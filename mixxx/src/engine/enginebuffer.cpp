@@ -117,7 +117,7 @@ EngineBuffer::EngineBuffer(const char * _group, ConfigObject<ConfigValue> * _con
     connect(m_playButton, SIGNAL(valueChanged(double)),
             this, SLOT(slotControlPlay(double)),
             Qt::DirectConnection);
-    
+
     // Play and Sync
     m_playSyncButton = new ControlPushButton(ConfigKey(m_group, "play_sync"));
     m_playSyncButton->set(0);
