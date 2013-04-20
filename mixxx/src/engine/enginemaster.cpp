@@ -90,14 +90,14 @@ EngineMaster::EngineMaster(ConfigObject<ConfigValue> * _config,
 
     // Headphone Clipping
     head_clipping = new EngineClipping("");
-    
+
     // Headphone Delay
     m_pHeadDelay = new EnginePflDelay();
-    
+
     // Eq Bypass
     m_pBypassEq = new ControlPushButton(ConfigKey(group, "bypass_eq"));
     m_pBypassEq->setButtonMode(ControlPushButton::TOGGLE);
-    
+
     // Allocate buffers
     m_pHead = SampleUtil::alloc(MAX_BUFFER_LEN);
     m_pMaster = SampleUtil::alloc(MAX_BUFFER_LEN);
