@@ -468,9 +468,13 @@ QVariant BaseSqlTableModel::data(const QModelIndex& index, int role) const {
 				if (value.toString().startsWith(m_sPrefix))
 					return value.toString().remove(0, m_sPrefix.size() + 1);
             } else if (column == fieldIndex(LIBRARYTABLE_DATETIMEADDED)) {
-                value = value.toDateTime().toString("yyyy-MM-dd"); //I prefer year first
+                QDateTime gmtDate = value.toDateTime().toString("yyyy-MM-dd"); //I prefer year first
+                gmtDate.setTimeSpec(Qt::UTC);
+                value = gmtDate.toLocalTime();
             } else if (column == fieldIndex(PLAYLISTTRACKSTABLE_DATETIMEADDED)) {
-                value = value.toDateTime().time();
+                QDateTime gmtDate = value.toDateTime().toString("yyyy-MM-dd"); //I prefer year first
+                gmtDate.setTimeSpec(Qt::UTC);
+                value = gmtDate.toLocalTime().time();
             } else if (column == fieldIndex(LIBRARYTABLE_BPM_LOCK)) {
                 value = value.toBool();
             }
@@ -794,13 +798,6 @@ QMimeData* BaseSqlTableModel::mimeData(const QModelIndexList &indexes) const {
     }
     mimeData->setUrls(urls);
     return mimeData;
-}
-
-void BaseSqlTableModel::setLibraryPrefix(QString sPrefix)
-{
-    m_sPrefix = sPrefix;
-    if (sPrefix[sPrefix.length()-1] == '/' || sPrefix[sPrefix.length()-1] == '\\')
-        m_sPrefix.chop(1);
 }
 
 QAbstractItemDelegate* BaseSqlTableModel::delegateForColumn(const int i, QObject* pParent) {
