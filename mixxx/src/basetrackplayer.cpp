@@ -267,10 +267,6 @@ TrackPointer BaseTrackPlayer::getLoadedTrack() const {
     return m_pLoadedTrack;
 }
 
-EngineDeck* BaseTrackPlayer::getEngineDeck() const {
-    return m_pChannel;
-}
-
 void BaseTrackPlayer::slotSetReplayGain(double replayGain) {
 
     // Do not change replay gain when track is playing because
