@@ -338,25 +338,24 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
     m_pPlayerManager = new PlayerManager(m_pConfig, m_pSoundManager, m_pEngine,
                                          m_pVCManager);
     // Set up four decks for with the player manager
-    for (unsigned int deck = 0; deck < 2; ++deck) {
-        qDebug() << "Adding deck " << deck;
+    for (unsigned int deck = 0; deck < 4; ++deck) {
+        
         // Add deck to the player manager
         Deck* pDeck = m_pPlayerManager->addDeck();
 #ifdef __VINYLCONTROL__
-        EngineDeck* pEngineDeck = pDeck->getEngineDeck();
-        // Register vinyl input signal with deck for passthrough
-        m_pSoundManager->registerInput(AudioInput(AudioInput::VINYLCONTROL, 0, deck), pEngineDeck);
+		if (deck < 2) {
+		    EngineDeck* pEngineDeck = pDeck->getEngineDeck();
+		    // Register vinyl input signal with deck for passthrough
+		    m_pSoundManager->registerInput(AudioInput(AudioInput::VINYLCONTROL, 0, deck), pEngineDeck);
+		}
 #endif
     }
 
-    qDebug() << "Adding Samplers";
     m_pPlayerManager->addSampler();
     m_pPlayerManager->addSampler();
     m_pPlayerManager->addSampler();
     m_pPlayerManager->addSampler();
     m_pPlayerManager->addPreviewDeck();
-    qDebug() << "All samplers and decks added";
-    ControlObject::sync();
 
 #ifdef __VINYLCONTROL__
     m_pVCManager->init();
@@ -1672,6 +1671,7 @@ void MixxxApp::rebootMixxxView() {
 
     m_pView->hide();
 
+    WaveformWidgetFactory::instance()->stop();
     WaveformWidgetFactory::instance()->destroyWidgets();
 
     // Workaround for changing skins while fullscreen, just go out of fullscreen
@@ -1719,6 +1719,8 @@ void MixxxApp::rebootMixxxView() {
         move(initPosition.x() + (initSize.width() - m_pView->width()) / 2,
              initPosition.y() + (initSize.height() - m_pView->height()) / 2);
     }
+
+    WaveformWidgetFactory::instance()->start();
 
 #ifdef __APPLE__
     // Original the following line fixes issue on OSX where menu bar went away

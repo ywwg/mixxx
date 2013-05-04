@@ -59,6 +59,7 @@ class BaseTrackPlayer : public BasePlayer {
 
     EngineDeck* m_pChannel;
     ControlObjectThreadMain* m_pPlay;
+    EngineDeck* m_pChannel;
 };
 
 

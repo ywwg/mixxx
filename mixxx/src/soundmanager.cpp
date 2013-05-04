@@ -165,7 +165,7 @@ void SoundManager::closeDevices() {
             QList<AudioDestination*> destList = m_registeredDestinations.values(in);
             AudioDestination* dest;
             foreach(dest, destList) {
-                        dest->onInputDisconnected(in);
+                dest->onInputDisconnected(in);
             }
         }
 
@@ -579,12 +579,12 @@ void SoundManager::pushBuffer(const QList<AudioInput>& inputs, short * inputBuff
             }
 
             short* pInputBuffer = m_inputBuffers[in];
-            
+
             if (m_registeredDestinations.contains(in)) {
                 QList<AudioDestination*> destList = m_registeredDestinations.values(in);
                 AudioDestination* dest;
                 foreach(dest, destList) {
-                    if(dest) {
+                    if (dest) {
                         dest->receiveBuffer(in, pInputBuffer, iFramesPerBuffer);
                     }
                 }

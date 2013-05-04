@@ -45,7 +45,6 @@ EngineDeck::EngineDeck(const char* group,
     m_bPassthroughWasActive = false;
 
     // Set up passthrough toggle button
-    m_pPassing->setButtonMode(ControlPushButton::TOGGLE);
     connect(m_pPassing, SIGNAL(valueChanged(double)),
             this, SLOT(slotPassingToggle(double)),
             Qt::DirectConnection);
@@ -165,7 +164,7 @@ void EngineDeck::receiveBuffer(AudioInput input, const short* pBuffer, unsigned 
         // Buffer overflow. We aren't processing samples fast enough. This
         // shouldn't happen since the deck spits out samples just as fast as they
         // come in, right?
-   	Q_ASSERT(false);
+        Q_ASSERT(false);
     }
 }
 
