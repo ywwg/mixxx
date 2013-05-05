@@ -327,7 +327,7 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
     // Register TrackPointer as a metatype since we use it in signals/slots
     // regularly.
     qRegisterMetaType<TrackPointer>("TrackPointer");
-
+    
 #ifdef __VINYLCONTROL__
     m_pVCManager = new VinylControlManager(this, m_pConfig);
 #else
@@ -337,25 +337,30 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
     // Create the player manager.
     m_pPlayerManager = new PlayerManager(m_pConfig, m_pSoundManager, m_pEngine,
                                          m_pVCManager);
-    // Set up four decks for with the player manager
-    for (unsigned int deck = 0; deck < 4; ++deck) {
-        
+    
+    int num_decks = m_pConfig->getValueString(ConfigKey("[Master]","num_decks")).toInt();
+    if (num_decks == 0) num_decks = 2;
+    for (int deck = 0; deck < num_decks; ++deck) {
         // Add deck to the player manager
         Deck* pDeck = m_pPlayerManager->addDeck();
 #ifdef __VINYLCONTROL__
-		if (deck < 2) {
-		    EngineDeck* pEngineDeck = pDeck->getEngineDeck();
-		    // Register vinyl input signal with deck for passthrough
-		    m_pSoundManager->registerInput(AudioInput(AudioInput::VINYLCONTROL, 0, deck), pEngineDeck);
-		}
+	    EngineDeck* pEngineDeck = pDeck->getEngineDeck();
+	    // Register vinyl input signal with deck for passthrough
+	    m_pSoundManager->registerInput(AudioInput(AudioInput::VINYLCONTROL, 0, deck), pEngineDeck);
 #endif
     }
 
-    m_pPlayerManager->addSampler();
-    m_pPlayerManager->addSampler();
-    m_pPlayerManager->addSampler();
-    m_pPlayerManager->addSampler();
-    m_pPlayerManager->addPreviewDeck();
+    int num_samplers = m_pConfig->getValueString(ConfigKey("[Master]","num_samplers")).toInt();
+    if (num_samplers == 0) num_samplers = 4;
+    for (int sampler = 0; sampler < num_samplers; ++sampler) {
+        m_pPlayerManager->addSampler();
+    }
+    
+    int num_preview_decks = m_pConfig->getValueString(ConfigKey("[Master]","num_preview_decks")).toInt();
+    if (num_preview_decks == 0) num_preview_decks = 1;
+    for (int preview = 0; preview < num_preview_decks; ++preview) {
+        m_pPlayerManager->addPreviewDeck();
+    }
 
 #ifdef __VINYLCONTROL__
     m_pVCManager->init();
@@ -577,6 +582,13 @@ MixxxApp::~MixxxApp()
     t.start();
 
     qDebug() << "Destroying MixxxApp";
+    
+    qDebug() << "save number of decks";
+    m_pConfig->set(ConfigKey("[Master]","num_decks"), ConfigValue(m_pPlayerManager->numDecks()));
+    m_pConfig->set(ConfigKey("[Master]","num_samplers"), 
+                   ConfigValue(m_pPlayerManager->numSamplers()));
+    m_pConfig->set(ConfigKey("[Master]","num_preview_decks"), 
+                   ConfigValue(m_pPlayerManager->numPreviewDecks()));
 
     qDebug() << "save config " << qTime.elapsed();
     m_pConfig->Save();

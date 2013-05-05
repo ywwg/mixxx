@@ -162,9 +162,8 @@ void PlayerManager::slotNumDecksControlChanged(double v) {
     m_pCONumDecks->set(m_decks.size());
 
     int num = v;
-    if (num < m_decks.size()) {
-        qDebug() << "Ignoring request to reduce the number of decks to" << num;
-        return;
+    while (num < m_decks.size()) {
+        m_decks.removeLast();
     }
 
     while (m_decks.size() < num) {
@@ -177,9 +176,8 @@ void PlayerManager::slotNumSamplersControlChanged(double v) {
     m_pCONumSamplers->set(m_samplers.size());
 
     int num = v;
-    if (num < m_samplers.size()) {
-        qDebug() << "Ignoring request to reduce the number of samplers to" << num;
-        return;
+    while (num < m_samplers.size()) {
+        m_samplers.removeLast();
     }
 
     while (m_samplers.size() < num) {
@@ -192,9 +190,8 @@ void PlayerManager::slotNumPreviewDecksControlChanged(double v) {
     m_pCONumPreviewDecks->set(m_preview_decks.size());
 
     int num = v;
-    if (num < m_preview_decks.size()) {
-        qDebug() << "Ignoring request to reduce the number of preview decks to" << num;
-        return;
+    while (num < m_preview_decks.size()) {
+        m_preview_decks.removeLast();
     }
 
     while (m_preview_decks.size() < num) {
@@ -340,9 +337,18 @@ void PlayerManager::slotLoadToSampler(QString location, int sampler) {
 
 void PlayerManager::slotLoadTrackIntoNextAvailableDeck(TrackPointer pTrack)
 {
-    QList<Deck*>::iterator it = m_decks.begin();
-    while (it != m_decks.end()) {
-        Deck* pDeck = *it;
+    QList<Deck*>::iterator it_b = m_decks.begin();
+    QList<Deck*>::iterator it_e = m_decks.end();
+    bool try_b = true;
+    while (it_b != it_e) {
+        Deck* pDeck = *it_b;
+        if (try_b) {
+            ++it_b;
+        } else {
+            --it_e;
+            pDeck = *it_e;
+        }
+        try_b = !try_b;
         
         ControlObject* vinylControlEnabled =
                 ControlObject::getControl(ConfigKey(pDeck->getGroup(), 
@@ -370,7 +376,6 @@ void PlayerManager::slotLoadTrackIntoNextAvailableDeck(TrackPointer pTrack)
                 break;
             }
         }
-        it++;
     }
 }
 
