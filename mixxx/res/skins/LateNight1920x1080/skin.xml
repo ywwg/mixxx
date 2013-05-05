@@ -2198,7 +2198,7 @@
 				<Style>
 				QGroupBox { border: 0px solid yellow; margin: 0px 0px 0px 0px;}
 
-				QTableView, QTextBrowser, QTreeView { border: 1px solid #656565; font: 13px/15px Lucida Grande, Lucida Sans Unicode, Arial, Verdana, sans-serif;
+				QTableView, QTextBrowser, QTreeView { border: 1px solid #656565; font: 15px/18px Lucida Grande, Lucida Sans Unicode, Arial, Verdana, sans-serif;
 				background: transparent; color: #ACACAC;
 				<!--we use  "background: transparent" as workaround, else "alternate-background-color" wont work, QT 4.7.x bug?-->
 				alternate-background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(43, 43, 43, 255), stop:0.049 rgba(43, 43, 43, 255), stop:0.050 rgba(43, 43, 43, 100), stop:0.949 rgba(43, 43, 43, 100), stop:0.95 rgba(43, 43, 43, 255), stop:1 rgba(43, 43, 43, 255));}
@@ -2223,21 +2223,21 @@
 				QSpinBox { min-height: 20px; max-height: 20px;min-width: 40px; max-width: 40px;}
 
 				<!--library search bar-->
-				WSearchLineEdit { padding: 2px; border: 1px solid #656565; font: 13px/15px Lucida Grande, Lucida Sans Unicode, Arial, Verdana, sans-serif; background: transparent; color: #ACACAC; }
-				WSearchLineEdit:focus { padding: 2px; border: 2px solid #FF6600; font: bold 13px/15px Lucida Grande, Lucida Sans Unicode, Arial, Verdana, sans-serif; background: rgba(255, 102, 0,50); color: #D6D6D6;}
+				WSearchLineEdit { padding: 2px; border: 1px solid #656565; font: 18px/20px Lucida Grande, Lucida Sans Unicode, Arial, Verdana, sans-serif; background: transparent; color: #ACACAC; }
+				WSearchLineEdit:focus { padding: 2px; border: 2px solid #FF6600; font: bold 18px/20px Lucida Grande, Lucida Sans Unicode, Arial, Verdana, sans-serif; background: rgba(255, 102, 0,50); color: #D6D6D6;}
 
 				<!--splitter between treeview and library-->
 				QSplitter::handle { image: url(skin:/style/style_handle_unchecked.png); background: none; }
 				QSplitter::handle:pressed { image: url(skin:/style/style_handle_checked.png); background: none; }
-				QSplitter::handle:horizontal { width: 6px; }
-				QSplitter::handle:vertical { height: 6px;}
+				QSplitter::handle:horizontal { width: 10px; }
+				QSplitter::handle:vertical { height: 10px;}
 
 				QPushButton { font: 13px/15px Lucida Grande, Lucida Sans Unicode, Arial, Verdana, sans-serif; }
 				<!--Extra declaration for QRadionButton otherwise it shows up with wrong colors in Linux with Gnome -->
 				QLabel, QRadioButton { font: 13px/15px Lucida Grande, Lucida Sans Unicode, Arial, Verdana, sans-serif; background: transparent; color: #C1C1C1;}
 
 				<!--Spacing between treeview and searchbar-->
-				QTreeView { margin: 6px 0px 0px 0px; }
+				QTreeView { margin: 10px 0px 0px 0px; }
 
 				<!--triangle for closed/opened branches in treeview-->
 				QTreeView { show-decoration-selected: 0; } <!-- Suppresses that selected sidebar items branch indicator shows wrong color when out of focus ; lp:880588-->
@@ -2256,7 +2256,7 @@
 					<Splitter>
 						<Size>me,me</Size>
 						<Style></Style>
-						<SplitSizes>1,10</SplitSizes>
+						<SplitSizes>1,12</SplitSizes>
 						<Children>
 							<WidgetGroup>
 								<Style>QGroupBox {}</Style>
