@@ -158,54 +158,74 @@ unsigned int PlayerManager::numPreviewDecks() {
 }
 
 void PlayerManager::slotNumDecksControlChanged(double v) {
-    // First off, undo any changes to the control.
     m_pCONumDecks->set(m_decks.size());
-
     int num = v;
+    if (num == m_decks.size())
+        return;
+        
     while (num < m_decks.size()) {
+        QString group = groupForDeck(m_decks.size() - 1);
+        m_players.remove(group);
         m_decks.removeLast();
     }
 
     while (m_decks.size() < num) {
-        addDeck();
+        addDeck(num);
     }
+    
+	// Redistribute decks left and right based on new count.
+    QList<Deck*>::iterator it = m_decks.begin();
+    for (int i = 1; it != m_decks.end(); ++i, ++it) {
+        if (i > m_decks.size() / 2) {
+            ControlObject::getControl(ConfigKey(QString("[Channel%1]").arg(i), 
+                                                "orientation"))->set(EngineChannel::RIGHT);
+        } else {
+            ControlObject::getControl(ConfigKey(QString("[Channel%1]").arg(i), 
+                                                "orientation"))->set(EngineChannel::LEFT);
+        }
+    }
+    
+    m_pCONumDecks->set(m_decks.size());
 }
 
 void PlayerManager::slotNumSamplersControlChanged(double v) {
-    // First off, undo any changes to the control.
     m_pCONumSamplers->set(m_samplers.size());
-
     int num = v;
     while (num < m_samplers.size()) {
+        QString group = groupForSampler(m_samplers.size() - 1);
+        m_players.remove(group);
         m_samplers.removeLast();
     }
 
     while (m_samplers.size() < num) {
         addSampler();
     }
+    m_pCONumSamplers->set(m_samplers.size());
 }
 
 void PlayerManager::slotNumPreviewDecksControlChanged(double v) {
-    // First off, undo any changes to the control.
     m_pCONumPreviewDecks->set(m_preview_decks.size());
-
     int num = v;
     while (num < m_preview_decks.size()) {
+        QString group = groupForPreviewDeck(m_preview_decks.size() - 1);
+        m_players.remove(group);
         m_preview_decks.removeLast();
     }
 
     while (m_preview_decks.size() < num) {
         addPreviewDeck();
     }
+    m_pCONumPreviewDecks->set(m_preview_decks.size());
 }
 
-Deck* PlayerManager::addDeck() {
+Deck* PlayerManager::addDeck(int total_decks) {
     QString group = groupForDeck(numDecks());
     int number = numDecks() + 1;
 
     EngineChannel::ChannelOrientation orientation = EngineChannel::LEFT;
-    if (number % 2 == 0)
+    if (number > total_decks / 2) {
         orientation = EngineChannel::RIGHT;
+    }
 
     Deck* pDeck = new Deck(this, m_pConfig, m_pEngine, orientation, group);
     if (m_pAnalyserQueue) {

@@ -32,7 +32,7 @@ class PlayerManager : public QObject {
     virtual ~PlayerManager();
 
     // Add a deck to the PlayerManager
-    Deck* addDeck();
+    Deck* addDeck(int total_decks);
 
     // Add a sampler to the PlayerManager
     Sampler* addSampler();

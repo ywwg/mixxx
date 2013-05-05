@@ -342,7 +342,7 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
     if (num_decks == 0) num_decks = 2;
     for (int deck = 0; deck < num_decks; ++deck) {
         // Add deck to the player manager
-        Deck* pDeck = m_pPlayerManager->addDeck();
+        Deck* pDeck = m_pPlayerManager->addDeck(num_decks);
 #ifdef __VINYLCONTROL__
 	    EngineDeck* pEngineDeck = pDeck->getEngineDeck();
 	    // Register vinyl input signal with deck for passthrough
@@ -583,7 +583,7 @@ MixxxApp::~MixxxApp()
 
     qDebug() << "Destroying MixxxApp";
     
-    qDebug() << "save number of decks";
+    qDebug() << "save number of decks " << m_pPlayerManager->numDecks();
     m_pConfig->set(ConfigKey("[Master]","num_decks"), ConfigValue(m_pPlayerManager->numDecks()));
     m_pConfig->set(ConfigKey("[Master]","num_samplers"), 
                    ConfigValue(m_pPlayerManager->numSamplers()));
