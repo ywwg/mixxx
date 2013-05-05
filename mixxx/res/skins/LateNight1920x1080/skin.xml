@@ -106,7 +106,7 @@
 		<size> is optional, this will limit the size so that any part of a child widget outside of the size rectangle is not shown
 		<Size>w,h</Size>
 		-->
-		<Size>1280,331f</Size>
+		<Size>1920,497f</Size>
 		<Layout>vertical</Layout>
 		<!--deactivate the standard
 		<Style>QGroupBox { border: 0px solid red; } QWidget { margin: 0; padding: 0; }</Style>
@@ -137,7 +137,7 @@
 								</Style>
 								<Group>[Sampler1]</Group>
 								<Pos>8,5</Pos>
-								<Size>205f,21</Size>
+								<Size>308f,32</Size>
 							</Text>
 							<!-- Alternative "TITLE ONLY" display
 							<TrackProperty>
@@ -652,7 +652,7 @@
 								</Style>
 								<Group>[Sampler2]</Group>
 								<Pos>8,5</Pos>
-								<Size>205f,21</Size>
+								<Size>308f,32</Size>
 							</Text>
 							<!-- Alternative "TITLE ONLY" display
 							<TrackProperty>
@@ -1167,7 +1167,7 @@
 								</Style>
 								<Group>[Sampler3]</Group>
 								<Pos>8,5</Pos>
-								<Size>205f,21</Size>
+								<Size>308f,32</Size>
 							</Text>
 							<!-- Alternative "TITLE ONLY" display
 							<TrackProperty>
@@ -1682,7 +1682,7 @@
 								</Style>
 								<Group>[Sampler4]</Group>
 								<Pos>8,5</Pos>
-								<Size>205f,21</Size>
+								<Size>308f,32</Size>
 							</Text>
 							<!-- Alternative "TITLE ONLY" display
 							<TrackProperty>
@@ -2303,7 +2303,7 @@
 														</Style>
 														<Group>[PreviewDeck1]</Group>
 														<Pos></Pos>
-														<Size>50me,15f</Size>
+														<Size>75me,23f</Size>
 													</Text>
 													<!--
 													**********************************************
@@ -2376,7 +2376,7 @@
 														<TooltipId>waveform_overview</TooltipId>
 														<Style></Style>
 														<Group>[PreviewDeck1]</Group>
-														<Size>me,30f</Size>
+														<Size>me,45f</Size>
 														<BgColor></BgColor>
 														<BgColor>#FFFFFF</BgColor>
 														<SignalHighColor>#FFE300</SignalHighColor>
@@ -2409,7 +2409,7 @@
 
 										<!-- Preview Deck Column 2-->
 											<WidgetGroup>
-												<Size>20f,i</Size>
+												<Size>30f,i</Size>
 												<Style>
 												QGroupBox {
 												margin-bottom: 7px;
@@ -2514,7 +2514,7 @@
 	-->
 	<WidgetGroup>
 		<Pos>2,2</Pos>
-		<Size>1279,i</Size>
+		<Size>1919,i</Size>
 		<Style>QGroupBox { border: 0px solid red; } QWidget { margin: 0; padding: 0; }</Style>
 		<Layout>horizontal</Layout>
 		<Children>
@@ -2686,7 +2686,7 @@
 			<!-- Vinylcontrol 1 sub-widget -->
 			<WidgetGroup>
 				<!--<<Pos>0,0</Pos>-->
-				<Size>59,i</Size>
+				<Size>89,i</Size>
 				<Style>QGroupBox { border: 0px solid yellow;} QWidget { margin: 0; padding: 0; }</Style>
 				<Children>
 					<!--
@@ -2764,7 +2764,7 @@
 			<!-- Spinning Vinyl 1 sub-widget -->
 			<WidgetGroup>
 				<!--<Pos>0,0</Pos>-->
-				<Size>142,i</Size>
+				<Size>213,i</Size>
 				<Style>QGroupBox { border: 0px solid green; } QWidget { margin: 0; padding: 0;} </Style>
 				<Children>
 					<!--
@@ -2925,7 +2925,7 @@
 				<!-- Spinning Vinyl 2 sub-widget -->
 			<WidgetGroup>
 				<!--<Pos>0,0</Pos>-->
-				<Size>142,i</Size>
+				<Size>213,i</Size>
 				<Style>QGroupBox { border: 0px solid green; } QWidget { margin: 0; padding: 0; } </Style>
 				<Children>
 					<!--
@@ -2952,7 +2952,7 @@
 			<!-- Vinylcontrol 2 sub-widget -->
 			<WidgetGroup>
 				<!--<Pos>0,0</Pos>-->
-				<Size>58,i</Size>
+				<Size>87,i</Size>
 				<Style>QGroupBox { border: 0px solid green;} QWidget { margin: 0; padding: 0; }</Style>
 				<Children>
 					<!--
@@ -3331,7 +3331,7 @@
 			<!-- Effects control sub-widget -->
 			<WidgetGroup>
 				<Pos>387,0</Pos>
-				<Size>i,42</Size>
+				<Size>i,63</Size>
 				<Style>QGroupBox { border: 0px solid yellow; } QWidget { margin: 0; padding: 0; }</Style>
 				<Children>
 					<!--
@@ -4244,7 +4244,7 @@
 				<Property>title</Property>
 				<Channel>1</Channel>
 				<Pos>0,2</Pos>
-				<Size>370f,23</Size>
+				<Size>555f,35</Size>
 			</TrackProperty>
 
 			<!--
@@ -4260,7 +4260,7 @@
 				<Property>artist</Property>
 				<Channel>1</Channel>
 				<Pos>0,38</Pos>
-				<Size>350f,23</Size>
+				<Size>555f,35</Size>
 			</TrackProperty>
 
 			<!--
@@ -4276,7 +4276,7 @@
 				<Property>album</Property>
 				<Channel>1</Channel>
 				<Pos>0,75</Pos>
-				<Size>350f,15</Size>
+				<Size>555f,35</Size>
 			</TrackProperty>
 
 			<!--
@@ -5229,7 +5229,7 @@
 				<Property>title</Property>
 				<Channel>2</Channel>
 				<Pos>0,2</Pos>
-				<Size>370f,23</Size>
+				<Size>555f,35</Size>
 			</TrackProperty>
 
 			<!--
@@ -5244,7 +5244,7 @@
 				<Property>artist</Property>
 				<Channel>2</Channel>
 				<Pos>0,38</Pos>
-				<Size>350f,23</Size>
+				<Size>555f,35</Size>
 			</TrackProperty>
 
 			<!--
@@ -5260,7 +5260,7 @@
 				<Property>album</Property>
 				<Channel>2</Channel>
 				<Pos>0,75</Pos>
-				<Size>350f,15</Size>
+				<Size>555f,35</Size>
 			</TrackProperty>
 
 			<!--
