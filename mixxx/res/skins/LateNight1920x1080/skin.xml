@@ -4346,10 +4346,10 @@
 				 BPM tap is transparent png directly over BPM display, so it became BPM and TAP at once,
 				 changed tooltip accordingly
 			-->
-			<PushButton>
+			<!--<PushButton>-->
 			<!-- Original:
 				<TooltipId>bpm_tap</TooltipId>
-			-->
+		    
 				<TooltipId>bpm_tap_visual_bpm</TooltipId>
 				<Style></Style>
 				<NumberStates>1</NumberStates>
@@ -4364,7 +4364,7 @@
 					<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
 				</Connection>
 			</PushButton>
-
+            -->
 			<!--
 			**********************************************
 			Button - Show spinning Vinyl widget
@@ -5329,10 +5329,9 @@
 				 BPM tap is transparent png directly over BPM display, so it became BPM and TAP at once,
 				 changed tooltip accordingly
 			-->
-			<PushButton>
+			<!--<PushButton>-->
 			<!-- Original:
 				<TooltipId>bpm_tap</TooltipId>
-			-->
 				<TooltipId>bpm_tap_visual_bpm</TooltipId>
 				<Style></Style>
 				<NumberStates>1</NumberStates>
@@ -5347,7 +5346,7 @@
 					<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
 				</Connection>
 			</PushButton>
-
+            -->
 			<!--
 			**********************************************
 			Button - Show spinning Vinyl widget
