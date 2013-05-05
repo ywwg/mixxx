@@ -65,7 +65,7 @@
 	<license>Creative Commons Attribution, Share-Alike 3.0 Unported</license>
 	<attributes>
 		<attribute config_key="[Master],num_decks">4</attribute>
-		<attribute config_key="[Master],num_samplers">2</attribute>
+		<attribute config_key="[Master],num_samplers">0</attribute>
 		<attribute config_key="[Master],num_preview_decks">1</attribute>
 		<!--Optionally, make elements visible on skin load-->
 		<attribute config_key="[Spinny1],show_spinny">1</attribute>
@@ -453,160 +453,6 @@
 		<Style>QGroupBox { border: 0px solid red; } QWidget { margin: 0; padding: 0; }</Style>
 		<Layout>horizontal</Layout>
 		<Children>
-			<!-- Pitch 1 control sub-widget 
-			<WidgetGroup>
-				<Size>165,222</Size>
-				<Style>QGroupBox { border: 0px solid yellow; } QWidget { margin: 0; padding: 0; } </Style>
-				<Children>
-					**********************************************
-					Text- Pitch rate display
-					**********************************************
-					<NumberRate>
-						<TooltipId>rate_display</TooltipId>
-						<Style>QLabel { font: bold 18px/20px Lucida Grande, Lucida Sans Unicode, Arial, Verdana, sans-serif;
-						background-color: transparent; color: #EECE33; text-align: center; padding-right: 1px; }
-						</Style>
-						<Channel>4</Channel>
-						<Pos>80,98</Pos>
-						<Size>78,30</Size>
-						<Alignment>center</Alignment>
-					</NumberRate>
-
-					**********************************************
-					Slider- Pitch control
-					**********************************************
-					<SliderComposed>
-						<TooltipId>rate</TooltipId>
-						<Style></Style>
-						<Handle>knob_pitch1.png</Handle>
-						<Slider>slider_pitch1.png</Slider>
-						<Pos>5,11</Pos>
-						<Horizontal>false</Horizontal>
-						<Connection>
-							<ConfigKey>[Channel1],rate</ConfigKey>
-							<EmitOnDownPress>false</EmitOnDownPress>
-						</Connection>
-					</SliderComposed>
-
-					**********************************************
-					Button- Beat sync
-					**********************************************
-					<PushButton>
-						<TooltipId>beatsync_beatsync_tempo</TooltipId>
-						<Style></Style>
-						<NumberStates>1</NumberStates>
-						<State>
-							<Number>0</Number>
-							<Pressed>btn_sync1_overdown.png</Pressed>
-							<Unpressed>btn_sync1.png</Unpressed>
-						</State>
-						<Pos>81,12</Pos>
-						<Connection>
-							<ConfigKey>[Channel1],beatsync</ConfigKey>
-							<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
-							<ButtonState>LeftButton</ButtonState>
-						</Connection>
-						<Connection>
-							<ConfigKey>[Channel1],beatsync_tempo</ConfigKey>
-							<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
-							<ButtonState>RightButton</ButtonState>
-						</Connection>
-					</PushButton>
-
-					**********************************************
-					Button- Pitch control
-					**********************************************
-					<PushButton>
-						<TooltipId>rate_perm_up_rate_perm_up_small</TooltipId>
-						<Style></Style>
-						<NumberStates>1</NumberStates>
-						<State>
-							<Number>0</Number>
-							<Pressed>btn_pitch_up1_overdown.png</Pressed>
-							<Unpressed>btn_pitch_up1.png</Unpressed>
-						</State>
-						<Pos>120,140</Pos>
-						<Connection>
-							<ConfigKey>[Channel1],rate_perm_up</ConfigKey>
-							<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
-							<ButtonState>LeftButton</ButtonState>
-						</Connection>
-						<Connection>
-							<ConfigKey>[Channel1],rate_perm_up_small</ConfigKey>
-							<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
-							<ButtonState>RightButton</ButtonState>
-						</Connection>
-					</PushButton>
-					<PushButton>
-						<TooltipId>rate_perm_down_rate_perm_down_small</TooltipId>
-						<Style></Style>
-						<NumberStates>1</NumberStates>
-						<State>
-							<Number>0</Number>
-							<Pressed>btn_pitch_down1_overdown.png</Pressed>
-							<Unpressed>btn_pitch_down1.png</Unpressed>
-						</State>
-						<Pos>81,140</Pos>
-						<Connection>
-							<ConfigKey>[Channel1],rate_perm_down</ConfigKey>
-							<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
-							<ButtonState>LeftButton</ButtonState>
-						</Connection>
-						<Connection>
-							<ConfigKey>[Channel1],rate_perm_down_small</ConfigKey>
-							<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
-							<ButtonState>RightButton</ButtonState>
-						</Connection>
-					</PushButton>
-
-					**********************************************
-					Button- Pitch bend (Nudge)
-					**********************************************
-					<PushButton>
-						<TooltipId>rate_temp_up_rate_temp_up_small</TooltipId>
-						<Style></Style>
-						<NumberStates>1</NumberStates>
-						<State>
-							<Number>0</Number>
-							<Pressed>btn_nudge_up1_overdown.png</Pressed>
-							<Unpressed>btn_nudge_up1.png</Unpressed>
-						</State>
-						<Pos>120,179</Pos>
-						<Connection>
-							<ConfigKey>[Channel1],rate_temp_up</ConfigKey>
-							<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
-							<ButtonState>LeftButton</ButtonState>
-						</Connection>
-						<Connection>
-							<ConfigKey>[Channel1],rate_temp_up_small</ConfigKey>
-							<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
-							<ButtonState>RightButton</ButtonState>
-						</Connection>
-					</PushButton>
-					<PushButton>
-						<TooltipId>rate_temp_down_rate_temp_down_small</TooltipId>
-						<Style></Style>
-						<NumberStates>1</NumberStates>
-						<State>
-							<Number>0</Number>
-							<Pressed>btn_nudge_down1_overdown.png</Pressed>
-							<Unpressed>btn_nudge_down1.png</Unpressed>
-						</State>
-						<Pos>81,179</Pos>
-						<Connection>
-							<ConfigKey>[Channel1],rate_temp_down</ConfigKey>
-							<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
-							<ButtonState>LeftButton</ButtonState>
-						</Connection>
-						<Connection>
-							<ConfigKey>[Channel1],rate_temp_down_small</ConfigKey>
-							<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
-							<ButtonState>RightButton</ButtonState>
-						</Connection>
-					</PushButton>
-				</Children>
-			</WidgetGroup> -->
-			
 			<!-- Spinning Vinyl 1 sub-widget -->
 			<WidgetGroup>
 				<!--<Pos>0,0</Pos>-->
@@ -648,7 +494,7 @@
 					<Spinny>
 						<TooltipId>spinny</TooltipId>
 						<Style></Style>
-						<Channel>3</Channel>
+						<Channel>2</Channel>
 						<Pos>0,0</Pos>
 						<Size>i,i</Size>
 						<PathBackground>vinyl_spinny2_background.png</PathBackground>
@@ -736,7 +582,7 @@
 					<Visual>
 						<TooltipId>waveform_display</TooltipId>
 						<Style></Style>
-						<Channel>3</Channel>
+						<Channel>2</Channel>
 						<Pos>0,53</Pos>
 						<!--See comment about <Size> above-->
 						<!--<Size>i,110</Size>-->
@@ -790,7 +636,7 @@
 					<Visual>
 						<TooltipId>waveform_display</TooltipId>
 						<Style></Style>
-						<Channel>4</Channel>
+						<Channel>3</Channel>
 						<Pos>0,110</Pos>
 						<!--See comment about <Size> above-->
 						<!--<Size>i,110</Size>-->
@@ -844,7 +690,7 @@
 					<Visual>
 						<TooltipId>waveform_display</TooltipId>
 						<Style></Style>
-						<Channel>2</Channel>
+						<Channel>4</Channel>
 						<Pos>0,164</Pos>
 						<!--See comment about <Size> above-->
 						<!--<Size>i,110</Size>-->
@@ -910,7 +756,7 @@
 					<Spinny>
 						<TooltipId>spinny</TooltipId>
 						<Style></Style>
-						<Channel>4</Channel>
+						<Channel>3</Channel>
 						<Pos>0,0</Pos>
 						<Size>i,i</Size>
 						<PathBackground>vinyl_spinny2_background.png</PathBackground>
@@ -936,7 +782,7 @@
 					<Spinny>
 						<TooltipId>spinny</TooltipId>
 						<Style></Style>
-						<Channel>2</Channel>
+						<Channel>4</Channel>
 						<Pos>0,0</Pos>
 						<Size>i,i</Size>
 						<PathBackground>vinyl_spinny2_background.png</PathBackground>
@@ -1114,90 +960,6 @@
 					</Knob>
 				</Children>
 			</WidgetGroup>
-		</Children>
-	</WidgetGroup>-->
-
-	<!--
-	############################################################################################
-	############################################################################################
-	WidgetGroup : Volume, Balance & Headphones control
-	############################################################################################
-	############################################################################################
-	
-	<WidgetGroup>
-		<Pos>1202,224</Pos>
-		<Size>555,63</Size>
-		<Style>QGroupBox { border: 0px solid red; } QWidget { margin: 0; padding: 0; }</Style>
-		<Children>
-			**********************************************
-			Text- Clock display
-			**********************************************
-			<Time>
-				<TooltipId>time</TooltipId>
-				<Style>QLabel { font: bold 19px/21px Lucida Grande, Lucida Sans Unicode, Arial, Verdana, sans-serif;
-				background-color: transparent; color: #ACACAC; text-align: center; }
-				</Style>
-				<Pos>255,21</Pos>
-				<Size>120,30</Size>
-				<ShowSeconds>false</ShowSeconds>
-				<ClockFormat>24</ClockFormat>
-			</Time>
-
-			**********************************************
-			RotaryFader- Master volume & balance
-			**********************************************
-			
-
-			**********************************************
-			Visual - Volume level display
-			**********************************************
-
-			<VuMeter>
-				<TooltipId>master_VuMeterL</TooltipId>
-				<Style></Style>
-				<PathVu>btn_volume_display_master1_over.png</PathVu>
-				<PathBack>btn_volume_display_master1.png</PathBack>
-				<Pos>548,21</Pos>
-				<Horizontal>true</Horizontal>
-				<PeakHoldSize>5</PeakHoldSize>
-				<PeakHoldTime>500</PeakHoldTime>
-				<PeakFallTime>50</PeakFallTime>
-				<PeakFallStep>2</PeakFallStep>
-				<Connection>
-					<ConfigKey>[Master],VuMeterL</ConfigKey>
-				</Connection>
-			</VuMeter>
-			<VuMeter>
-				<TooltipId>master_VuMeterR</TooltipId>
-				<Style></Style>
-				<PathVu>btn_volume_display_master2_over.png</PathVu>
-				<PathBack>btn_volume_display_master2.png</PathBack>
-				<Pos>548,38</Pos>
-				<Horizontal>true</Horizontal>
-				<PeakHoldSize>5</PeakHoldSize>
-				<PeakHoldTime>500</PeakHoldTime>
-				<PeakFallTime>50</PeakFallTime>
-				<PeakFallStep>2</PeakFallStep>
-				<Connection>
-					<ConfigKey>[Master],VuMeterR</ConfigKey>
-				</Connection>
-			</VuMeter>
-
-			**********************************************
-			Visual- Volume peak indicator
-			**********************************************
-			<StatusLight>
-				<TooltipId>master_PeakIndicator</TooltipId>
-				<Style></Style>
-				<PathStatusLight>btn_clipping_master_over.png</PathStatusLight>
-				<PathBack>btn_clipping_master.png</PathBack>
-				<Pos>674,21</Pos>
-				<Horizontal>true</Horizontal>
-				<Connection>
-					<ConfigKey>[Master],PeakIndicator</ConfigKey>
-				</Connection>
-			</StatusLight>
-
 		</Children>
 	</WidgetGroup>-->
 
@@ -1436,8 +1198,174 @@
 				    </VuMeter>
 		        </Children>
 		    </WidgetGroup> <!-- /Channel1 mixer -->
-			<WidgetGroup> <!-- Channel3 controls -->
+		    <WidgetGroup> <!-- Channel2 controls -->
 				<Pos>173,0</Pos>
+			    <Size>82,250</Size>
+				<Style>QGroupBox { border: 0px solid yellow; } QWidget { margin: 0; padding: 0; } </Style>
+			    <Children>
+		            <SliderComposed>
+			            <TooltipId>channel_volume</TooltipId>
+			            <Style></Style>
+			            <Handle>knob_volume1.png</Handle>
+			            <Slider>slider_volume1.png</Slider>
+			            <Pos>26,153</Pos>
+			            <Horizontal>false</Horizontal>
+			            <Connection>
+				            <ConfigKey>[Channel2],volume</ConfigKey>
+				            <EmitOnDownPress>false</EmitOnDownPress>
+			            </Connection>
+		            </SliderComposed>
+		            <PushButton>
+					    <TooltipId>pfl</TooltipId>
+					    <Style></Style>
+					    <NumberStates>2</NumberStates>
+					    <State>
+						    <Number>0</Number>
+						    <Pressed>btn_pfl1_down.png</Pressed>
+						    <Unpressed>btn_pfl1.png</Unpressed>
+					    </State>
+					    <State>
+						    <Number>1</Number>
+						    <Pressed>btn_pfl1_overdown.png</Pressed>
+						    <Unpressed>btn_pfl1_over.png</Unpressed>
+					    </State>
+					    <Pos>1,8</Pos>
+					    <Connection>
+						    <ConfigKey>[Channel2],pfl</ConfigKey>
+					    </Connection>
+				    </PushButton>
+				    <PushButton>
+					    <TooltipId>filterHighKill</TooltipId>
+					    <Style></Style>
+					    <NumberStates>2</NumberStates>
+					    <State>
+						    <Number>0</Number>
+						    <Pressed>btn_kill_down.png</Pressed>
+						    <Unpressed>btn_kill.png</Unpressed>
+					    </State>
+					    <State>
+						    <Number>1</Number>
+						    <Pressed>btn_kill_overdown.png</Pressed>
+						    <Unpressed>btn_kill_over.png</Unpressed>
+					    </State>
+					    <Pos>4,54</Pos>
+					    <Connection>
+						    <ConfigKey>[Channel2],filterHighKill</ConfigKey>
+						    <EmitOnPressAndRelease>true</EmitOnPressAndRelease>
+						    <ButtonState>LeftButton</ButtonState>
+					    </Connection>
+				    </PushButton>
+				    <PushButton>
+					    <TooltipId>filterMidKill</TooltipId>
+					    <Style></Style>
+					    <NumberStates>2</NumberStates>
+					    <State>
+						    <Number>0</Number>
+						    <Pressed>btn_kill_down.png</Pressed>
+						    <Unpressed>btn_kill.png</Unpressed>
+					    </State>
+					    <State>
+						    <Number>1</Number>
+						    <Pressed>btn_kill_overdown.png</Pressed>
+						    <Unpressed>btn_kill_over.png</Unpressed>
+					    </State>
+					    <Pos>4,93</Pos>
+					    <Connection>
+						    <ConfigKey>[Channel2],filterMidKill</ConfigKey>
+						    <EmitOnPressAndRelease>true</EmitOnPressAndRelease>
+						    <ButtonState>LeftButton</ButtonState>
+					    </Connection>
+				    </PushButton>
+				    <PushButton>
+					    <TooltipId>filterLowKill</TooltipId>
+					    <Style></Style>
+					    <NumberStates>2</NumberStates>
+					    <State>
+						    <Number>0</Number>
+						    <Pressed>btn_kill_down.png</Pressed>
+						    <Unpressed>btn_kill.png</Unpressed>
+					    </State>
+					    <State>
+						    <Number>1</Number>
+						    <Pressed>btn_kill_overdown.png</Pressed>
+						    <Unpressed>btn_kill_over.png</Unpressed>
+					    </State>
+					    <Pos>4,130</Pos>
+					    <Connection>
+						    <ConfigKey>[Channel2],filterLowKill</ConfigKey>
+						    <EmitOnPressAndRelease>true</EmitOnPressAndRelease>
+						    <ButtonState>LeftButton</ButtonState>
+					    </Connection>
+				    </PushButton>
+				    <Knob>
+					    <TooltipId>pregain</TooltipId>
+					    <Style></Style>
+					    <NumberStates>64</NumberStates>
+					    <Path>knobs/knob_rotary_s%1.png</Path>
+					    <Pos>29,1</Pos>
+					    <Connection>
+						    <ConfigKey>[Channel2],pregain</ConfigKey>
+					    </Connection>
+				    </Knob>
+				    <Knob>
+					    <TooltipId>filterHigh</TooltipId>
+					    <Style></Style>
+					    <NumberStates>64</NumberStates>
+					    <Path>knobs/knob_rotary_s%1.png</Path>
+					    <Pos>29,39</Pos>
+					    <Connection>
+						    <ConfigKey>[Channel2],filterHigh</ConfigKey>
+					    </Connection>
+				    </Knob>
+				    <Knob>
+					    <TooltipId>filterMid</TooltipId>
+					    <Style></Style>
+					    <NumberStates>64</NumberStates>
+					    <Path>knobs/knob_rotary_s%1.png</Path>
+					    <Pos>29,78</Pos>
+					    <Connection>
+						    <ConfigKey>[Channel2],filterMid</ConfigKey>
+					    </Connection>
+				    </Knob>
+				    <Knob>
+					    <TooltipId>filterLow</TooltipId>
+					    <Style></Style>
+					    <NumberStates>64</NumberStates>
+					    <Path>knobs/knob_rotary_s%1.png</Path>
+					    <Pos>29,115</Pos>
+					    <Connection>
+						    <ConfigKey>[Channel2],filterLow</ConfigKey>
+					    </Connection>
+				    </Knob>
+				    <StatusLight>
+					    <TooltipId>PeakIndicator</TooltipId>
+					    <Style></Style>
+					    <PathStatusLight>btn_clipping1_over.png</PathStatusLight>
+					    <PathBack>btn_clipping1.png</PathBack>
+					    <Pos>8,154</Pos>
+					    <Connection>
+						    <ConfigKey>[Channel2],PeakIndicator</ConfigKey>
+					    </Connection>
+				    </StatusLight>
+				    <VuMeter>
+					    <TooltipId>channel_VuMeter</TooltipId>
+					    <Style></Style>
+					    <PathVu>btn_volume_display1_over.png</PathVu>
+					    <PathBack>btn_volume_display1.png</PathBack>
+					    <Pos>8,169</Pos>
+					    <Horizontal>false</Horizontal>
+					    <PeakHoldSize>5</PeakHoldSize>
+					    <PeakHoldTime>500</PeakHoldTime>
+					    <PeakFallTime>50</PeakFallTime>
+					    <PeakFallStep>2</PeakFallStep>
+					    <Connection>
+						    <ConfigKey>[Channel2],VuMeter</ConfigKey>
+					    </Connection>
+				    </VuMeter>
+		        </Children>
+		    </WidgetGroup> <!-- /Channel2 mixer -->
+			<WidgetGroup> <!-- Channel3 controls -->
+				<Pos>247,0</Pos>
 			    <Size>82,250</Size>
 				<Style>QGroupBox { border: 0px solid yellow; } QWidget { margin: 0; padding: 0; } </Style>
 			    <Children>
@@ -1603,7 +1531,7 @@
 		        </Children>
 		    </WidgetGroup> <!-- /Channel3 mixer -->		    
 		    <WidgetGroup> <!-- Channel4 controls -->
-				<Pos>247,0</Pos>
+				<Pos>321,0</Pos>
 			    <Size>82,250</Size>
 				<Style>QGroupBox { border: 0px solid yellow; } QWidget { margin: 0; padding: 0; } </Style>
 			    <Children>
@@ -1768,172 +1696,6 @@
 				    </VuMeter>
 		        </Children>
 		    </WidgetGroup> <!-- /Channel4 mixer -->
-		    <WidgetGroup> <!-- Channel2 controls -->
-				<Pos>321,0</Pos>
-			    <Size>82,250</Size>
-				<Style>QGroupBox { border: 0px solid yellow; } QWidget { margin: 0; padding: 0; } </Style>
-			    <Children>
-		            <SliderComposed>
-			            <TooltipId>channel_volume</TooltipId>
-			            <Style></Style>
-			            <Handle>knob_volume1.png</Handle>
-			            <Slider>slider_volume1.png</Slider>
-			            <Pos>26,153</Pos>
-			            <Horizontal>false</Horizontal>
-			            <Connection>
-				            <ConfigKey>[Channel2],volume</ConfigKey>
-				            <EmitOnDownPress>false</EmitOnDownPress>
-			            </Connection>
-		            </SliderComposed>
-		            <PushButton>
-					    <TooltipId>pfl</TooltipId>
-					    <Style></Style>
-					    <NumberStates>2</NumberStates>
-					    <State>
-						    <Number>0</Number>
-						    <Pressed>btn_pfl1_down.png</Pressed>
-						    <Unpressed>btn_pfl1.png</Unpressed>
-					    </State>
-					    <State>
-						    <Number>1</Number>
-						    <Pressed>btn_pfl1_overdown.png</Pressed>
-						    <Unpressed>btn_pfl1_over.png</Unpressed>
-					    </State>
-					    <Pos>1,8</Pos>
-					    <Connection>
-						    <ConfigKey>[Channel2],pfl</ConfigKey>
-					    </Connection>
-				    </PushButton>
-				    <PushButton>
-					    <TooltipId>filterHighKill</TooltipId>
-					    <Style></Style>
-					    <NumberStates>2</NumberStates>
-					    <State>
-						    <Number>0</Number>
-						    <Pressed>btn_kill_down.png</Pressed>
-						    <Unpressed>btn_kill.png</Unpressed>
-					    </State>
-					    <State>
-						    <Number>1</Number>
-						    <Pressed>btn_kill_overdown.png</Pressed>
-						    <Unpressed>btn_kill_over.png</Unpressed>
-					    </State>
-					    <Pos>4,54</Pos>
-					    <Connection>
-						    <ConfigKey>[Channel2],filterHighKill</ConfigKey>
-						    <EmitOnPressAndRelease>true</EmitOnPressAndRelease>
-						    <ButtonState>LeftButton</ButtonState>
-					    </Connection>
-				    </PushButton>
-				    <PushButton>
-					    <TooltipId>filterMidKill</TooltipId>
-					    <Style></Style>
-					    <NumberStates>2</NumberStates>
-					    <State>
-						    <Number>0</Number>
-						    <Pressed>btn_kill_down.png</Pressed>
-						    <Unpressed>btn_kill.png</Unpressed>
-					    </State>
-					    <State>
-						    <Number>1</Number>
-						    <Pressed>btn_kill_overdown.png</Pressed>
-						    <Unpressed>btn_kill_over.png</Unpressed>
-					    </State>
-					    <Pos>4,93</Pos>
-					    <Connection>
-						    <ConfigKey>[Channel2],filterMidKill</ConfigKey>
-						    <EmitOnPressAndRelease>true</EmitOnPressAndRelease>
-						    <ButtonState>LeftButton</ButtonState>
-					    </Connection>
-				    </PushButton>
-				    <PushButton>
-					    <TooltipId>filterLowKill</TooltipId>
-					    <Style></Style>
-					    <NumberStates>2</NumberStates>
-					    <State>
-						    <Number>0</Number>
-						    <Pressed>btn_kill_down.png</Pressed>
-						    <Unpressed>btn_kill.png</Unpressed>
-					    </State>
-					    <State>
-						    <Number>1</Number>
-						    <Pressed>btn_kill_overdown.png</Pressed>
-						    <Unpressed>btn_kill_over.png</Unpressed>
-					    </State>
-					    <Pos>4,130</Pos>
-					    <Connection>
-						    <ConfigKey>[Channel2],filterLowKill</ConfigKey>
-						    <EmitOnPressAndRelease>true</EmitOnPressAndRelease>
-						    <ButtonState>LeftButton</ButtonState>
-					    </Connection>
-				    </PushButton>
-				    <Knob>
-					    <TooltipId>pregain</TooltipId>
-					    <Style></Style>
-					    <NumberStates>64</NumberStates>
-					    <Path>knobs/knob_rotary_s%1.png</Path>
-					    <Pos>29,1</Pos>
-					    <Connection>
-						    <ConfigKey>[Channel2],pregain</ConfigKey>
-					    </Connection>
-				    </Knob>
-				    <Knob>
-					    <TooltipId>filterHigh</TooltipId>
-					    <Style></Style>
-					    <NumberStates>64</NumberStates>
-					    <Path>knobs/knob_rotary_s%1.png</Path>
-					    <Pos>29,39</Pos>
-					    <Connection>
-						    <ConfigKey>[Channel2],filterHigh</ConfigKey>
-					    </Connection>
-				    </Knob>
-				    <Knob>
-					    <TooltipId>filterMid</TooltipId>
-					    <Style></Style>
-					    <NumberStates>64</NumberStates>
-					    <Path>knobs/knob_rotary_s%1.png</Path>
-					    <Pos>29,78</Pos>
-					    <Connection>
-						    <ConfigKey>[Channel2],filterMid</ConfigKey>
-					    </Connection>
-				    </Knob>
-				    <Knob>
-					    <TooltipId>filterLow</TooltipId>
-					    <Style></Style>
-					    <NumberStates>64</NumberStates>
-					    <Path>knobs/knob_rotary_s%1.png</Path>
-					    <Pos>29,115</Pos>
-					    <Connection>
-						    <ConfigKey>[Channel2],filterLow</ConfigKey>
-					    </Connection>
-				    </Knob>
-				    <StatusLight>
-					    <TooltipId>PeakIndicator</TooltipId>
-					    <Style></Style>
-					    <PathStatusLight>btn_clipping1_over.png</PathStatusLight>
-					    <PathBack>btn_clipping1.png</PathBack>
-					    <Pos>8,154</Pos>
-					    <Connection>
-						    <ConfigKey>[Channel2],PeakIndicator</ConfigKey>
-					    </Connection>
-				    </StatusLight>
-				    <VuMeter>
-					    <TooltipId>channel_VuMeter</TooltipId>
-					    <Style></Style>
-					    <PathVu>btn_volume_display1_over.png</PathVu>
-					    <PathBack>btn_volume_display1.png</PathBack>
-					    <Pos>8,169</Pos>
-					    <Horizontal>false</Horizontal>
-					    <PeakHoldSize>5</PeakHoldSize>
-					    <PeakHoldTime>500</PeakHoldTime>
-					    <PeakFallTime>50</PeakFallTime>
-					    <PeakFallStep>2</PeakFallStep>
-					    <Connection>
-						    <ConfigKey>[Channel2],VuMeter</ConfigKey>
-					    </Connection>
-				    </VuMeter>
-		        </Children>
-		    </WidgetGroup> <!-- /Channel2 mixer -->
 		    <SliderComposed>
 			    <TooltipId>crossfader</TooltipId>
 			    <Style></Style>
@@ -3231,7 +2993,7 @@
 		</Children>
 	</WidgetGroup> <!-- /Deck Channel1 -->
     <WidgetGroup>  <!-- Deck Channel2 -->
-		<Pos>1563,217</Pos>
+		<Pos>360,217</Pos>
 		<Size>356,312</Size>
 		<Style>QGroupBox { border: 0px solid red; } QWidget { margin: 0; padding: 0; }</Style>
 		<Children>
@@ -4407,7 +4169,7 @@
 		</Children>
 	</WidgetGroup> <!-- /Deck Channel2 -->
 	<WidgetGroup>  <!-- Deck Channel3 -->
-		<Pos>360,217</Pos>
+		<Pos>1203,217</Pos>
 		<Size>356,312</Size>
 		<Style>QGroupBox { border: 0px solid red; } QWidget { margin: 0; padding: 0; }</Style>
 		<Children>
@@ -5584,7 +5346,7 @@
 		</Children>
 	</WidgetGroup> <!-- /Deck Channel3 -->
 	<WidgetGroup>  <!-- Deck Channel4 -->
-		<Pos>1203,217</Pos>
+		<Pos>1563,217</Pos>
 		<Size>356,312</Size>
 		<Style>QGroupBox { border: 0px solid red; } QWidget { margin: 0; padding: 0; }</Style>
 		<Children>
