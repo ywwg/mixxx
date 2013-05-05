@@ -31,8 +31,11 @@ PlayerManager::PlayerManager(ConfigObject<ConfigValue>* pConfig,
         m_pAnalyserQueue(NULL),
         m_pCONumDecks(new ControlObject(ConfigKey("[Master]", "num_decks"), true, true)),
         m_pCONumSamplers(new ControlObject(ConfigKey("[Master]", "num_samplers"), true, true)),
-        m_pCONumPreviewDecks(new ControlObject(ConfigKey("[Master]", "num_preview_decks"), true, true)) {
+        m_pCONumPreviewDecks(new ControlObject(ConfigKey("[Master]", "num_preview_decks"), true, true)),
+        m_pCOSkinNumDecks(new ControlObject(ConfigKey("[Skin]", "num_decks"), true, true)) {
 
+    connect(m_pCOSkinNumDecks, SIGNAL(valueChanged(double)),
+            this, SLOT(slotSkinNumDecksControlChanged(double)));
     connect(m_pCONumDecks, SIGNAL(valueChanged(double)),
             this, SLOT(slotNumDecksControlChanged(double)));
     connect(m_pCONumSamplers, SIGNAL(valueChanged(double)),
@@ -63,6 +66,7 @@ PlayerManager::~PlayerManager() {
     m_decks.clear();
     m_samplers.clear();
 
+    delete m_pCOSkinNumDecks;
     delete m_pCONumSamplers;
     delete m_pCONumDecks;
     delete m_pCONumPreviewDecks;
@@ -155,28 +159,40 @@ unsigned int PlayerManager::numPreviewDecks() {
             ConfigKey("[Master]", "num_preview_decks"));
     }
     return pNumCO ? pNumCO->get() : 0;
+
+}
+
+void PlayerManager::slotSkinNumDecksControlChanged(double v) {
+    m_skin_decks = static_cast<unsigned int>(v);
+    m_pCONumDecks->set(m_skin_decks);
+    remapDecks();
 }
 
 void PlayerManager::slotNumDecksControlChanged(double v) {
+    // First off, undo any changes to the control.
     m_pCONumDecks->set(m_decks.size());
+
     int num = v;
-    if (num == m_decks.size())
+      
+    if (num < m_decks.size()) {
+        qDebug() << "Ignoring request to reduce the number of decks to" << num;
         return;
-        
-    while (num < m_decks.size()) {
-        QString group = groupForDeck(m_decks.size() - 1);
-        m_players.remove(group);
-        m_decks.removeLast();
     }
 
     while (m_decks.size() < num) {
         addDeck(num);
     }
     
-	// Redistribute decks left and right based on new count.
-    QList<Deck*>::iterator it = m_decks.begin();
-    for (int i = 1; it != m_decks.end(); ++i, ++it) {
-        if (i > m_decks.size() / 2) {
+    remapDecks();
+    
+    m_pCONumDecks->set(m_decks.size());
+}
+
+void PlayerManager::remapDecks() {
+	// Redistribute decks left and right based on new count.  If the number of decks has decreased,
+	// Leave the extras where they are.
+    for (int i = 1; i <= m_decks.size(); ++i) {
+        if (i > m_skin_decks / 2) {
             ControlObject::getControl(ConfigKey(QString("[Channel%1]").arg(i), 
                                                 "orientation"))->set(EngineChannel::RIGHT);
         } else {
@@ -184,37 +200,42 @@ void PlayerManager::slotNumDecksControlChanged(double v) {
                                                 "orientation"))->set(EngineChannel::LEFT);
         }
     }
-    
-    m_pCONumDecks->set(m_decks.size());
+    // Make sure the count is up to date now.
 }
 
 void PlayerManager::slotNumSamplersControlChanged(double v) {
+    // First off, undo any changes to the control.
     m_pCONumSamplers->set(m_samplers.size());
+
     int num = v;
-    while (num < m_samplers.size()) {
-        QString group = groupForSampler(m_samplers.size() - 1);
-        m_players.remove(group);
-        m_samplers.removeLast();
+    if (num < m_samplers.size()) {
+        qDebug() << "Ignoring request to reduce the number of samplers to" << num;
+        return;
     }
 
     while (m_samplers.size() < num) {
         addSampler();
     }
+    
+    // Make sure the count is up to date now.
     m_pCONumSamplers->set(m_samplers.size());
 }
 
 void PlayerManager::slotNumPreviewDecksControlChanged(double v) {
+    // First off, undo any changes to the control.
     m_pCONumPreviewDecks->set(m_preview_decks.size());
+
     int num = v;
-    while (num < m_preview_decks.size()) {
-        QString group = groupForPreviewDeck(m_preview_decks.size() - 1);
-        m_players.remove(group);
-        m_preview_decks.removeLast();
+    if (num < m_preview_decks.size()) {
+        qDebug() << "Ignoring request to reduce the number of preview decks to" << num;
+        return;
     }
 
     while (m_preview_decks.size() < num) {
         addPreviewDeck();
     }
+    
+    // Make sure the count is up to date now.
     m_pCONumPreviewDecks->set(m_preview_decks.size());
 }
 
