@@ -462,6 +462,7 @@ class MixxxCore(Feature):
                    "engine/enginepregain.cpp",
                    "engine/enginechannel.cpp",
                    "engine/enginemaster.cpp",
+                   "engine/enginesync.cpp",
                    "engine/enginepfldelay.cpp",
                    "engine/engineflanger.cpp",
                    "engine/enginevumeter.cpp",
@@ -622,7 +623,6 @@ class MixxxCore(Feature):
                    "library/parser.cpp",
                    "library/parserpls.cpp",
                    "library/parserm3u.cpp",
-                   "logparser.cpp",
                    "library/parsercsv.cpp",
 
                    "bpm/bpmscheme.cpp",
@@ -634,7 +634,6 @@ class MixxxCore(Feature):
                    "waveform/waveform.cpp",
                    "waveform/waveformfactory.cpp",
                    "waveform/waveformwidgetfactory.cpp",
-                   "waveform/vsyncthread.cpp", 
                    "waveform/renderers/waveformwidgetrenderer.cpp",
                    "waveform/renderers/waveformrendererabstract.cpp",
                    "waveform/renderers/waveformrenderbackground.cpp",
@@ -651,7 +650,6 @@ class MixxxCore(Feature):
                    "waveform/renderers/glwaveformrendererfilteredsignal.cpp",
                    "waveform/renderers/glwaveformrenderersimplesignal.cpp",
                    "waveform/renderers/glslwaveformrenderersignal.cpp",
-                   "waveform/renderers/glvsynctestrenderer.cpp",
 
                    "waveform/renderers/waveformsignalcolors.cpp",
 
@@ -668,7 +666,6 @@ class MixxxCore(Feature):
                    "waveform/widgets/qtsimplewaveformwidget.cpp",
                    "waveform/widgets/glwaveformwidget.cpp",
                    "waveform/widgets/glsimplewaveformwidget.cpp",
-                   "waveform/widgets/glvsynctestwidget.cpp",
 
                    "waveform/widgets/glslwaveformwidget.cpp",
 
@@ -701,7 +698,6 @@ class MixxxCore(Feature):
                    "soundmanagerutil.cpp",
                    "dlgprefrecord.cpp",
                    "playerinfo.cpp",
-                   "visualplayposition.cpp",
 
                    "recording/enginerecord.cpp",
                    "recording/encoder.cpp",

@@ -235,12 +235,16 @@ private:
 
     ControlObject* m_rateEngine;
     ControlObject* m_visualBpm;
+    ControlObject* m_beatDistance;
+    ControlObject* m_pQuantize;
     ControlObject* m_pMasterRate;
     ControlPotmeter* m_playposSlider;
     ControlObject* m_pSampleRate;
     ControlPushButton* m_pKeylock;
 
     ControlPushButton* m_pEject;
+    /** Control used to signal when at end of file */
+    ControlObject *m_pTrackEnd;
 
     // Whether or not to repeat the track when at the end
     ControlPushButton* m_pRepeat;

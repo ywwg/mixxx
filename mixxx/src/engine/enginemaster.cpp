@@ -31,8 +31,9 @@
 #include "engineclipping.h"
 #include "enginevumeter.h"
 #include "enginexfader.h"
-#include "enginesidechain.h"
 #include "enginepfldelay.h"
+#include "enginesidechain.h"
+#include "enginesync.h"
 #include "engine/syncworker.h"
 #include "sampleutil.h"
 #include "util/timer.h"
@@ -59,6 +60,14 @@ EngineMaster::EngineMaster(ConfigObject<ConfigValue> * _config,
 
     // Master rate
     m_pMasterRate = new ControlPotmeter(ConfigKey(group, "rate"), -1.0, 1.0);
+    
+    // Master sync controller
+    m_pMasterSync = new EngineSync(this, _config);
+    //(XXX) DEBUG TEMP
+    //m_pMasterSync->setDeckMaster("[Channel1]");
+    //m_pMasterSync->setInternalMaster();
+    //qDebug() << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-here we are setting bpm";
+    ControlObject::getControl(ConfigKey("[Master]","sync_bpm"))->set(124.0);
 
 #ifdef __LADSPA__
     // LADSPA
@@ -133,68 +142,40 @@ EngineMaster::~EngineMaster()
 {
     qDebug() << "in ~EngineMaster()";
     delete crossfader;
-    qDebug() << "m_pBalance";
     delete m_pBalance;
-    qDebug() << "headmix";
     delete head_mix;
-    qDebug() << "master vol";
     delete m_pMasterVolume;
-    qDebug() << "head vol";
     delete m_pHeadVolume;
-    qDebug() << "head delay";
-    delete m_pHeadDelay;
-    qDebug() << "bypass eq";
-    delete m_pBypassEq;
-    qDebug() << "clipping";
     delete clipping;
-    qDebug() << "vumeter";
     delete vumeter;
-    qDebug() << "head clip";
     delete head_clipping;
-    qDebug() << "sidechain";
     delete sidechain;
 
-    qDebug() << "xfade reverse";
     delete xFaderReverse;
-    qDebug() << "xfade calib";
     delete xFaderCalibration;
-    qDebug() << "xfade curve";
     delete xFaderCurve;
-    qDebug() << "xfade mode";
     delete xFaderMode;
 
-    qDebug() << "master sample rate";
     delete m_pMasterSampleRate;
-    qDebug() << "latency";
     delete m_pMasterLatency;
-    qDebug() << "master rate";
     delete m_pMasterAudioBufferSize;
     delete m_pMasterRate;
-    
-    qDebug() << "underflow";
     delete m_pMasterUnderflowCount;
 
-    qDebug() << "free head";
     SampleUtil::free(m_pHead);
-    qDebug() << "free master";
     SampleUtil::free(m_pMaster);
 
     QMutableListIterator<ChannelInfo*> channel_it(m_channels);
     while (channel_it.hasNext()) {
         ChannelInfo* pChannelInfo = channel_it.next();
-        qDebug() << "remove channel";
         channel_it.remove();
-        qDebug() << "free buf";
         SampleUtil::free(pChannelInfo->m_pBuffer);
-        qDebug() << "mpvol";
+        delete pChannelInfo->m_pChannel;
         delete pChannelInfo->m_pVolumeControl;
-        qDebug() << "channelinfo";
         delete pChannelInfo;
     }
 
-    qDebug() << "worker sched";
     delete m_pWorkerScheduler;
-    qDebug() << "syncowrk";
     delete m_pSyncWorker;
 }
 
@@ -206,6 +187,16 @@ const CSAMPLE* EngineMaster::getMasterBuffer() const
 const CSAMPLE* EngineMaster::getHeadphoneBuffer() const
 {
     return m_pHead;
+}
+
+EngineSync* EngineMaster::getMasterSync(void)
+{
+    return m_pMasterSync;
+}
+
+void EngineMaster::setMasterSync(QString deck)
+{
+    m_pMasterSync->setDeckMaster(deck);
 }
 
 void EngineMaster::mixChannels(unsigned int channelBitvector, unsigned int maxChannels,
@@ -396,13 +387,62 @@ void EngineMaster::process(const CSAMPLE *, const CSAMPLE *pOut, const int iBuff
     float cmaster_gain = 0.5*(cf_val+1.);
     // qDebug() << "head val " << cf_val << ", head " << chead_gain
     //          << ", master " << cmaster_gain;
+    
+    //increment Internal buffer first in case it is the master
+    m_pMasterSync->incrementPseudoPosition(iBufferSize);
+    
+    //Owen TODO: MIDI goes here?????
+    
+    //find the Sync Master and process it first
+    //then process all the slaves (and skip the master)
 
     Timer timer("EngineMaster::process channels");
     QList<ChannelInfo*>::iterator it = m_channels.begin();
+    QList<ChannelInfo*>::iterator master_it = NULL;
+    for (unsigned int channel_number = 0;
+         it != m_channels.end(); ++it, ++channel_number) {
+         ChannelInfo* pChannelInfo = *it;
+         EngineChannel* pChannel = pChannelInfo->m_pChannel;
+         if (pChannel && pChannel->isActive())
+         {
+            EngineBuffer* pBuffer = pChannel->getEngineBuffer();
+            if (pBuffer == m_pMasterSync->getMaster())
+            {
+                master_it = it;
+                
+                //proceed with the processing as below
+                bool needsProcessing = false;
+                if (pChannel->isMaster()) {
+                    masterOutput |= (1 << channel_number);
+                    needsProcessing = true;
+                }
+
+                // If the channel is enabled for previewing in headphones, copy it
+                // over to the headphone buffer
+                if (pChannel->isPFL()) {
+                    headphoneOutput |= (1 << channel_number);
+                    needsProcessing = true;
+                }
+
+                // Process the buffer if necessary, which it damn well better be
+                Q_ASSERT(needsProcessing);
+                if (needsProcessing) {
+                    pChannel->process(NULL, pChannelInfo->m_pBuffer, iBufferSize);
+                }
+            }
+        }
+    }
+
+    it = m_channels.begin();
     for (unsigned int channel_number = 0;
          it != m_channels.end(); ++it, ++channel_number) {
         ChannelInfo* pChannelInfo = *it;
         EngineChannel* pChannel = pChannelInfo->m_pChannel;
+        
+        if (it == master_it) {
+            //we already processed this
+            continue;
+        }
 
         if (!pChannel->isActive()) {
             continue;
@@ -508,6 +548,8 @@ void EngineMaster::addChannel(EngineChannel* pChannel) {
     pChannelInfo->m_pBuffer = SampleUtil::alloc(MAX_BUFFER_LEN);
     SampleUtil::applyGain(pChannelInfo->m_pBuffer, 0, MAX_BUFFER_LEN);
     m_channels.push_back(pChannelInfo);
+    
+    m_pMasterSync->addDeck(pChannel->getGroup());
 
     EngineBuffer* pBuffer = pChannelInfo->m_pChannel->getEngineBuffer();
     if (pBuffer != NULL) {

@@ -162,6 +162,9 @@ EngineBuffer::EngineBuffer(const char * _group, ConfigObject<ConfigValue> * _con
 
     // BPM to display in the UI (updated more slowly than the actual bpm)
     m_visualBpm = new ControlObject(ConfigKey(m_group, "visual_bpm"));
+    
+    // how far past the last beat are we?
+    m_beatDistance = new ControlObject(ConfigKey(m_group, "beat_distance"));
 
     // Slider to show and change song position
     //these bizarre choices map conveniently to the 0-127 range of midi
@@ -197,7 +200,8 @@ EngineBuffer::EngineBuffer(const char * _group, ConfigObject<ConfigValue> * _con
     // quantization (alignment) of loop in/out positions and (hot)cues with
     // beats.
     addControl(new QuantizeControl(_group, _config));
-
+    m_pQuantize = ControlObject::getControl(ConfigKey(_group, "quantize"));
+    
     // Create the Loop Controller
     m_pLoopingControl = new LoopingControl(_group, _config);
     addControl(m_pLoopingControl);
@@ -343,6 +347,7 @@ double EngineBuffer::getFileBpm() {
 
 void EngineBuffer::setEngineMaster(EngineMaster * pEngineMaster)
 {
+    m_pRateControl->setEngineMaster(pEngineMaster);
     m_pBpmControl->setEngineMaster(pEngineMaster);
 }
 
@@ -478,6 +483,14 @@ void EngineBuffer::slotControlSeek(double change)
     // Ensure that the file position is even (remember, stereo channel files...)
     if (!even((int)new_playpos))
         new_playpos--;
+        
+    if (m_pQuantize->get() > 0.0) {
+        int offset = static_cast<int>(m_pBpmControl->getPhaseOffset(new_playpos));
+        qDebug() << "syncing phase on seek" << offset;
+        if (!even(offset))
+            offset--;
+        new_playpos += offset;
+    }
 
     setNewPlaypos(new_playpos);
 }
@@ -598,7 +611,13 @@ void EngineBuffer::process(const CSAMPLE *, const CSAMPLE * pOut, const int iBuf
         bool is_scratching;
         rate = m_pRateControl->calculateRate(baserate, paused, iBufferSize,
                                              &is_scratching);
-
+        
+        m_pBpmControl->userTweakingSync(m_pRateControl->getUserTweakingSync());
+        m_beatDistance->set(m_pBpmControl->getBeatDistance());
+        
+        if (!paused) {
+            rate += m_pBpmControl->getSyncAdjustment();
+        }
         //qDebug() << "rate" << rate << " paused" << paused;
 
         // Update the slipped position

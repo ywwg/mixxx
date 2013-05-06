@@ -6,6 +6,7 @@
 #define BPMCONTROL_H
 
 #include "engine/enginecontrol.h"
+#include "engine/enginesync.h"
 #include "tapfilter.h"
 
 class ControlObject;
@@ -20,15 +21,22 @@ class BpmControl : public EngineControl {
     virtual ~BpmControl();
     double getBpm();
     double getFileBpm();
-
+    double getBeatDistance();
+    double getSyncAdjustment();
+    void userTweakingSync(bool tweakActive);
+    double getPhaseOffset();
+    double getPhaseOffset(double reference_position);
+    
   public slots:
-
+    //void slotRateChanged(double);
     virtual void trackLoaded(TrackPointer pTrack);
     virtual void trackUnloaded(TrackPointer pTrack);
-    void slotControlBeatSync(double);
 
   private slots:
     void slotSetEngineBpm(double);
+    void slotFileBpmChanged(double);
+    void slotControlPlay(double);
+    void slotControlBeatSync(double);
     void slotControlBeatSyncPhase(double);
     void slotControlBeatSyncTempo(double);
     void slotTapFilter(double,int);
@@ -36,20 +44,31 @@ class BpmControl : public EngineControl {
     void slotAdjustBpm();
     void slotUpdatedTrackBeats();
     void slotBeatsTranslate(double);
+    void slotMasterBeatDistanceChanged(double);
+    void slotSyncMasterChanged(double);
+    void slotSyncSlaveChanged(double);
 
   private:
     EngineBuffer* pickSyncTarget();
-    bool syncTempo(EngineBuffer* pOtherEngineBuffer);
-    bool syncPhase(EngineBuffer* pOtherEngineBuffer);
+    bool syncTempo();
+    bool syncPhase();
 
     // ControlObjects that come from PlayerManager
     ControlObject* m_pNumDecks;
 
     // ControlObjects that come from EngineBuffer
     ControlObject* m_pPlayButton;
+    ControlObject* m_pQuantize;
     ControlObject* m_pRateSlider;
     ControlObject* m_pRateRange;
     ControlObject* m_pRateDir;
+    
+    ControlObject *m_pMasterBeatDistance;
+    ControlObject *m_pSyncMasterEnabled, *m_pSyncSlaveEnabled;
+    int m_iSyncState;
+    double m_dSyncAdjustment;
+    bool m_bUserTweakingSync;
+    double m_dUserOffset;
 
     // ControlObjects that come from LoopingControl
     ControlObject* m_pLoopEnabled;
@@ -73,11 +92,15 @@ class BpmControl : public EngineControl {
     // Button that translates the beats so the nearest beat is on the current
     // playposition.
     ControlPushButton* m_pTranslateBeats;
+    
+    double m_dFileBpm; // cache it
 
     TapFilter m_tapFilter;
 
     TrackPointer m_pTrack;
     BeatsPointer m_pBeats;
+    
+    QString m_sGroup;
 };
 
 
