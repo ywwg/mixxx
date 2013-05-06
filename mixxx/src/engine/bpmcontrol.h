@@ -29,6 +29,7 @@ class BpmControl : public EngineControl {
     
   public slots:
     //void slotRateChanged(double);
+    void slotControlBeatSync(double);
     virtual void trackLoaded(TrackPointer pTrack);
     virtual void trackUnloaded(TrackPointer pTrack);
 
@@ -36,7 +37,6 @@ class BpmControl : public EngineControl {
     void slotSetEngineBpm(double);
     void slotFileBpmChanged(double);
     void slotControlPlay(double);
-    void slotControlBeatSync(double);
     void slotControlBeatSyncPhase(double);
     void slotControlBeatSyncTempo(double);
     void slotTapFilter(double,int);

@@ -586,12 +586,8 @@ double BpmControl::getPhaseOffset(double reference_position)
     }
     
     // Get the current position of both decks
-    double dThisPosition = getCurrentSample();
-    double dOtherLength = ControlObject::getControl(
-        ConfigKey(pOtherEngineBuffer->getGroup(), "track_samples"))->get();
-    double dOtherEnginePlayPos = ControlObject::getControl(
-        ConfigKey(pOtherEngineBuffer->getGroup(), "visual_playposition"))->get();
-    double dOtherPosition = dOtherLength * dOtherEnginePlayPos;
+    //qDebug() << m_sGroup << "starting with reference" << reference_position << "and adjusting" << m_dUserOffset;
+    double dThisPosition = reference_position;
 
     double dThisPrevBeat = m_pBeats->findPrevBeat(dThisPosition);
     double dThisNextBeat = m_pBeats->findNextBeat(dThisPosition);

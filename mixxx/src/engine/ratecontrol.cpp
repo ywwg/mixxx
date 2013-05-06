@@ -420,6 +420,102 @@ void RateControl::slotWheelSensitivity(double val)
 	m_dWheelSensitivity = val;
 }
 
+void RateControl::slotFileBpmChanged(double bpm) {
+    m_dFileBpm = bpm;
+    slotMasterBpmChanged(m_pMasterBpm->get());
+}
+
+void RateControl::slotMasterBpmChanged(double syncbpm)
+{
+    //qDebug() << m_sGroup << "got a master bpm change" << syncbpm;
+    if (m_iSyncState == SYNC_SLAVE)
+    {
+        // if we're a slave, update the rate value -- we don't set anything here,
+        // this comes into effect in the return from calculaterate
+        //TODO: let's ignore x2, /2 issues for now
+        //this is reproduced from bpmcontrol::syncTempo -- should break this out
+        double dDesiredRate;
+        if (m_dFileBpm == 0.0)
+        {
+            //XXX TODO: what to do about this case
+            qDebug() << "well fuck, what are we supposed to do with zero bpm????";
+            dDesiredRate = 0.0;
+        }
+        else {
+            dDesiredRate = syncbpm / m_dFileBpm;
+        }
+        m_dSyncedRate = dDesiredRate;
+        if (m_dSyncedRate != 0) {
+            m_pRateSlider->set(((m_dSyncedRate - 1.0f) / m_pRateRange->get()) * m_pRateDir->get());
+        } else {
+            m_pRateSlider->set(0);
+        }
+    }
+}
+
+void RateControl::slotSyncMasterChanged(double state)
+{
+    //qDebug() << m_sGroup << "slot master changed";
+    
+    if (state)
+    {
+        if (m_iSyncState == SYNC_MASTER){
+            //qDebug() << "already master";
+            return;
+        }
+        
+        m_iSyncState = SYNC_MASTER;
+        //qDebug() << m_sGroup << "setting ourselves as master";
+    } 
+    else
+    {
+        // For now, turning off master turns on slave mode
+        if (m_iSyncState != SYNC_MASTER) {
+            return;
+        }
+        //unset ourselves
+        //qDebug() << m_sGroup << "unsetting ourselves as master (now slave)";
+        
+        slotMasterBpmChanged(m_pMasterBpm->get()); //make sure we have a synced rate
+        //m_pSyncSlaveEnabled->set(TRUE); //this doesn't work, no FromEngine connection
+    }
+}
+
+void RateControl::slotSyncSlaveChanged(double state)
+{
+    //qDebug() << m_sGroup << "slot slave changed";
+    if (state)
+    {
+        if (m_iSyncState == SYNC_SLAVE) {
+            //qDebug() << "already slave";
+            return;
+        }
+        //qDebug() << m_sGroup << "setting ourselves as slave";
+        m_iSyncState = SYNC_SLAVE;
+        slotMasterBpmChanged(m_pMasterBpm->get()); //make sure we have a synced rate
+        //m_pSyncMasterEnabled->set(FALSE); //this doesn't work, no FromEngine connection
+    } 
+    else
+    {
+        // For now, turning off slave turns off syncing
+        //qDebug() << m_sGroup << "sync off (might have been already)";
+        m_iSyncState = SYNC_NONE;
+    }
+}
+
+void RateControl::slotSyncInternalChanged(double state)
+{
+    if (state)
+    {
+        if (m_iSyncState == SYNC_MASTER)
+        {
+            m_iSyncState = SYNC_SLAVE;
+            m_pSyncSlaveEnabled->set(TRUE);
+            m_pSyncMasterEnabled->set(FALSE);  //this will happen
+        }
+    }
+}
+
 double RateControl::getRawRate() {
     return m_pRateSlider->get() *
         m_pRateRange->get() *
