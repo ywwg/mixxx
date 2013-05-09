@@ -238,6 +238,7 @@ private:
     ControlObject* m_beatDistance;
     ControlObject* m_pQuantize;
     ControlObject* m_pMasterRate;
+    ControlObject* m_pTrueRate;
     ControlPotmeter* m_playposSlider;
     ControlObject* m_pSampleRate;
     ControlPushButton* m_pKeylock;

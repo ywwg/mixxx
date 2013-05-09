@@ -28,6 +28,7 @@ double RateControl::m_dWheelSensitivity = 1.0;
 RateControl::RateControl(const char* _group,
                          ConfigObject<ConfigValue>* _config)
     : EngineControl(_group, _config),
+      
       m_bVinylControlEnabled(false),
       m_bVinylControlScratching(false),
       m_ePbCurrent(0),
@@ -37,8 +38,8 @@ RateControl::RateControl(const char* _group,
       m_dRateTemp(0.0),
       m_eRampBackMode(RATERAMP_RAMPBACK_NONE),
       m_dRateTempRampbackChange(0.0),
-      m_dOldRate(0.0f),
       m_sGroup(_group),
+      m_dOldRate(0.0f),
       m_iSyncState(0),
       m_bUserTweakingSync(false),
       m_pConfig(_config) {
@@ -162,9 +163,6 @@ RateControl::RateControl(const char* _group,
     m_iRateRampSensitivity =
             getConfig()->getValueString(ConfigKey("[Controls]","RateRampSensitivity")).toInt();
      
-    // the actual rate of playback as a multiple.  (ie 1.0 for native speed of file)
-    m_pTrueRate = new ControlObject(ConfigKey(_group, "true_rate"));
-            
     m_pSyncMasterEnabled = new ControlPushButton(ConfigKey(_group, "sync_master"));
     m_pSyncMasterEnabled->setButtonMode(ControlPushButton::TOGGLE);
     connect(m_pSyncMasterEnabled, SIGNAL(valueChanged(double)),
@@ -590,7 +588,7 @@ double RateControl::calculateRate(double baserate, bool paused, int iSamplesPerB
             
             //Don't set the rate slider for all changes
             //m_pRateSlider->set(((rate - 1.0f) / m_pRateRange->get()) * m_pRateDir->get());
-            m_pTrueRate->set(rate);
+            //qDebug() << m_sGroup << " setting true rate " << rate;
             //return rate * baserate;
             //qDebug() << m_dSyncedRate << rate;
             return rate * baserate;
@@ -668,9 +666,6 @@ double RateControl::calculateRate(double baserate, bool paused, int iSamplesPerB
 
     m_dOldRate = rate;
     
-    // update our true rate in case we are the master deck
-    m_pTrueRate->set(rate);
-
     // Scale the rate by the engine samplerate
     rate *= baserate;
 
