@@ -10,6 +10,7 @@
 #include "library/stardelegate.h"
 #include "library/starrating.h"
 #include "library/previewbuttondelegate.h"
+#include "library/queryutil.h"
 #include "mixxxutils.cpp"
 #include "playermanager.h"
 #include "playerinfo.h"
@@ -193,8 +194,7 @@ void BaseSqlTableModel::select() {
     query.prepare(queryString);
 
     if (!query.exec()) {
-        qDebug() << this << "select() error:" << __FILE__ << __LINE__
-                 << query.executedQuery() << query.lastError();
+        LOG_FAILED_QUERY(query);
         return;
     }
 
@@ -468,9 +468,13 @@ QVariant BaseSqlTableModel::data(const QModelIndex& index, int role) const {
 				if (value.toString().startsWith(m_sPrefix))
 					return value.toString().remove(0, m_sPrefix.size() + 1);
             } else if (column == fieldIndex(LIBRARYTABLE_DATETIMEADDED)) {
-                value = value.toDateTime().toString("yyyy-MM-dd"); //I prefer year first
+                QDateTime gmtDate = value.toDateTime();
+                gmtDate.setTimeSpec(Qt::UTC);
+                value = gmtDate.toLocalTime().toString("yyyy-MM-dd"); //I prefer year first
             } else if (column == fieldIndex(PLAYLISTTRACKSTABLE_DATETIMEADDED)) {
-                value = value.toDateTime().time();
+                QDateTime gmtDate = value.toDateTime();
+                gmtDate.setTimeSpec(Qt::UTC);
+                value = gmtDate.toLocalTime().time();
             } else if (column == fieldIndex(LIBRARYTABLE_BPM_LOCK)) {
                 value = value.toBool();
             }
@@ -794,13 +798,6 @@ QMimeData* BaseSqlTableModel::mimeData(const QModelIndexList &indexes) const {
     }
     mimeData->setUrls(urls);
     return mimeData;
-}
-
-void BaseSqlTableModel::setLibraryPrefix(QString sPrefix)
-{
-    m_sPrefix = sPrefix;
-    if (sPrefix[sPrefix.length()-1] == '/' || sPrefix[sPrefix.length()-1] == '\\')
-        m_sPrefix.chop(1);
 }
 
 QAbstractItemDelegate* BaseSqlTableModel::delegateForColumn(const int i, QObject* pParent) {
