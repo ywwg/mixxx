@@ -232,6 +232,7 @@ private:
     ControlObject* m_fwdButton;
     ControlObject* m_backButton;
     ControlPushButton* m_pSlipButton;
+    ControlObject* m_pSlipPosition;
 
     ControlObject* m_rateEngine;
     ControlObject* m_visualBpm;
@@ -240,6 +241,7 @@ private:
     ControlObject* m_pMasterRate;
     //ControlObject* m_pTrueRate;
     ControlPotmeter* m_playposSlider;
+    ControlPotmeter* m_visualPlaypos;
     ControlObject* m_pSampleRate;
     ControlPushButton* m_pKeylock;
 
