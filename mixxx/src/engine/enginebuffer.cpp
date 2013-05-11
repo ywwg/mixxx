@@ -156,6 +156,7 @@ EngineBuffer::EngineBuffer(const char * _group, ConfigObject<ConfigValue> * _con
     connect(m_pSlipButton, SIGNAL(valueChangedFromEngine(double)),
             this, SLOT(slotControlSlip(double)),
             Qt::DirectConnection);
+    m_pSlipPosition = new ControlObject(ConfigKey(m_group, "slip_playposition"));
 
     // Actual rate (used in visuals, not for control)
     m_rateEngine = new ControlObject(ConfigKey(m_group, "rateEngine"));
@@ -166,8 +167,8 @@ EngineBuffer::EngineBuffer(const char * _group, ConfigObject<ConfigValue> * _con
     // how far past the last beat are we?
     m_beatDistance = new ControlObject(ConfigKey(m_group, "beat_distance"));
     
-    // the actual rate of playback as a multiple.  (ie 1.0 for native speed of file)
-    m_pTrueRate = new ControlObject(ConfigKey(_group, "true_rate"));
+    //// the actual rate of playback as a multiple.  (ie 1.0 for native speed of file)
+    //m_pTrueRate = new ControlObject(ConfigKey(_group, "true_rate"));
 
     // Slider to show and change song position
     //these bizarre choices map conveniently to the 0-127 range of midi
@@ -178,7 +179,8 @@ EngineBuffer::EngineBuffer(const char * _group, ConfigObject<ConfigValue> * _con
             Qt::DirectConnection);
 
     // Control used to communicate ratio playpos to GUI thread
-    m_visualPlayPos = VisualPlayPosition::getVisualPlayPosition(m_group);
+    m_visualPlaypos = new ControlPotmeter(
+        ConfigKey(m_group, "visual_playposition"), kMinPlayposRange, kMaxPlayposRange);
 
     m_pRepeat = new ControlPushButton(ConfigKey(m_group, "repeat"));
     m_pRepeat->setButtonMode(ControlPushButton::TOGGLE);
@@ -275,9 +277,11 @@ EngineBuffer::~EngineBuffer()
     delete m_stopButton;
     delete m_rateEngine;
     delete m_playposSlider;
+    delete m_visualPlaypos;
     delete m_visualBpm;
 
     delete m_pSlipButton;
+    delete m_pSlipPosition;
     delete m_pRepeat;
 
     delete m_pTrackSamples;
@@ -411,7 +415,7 @@ void EngineBuffer::slotTrackLoaded(TrackPointer pTrack,
                                    int iTrackSampleRate,
                                    int iTrackNumSamples) {
     m_pause.lock();
-    m_visualPlayPos->setInvalid();
+    m_visualPlaypos->set(-1);
     m_pCurrentTrack = pTrack;
     m_file_srate_old = iTrackSampleRate;
     m_file_length_old = iTrackNumSamples;
@@ -489,7 +493,7 @@ void EngineBuffer::slotControlSeek(double change)
         
     if (m_pQuantize->get() > 0.0) {
         int offset = static_cast<int>(m_pBpmControl->getPhaseOffset(new_playpos));
-        qDebug() << "syncing phase on seek" << offset;
+        //qDebug() << m_group << " syncing phase on seek" << offset;
         if (!even(offset))
             offset--;
         new_playpos += offset;
@@ -572,11 +576,13 @@ void EngineBuffer::slotControlSlip(double v)
         // TODO(rryan): Should this filepos instead be the RAMAN current
         // position? filepos_play could be out of date.
         m_dSlipPosition = m_filepos_play;
+        m_pSlipPosition->set(fractionalPlayposFromAbsolute(m_dSlipPosition));
         m_dSlipRate = m_rate_old;
     } else {
         // TODO(owen) assuming that looping will get canceled properly
         slotControlSeekAbs(m_dSlipPosition);
         m_dSlipPosition = 0;
+        m_pSlipPosition->set(0);
     }
 }
 
@@ -598,6 +604,7 @@ void EngineBuffer::process(const CSAMPLE *, const CSAMPLE * pOut, const int iBuf
     CSAMPLE * pOutput = (CSAMPLE *)pOut; // strip const attribute TODO(XXX): avoid this hack
     bool bCurBufferPaused = false;
     double rate = 0;
+    double resample_rate = 0.0f;
 
     bool bTrackLoading = m_iTrackLoading != 0;
     if (!bTrackLoading && m_pause.tryLock()) {
@@ -617,16 +624,18 @@ void EngineBuffer::process(const CSAMPLE *, const CSAMPLE * pOut, const int iBuf
         
         m_pBpmControl->setLoopSize(m_pLoopingControl->getLoopSize());
         m_pBpmControl->userTweakingSync(m_pRateControl->getUserTweakingSync());
-        m_beatDistance->set(m_pBpmControl->getBeatDistance());
         
         if (!paused) {
-            rate += m_pBpmControl->getSyncAdjustment();
+            //qDebug() << "sync adjustment " << m_pBpmControl->getSyncAdjustment();
+            rate *= m_pBpmControl->getSyncAdjustment();
         }
+        resample_rate = rate * baserate;
         //qDebug() << "rate" << rate << " paused" << paused;
 
         // Update the slipped position
         if (m_bSlipEnabled) {
             m_dSlipPosition += static_cast<double>(iBufferSize) * m_dSlipRate;
+            m_pSlipPosition->set(fractionalPlayposFromAbsolute(m_dSlipPosition));
         }
 
         // Scratching always disables keylock because keylock sounds terrible
@@ -655,11 +664,13 @@ void EngineBuffer::process(const CSAMPLE *, const CSAMPLE * pOut, const int iBuf
                     setNewPlaypos(m_filepos_play);
                 }
             }
-
-            if (baserate > 0) { // Prevent division by 0
-                rate = baserate * m_pScale->setTempo(rate/baserate);
+            if (m_pBpmControl->getSyncState() == SYNC_SLAVE) {
+                m_pBpmControl->setEngineBpmByRate(rate);
             }
-            m_pTrueRate->set(rate / baserate);
+
+            rate = m_pScale->setTempo(rate);
+            resample_rate = rate * baserate;
+            //m_pTrueRate->set(rate);
             m_pScale->setBaseRate(baserate);
             m_rate_old = rate;
             // Scaler is up to date now.
@@ -737,7 +748,7 @@ void EngineBuffer::process(const CSAMPLE *, const CSAMPLE * pOut, const int iBuf
         while (it.hasNext()) {
             EngineControl* pControl = it.next();
             pControl->setCurrentSample(m_filepos_play, m_file_length_old);
-            double control_seek = pControl->process(rate, m_filepos_play,
+            double control_seek = pControl->process(resample_rate, m_filepos_play,
                                                     m_file_length_old, iBufferSize);
 
             if (control_seek != kNoTrigger) {
@@ -785,6 +796,9 @@ void EngineBuffer::process(const CSAMPLE *, const CSAMPLE * pOut, const int iBuf
                 m_pRateControl->notifySeek(m_filepos_play);
             }
         }
+        if (m_pBpmControl->getSyncState() == SYNC_MASTER) {
+            m_beatDistance->set(m_pBpmControl->getBeatDistance());
+        }
         m_engineLock.unlock();
 
 
@@ -821,7 +835,7 @@ void EngineBuffer::process(const CSAMPLE *, const CSAMPLE * pOut, const int iBuf
 
     // Give the Reader hints as to which chunks of the current song we
     // really care about. It will try very hard to keep these in memory
-    hintReader(rate);
+    hintReader(resample_rate);
 
     const double kSmallRate = 0.005;
     if (m_bLastBufferPaused && !bCurBufferPaused) {
@@ -891,7 +905,7 @@ void EngineBuffer::process(const CSAMPLE *, const CSAMPLE * pOut, const int iBuf
         writer << pOutput[i] <<  "\n";
     }
 #endif
-    
+
     m_bLastBufferPaused = bCurBufferPaused;
     m_iLastBufferSize = iBufferSize;
 }
@@ -902,18 +916,11 @@ void EngineBuffer::updateIndicators(double rate, int iBufferSize) {
     m_iSamplesCalculated += iBufferSize;
 
     double fFractionalPlaypos = fractionalPlayposFromAbsolute(m_filepos_play);
-    if(rate > 0 && fFractionalPlaypos == 1.0) {
-        rate = 0;
-    }
 
     // Update indicators that are only updated after every
-    // sampleRate/kiUpdateRate samples processed.  (e.g. playposSlider,
-    // rateEngine)
+    // sampleRate/kiUpdateRate samples processed.
     if (m_iSamplesCalculated > (m_pSampleRate->get()/kiUpdateRate)) {
         m_playposSlider->set(fFractionalPlaypos);
-
-        if(rate != m_rateEngine->get())
-            m_rateEngine->set(rate);
 
         //Update the BPM even more slowly
         m_iUiSlowTick = (m_iUiSlowTick + 1) % kiBpmUpdateRate;
@@ -925,11 +932,9 @@ void EngineBuffer::updateIndicators(double rate, int iBufferSize) {
         m_iSamplesCalculated = 0;
     }
 
-    // Update visual control object, this needs to be done more often than the
-    // rateEngine and playpos slider
-    m_visualPlayPos->set(fFractionalPlaypos, rate,
-            (double)iBufferSize/m_file_length_old,
-            fractionalPlayposFromAbsolute(m_dSlipPosition));
+    // Update visual control object, this needs to be done more often
+    m_visualPlaypos->set(fFractionalPlaypos);
+    m_rateEngine->set(rate);
 }
 
 void EngineBuffer::hintReader(const double dRate) {

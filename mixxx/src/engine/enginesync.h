@@ -31,12 +31,6 @@ enum SYNC_STATE {
     SYNC_MASTER = 2
 };  
 
-enum SYNC_SOURCE {
-    SYNC_INTERNAL = 0,
-    SYNC_DECK = 1,
-    SYNC_MIDI = 2    
-};
-
 class EngineSync : public EngineControl { 
     Q_OBJECT
     
@@ -44,26 +38,24 @@ class EngineSync : public EngineControl {
         EngineSync(EngineMaster *master, ConfigObject<ConfigValue>* pConfig);
         ~EngineSync();
         void addDeck(QString group);
-        bool setMaster(QString group);
+        void setMaster(QString group);
         bool setDeckMaster(QString deck);
-        bool setInternalMaster(void);
+        void setInternalMaster(void);
         bool setMidiMaster(void);
-        bool setNone(QString deck);
-        EngineBuffer* getMaster();
+        //bool setNone(QString deck);
+        EngineBuffer* getMaster() const;
         
         void incrementPseudoPosition(int bufferSize);
-        double getInternalBeatDistance(void);
+        double getInternalBeatDistance(void) const;
         
     private slots:
         void slotMasterBpmChanged(double);
         void slotSourceRateChanged(double);
         void slotSyncRateSliderChanged(double);
-        /*void slotSyncRateSliderChangedFromEngine(double);*/
         void slotSourceBeatDistanceChanged(double);
         void slotSampleRateChanged(double);
         void slotInternalMasterChanged(double);
-        void slotDeckMasterChanged(double);
-        void slotDeckSlaveChanged(double);
+        void slotDeckStateChanged(double);
         
     protected:
         QString chooseNewMaster(QString dontpick);
@@ -83,12 +75,11 @@ class EngineSync : public EngineControl {
         
         QList<QString> m_sDeckList;
         
-        int m_iSyncSource;
+        QString m_sSyncSource;
         int m_iSampleRate;
         double m_dSourceRate, m_dMasterBpm;
         double m_dSamplesPerBeat;
         double m_dPseudoBufferPos;
-        
 };
 
 #endif

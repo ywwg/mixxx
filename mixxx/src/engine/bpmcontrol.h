@@ -19,17 +19,18 @@ class BpmControl : public EngineControl {
   public:
     BpmControl(const char* _group, ConfigObject<ConfigValue>* _config);
     virtual ~BpmControl();
-    double getBpm();
-    double getFileBpm();
-    double getBeatDistance();
-    double getSyncAdjustment();
+    double getBpm() const;
+    double getFileBpm() const { return m_dFileBpm; }
+    void setEngineBpmByRate(double rate);
+    double getBeatDistance() const;
+    int getSyncState() const { return m_iSyncState; }
+    double getSyncAdjustment() const;
     void userTweakingSync(bool tweakActive);
-    double getPhaseOffset();
-    double getPhaseOffset(double reference_position);
+    double getPhaseOffset() { return getPhaseOffset(getCurrentSample()); }
+    double getPhaseOffset(double reference_position) ;
     void setLoopSize(double size) { m_dLoopSize = size; }
     
   public slots:
-    //void slotRateChanged(double);
     void slotControlBeatSync(double);
     virtual void trackLoaded(TrackPointer pTrack);
     virtual void trackUnloaded(TrackPointer pTrack);
@@ -46,8 +47,7 @@ class BpmControl : public EngineControl {
     void slotUpdatedTrackBeats();
     void slotBeatsTranslate(double);
     void slotMasterBeatDistanceChanged(double);
-    void slotSyncMasterChanged(double);
-    void slotSyncSlaveChanged(double);
+    void slotSyncStateChanged(double);
 
   private:
     EngineBuffer* pickSyncTarget();
@@ -65,7 +65,7 @@ class BpmControl : public EngineControl {
     ControlObject* m_pRateDir;
     
     ControlObject *m_pMasterBeatDistance;
-    ControlObject *m_pSyncMasterEnabled, *m_pSyncSlaveEnabled;
+    ControlObject *m_pSyncState;
     int m_iSyncState;
     double m_dSyncAdjustment;
     bool m_bUserTweakingSync;
@@ -94,8 +94,8 @@ class BpmControl : public EngineControl {
     // playposition.
     ControlPushButton* m_pTranslateBeats;
     
-    double m_dFileBpm; // cache it
-    double m_dLoopSize; // only used to see if we shouldn't quantize position
+    double m_dFileBpm;
+    double m_dLoopSize; // Only used to see if we shouldn't quantize position.
 
     TapFilter m_tapFilter;
 

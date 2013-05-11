@@ -39,9 +39,9 @@ public:
                    const int bufferSamples);
     // Returns the current engine rate.
     double calculateRate(double baserate, bool paused, int iSamplesPerBuffer, bool* isScratching);
-    double getRawRate();
-    double getCurrentRate();
-    bool getUserTweakingSync();
+    double getRawRate() const;
+    double getCurrentRate() const;
+    bool getUserTweakingSync() const;
 
     // Set rate change when temp rate button is pressed
     static void setTemp(double v);
@@ -76,6 +76,7 @@ public:
     void slotSyncMasterChanged(double);
     void slotSyncSlaveChanged(double);
     void slotSyncInternalChanged(double);
+    void slotSyncStateChanged(double);
     void slotControlVinylScratching(double);
     void slotWheelSensitivity(double);
     
@@ -85,8 +86,8 @@ public:
   private:
     QString m_sGroup;
   
-    double getJogFactor();
-    double getWheelFactor();
+    double getJogFactor() const;
+    double getWheelFactor() const;
 
     /** Set rate change of the temporary pitch rate */
     void setRateTemp(double v);
@@ -121,6 +122,7 @@ public:
 
     ControlPushButton* m_pScratchToggle;
     ControlObject* m_pJog;
+    ControlObject* m_pVCEnabled;
     Rotary* m_pJogFilter;
 
     ControlObject *m_pSampleRate;
@@ -129,6 +131,7 @@ public:
     ControlObject *m_pMasterBpm;
     ControlObject *m_pSyncInternalEnabled;
     ControlPushButton *m_pSyncMasterEnabled, *m_pSyncSlaveEnabled;
+    ControlObject *m_pSyncState;
     EngineMaster *m_pEngineMaster;
     double m_dSyncedRate;
     int m_iSyncState;
@@ -136,7 +139,7 @@ public:
     
     /** The current loaded file's detected BPM */
     ControlObject* m_pFileBpm;
-    double m_dFileBpm; // cache it
+    double m_dFileBpm;
 
     // Enumerations which hold the state of the pitchbend buttons.
     // These enumerations can be used like a bitmask.
