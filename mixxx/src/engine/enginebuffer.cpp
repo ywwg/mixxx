@@ -179,8 +179,7 @@ EngineBuffer::EngineBuffer(const char * _group, ConfigObject<ConfigValue> * _con
             Qt::DirectConnection);
 
     // Control used to communicate ratio playpos to GUI thread
-    m_visualPlaypos = new ControlPotmeter(
-        ConfigKey(m_group, "visual_playposition"), kMinPlayposRange, kMaxPlayposRange);
+    m_visualPlayPos = VisualPlayPosition::getVisualPlayPosition(m_group);
 
     m_pRepeat = new ControlPushButton(ConfigKey(m_group, "repeat"));
     m_pRepeat->setButtonMode(ControlPushButton::TOGGLE);
@@ -277,7 +276,6 @@ EngineBuffer::~EngineBuffer()
     delete m_stopButton;
     delete m_rateEngine;
     delete m_playposSlider;
-    delete m_visualPlaypos;
     delete m_visualBpm;
 
     delete m_pSlipButton;
@@ -415,7 +413,7 @@ void EngineBuffer::slotTrackLoaded(TrackPointer pTrack,
                                    int iTrackSampleRate,
                                    int iTrackNumSamples) {
     m_pause.lock();
-    m_visualPlaypos->set(-1);
+    m_visualPlayPos->setInvalid();
     m_pCurrentTrack = pTrack;
     m_file_srate_old = iTrackSampleRate;
     m_file_length_old = iTrackNumSamples;
@@ -933,7 +931,9 @@ void EngineBuffer::updateIndicators(double rate, int iBufferSize) {
     }
 
     // Update visual control object, this needs to be done more often
-    m_visualPlaypos->set(fFractionalPlaypos);
+    m_visualPlayPos->set(fFractionalPlaypos, rate,
+            (double)iBufferSize/m_file_length_old,
+            fractionalPlayposFromAbsolute(m_dSlipPosition));
     m_rateEngine->set(rate);
 }
 
