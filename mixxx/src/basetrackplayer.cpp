@@ -126,7 +126,6 @@ BaseTrackPlayer::~BaseTrackPlayer()
     delete m_pBPM;
     delete m_pReplayGain;
     delete m_pDuration;
-    delete m_pChannel;
 }
 
 void BaseTrackPlayer::slotLoadTrack(TrackPointer track, bool bPlay) {
