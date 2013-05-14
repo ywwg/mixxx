@@ -497,9 +497,9 @@ double BpmControl::getPhaseOffset(double reference_position) {
         
         double dOtherLength = ControlObject::getControl(
             ConfigKey(pOtherEngineBuffer->getGroup(), "track_samples"))->get();
-        double dOtherPosition = dOtherLength * ControlObject::getControl(
-            ConfigKey(pOtherEngineBuffer->getGroup(), "visual_playposition"))->get();
-
+        double dOtherEnginePlayPos =
+            VisualPlayPosition::getVisualPlayPosition(pOtherEngineBuffer->getGroup())->getEnginePlayPos();
+    
         double dOtherPrevBeat = otherBeats->findPrevBeat(dOtherPosition);
         double dOtherNextBeat = otherBeats->findNextBeat(dOtherPosition);
 
