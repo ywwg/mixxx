@@ -136,8 +136,7 @@ EngineMaster::~EngineMaster()
     delete clipping;
     delete vumeter;
     delete head_clipping;
-    qDebug() << "sidechain";
-    delete sidechain;
+    delete m_pSideChain;
 
     delete xFaderReverse;
     delete xFaderCalibration;
