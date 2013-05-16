@@ -42,6 +42,7 @@
 #include "playermanager.h"
 #include "recording/defs_recording.h"
 #include "recording/recordingmanager.h"
+#include "shoutcast/shoutcastmanager.h"
 #include "skin/legacyskinparser.h"
 #include "skin/skinloader.h"
 #include "soundmanager.h"
@@ -98,12 +99,7 @@ bool loadTranslations(const QLocale& systemLocale, QString userLocale,
     return pTranslator->load(translation + prefix + userLocale, translationPath);
 }
 
-MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
-        : m_runtime_timer("MixxxApp::runtime"),
-          m_cmdLineArgs(args) {
-    ScopedTimer t("MixxxApp::MixxxApp");
-    m_runtime_timer.start();
-
+void MixxxApp::logBuildDetails() {
     QString buildBranch, buildRevision, buildFlags;
 #ifdef BUILD_BRANCH
     buildBranch = BUILD_BRANCH;
@@ -134,10 +130,10 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
     // This is the first line in mixxx.log
     qDebug() << "Mixxx" << VERSION << buildInfoFormatted << "is starting...";
     qDebug() << "Qt version is:" << qVersion();
+}
 
-    QCoreApplication::setApplicationName("Mixxx");
-    QCoreApplication::setApplicationVersion(VERSION);
-#ifdef __APPLE__
+void MixxxApp::initializeWindow() {
+    #ifdef __APPLE__
     setWindowTitle(tr("Mixxx")); //App Store
 #elif defined(AMD64) || defined(EM64T) || defined(x86_64)
     setWindowTitle(tr("Mixxx " VERSION " x64"));
@@ -147,30 +143,14 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
     setWindowTitle(tr("Mixxx " VERSION));
 #endif
     setWindowIcon(QIcon(":/images/ic_mixxx_window.png"));
+}
 
-    // Only record stats in developer mode.
-    if (m_cmdLineArgs.getDeveloper()) {
-        StatsManager::create();
-    }
-
-    //Reset pointer to players
-    m_pSoundManager = NULL;
-    m_pPrefDlg = NULL;
-    m_pControllerManager = NULL;
-    m_pRecordingManager = NULL;
-
-    // Check to see if this is the first time this version of Mixxx is run
-    // after an upgrade and make any needed changes.
-    Upgrade upgrader;
-    m_pConfig = upgrader.versionUpgrade(args.getSettingsPath());
-    bool bFirstRun = upgrader.isFirstRun();
-    bool bUpgraded = upgrader.isUpgraded();
-
+void MixxxApp::initializeTranslations(QApplication* pApp) {
     QString resourcePath = m_pConfig->getResourcePath();
     QString translationsFolder = resourcePath + "translations/";
 
     // Load Qt base translations
-    QString userLocale = args.getLocale();
+    QString userLocale = m_cmdLineArgs.getLocale();
     QLocale systemLocale = QLocale::system();
 
     // Attempt to load user locale from config
@@ -214,12 +194,10 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
     } else {
         delete mixxxTranslator;
     }
+}
 
-    // Set the visibility of tooltips
-    m_tooltips = m_pConfig->getValueString(ConfigKey("[Controls]", "Tooltips")).toInt();
-
-    // Store the path in the config database
-    m_pConfig->set(ConfigKey("[Config]", "Path"), ConfigValue(resourcePath));
+void MixxxApp::initializeKeyboard() {
+    QString resourcePath = m_pConfig->getResourcePath();
 
     // Set the default value in settings file
     if (m_pConfig->getValueString(ConfigKey("[Keyboard]","Enabled")).length() == 0)
@@ -227,7 +205,7 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
 
     // Read keyboard configuration and set kdbConfig object in WWidget
     // Check first in user's Mixxx directory
-    QString userKeyboard = args.getSettingsPath() + "Custom.kbd.cfg";
+    QString userKeyboard = m_cmdLineArgs.getSettingsPath() + "Custom.kbd.cfg";
 
     //Empty keyboard configuration
     m_pKbdConfigEmpty = new ConfigObject<ConfigValueKbd>("");
@@ -261,17 +239,56 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
     bool keyboardShortcutsEnabled = m_pConfig->getValueString(
         ConfigKey("[Keyboard]", "Enabled")) == "1";
     m_pKeyboard = new MixxxKeyboard(keyboardShortcutsEnabled ? m_pKbdConfig : m_pKbdConfigEmpty);
+}
 
-    //create RecordingManager
-    m_pRecordingManager = new RecordingManager(m_pConfig);
+MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
+        : m_runtime_timer("MixxxApp::runtime"),
+          m_cmdLineArgs(args) {
+    ScopedTimer t("MixxxApp::MixxxApp");
+    m_runtime_timer.start();
+
+    initializeWindow();
+
+    // Only record stats in developer mode.
+    if (m_cmdLineArgs.getDeveloper()) {
+        StatsManager::create();
+    }
+
+    //Reset pointer to players
+    m_pSoundManager = NULL;
+    m_pPrefDlg = NULL;
+    m_pControllerManager = NULL;
+    m_pRecordingManager = NULL;
+#ifdef __SHOUTCAST__
+    m_pShoutcastManager = NULL;
+#endif
+
+    // Check to see if this is the first time this version of Mixxx is run
+    // after an upgrade and make any needed changes.
+    Upgrade upgrader;
+    m_pConfig = upgrader.versionUpgrade(args.getSettingsPath());
+    bool bFirstRun = upgrader.isFirstRun();
+    bool bUpgraded = upgrader.isUpgraded();
+
+    QString resourcePath = m_pConfig->getResourcePath();
+
+    initializeTranslations(pApp);
+
+    // Set the visibility of tooltips
+    m_tooltips = m_pConfig->getValueString(ConfigKey("[Controls]", "Tooltips")).toInt();
+
+    // Store the path in the config database
+    m_pConfig->set(ConfigKey("[Config]", "Path"), ConfigValue(resourcePath));
+
+    initializeKeyboard();
 
     // Starting the master (mixing of the channels and effects):
     m_pEngine = new EngineMaster(m_pConfig, "[Master]", true);
 
-    connect(m_pEngine, SIGNAL(isRecording(bool)),
-            m_pRecordingManager,SLOT(slotIsRecording(bool)));
-    connect(m_pEngine, SIGNAL(bytesRecorded(int)),
-            m_pRecordingManager,SLOT(slotBytesRecorded(int)));
+    m_pRecordingManager = new RecordingManager(m_pConfig, m_pEngine);
+#ifdef __SHOUTCAST__
+    m_pShoutcastManager = new ShoutcastManager(m_pConfig, m_pEngine);
+#endif
 
     // Initialize player device
     // while this is created here, setupDevices needs to be called sometime
@@ -327,7 +344,7 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
     // Register TrackPointer as a metatype since we use it in signals/slots
     // regularly.
     qRegisterMetaType<TrackPointer>("TrackPointer");
-    
+
 #ifdef __VINYLCONTROL__
     m_pVCManager = new VinylControlManager(this, m_pConfig);
 #else
@@ -454,9 +471,6 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
         numDevices = m_pSoundManager->getConfig().getOutputs().count();
     }
 
-    //setFocusPolicy(QWidget::StrongFocus);
-    //grabKeyboard();
-
     // Load tracks in args.qlMusicFiles (command line arguments) into player
     // 1 and 2:
     for (int i = 0; i < (int)m_pPlayerManager->numDecks()
@@ -568,8 +582,7 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
 
     if (rescan || hasChanged_MusicDir) {
         m_pLibraryScanner->scan(
-            m_pConfig->getValueString(ConfigKey("[Playlist]", "Directory")),this);
-        qDebug() << "Rescan finished";
+            m_pConfig->getValueString(ConfigKey("[Playlist]", "Directory")), this);
     }
 }
 
@@ -620,10 +633,6 @@ MixxxApp::~MixxxApp()
     qDebug() << "delete playerManager " << qTime.elapsed();
     delete m_pPlayerManager;
 
-    // EngineMaster depends on Config
-    qDebug() << "delete m_pEngine " << qTime.elapsed();
-    delete m_pEngine;
-
     // LibraryScanner depends on Library
     qDebug() << "delete library scanner " <<  qTime.elapsed();
     delete m_pLibraryScanner;
@@ -634,18 +643,26 @@ MixxxApp::~MixxxApp()
     qDebug() << "delete library " << qTime.elapsed();
     delete m_pLibrary;
 
-    // RecordingManager depends on config
+    // RecordingManager depends on config, engine
     qDebug() << "delete RecordingManager " << qTime.elapsed();
     delete m_pRecordingManager;
+
+#ifdef __SHOUTCAST__
+    // ShoutcastManager depends on config, engine
+    qDebug() << "delete ShoutcastManager " << qTime.elapsed();
+    delete m_pShoutcastManager;
+#endif
+
+    // EngineMaster depends on Config
+    qDebug() << "delete m_pEngine " << qTime.elapsed();
+    delete m_pEngine;
 
     // HACK: Save config again. We saved it once before doing some dangerous
     // stuff. We only really want to save it here, but the first one was just
     // a precaution. The earlier one can be removed when stuff is more stable
     // at exit.
-
-    //Disable shoutcast so when Mixxx starts again it will not connect
-    m_pConfig->set(ConfigKey("[Shoutcast]", "enabled"),0);
     m_pConfig->Save();
+
     delete m_pPrefDlg;
 
     qDebug() << "delete config " << qTime.elapsed();
@@ -1048,15 +1065,12 @@ void MixxxApp::initActions()
     m_pOptionsShoutcast->setShortcut(tr("Ctrl+L"));
     m_pOptionsShoutcast->setShortcutContext(Qt::ApplicationShortcut);
     m_pOptionsShoutcast->setCheckable(true);
-    bool broadcastEnabled =
-        (m_pConfig->getValueString(ConfigKey("[Shoutcast]", "enabled"))
-            .toInt() == 1);
-
-    m_pOptionsShoutcast->setChecked(broadcastEnabled);
+    m_pOptionsShoutcast->setChecked(m_pShoutcastManager->isEnabled());
     m_pOptionsShoutcast->setStatusTip(shoutcastText);
     m_pOptionsShoutcast->setWhatsThis(buildWhatsThis(shoutcastTitle, shoutcastText));
-    connect(m_pOptionsShoutcast, SIGNAL(toggled(bool)),
-            this, SLOT(slotOptionsShoutcast(bool)));
+
+    connect(m_pOptionsShoutcast, SIGNAL(triggered(bool)),
+            m_pShoutcastManager, SLOT(setEnabled(bool)));
 #endif
 
     QString mayNotBeSupported = tr("May not be supported on all skins.");
@@ -1114,7 +1128,7 @@ void MixxxApp::initActions()
     m_pOptionsRecord->setStatusTip(recordText);
     m_pOptionsRecord->setWhatsThis(buildWhatsThis(recordTitle, recordText));
     connect(m_pOptionsRecord, SIGNAL(toggled(bool)),
-            this, SLOT(slotOptionsRecord(bool)));
+            m_pRecordingManager, SLOT(slotSetRecording(bool)));
 
     QString reloadSkinTitle = tr("&Reload Skin");
     QString reloadSkinText = tr("Reload the skin");
@@ -1416,25 +1430,7 @@ void MixxxApp::slotCheckboxVinylControl2(bool toggle)
 #endif
 }
 
-//Also can't ifdef this (MOC again)
-void MixxxApp::slotOptionsRecord(bool toggle)
-{
-    //Only start recording if checkbox was set to true and recording is inactive
-    if(toggle && !m_pRecordingManager->isRecordingActive()) //start recording
-        m_pRecordingManager->startRecording();
-    //Only stop recording if checkbox was set to false and recording is active
-    else if(!toggle && m_pRecordingManager->isRecordingActive())
-        m_pRecordingManager->stopRecording();
-}
-
 void MixxxApp::slotHelpAbout() {
-    QString buildBranch, buildRevision;
-#ifdef BUILD_BRANCH
-    buildBranch = BUILD_BRANCH;
-#endif
-#ifdef BUILD_REV
-    buildRevision = BUILD_REV;
-#endif
     DlgAbout *about = new DlgAbout(this);
 
     QStringList version;
@@ -1539,6 +1535,7 @@ void MixxxApp::slotHelpAbout() {
 "Steven Boswell<br>"
 "Jo&atilde;o Reys Santos<br>"
 "Carl Pillot<br>"
+"Vedant Agarwala<br>"
 
 "</p>"
 "<p align=\"center\"><b>%3</b></p>"
@@ -1620,7 +1617,6 @@ void MixxxApp::slotHelpAbout() {
 
     about->textBrowser->setHtml(credits);
     about->show();
-
 }
 
 void MixxxApp::slotHelpSupport() {
@@ -1731,6 +1727,8 @@ void MixxxApp::rebootMixxxView() {
              initPosition.y() + (initSize.height() - m_pView->height()) / 2);
     }
 
+    WaveformWidgetFactory::instance()->start();
+
 #ifdef __APPLE__
     // Original the following line fixes issue on OSX where menu bar went away
     // after a skin change. It was original surrounded by #if __OSX__
@@ -1791,24 +1789,8 @@ void MixxxApp::slotEnableRescanLibraryAction()
 void MixxxApp::slotOptionsMenuShow(){
     // Check recording if it is active.
     m_pOptionsRecord->setChecked(m_pRecordingManager->isRecordingActive());
-
 #ifdef __SHOUTCAST__
-    bool broadcastEnabled =
-        (m_pConfig->getValueString(ConfigKey("[Shoutcast]", "enabled")).toInt()
-            == 1);
-    if (broadcastEnabled)
-      m_pOptionsShoutcast->setChecked(true);
-    else
-      m_pOptionsShoutcast->setChecked(false);
-#endif
-}
-
-void MixxxApp::slotOptionsShoutcast(bool value){
-#ifdef __SHOUTCAST__
-    m_pOptionsShoutcast->setChecked(value);
-    m_pConfig->set(ConfigKey("[Shoutcast]", "enabled"),ConfigValue(value));
-#else
-    Q_UNUSED(value);
+    m_pOptionsShoutcast->setChecked(m_pShoutcastManager->isEnabled());
 #endif
 }
 

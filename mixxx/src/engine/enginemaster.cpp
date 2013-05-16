@@ -31,7 +31,7 @@
 #include "engineclipping.h"
 #include "enginevumeter.h"
 #include "enginexfader.h"
-#include "enginesidechain.h"
+#include "engine/sidechain/enginesidechain.h"
 #include "enginepfldelay.h"
 #include "engine/syncworker.h"
 #include "sampleutil.h"
@@ -101,22 +101,11 @@ EngineMaster::EngineMaster(ConfigObject<ConfigValue> * _config,
     // Allocate buffers
     m_pHead = SampleUtil::alloc(MAX_BUFFER_LEN);
     m_pMaster = SampleUtil::alloc(MAX_BUFFER_LEN);
-    memset(m_pHead, 0, sizeof(CSAMPLE) * MAX_BUFFER_LEN);
-    memset(m_pMaster, 0, sizeof(CSAMPLE) * MAX_BUFFER_LEN);
+    SampleUtil::applyGain(m_pHead, 0, MAX_BUFFER_LEN);
+    SampleUtil::applyGain(m_pMaster, 0, MAX_BUFFER_LEN);
 
-    //Starts a thread for recording and shoutcast
-    sidechain = NULL;
-    if (bEnableSidechain) {
-        sidechain = new EngineSideChain(_config);
-        connect(sidechain, SIGNAL(isRecording(bool)),
-                this, SIGNAL(isRecording(bool)));
-        connect(sidechain, SIGNAL(bytesRecorded(int)),
-                this, SIGNAL(bytesRecorded(int)));
-    }
-
-	//df.setFileName("mixxx-debug.csv");
-	//df.open(QIODevice::WriteOnly | QIODevice::Text);
-	//writer.setDevice(&df);
+    // Starts a thread for recording and shoutcast
+    m_pSideChain = bEnableSidechain ? new EngineSideChain(_config) : NULL;
 
     // X-Fader Setup
     xFaderMode = new ControlPotmeter(
@@ -133,68 +122,40 @@ EngineMaster::~EngineMaster()
 {
     qDebug() << "in ~EngineMaster()";
     delete crossfader;
-    qDebug() << "m_pBalance";
     delete m_pBalance;
-    qDebug() << "headmix";
     delete head_mix;
-    qDebug() << "master vol";
     delete m_pMasterVolume;
-    qDebug() << "head vol";
     delete m_pHeadVolume;
-    qDebug() << "head delay";
-    delete m_pHeadDelay;
-    qDebug() << "bypass eq";
-    delete m_pBypassEq;
-    qDebug() << "clipping";
     delete clipping;
-    qDebug() << "vumeter";
     delete vumeter;
-    qDebug() << "head clip";
     delete head_clipping;
-    qDebug() << "sidechain";
-    delete sidechain;
+    delete m_pSideChain;
 
-    qDebug() << "xfade reverse";
     delete xFaderReverse;
-    qDebug() << "xfade calib";
     delete xFaderCalibration;
-    qDebug() << "xfade curve";
     delete xFaderCurve;
-    qDebug() << "xfade mode";
     delete xFaderMode;
 
-    qDebug() << "master sample rate";
     delete m_pMasterSampleRate;
-    qDebug() << "latency";
     delete m_pMasterLatency;
-    qDebug() << "master rate";
     delete m_pMasterAudioBufferSize;
     delete m_pMasterRate;
-    
-    qDebug() << "underflow";
     delete m_pMasterUnderflowCount;
 
-    qDebug() << "free head";
     SampleUtil::free(m_pHead);
-    qDebug() << "free master";
     SampleUtil::free(m_pMaster);
 
     QMutableListIterator<ChannelInfo*> channel_it(m_channels);
     while (channel_it.hasNext()) {
         ChannelInfo* pChannelInfo = channel_it.next();
-        qDebug() << "remove channel";
         channel_it.remove();
-        qDebug() << "free buf";
         SampleUtil::free(pChannelInfo->m_pBuffer);
-        qDebug() << "mpvol";
+        delete pChannelInfo->m_pChannel;
         delete pChannelInfo->m_pVolumeControl;
-        qDebug() << "channelinfo";
         delete pChannelInfo;
     }
 
-    qDebug() << "worker sched";
     delete m_pWorkerScheduler;
-    qDebug() << "syncowrk";
     delete m_pSyncWorker;
 }
 
@@ -473,8 +434,8 @@ void EngineMaster::process(const CSAMPLE *, const CSAMPLE *pOut, const int iBuff
 
     //Submit master samples to the side chain to do shoutcasting, recording,
     //etc.  (cpu intensive non-realtime tasks)
-    if (sidechain != NULL) {
-        sidechain->submitSamples(m_pMaster, iBufferSize);
+    if (m_pSideChain != NULL) {
+        m_pSideChain->writeSamples(m_pMaster, iBufferSize);
     }
 
     // Add master to headphone with appropriate gain
