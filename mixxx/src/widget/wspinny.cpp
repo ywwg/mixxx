@@ -7,7 +7,6 @@
 #include "controlobject.h"
 #include "controlobjectthreadmain.h"
 #include "sharedglcontext.h"
-#include "visualplayposition.h"
 #include "wspinny.h"
 
 WSpinny::WSpinny(QWidget* parent, VinylControlManager* pVCMan)
@@ -17,6 +16,7 @@ WSpinny::WSpinny(QWidget* parent, VinylControlManager* pVCMan)
           m_pGhostImage(NULL),
           m_pPlay(NULL),
           m_pPlayPos(NULL),
+          m_pVisualPlayPos(NULL),
           m_pDuration(NULL),
           m_pTrackSamples(NULL),
           m_pScratch(NULL),
@@ -48,29 +48,27 @@ WSpinny::WSpinny(QWidget* parent, VinylControlManager* pVCMan)
              << "Sharing:" << context()->isSharing();
 }
 
-WSpinny::~WSpinny()
-{
-    //Don't delete these because the image store takes care of them.
-    //delete m_pBgImage;
-    //delete m_pFgImage;
-    //delete m_pGhostImage;
-    WImageStore::deleteImage(m_pBgImage);
-    WImageStore::deleteImage(m_pFgImage);
-    WImageStore::deleteImage(m_pGhostImage);
-    delete m_pPlay;
-    delete m_pPlayPos;
-    delete m_pDuration;
-    delete m_pTrackSamples;
-    delete m_pTrackSampleRate;
-    delete m_pScratch;
-    delete m_pScratchToggle;
-    delete m_pScratchPos;
-#ifdef __VINYLCONTROL__
-    delete m_pVinylControlSpeedType;
-    delete m_pVinylControlEnabled;
-    delete m_pSignalEnabled;
-#endif
-
+WSpinny::~WSpinny() {
+    // No need to delete anything if m_group is empty because setup() was not called.
+    if (!m_group.isEmpty()) {
+        WImageStore::deleteImage(m_pBgImage);
+        WImageStore::deleteImage(m_pFgImage);
+        WImageStore::deleteImage(m_pGhostImage);
+        delete m_pPlay;
+        delete m_pPlayPos;
+        delete m_pVisualPlayPos;
+        delete m_pDuration;
+        delete m_pTrackSamples;
+        delete m_pTrackSampleRate;
+        delete m_pScratch;
+        delete m_pScratchToggle;
+        delete m_pScratchPos;
+    #ifdef __VINYLCONTROL__
+        delete m_pVinylControlSpeedType;
+        delete m_pVinylControlEnabled;
+        delete m_pSignalEnabled;
+    #endif
+    }
 }
 
 void WSpinny::setup(QDomNode node, QString group) {
@@ -98,8 +96,8 @@ void WSpinny::setup(QDomNode node, QString group) {
                         ConfigKey(group, "play")));
     m_pPlayPos = new ControlObjectThreadMain(ControlObject::getControl(
                         ConfigKey(group, "playposition")));
-    m_pVisualPlayPos = VisualPlayPosition::getVisualPlayPosition(group);
-
+    m_pVisualPlayPos = new ControlObjectThreadMain(ControlObject::getControl(
+                        ConfigKey(group, "visual_playposition")));
     m_pDuration = new ControlObjectThreadMain(ControlObject::getControl(
                         ConfigKey(group, "duration")));
     m_pTrackSamples = new ControlObjectThreadMain(ControlObject::getControl(
@@ -117,6 +115,8 @@ void WSpinny::setup(QDomNode node, QString group) {
 
     m_pSlipEnabled = new ControlObjectThreadMain(ControlObject::getControl(
         ConfigKey(group, "slip_enabled")));
+    m_pSlipPosition = new ControlObjectThreadMain(ControlObject::getControl(
+        ConfigKey(group, "slip_playposition")));
 
 #ifdef __VINYLCONTROL__
     m_pVinylControlSpeedType = new ControlObjectThreadMain(ControlObject::getControl(
@@ -211,9 +211,8 @@ void WSpinny::paintEvent(QPaintEvent *e) {
         p.save();
     }
 
-    double playPosition = -1;
-    double slipPosition = -1;
-    m_pVisualPlayPos->getPlaySlipAt(0, &playPosition, &slipPosition);
+    double playPosition = m_pVisualPlayPos->get();
+    double slipPosition = m_pSlipPosition->get();
 
     if (playPosition != m_dAngleLastPlaypos) {
         m_fAngle = calculateAngle(playPosition);

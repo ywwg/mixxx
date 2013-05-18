@@ -53,7 +53,6 @@ class EngineBufferScale;
 class EngineBufferScaleLinear;
 class EngineBufferScaleST;
 class EngineWorkerScheduler;
-class VisualPlayPosition;
 class EngineMaster;
 
 struct Hint;
@@ -288,8 +287,6 @@ private:
     CSAMPLE* m_pCrossFadeBuffer;
     int m_iCrossFadeSamples;
     int m_iLastBufferSize;
-
-    VisualPlayPosition* m_visualPlayPos;
 };
 
 #endif

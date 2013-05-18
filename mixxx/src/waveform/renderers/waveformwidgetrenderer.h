@@ -15,8 +15,6 @@
 
 class TrackInfoObject;
 class ControlObjectThreadMain;
-class VisualPlayPosition;
-class VSyncThread;
 
 class WaveformWidgetRenderer {
 public:
@@ -31,7 +29,7 @@ public:
     virtual bool onInit() {return true;}
 
     void setup(const QDomNode& node);
-    void onPreRender(VSyncThread* vsyncThread);
+    void onPreRender();
     void draw(QPainter* painter, QPaintEvent* event);
 
     const char* getGroup() const { return m_group;}
@@ -58,7 +56,6 @@ public:
     double transformPositionInRendererWorld(double position) const;
 
     double getPlayPos() const { return m_playPos;}
-    double getPlayPosVSample() const { return m_playPosVSample;}
     double getZoomFactor() const { return m_zoomFactor;}
     double getRateAdjust() const { return m_rateAdjust;}
     double getGain() const { return m_gain;}
@@ -81,7 +78,7 @@ public:
 protected:
     const char* m_group;
     TrackPointer m_trackInfoObject;
-    QList<WaveformRendererAbstract*> m_rendererStack;
+    QVector<WaveformRendererAbstract*> m_rendererStack;
     int m_height;
     int m_width;
     WaveformSignalColors m_colors;
@@ -98,9 +95,8 @@ protected:
 
     //TODO: vRince create some class to manage control/value
     //ControlConnection
-    VisualPlayPosition* m_visualPlayPosition;
+    ControlObjectThreadMain* m_playPosControlObject;
     double m_playPos;
-    int m_playPosVSample;
     ControlObjectThreadMain* m_rateControlObject;
     double m_rate;
     ControlObjectThreadMain* m_rateRangeControlObject;
@@ -121,6 +117,7 @@ protected:
     int currentFrame;
 #endif
 
+    WaveformWidgetRenderer();
 private:
     DISALLOW_COPY_AND_ASSIGN(WaveformWidgetRenderer);
     friend class WaveformWidgetFactory;

@@ -11,7 +11,6 @@
 #endif
 
 class ControlObjectThreadMain;
-class VisualPlayPosition;
 
 class WSpinny : public QGLWidget {
     Q_OBJECT
@@ -49,7 +48,7 @@ class WSpinny : public QGLWidget {
     QImage* m_pGhostImage;
     ControlObjectThreadMain* m_pPlay;
     ControlObjectThreadMain* m_pPlayPos;
-    VisualPlayPosition* m_pVisualPlayPos;
+    ControlObjectThreadMain* m_pVisualPlayPos;
     ControlObjectThreadMain* m_pDuration;
     ControlObjectThreadMain* m_pTrackSamples;
     ControlObjectThreadMain* m_pTrackSampleRate;
@@ -61,6 +60,7 @@ class WSpinny : public QGLWidget {
     ControlObjectThreadMain* m_pVinylControlEnabled;
     ControlObjectThreadMain* m_pSignalEnabled;
     ControlObjectThreadMain* m_pSlipEnabled;
+    ControlObjectThreadMain* m_pSlipPosition;
 
 #ifdef __VINYLCONTROL__
     VinylControlManager* m_pVCManager;

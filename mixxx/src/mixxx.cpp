@@ -359,12 +359,7 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
     if (num_decks == 0) num_decks = 2;
     for (int deck = 0; deck < num_decks; ++deck) {
         // Add deck to the player manager
-        Deck* pDeck = m_pPlayerManager->addDeck(num_decks);
-#ifdef __VINYLCONTROL__
-	    EngineDeck* pEngineDeck = pDeck->getEngineDeck();
-	    // Register vinyl input signal with deck for passthrough
-	    m_pSoundManager->registerInput(AudioInput(AudioInput::VINYLCONTROL, 0, deck), pEngineDeck);
-#endif
+        m_pPlayerManager->addDeck();
     }
 
     int num_samplers = m_pConfig->getValueString(ConfigKey("[Master]","num_samplers")).toInt();
@@ -429,7 +424,6 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
     m_pControllerManager = new ControllerManager(m_pConfig);
 
     WaveformWidgetFactory::create();
-    WaveformWidgetFactory::instance()->startVSync(this);
     WaveformWidgetFactory::instance()->setConfig(m_pConfig);
 
     m_pSkinLoader = new SkinLoader(m_pConfig);
@@ -1462,64 +1456,6 @@ void MixxxApp::slotCheckboxVinylControl2(bool toggle)
 #endif
 }
 
-void MixxxApp::slotControlVinylControl3(double toggle)
-{
-#ifdef __VINYLCONTROL__
-    if (m_pVCManager->vinylInputEnabled(3)) {
-        m_pOptionsVinylControl3->setChecked((bool)toggle);
-    } else {
-        m_pOptionsVinylControl3->setChecked(false);
-        if (toggle) {
-            QMessageBox::warning(this, tr("Mixxx"),
-                tr("No input device(s) select.\nPlease select your soundcard(s) "
-                    "in the sound hardware preferences."),
-                QMessageBox::Ok,
-                QMessageBox::Ok);
-            m_pPrefDlg->show();
-            m_pPrefDlg->showSoundHardwarePage();
-            ControlObject::getControl(ConfigKey("[Channel3]", "vinylcontrol_status"))->set(VINYL_STATUS_DISABLED);
-            ControlObject::getControl(ConfigKey("[Channel3]", "vinylcontrol_enabled"))->set(0);
-        }
-    }
-#endif
-}
-
-void MixxxApp::slotCheckboxVinylControl3(bool toggle)
-{
-#ifdef __VINYLCONTROL__
-    ControlObject::getControl(ConfigKey("[Channel3]", "vinylcontrol_enabled"))->set((double)toggle);
-#endif
-}
-
-void MixxxApp::slotControlVinylControl4(double toggle)
-{
-#ifdef __VINYLCONTROL__
-    if (m_pVCManager->vinylInputEnabled(4)) {
-        m_pOptionsVinylControl4->setChecked((bool)toggle);
-    } else {
-        m_pOptionsVinylControl4->setChecked(false);
-        if (toggle) {
-            QMessageBox::warning(this, tr("Mixxx"),
-                tr("No input device(s) select.\nPlease select your soundcard(s) "
-                    "in the sound hardware preferences."),
-                QMessageBox::Ok,
-                QMessageBox::Ok);
-            m_pPrefDlg->show();
-            m_pPrefDlg->showSoundHardwarePage();
-            ControlObject::getControl(ConfigKey("[Channel4]", "vinylcontrol_status"))->set(VINYL_STATUS_DISABLED);
-            ControlObject::getControl(ConfigKey("[Channel4]", "vinylcontrol_enabled"))->set(0);
-        }
-    }
-#endif
-}
-
-void MixxxApp::slotCheckboxVinylControl4(bool toggle)
-{
-#ifdef __VINYLCONTROL__
-    ControlObject::getControl(ConfigKey("[Channel4]", "vinylcontrol_enabled"))->set((double)toggle);
-#endif
-}
-
 void MixxxApp::slotHelpAbout() {
     DlgAbout *about = new DlgAbout(this);
     about->show();
@@ -1585,6 +1521,7 @@ void MixxxApp::rebootMixxxView() {
 
     m_pView->hide();
 
+    WaveformWidgetFactory::instance()->stop();
     WaveformWidgetFactory::instance()->destroyWidgets();
 
     // Workaround for changing skins while fullscreen, just go out of fullscreen
@@ -1632,6 +1569,8 @@ void MixxxApp::rebootMixxxView() {
         move(initPosition.x() + (initSize.width() - m_pView->width()) / 2,
              initPosition.y() + (initSize.height() - m_pView->height()) / 2);
     }
+
+    WaveformWidgetFactory::instance()->start();
 
 #ifdef __APPLE__
     // Original the following line fixes issue on OSX where menu bar went away

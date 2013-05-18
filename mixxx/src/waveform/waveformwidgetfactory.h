@@ -8,15 +8,14 @@
 #include "waveform/waveform.h"
 
 #include <QObject>
-#include <QTime>
-#include <QVector>
+
+#include <vector>
 
 class WWaveformViewer;
 class WaveformWidgetAbstract;
 class ControlObjectThreadMain;
 class QTimer;
-class VSyncThread;
-
+class QTime;
 
 class WaveformWidgetAbstractHandle {
   public:
@@ -35,9 +34,7 @@ class WaveformWidgetAbstractHandle {
 };
 
 class WaveformWidgetHolder {
-  public:
-    WaveformWidgetHolder();
-  private:
+private:
     WaveformWidgetHolder(WaveformWidgetAbstract* waveformWidget,
                          WWaveformViewer* waveformViewer,
                          const QDomNode& visualNodeCache);
@@ -65,7 +62,7 @@ class WaveformWidgetFactory : public QObject, public Singleton<WaveformWidgetFac
 
     void setFrameRate( int frameRate);
     int getFrameRate() const { return m_frameRate;}
-//    bool getVSync() const { return m_vSyncType;}
+    double getActualFrameRate() const { return m_actualFrameRate;}
 
     bool isOpenGLAvailable() const { return m_openGLAvailable;}
     QString getOpenGLVersion() const { return m_openGLVersion;}
@@ -88,21 +85,22 @@ class WaveformWidgetFactory : public QObject, public Singleton<WaveformWidgetFac
     void setOverviewNormalized(bool normalize);
     int isOverviewNormalized() const { return m_overviewNormalized;}
 
-    const QVector<WaveformWidgetAbstractHandle> getAvailableTypes() const { return m_waveformWidgetHandles;}
-    void getAvailableVSyncTypes(QList<QPair<int, QString > >* list);
+    const std::vector<WaveformWidgetAbstractHandle> getAvailableTypes() const { return m_waveformWidgetHandles;}
     void destroyWidgets();
 
     void addTimerListener(QWidget* pWidget);
 
-    void startVSync(QWidget *parent);
-    void setVSyncType(int vsType);
-    int getVSyncType();
+  public slots:
+    void start();
+    void stop();
 
     void notifyZoomChange(WWaveformViewer *viewer);
 
   signals:
     void waveformUpdateTick();
-    void waveformMeasured(float frameRate, int rtErrorCnt);
+
+  protected:
+    void timerEvent(QTimerEvent *timerEvent);
 
   protected:
     WaveformWidgetFactory();
@@ -112,7 +110,6 @@ class WaveformWidgetFactory : public QObject, public Singleton<WaveformWidgetFac
 
   private slots:
     void refresh();
-    void postRefresh();
 
   private:
     WaveformWidgetType::Type autoChooseWidgetType() const;
@@ -121,11 +118,10 @@ class WaveformWidgetFactory : public QObject, public Singleton<WaveformWidgetFac
     int findIndexOf( WWaveformViewer* viewer) const;
 
     //All type of available widgets
-
-    QVector<WaveformWidgetAbstractHandle> m_waveformWidgetHandles;
+    std::vector<WaveformWidgetAbstractHandle> m_waveformWidgetHandles;
 
     //Currently in use widgets/visual/node
-    QVector<WaveformWidgetHolder> m_waveformWidgetHolders;
+    std::vector<WaveformWidgetHolder> m_waveformWidgetHolders;
 
     WaveformWidgetType::Type m_type;
 
@@ -143,17 +139,10 @@ class WaveformWidgetFactory : public QObject, public Singleton<WaveformWidgetFac
     QString m_openGLVersion;
     bool m_openGLShaderAvailable;
 
-    VSyncThread* m_vsyncThread;
-
     //Debug
-    QTime m_time;
-    QTime m_delayTime;
-    float m_frameCnt;
-    int m_lastRenderDuration;
+    QTime* m_time;
+    int m_lastFrameTime;
     double m_actualFrameRate;
-    double m_minimumFrameRate;
-    double m_maximumlFrameRate;
-    int m_vSyncType;
 };
 
 #endif // WAVEFORMWIDGETFACTORY_H

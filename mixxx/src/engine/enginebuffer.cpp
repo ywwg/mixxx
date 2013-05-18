@@ -37,7 +37,6 @@
 #include "engine/ratecontrol.h"
 #include "engine/bpmcontrol.h"
 #include "engine/quantizecontrol.h"
-#include "visualplayposition.h"
 #include "util/timer.h"
 
 #ifdef __VINYLCONTROL__
@@ -179,7 +178,8 @@ EngineBuffer::EngineBuffer(const char * _group, ConfigObject<ConfigValue> * _con
             Qt::DirectConnection);
 
     // Control used to communicate ratio playpos to GUI thread
-    m_visualPlayPos = VisualPlayPosition::getVisualPlayPosition(m_group);
+    m_visualPlaypos = new ControlPotmeter(
+        ConfigKey(m_group, "visual_playposition"), kMinPlayposRange, kMaxPlayposRange);
 
     m_pRepeat = new ControlPushButton(ConfigKey(m_group, "repeat"));
     m_pRepeat->setButtonMode(ControlPushButton::TOGGLE);
@@ -413,7 +413,7 @@ void EngineBuffer::slotTrackLoaded(TrackPointer pTrack,
                                    int iTrackSampleRate,
                                    int iTrackNumSamples) {
     m_pause.lock();
-    m_visualPlayPos->setInvalid();
+    m_visualPlaypos->set(-1);
     m_pCurrentTrack = pTrack;
     m_file_srate_old = iTrackSampleRate;
     m_file_length_old = iTrackNumSamples;
@@ -934,9 +934,7 @@ void EngineBuffer::updateIndicators(double rate, int iBufferSize) {
     }
 
     // Update visual control object, this needs to be done more often
-    m_visualPlayPos->set(fFractionalPlaypos, rate,
-            (double)iBufferSize/m_file_length_old,
-            fractionalPlayposFromAbsolute(m_dSlipPosition));
+    m_visualPlaypos->set(fFractionalPlaypos);
     m_rateEngine->set(rate);
 }
 
