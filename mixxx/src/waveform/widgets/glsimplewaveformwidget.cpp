@@ -13,8 +13,6 @@
 #include "waveform/renderers/waveformrendererendoftrack.h"
 #include "waveform/renderers/waveformrenderbeat.h"
 
-#include "util/performancetimer.h"
-
 GLSimpleWaveformWidget::GLSimpleWaveformWidget( const char* group, QWidget* parent)
         : QGLWidget(parent, SharedGLContext::getWidget()),
           WaveformWidgetAbstract(group) {
@@ -51,24 +49,11 @@ void GLSimpleWaveformWidget::castToQWidget() {
 }
 
 void GLSimpleWaveformWidget::paintEvent( QPaintEvent* event) {
-    Q_UNUSED(event);
-}
-
-int GLSimpleWaveformWidget::render() {
-    PerformanceTimer timer;
-    int t1;
-    //int t2, t3;
-    timer.start();
-    // QPainter makes QGLContext::currentContext() == context()
-    // this may delayed until previous buffer swap finished
+    if (QGLContext::currentContext() != context()) {
+        makeCurrent();
+    }
     QPainter painter(this);
-    t1 = timer.restart();
-    draw(&painter, NULL);
-    //t2 = timer.restart();
-    //glFinish();
-    //t3 = timer.restart();
-    //qDebug() << "GLVSyncTestWidget "<< t1 << t2 << t3;
-    return t1 / 1000; // return timer for painter setup
+    draw(&painter,event);
 }
 
 void GLSimpleWaveformWidget::postRender() {

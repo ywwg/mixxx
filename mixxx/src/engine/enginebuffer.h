@@ -53,7 +53,6 @@ class EngineBufferScale;
 class EngineBufferScaleLinear;
 class EngineBufferScaleST;
 class EngineWorkerScheduler;
-class VisualPlayPosition;
 class EngineMaster;
 
 struct Hint;
@@ -232,11 +231,13 @@ private:
     ControlObject* m_fwdButton;
     ControlObject* m_backButton;
     ControlPushButton* m_pSlipButton;
+    ControlObject* m_pSlipPosition;
 
     ControlObject* m_rateEngine;
     ControlObject* m_visualBpm;
     ControlObject* m_pMasterRate;
     ControlPotmeter* m_playposSlider;
+    ControlPotmeter* m_visualPlaypos;
     ControlObject* m_pSampleRate;
     ControlPushButton* m_pKeylock;
 
@@ -283,8 +284,6 @@ private:
     CSAMPLE* m_pCrossFadeBuffer;
     int m_iCrossFadeSamples;
     int m_iLastBufferSize;
-
-    VisualPlayPosition* m_visualPlayPos;
 };
 
 #endif
