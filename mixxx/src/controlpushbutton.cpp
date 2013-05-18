@@ -17,11 +17,6 @@
 
 #include "controlpushbutton.h"
 
-#include <QDebug>
-
-// static
-const int ControlPushButton::kPowerWindowTimeMillis = 300;
-
 /* -------- ------------------------------------------------------
    Purpose: Creates a new simulated latching push-button.
    Input:   key - Key for the configuration file
@@ -30,6 +25,13 @@ ControlPushButton::ControlPushButton(ConfigKey key) :
         ControlObject(key, false),
         m_buttonMode(PUSH),
         m_iNoStates(2) {
+    if (m_pControl) {
+        ControlNumericBehavior* pOldBehavior = m_pControl->setBehavior(
+            new ControlPushButtonBehavior(
+                static_cast<ControlPushButtonBehavior::ButtonMode>(m_buttonMode),
+                m_iNoStates));
+        delete pOldBehavior;
+    }
 }
 
 ControlPushButton::~ControlPushButton() {
@@ -39,11 +41,18 @@ ControlPushButton::~ControlPushButton() {
 void ControlPushButton::setButtonMode(enum ButtonMode mode) {
     //qDebug() << "Setting " << m_Key.group << m_Key.item << "as toggle";
     m_buttonMode = mode;
+
+    if (m_pControl) {
+        ControlNumericBehavior* pOldBehavior = m_pControl->setBehavior(
+            new ControlPushButtonBehavior(
+                static_cast<ControlPushButtonBehavior::ButtonMode>(m_buttonMode),
+                m_iNoStates));
+        delete pOldBehavior;
+    }
 }
 
 void ControlPushButton::setStates(int num_states) {
     m_iNoStates = num_states;
-}
 
 void ControlPushButton::setValueFromMidi(MidiOpCode o, double v) {
     // keyboard events are handled by this function as well
@@ -76,20 +85,20 @@ void ControlPushButton::setValueFromMidi(MidiOpCode o, double v) {
                     m_dValue = 0;
             }
         } else {
-            //if (o == MIDI_NOTE_ON) {
+            if (o == MIDI_NOTE_ON) {
                 if (v > 0.) {
                     m_dValue = !m_dValue;
                 }
-            //}
+            }
         }
     } else { //Not a toggle button (trigger only when button pushed)
-        //if (o == MIDI_NOTE_ON) {
+        if (o == MIDI_NOTE_ON) {
             m_dValue = !m_dValue;
-        //} else if (o == MIDI_NOTE_OFF) {
-        //    qDebug() << "toggle6";
-        //    m_dValue = 0.0;
-        //}
+        } else if (o == MIDI_NOTE_OFF) {
+            m_dValue = 0.0;
+        }
     }
+
     emit(valueChanged(m_dValue));
 }
 
