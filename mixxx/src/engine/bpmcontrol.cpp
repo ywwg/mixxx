@@ -9,7 +9,6 @@
 
 #include "engine/enginebuffer.h"
 #include "engine/bpmcontrol.h"
-#include "visualplayposition.h"
 #include "engine/enginechannel.h"
 #include "engine/enginemaster.h"
 
@@ -519,8 +518,8 @@ double BpmControl::getPhaseOffset(double reference_position) {
         
         double dOtherLength = ControlObject::getControl(
             ConfigKey(pOtherEngineBuffer->getGroup(), "track_samples"))->get();
-        double dOtherEnginePlayPos =
-            VisualPlayPosition::getVisualPlayPosition(pOtherEngineBuffer->getGroup())->getEnginePlayPos();
+        double dOtherEnginePlayPos =ControlObject::getControl(
+            ConfigKey(pOtherEngineBuffer->getGroup(), "visual_playposition"))->get();
         double dOtherPosition = dOtherLength * dOtherEnginePlayPos;
 
         double dOtherPrevBeat = otherBeats->findPrevBeat(dOtherPosition);

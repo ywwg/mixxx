@@ -1456,6 +1456,64 @@ void MixxxApp::slotCheckboxVinylControl2(bool toggle)
 #endif
 }
 
+void MixxxApp::slotControlVinylControl3(double toggle)
+{
+#ifdef __VINYLCONTROL__
+    if (m_pVCManager->vinylInputEnabled(3)) {
+        m_pOptionsVinylControl3->setChecked((bool)toggle);
+    } else {
+        m_pOptionsVinylControl3->setChecked(false);
+        if (toggle) {
+            QMessageBox::warning(this, tr("Mixxx"),
+                tr("No input device(s) select.\nPlease select your soundcard(s) "
+                    "in the sound hardware preferences."),
+                QMessageBox::Ok,
+                QMessageBox::Ok);
+            m_pPrefDlg->show();
+            m_pPrefDlg->showSoundHardwarePage();
+            ControlObject::getControl(ConfigKey("[Channel3]", "vinylcontrol_status"))->set(VINYL_STATUS_DISABLED);
+            ControlObject::getControl(ConfigKey("[Channel3]", "vinylcontrol_enabled"))->set(0);
+        }
+    }
+#endif
+}
+
+void MixxxApp::slotCheckboxVinylControl3(bool toggle)
+{
+#ifdef __VINYLCONTROL__
+    ControlObject::getControl(ConfigKey("[Channel3]", "vinylcontrol_enabled"))->set((double)toggle);
+#endif
+}
+
+void MixxxApp::slotControlVinylControl4(double toggle)
+{
+#ifdef __VINYLCONTROL__
+    if (m_pVCManager->vinylInputEnabled(4)) {
+        m_pOptionsVinylControl4->setChecked((bool)toggle);
+    } else {
+        m_pOptionsVinylControl4->setChecked(false);
+        if (toggle) {
+            QMessageBox::warning(this, tr("Mixxx"),
+                tr("No input device(s) select.\nPlease select your soundcard(s) "
+                    "in the sound hardware preferences."),
+                QMessageBox::Ok,
+                QMessageBox::Ok);
+            m_pPrefDlg->show();
+            m_pPrefDlg->showSoundHardwarePage();
+            ControlObject::getControl(ConfigKey("[Channel4]", "vinylcontrol_status"))->set(VINYL_STATUS_DISABLED);
+            ControlObject::getControl(ConfigKey("[Channel4]", "vinylcontrol_enabled"))->set(0);
+        }
+    }
+#endif
+}
+
+void MixxxApp::slotCheckboxVinylControl4(bool toggle)
+{
+#ifdef __VINYLCONTROL__
+    ControlObject::getControl(ConfigKey("[Channel4]", "vinylcontrol_enabled"))->set((double)toggle);
+#endif
+}
+
 void MixxxApp::slotHelpAbout() {
     DlgAbout *about = new DlgAbout(this);
     about->show();

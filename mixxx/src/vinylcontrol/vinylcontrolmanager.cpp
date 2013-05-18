@@ -80,25 +80,25 @@ void VinylControlManager::init()
                 ConfigKey("[VinylControl]","mode")).toDouble(), NULL);
     ControlObject::getControl(ConfigKey("[Channel2]","vinylcontrol_mode"))
             ->setValueFromThread(m_pConfig->getValueString(
-                ConfigKey("[VinylControl]","mode")).toDouble());
+                ConfigKey("[VinylControl]","mode")).toDouble(), NULL);
     ControlObject::getControl(ConfigKey("[Channel3]","vinylcontrol_mode"))
         ->setValueFromThread(m_pConfig->getValueString(
-                ConfigKey("[VinylControl]","mode")).toDouble());
+                ConfigKey("[VinylControl]","mode")).toDouble(), NULL);
     ControlObject::getControl(ConfigKey("[Channel4]","vinylcontrol_mode"))
         ->setValueFromThread(m_pConfig->getValueString(
-                ConfigKey("[VinylControl]","mode")).toDouble());
+                ConfigKey("[VinylControl]","mode")).toDouble(), NULL);
     ControlObject::getControl(ConfigKey("[Channel1]","vinylcontrol_cueing"))
             ->setValueFromThread(m_pConfig->getValueString(
                 ConfigKey("[VinylControl]","cueing_ch1")).toDouble(), NULL);
     ControlObject::getControl(ConfigKey("[Channel2]","vinylcontrol_cueing"))
             ->setValueFromThread(m_pConfig->getValueString(
-                ConfigKey("[VinylControl]","cueing_ch2")).toDouble());
+                ConfigKey("[VinylControl]","cueing_ch2")).toDouble(), NULL);
     ControlObject::getControl(ConfigKey("[Channel3]","vinylcontrol_cueing"))
             ->setValueFromThread(m_pConfig->getValueString(
-                ConfigKey("[VinylControl]","cueing_ch3")).toDouble());
+                ConfigKey("[VinylControl]","cueing_ch3")).toDouble(), NULL);
     ControlObject::getControl(ConfigKey("[Channel4]","vinylcontrol_cueing"))
             ->setValueFromThread(m_pConfig->getValueString(
-                ConfigKey("[VinylControl]","cueing_ch4")).toDouble());
+                ConfigKey("[VinylControl]","cueing_ch4")).toDouble(), NULL);
 }
 
 void VinylControlManager::receiveBuffer(AudioInput input,
