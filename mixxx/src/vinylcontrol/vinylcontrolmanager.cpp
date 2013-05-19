@@ -83,10 +83,10 @@ void VinylControlManager::init()
             ->setValueFromThread(m_pConfig->getValueString(
                 ConfigKey("[VinylControl]","mode")).toDouble(), NULL);
     ControlObject::getControl(ConfigKey("[Channel3]","vinylcontrol_mode"))
-        ->setValueFromThread(m_pConfig->getValueString(
+            ->setValueFromThread(m_pConfig->getValueString(
                 ConfigKey("[VinylControl]","mode")).toDouble(), NULL);
     ControlObject::getControl(ConfigKey("[Channel4]","vinylcontrol_mode"))
-        ->setValueFromThread(m_pConfig->getValueString(
+            ->setValueFromThread(m_pConfig->getValueString(
                 ConfigKey("[VinylControl]","mode")).toDouble(), NULL);
     ControlObject::getControl(ConfigKey("[Channel1]","vinylcontrol_cueing"))
             ->setValueFromThread(m_pConfig->getValueString(

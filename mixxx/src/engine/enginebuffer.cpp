@@ -162,10 +162,10 @@ EngineBuffer::EngineBuffer(const char * _group, ConfigObject<ConfigValue> * _con
 
     // BPM to display in the UI (updated more slowly than the actual bpm)
     m_visualBpm = new ControlObject(ConfigKey(m_group, "visual_bpm"));
-    
+
     // how far past the last beat are we?
     m_beatDistance = new ControlObject(ConfigKey(m_group, "beat_distance"));
-    
+
     //// the actual rate of playback as a multiple.  (ie 1.0 for native speed of file)
     //m_pTrueRate = new ControlObject(ConfigKey(_group, "true_rate"));
 
@@ -205,7 +205,7 @@ EngineBuffer::EngineBuffer(const char * _group, ConfigObject<ConfigValue> * _con
     // beats.
     addControl(new QuantizeControl(_group, _config));
     m_pQuantize = ControlObject::getControl(ConfigKey(_group, "quantize"));
-    
+
     // Create the Loop Controller
     m_pLoopingControl = new LoopingControl(_group, _config);
     addControl(m_pLoopingControl);
@@ -276,6 +276,7 @@ EngineBuffer::~EngineBuffer()
     delete m_stopButton;
     delete m_rateEngine;
     delete m_playposSlider;
+    delete m_visualPlaypos;
     delete m_visualBpm;
 
     delete m_pSlipButton;
@@ -488,12 +489,12 @@ void EngineBuffer::slotControlSeek(double change)
     // Ensure that the file position is even (remember, stereo channel files...)
     if (!even((int)new_playpos))
         new_playpos--;
-        
+
     if (m_pQuantize->get() > 0.0) {
         int offset = static_cast<int>(m_pBpmControl->getPhaseOffset(new_playpos));
-        //qDebug() << m_group << " syncing phase on seek" << offset;
-        if (!even(offset))
+        if (!even(offset)) {
             offset--;
+        }
         new_playpos += offset;
     }
 
@@ -619,10 +620,10 @@ void EngineBuffer::process(const CSAMPLE *, const CSAMPLE * pOut, const int iBuf
         bool is_scratching;
         rate = m_pRateControl->calculateRate(baserate, paused, iBufferSize,
                                              &is_scratching);
-        
+
         m_pBpmControl->setLoopSize(m_pLoopingControl->getLoopSize());
         m_pBpmControl->userTweakingSync(m_pRateControl->getUserTweakingSync());
-        
+
         if (!paused) {
             //qDebug() << "sync adjustment " << m_pBpmControl->getSyncAdjustment();
             rate *= m_pBpmControl->getSyncAdjustment();
@@ -668,7 +669,6 @@ void EngineBuffer::process(const CSAMPLE *, const CSAMPLE * pOut, const int iBuf
 
             rate = m_pScale->setTempo(rate);
             resample_rate = rate * baserate;
-            //m_pTrueRate->set(rate);
             m_pScale->setBaseRate(baserate);
             m_rate_old = resample_rate;
             // Scaler is up to date now.
@@ -740,7 +740,7 @@ void EngineBuffer::process(const CSAMPLE *, const CSAMPLE * pOut, const int iBuf
             }
             m_iCrossFadeSamples = 0;
         }
-        
+
         // It doesn't make sense to me to use the position before update, but this
         // results in better sync.
         if (m_pBpmControl->getSyncState() == SYNC_MASTER) {
@@ -800,7 +800,6 @@ void EngineBuffer::process(const CSAMPLE *, const CSAMPLE * pOut, const int iBuf
                 m_pRateControl->notifySeek(m_filepos_play);
             }
         }
-        
         m_engineLock.unlock();
 
         // Update all the indicators that EngineBuffer publishes to allow

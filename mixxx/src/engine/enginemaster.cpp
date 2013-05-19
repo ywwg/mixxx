@@ -428,7 +428,7 @@ void EngineMaster::process(const CSAMPLE *, const CSAMPLE *pOut, const int iBuff
             continue;
         }
 
-        if (!pChannel || !pChannel->isActive()) {
+        if (!pChannel->isActive()) {
             continue;
         }
 

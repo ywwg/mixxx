@@ -429,7 +429,6 @@ void RateControl::slotFileBpmChanged(double bpm) {
 }
 
 void RateControl::slotMasterBpmChanged(double syncbpm) {
-    //qDebug() << m_sGroup << "got a master bpm change" << syncbpm;
     // Vinyl overrides
     if (m_bVinylControlEnabled) {
         return;
@@ -472,7 +471,7 @@ void RateControl::slotSyncMasterChanged(double state) {
             m_pSyncMasterEnabled->set(false);
             return;    
         }
-        
+
         qDebug() << m_sGroup << " setting ourselves as master";
         m_pSyncState->set(SYNC_MASTER);
     } else {
