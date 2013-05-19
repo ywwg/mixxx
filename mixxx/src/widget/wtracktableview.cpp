@@ -359,8 +359,7 @@ void WTrackTableView::loadSelectionToGroup(QString group, bool play) {
 void WTrackTableView::slotRemove()
 {
     QModelIndexList indices = selectionModel()->selectedRows();
-    if (indices.size() > 0)
-    {
+    if (indices.size() > 0) {
         TrackModel* trackModel = getTrackModel();
         if (trackModel) {
             trackModel->removeTracks(indices);
@@ -370,8 +369,7 @@ void WTrackTableView::slotRemove()
 
 void WTrackTableView::slotPurge(){
     QModelIndexList indices = selectionModel()->selectedRows();
-    if (indices.size() > 0)
-    {
+    if (indices.size() > 0) {
         TrackModel* trackModel = getTrackModel();
         if (trackModel) {
             trackModel->purgeTracks(indices);
