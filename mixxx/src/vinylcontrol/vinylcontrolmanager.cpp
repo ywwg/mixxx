@@ -164,16 +164,18 @@ void VinylControlManager::onInputDisconnected(AudioInput input) {
 }
 
 void VinylControlManager::reloadConfig() {
-    m_proxiesLock.lockForWrite();
     for (int i = 0; i < m_proxies.size(); ++i) {
         if (!m_proxies.at(i)) continue;
+        m_proxiesLock.lockForWrite();
         VinylControlProxy *pProxy = m_proxies.at(i);
         QString group = kVCProxyGroup.arg(i + 1);
+        m_proxiesLock.unlock();
         delete pProxy;
+        m_proxiesLock.lockForWrite();
         pProxy = new VinylControlProxy(m_pConfig, group);
         m_proxies.replace(i, pProxy);
+        m_proxiesLock.unlock();
     }
-    m_proxiesLock.unlock();
 }
 
 QList<VinylControlProxy*> VinylControlManager::vinylControlProxies() {
