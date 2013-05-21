@@ -26,7 +26,7 @@ BpmControl::BpmControl(const char* _group,
         m_dLoopSize(0.0),
         m_tapFilter(this, filterLength, maxInterval),
         m_sGroup(_group) {
-    m_pNumDecks = ControlObject::getControl(ConfigKey("[Master]", "num_decks"));
+    m_pNumDecks = ControlObject::getControl(ConfigKey("[Skin]", "num_decks"));
 
     m_pPlayButton = ControlObject::getControl(ConfigKey(_group, "play"));
     connect(m_pPlayButton, SIGNAL(valueChanged(double)),
