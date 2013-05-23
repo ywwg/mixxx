@@ -1347,7 +1347,7 @@ void MixxxApp::slotOptionsPreferences()
 void MixxxApp::slotControlVinylControl(double toggle)
 {
 #ifdef __VINYLCONTROL__
-    if (m_pVCManager->vinylInputEnabled(0)) {
+    if (m_pVCManager->vinylInputEnabled(1)) {
         m_pOptionsVinylControl->setChecked((bool)toggle);
     } else {
         m_pOptionsVinylControl->setChecked(false);
@@ -1376,7 +1376,7 @@ void MixxxApp::slotCheckboxVinylControl(bool toggle)
 void MixxxApp::slotControlVinylControl2(double toggle)
 {
 #ifdef __VINYLCONTROL__
-    if (m_pVCManager->vinylInputEnabled(1)) {
+    if (m_pVCManager->vinylInputEnabled(2)) {
         m_pOptionsVinylControl2->setChecked((bool)toggle);
     } else {
         m_pOptionsVinylControl2->setChecked(false);
