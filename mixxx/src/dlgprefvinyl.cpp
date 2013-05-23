@@ -21,20 +21,19 @@
 #include <QtCore>
 #include <QtDebug>
 #include <QtGui>
+
 #include "dlgprefvinyl.h"
+
 #include "controlobject.h"
 #include "vinylcontrol/vinylcontrolmanager.h"
-#include "vinylcontrol/vinylcontrol.h" //For vinyl type string constants
+#include "vinylcontrol/defs_vinylcontrol.h"
 #include "controlobjectthreadmain.h"
-#include "dlgprefvinyl.h"
 
 DlgPrefVinyl::DlgPrefVinyl(QWidget * parent, VinylControlManager *pVCMan,
                            ConfigObject<ConfigValue> * _config)
         : QWidget(parent),
           m_COSpeed1(ControlObject::getControl(ConfigKey("[Channel1]", "vinylcontrol_speed_type"))),
-          m_COSpeed2(ControlObject::getControl(ConfigKey("[Channel2]", "vinylcontrol_speed_type"))),
-          m_COSpeed3(ControlObject::getControl(ConfigKey("[Channel3]", "vinylcontrol_speed_type"))),
-          m_COSpeed4(ControlObject::getControl(ConfigKey("[Channel4]", "vinylcontrol_speed_type"))) {
+          m_COSpeed2(ControlObject::getControl(ConfigKey("[Channel2]", "vinylcontrol_speed_type"))) {
     m_pVCManager = pVCMan;
     config = _config;
 
@@ -45,17 +44,15 @@ DlgPrefVinyl::DlgPrefVinyl(QWidget * parent, VinylControlManager *pVCMan,
     vinylControlMode.addButton(AbsoluteMode);
     vinylControlMode.addButton(RelativeMode);
 
+    m_signalWidget1.setVinylInput(0);
+    m_signalWidget2.setVinylInput(1);
     m_signalWidget1.setSize(MIXXX_VINYL_SCOPE_SIZE);
     m_signalWidget2.setSize(MIXXX_VINYL_SCOPE_SIZE);
-    m_signalWidget3.setSize(MIXXX_VINYL_SCOPE_SIZE);
-    m_signalWidget4.setSize(MIXXX_VINYL_SCOPE_SIZE);
 
     delete groupBoxSignalQuality->layout();
     QHBoxLayout *layout = new QHBoxLayout;
     layout->layout()->addWidget(&m_signalWidget1);
     layout->layout()->addWidget(&m_signalWidget2);
-    layout->layout()->addWidget(&m_signalWidget3);
-    layout->layout()->addWidget(&m_signalWidget4);
     groupBoxSignalQuality->setLayout(layout);
 
     // Add vinyl types
@@ -72,32 +69,12 @@ DlgPrefVinyl::DlgPrefVinyl(QWidget * parent, VinylControlManager *pVCMan,
     ComboBoxVinylType2->addItem(MIXXX_VINYL_TRAKTORSCRATCHSIDEA);
     ComboBoxVinylType2->addItem(MIXXX_VINYL_TRAKTORSCRATCHSIDEB);
     ComboBoxVinylType2->addItem(MIXXX_VINYL_MIXVIBESDVS);
-    
-    ComboBoxVinylType3->addItem(MIXXX_VINYL_SERATOCV02VINYLSIDEA);
-    ComboBoxVinylType3->addItem(MIXXX_VINYL_SERATOCV02VINYLSIDEB);
-    ComboBoxVinylType3->addItem(MIXXX_VINYL_SERATOCD);
-    ComboBoxVinylType3->addItem(MIXXX_VINYL_TRAKTORSCRATCHSIDEA);
-    ComboBoxVinylType3->addItem(MIXXX_VINYL_TRAKTORSCRATCHSIDEB);
-    ComboBoxVinylType3->addItem(MIXXX_VINYL_MIXVIBESDVS);
-    
-    ComboBoxVinylType4->addItem(MIXXX_VINYL_SERATOCV02VINYLSIDEA);
-    ComboBoxVinylType4->addItem(MIXXX_VINYL_SERATOCV02VINYLSIDEB);
-    ComboBoxVinylType4->addItem(MIXXX_VINYL_SERATOCD);
-    ComboBoxVinylType4->addItem(MIXXX_VINYL_TRAKTORSCRATCHSIDEA);
-    ComboBoxVinylType4->addItem(MIXXX_VINYL_TRAKTORSCRATCHSIDEB);
-    ComboBoxVinylType4->addItem(MIXXX_VINYL_MIXVIBESDVS);
 
     ComboBoxVinylSpeed1->addItem(MIXXX_VINYL_SPEED_33);
     ComboBoxVinylSpeed1->addItem(MIXXX_VINYL_SPEED_45);
 
     ComboBoxVinylSpeed2->addItem(MIXXX_VINYL_SPEED_33);
     ComboBoxVinylSpeed2->addItem(MIXXX_VINYL_SPEED_45);
-
-    ComboBoxVinylSpeed3->addItem(MIXXX_VINYL_SPEED_33);
-    ComboBoxVinylSpeed3->addItem(MIXXX_VINYL_SPEED_45);
-
-    ComboBoxVinylSpeed4->addItem(MIXXX_VINYL_SPEED_33);
-    ComboBoxVinylSpeed4->addItem(MIXXX_VINYL_SPEED_45);
 
     connect(applyButton, SIGNAL(clicked()), this, SLOT(slotApply()));
     connect(VinylGain, SIGNAL(sliderReleased()), this, SLOT(VinylGainSlotApply()));
@@ -109,37 +86,24 @@ DlgPrefVinyl::~DlgPrefVinyl()
 }
 
 /** @brief Performs any necessary actions that need to happen when the prefs dialog is opened */
-void DlgPrefVinyl::slotShow()
-{
-    QList<VinylControlProxy*> VCProxiesList = m_pVCManager->vinylControlProxies();
-    if (VCProxiesList.value(0) != NULL)
-        m_signalWidget1.setVinylControlProxy(VCProxiesList.value(0));
-    if (VCProxiesList.value(1) != NULL)
-        m_signalWidget2.setVinylControlProxy(VCProxiesList.value(1));
-    if (VCProxiesList.value(2) != NULL)
-        m_signalWidget3.setVinylControlProxy(VCProxiesList.value(2));
-    if (VCProxiesList.value(3) != NULL)
-        m_signalWidget4.setVinylControlProxy(VCProxiesList.value(3));
+void DlgPrefVinyl::slotShow() {
+    if (m_pVCManager) {
+        m_pVCManager->addSignalQualityListener(&m_signalWidget1);
+        m_pVCManager->addSignalQualityListener(&m_signalWidget2);
+    }
 
     //(Re)Initialize the signal quality indicators
     m_signalWidget1.resetWidget();
-    m_signalWidget1.startDrawing();
     m_signalWidget2.resetWidget();
-    m_signalWidget2.startDrawing();
-    m_signalWidget3.resetWidget();
-    m_signalWidget3.startDrawing();
-    m_signalWidget4.resetWidget();
-    m_signalWidget4.startDrawing();
+
 }
 
 /** @brief Performs any necessary actions that need to happen when the prefs dialog is closed */
-void DlgPrefVinyl::slotClose()
-{
-    //Stop updating the vinyl control signal indicators when the prefs dialog is closed.
-    m_signalWidget1.stopDrawing();
-    m_signalWidget2.stopDrawing();
-    m_signalWidget3.stopDrawing();
-    m_signalWidget4.stopDrawing();
+void DlgPrefVinyl::slotClose() {
+    if (m_pVCManager) {
+        m_pVCManager->removeSignalQualityListener(&m_signalWidget1);
+        m_pVCManager->removeSignalQualityListener(&m_signalWidget2);
+    }
 }
 
 void DlgPrefVinyl::slotUpdate()
@@ -152,14 +116,6 @@ void DlgPrefVinyl::slotUpdate()
     combo_index = ComboBoxVinylType2->findText(config->getValueString(ConfigKey("[Channel2]","vinylcontrol_vinyl_type")));
     if (combo_index != -1)
         ComboBoxVinylType2->setCurrentIndex(combo_index);
-        
-    combo_index = ComboBoxVinylType3->findText(config->getValueString(ConfigKey("[Channel3]","vinylcontrol_vinyl_type")));
-    if (combo_index != -1)
-        ComboBoxVinylType3->setCurrentIndex(combo_index);
-        
-    combo_index = ComboBoxVinylType4->findText(config->getValueString(ConfigKey("[Channel4]","vinylcontrol_vinyl_type")));
-    if (combo_index != -1)
-        ComboBoxVinylType4->setCurrentIndex(combo_index);
 
     combo_index = ComboBoxVinylSpeed1->findText(config->getValueString(ConfigKey("[Channel1]","vinylcontrol_speed_type")));
     if (combo_index != -1)
@@ -169,50 +125,26 @@ void DlgPrefVinyl::slotUpdate()
     if (combo_index != -1)
         ComboBoxVinylSpeed2->setCurrentIndex(combo_index);
 
-    combo_index = ComboBoxVinylSpeed3->findText(config->getValueString(ConfigKey("[Channel3]","vinylcontrol_speed_type")));
-    if (combo_index != -1)
-        ComboBoxVinylSpeed3->setCurrentIndex(combo_index);
-
-    combo_index = ComboBoxVinylSpeed4->findText(config->getValueString(ConfigKey("[Channel4]","vinylcontrol_speed_type")));
-    if (combo_index != -1)
-        ComboBoxVinylSpeed4->setCurrentIndex(combo_index);
-
     // set lead-in time
-    LeadinTime->setText (config->getValueString(ConfigKey("[VinylControl]","lead_in_time")) );
+    LeadinTime->setText (config->getValueString(ConfigKey(VINYL_PREF_KEY,"lead_in_time")) );
 
     // set Relative mode
-    int iMode = config->getValueString(ConfigKey("[VinylControl]","mode")).toInt();
+    int iMode = config->getValueString(ConfigKey(VINYL_PREF_KEY,"mode")).toInt();
     if (iMode == MIXXX_VCMODE_ABSOLUTE)
         AbsoluteMode->setChecked(true);
     else if (iMode == MIXXX_VCMODE_RELATIVE)
         RelativeMode->setChecked(true);
 
     // Honour the Needle Skip Prevention setting.
-    NeedleSkipEnable->setChecked( (bool)config->getValueString( ConfigKey("[VinylControl]", "needle_skip_prevention") ).toInt() );
+    NeedleSkipEnable->setChecked( (bool)config->getValueString( ConfigKey(VINYL_PREF_KEY, "needle_skip_prevention") ).toInt() );
 
-    SignalQualityEnable->setChecked((bool)config->getValueString(ConfigKey("[VinylControl]", "show_signal_quality") ).toInt() );
+    SignalQualityEnable->setChecked((bool)config->getValueString(ConfigKey(VINYL_PREF_KEY, "show_signal_quality") ).toInt() );
 
     //set vinyl control gain
-    VinylGain->setValue( config->getValueString(ConfigKey("[VinylControl]","gain")).toInt());
+    VinylGain->setValue( config->getValueString(ConfigKey(VINYL_PREF_KEY,"gain")).toInt());
 
-    QList<VinylControlProxy*> VCProxiesList = m_pVCManager->vinylControlProxies();
-    if (VCProxiesList.value(0) != NULL) {
-        m_signalWidget1.setVinylControlProxy(VCProxiesList.value(0));
-    }
-    if (VCProxiesList.value(1) != NULL) {
-        m_signalWidget2.setVinylControlProxy(VCProxiesList.value(1));
-    }
-    if (VCProxiesList.value(2) != NULL) {
-        m_signalWidget3.setVinylControlProxy(VCProxiesList.value(2));
-    }
-    if (VCProxiesList.value(3) != NULL) {
-        m_signalWidget4.setVinylControlProxy(VCProxiesList.value(3));
-    }
-
-    m_signalWidget1.setVinylActive(m_pVCManager->vinylInputEnabled(1));
-    m_signalWidget2.setVinylActive(m_pVCManager->vinylInputEnabled(2));
-    m_signalWidget3.setVinylActive(m_pVCManager->vinylInputEnabled(3));
-    m_signalWidget4.setVinylActive(m_pVCManager->vinylInputEnabled(4));
+    m_signalWidget1.setVinylActive(m_pVCManager->vinylInputEnabled(0));
+    m_signalWidget2.setVinylActive(m_pVCManager->vinylInputEnabled(1));
 }
 
 // Update the config object with parameters from dialog
@@ -225,9 +157,9 @@ void DlgPrefVinyl::slotApply()
     bool isInteger;
     strLeadIn.toInt(&isInteger);
     if (isInteger)
-        config->set(ConfigKey("[VinylControl]","lead_in_time"), strLeadIn);
+        config->set(ConfigKey(VINYL_PREF_KEY,"lead_in_time"), strLeadIn);
     else
-        config->set(ConfigKey("[VinylControl]","lead_in_time"), MIXXX_VC_DEFAULT_LEADINTIME);
+        config->set(ConfigKey(VINYL_PREF_KEY,"lead_in_time"), MIXXX_VC_DEFAULT_LEADINTIME);
 
     //Apply updates for everything else...
     VinylTypeSlotApply();
@@ -239,11 +171,11 @@ void DlgPrefVinyl::slotApply()
     if (RelativeMode->isChecked())
         iMode = MIXXX_VCMODE_RELATIVE;
 
-    config->set(ConfigKey("[VinylControl]","mode"), ConfigValue(iMode));
-    config->set(ConfigKey("[VinylControl]","needle_skip_prevention" ), ConfigValue( (int)(NeedleSkipEnable->isChecked( )) ) );
-    config->set(ConfigKey("[VinylControl]","show_signal_quality" ), ConfigValue( (int)(SignalQualityEnable->isChecked( )) ) );
+    config->set(ConfigKey(VINYL_PREF_KEY,"mode"), ConfigValue(iMode));
+    config->set(ConfigKey(VINYL_PREF_KEY,"needle_skip_prevention" ), ConfigValue( (int)(NeedleSkipEnable->isChecked( )) ) );
+    config->set(ConfigKey(VINYL_PREF_KEY,"show_signal_quality" ), ConfigValue( (int)(SignalQualityEnable->isChecked( )) ) );
 
-    m_pVCManager->reloadConfig();
+    m_pVCManager->requestReloadConfig();
     slotUpdate();
 }
 
@@ -251,12 +183,8 @@ void DlgPrefVinyl::VinylTypeSlotApply()
 {
     config->set(ConfigKey("[Channel1]","vinylcontrol_vinyl_type"), ConfigValue(ComboBoxVinylType1->currentText()));
     config->set(ConfigKey("[Channel2]","vinylcontrol_vinyl_type"), ConfigValue(ComboBoxVinylType2->currentText()));
-    config->set(ConfigKey("[Channel3]","vinylcontrol_vinyl_type"), ConfigValue(ComboBoxVinylType3->currentText()));
-    config->set(ConfigKey("[Channel4]","vinylcontrol_vinyl_type"), ConfigValue(ComboBoxVinylType4->currentText()));
     config->set(ConfigKey("[Channel1]","vinylcontrol_speed_type"), ConfigValue(ComboBoxVinylSpeed1->currentText()));
     config->set(ConfigKey("[Channel2]","vinylcontrol_speed_type"), ConfigValue(ComboBoxVinylSpeed2->currentText()));
-    config->set(ConfigKey("[Channel3]","vinylcontrol_speed_type"), ConfigValue(ComboBoxVinylSpeed3->currentText()));
-    config->set(ConfigKey("[Channel4]","vinylcontrol_speed_type"), ConfigValue(ComboBoxVinylSpeed4->currentText()));
 
     //Save the vinylcontrol_speed_type in ControlObjects as well so it can be retrieved quickly
     //on the fly. (eg. WSpinny needs to know how fast to spin)
@@ -270,25 +198,15 @@ void DlgPrefVinyl::VinylTypeSlotApply()
     } else if (ComboBoxVinylSpeed2->currentText() == MIXXX_VINYL_SPEED_45) {
         m_COSpeed2.slotSet(MIXXX_VINYL_SPEED_45_NUM);
     }
-    if (ComboBoxVinylSpeed3->currentText() == MIXXX_VINYL_SPEED_33) {
-        m_COSpeed3.slotSet(MIXXX_VINYL_SPEED_33_NUM);
-    } else if (ComboBoxVinylSpeed3->currentText() == MIXXX_VINYL_SPEED_45) {
-        m_COSpeed3.slotSet(MIXXX_VINYL_SPEED_45_NUM);
-    }
-    if (ComboBoxVinylSpeed4->currentText() == MIXXX_VINYL_SPEED_33) {
-        m_COSpeed4.slotSet(MIXXX_VINYL_SPEED_33_NUM);
-    } else if (ComboBoxVinylSpeed4->currentText() == MIXXX_VINYL_SPEED_45) {
-        m_COSpeed4.slotSet(MIXXX_VINYL_SPEED_45_NUM);
-    }
 }
 
 void DlgPrefVinyl::VinylGainSlotApply()
 {
     qDebug() << "in VinylGainSlotApply()" << "with gain:" << VinylGain->value();
     //Update the config key...
-    config->set(ConfigKey("[VinylControl]","gain"), ConfigValue(VinylGain->value()));
+    config->set(ConfigKey(VINYL_PREF_KEY,"gain"), ConfigValue(VinylGain->value()));
 
     //Update the ControlObject...
-    ControlObject* pControlObjectVinylControlGain = ControlObject::getControl(ConfigKey("[VinylControl]", "gain"));
+    ControlObject* pControlObjectVinylControlGain = ControlObject::getControl(ConfigKey(VINYL_PREF_KEY, "gain"));
     pControlObjectVinylControlGain->set(VinylGain->value());
 }
