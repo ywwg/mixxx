@@ -151,7 +151,6 @@ double BpmControl::getBpm() const {
 }
 
 void BpmControl::slotFileBpmChanged(double bpm) {
-    //qDebug() << this << "slotFileBpmChanged" << bpm;
     // Adjust the file-bpm with the current setting of the rate to get the
     // engine BPM.
     double dRate = 1.0 + m_pRateDir->get() * m_pRateRange->get() * m_pRateSlider->get();
@@ -416,10 +415,6 @@ void BpmControl::slotMasterBeatDistanceChanged(double master_distance)
             return;
     }
 
-    //e.g. if my position is .8, and theirs is .6
-    //then sample_offset = beatlength * .8 - beatlength * .6
-    //or, beatlength * (myposition - theirpercent)
-
     double percent_offset = my_distance - master_distance;
     double sample_offset = beat_length * percent_offset;
 
@@ -435,13 +430,8 @@ void BpmControl::slotMasterBeatDistanceChanged(double master_distance)
     } else {
         double error = percent_offset - m_dUserOffset;
         if (fabs(error) > MAGIC_FUZZ) {
-            //qDebug() << "tweak to get back in sync " << error
-            //         << " " << m_dUserOffset << " " << MAGIC_FUZZ;
-            //qDebug() << "master" << master_distance << "mine" << my_distance << "diff" << percent_offset;
             m_dSyncAdjustment = (0 - error) * MAGIC_FACTOR;
-            //qDebug() << m_sGroup << " tweaking.... " << m_dSyncAdjustment;
             m_dSyncAdjustment = 1.0 + math_max(-0.1f, math_min(0.1f, m_dSyncAdjustment));
-            //qDebug() << "clamped" << m_dSyncAdjustment;
         }
     }
 }
@@ -624,8 +614,11 @@ double BpmControl::getPhaseOffset(double reference_position) {
         }
     }
 
-    seekAbs(dNewPlaypos);
-    return true;
+    return dNewPlaypos - dThisPosition;
+}
+
+void BpmControl::setEngineBpmByRate(double rate) {
+    m_pEngineBpm->set(rate * m_pFileBpm->get());
 }
 
 void BpmControl::slotAdjustBpm() {
@@ -638,9 +631,6 @@ void BpmControl::slotAdjustBpm() {
         m_dFileBpm = dFileBpm;
     }
 
-    // Emitted value is one of the control objects used below
-
-    //qDebug() << this << "slotAdjustBpm"
     // Adjust the file-bpm with the current setting of the rate to get the
     // engine BPM.
     double dRate = 1.0 + m_pRateDir->get() * m_pRateRange->get() * m_pRateSlider->get();
