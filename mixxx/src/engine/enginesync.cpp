@@ -91,13 +91,42 @@ void EngineSync::addDeck(QString deck) {
     m_sDeckList.append(deck);
 
     // Connect objects so we can react when the user changes the settings
-    ControlObject *deck_sync_state = ControlObject::getControl(ConfigKey(deck, "sync_state"));
-    connect(deck_sync_state, SIGNAL(valueChanged(double)),
-            this, SLOT(slotDeckStateChanged(double)),
+    ConfigKey key(deck, "sync_state");
+    ControlObject *deck_sync_state = ControlObject::getControl(key);
+    if (key.group == "[Channel1]") {
+        connect(deck_sync_state, SIGNAL(valueChanged(double)),
+            this, SLOT(slotDeck1StateChanged(double)),
             Qt::DirectConnection);
-    connect(deck_sync_state, SIGNAL(valueChangedFromEngine(double)),
-            this, SLOT(slotDeckStateChanged(double)),
+        connect(deck_sync_state, SIGNAL(valueChangedFromEngine(double)),
+            this, SLOT(slotDeck1StateChanged(double)),
             Qt::DirectConnection);
+    } else if (key.group == "[Channel2]") {
+        connect(deck_sync_state, SIGNAL(valueChanged(double)),
+            this, SLOT(slotDeck2StateChanged(double)),
+            Qt::DirectConnection);
+        connect(deck_sync_state, SIGNAL(valueChangedFromEngine(double)),
+            this, SLOT(slotDeck2StateChanged(double)),
+            Qt::DirectConnection);
+    } else if (key.group == "[Channel3]") {
+        connect(deck_sync_state, SIGNAL(valueChanged(double)),
+            this, SLOT(slotDeck3StateChanged(double)),
+            Qt::DirectConnection);
+        connect(deck_sync_state, SIGNAL(valueChangedFromEngine(double)),
+            this, SLOT(slotDeck3StateChanged(double)),
+            Qt::DirectConnection);
+    } else if (key.group == "[Channel4]") {
+        connect(deck_sync_state, SIGNAL(valueChanged(double)),
+            this, SLOT(slotDeck4StateChanged(double)),
+            Qt::DirectConnection);
+        connect(deck_sync_state, SIGNAL(valueChangedFromEngine(double)),
+            this, SLOT(slotDeck4StateChanged(double)),
+            Qt::DirectConnection);
+    } else {
+        qDebug() << "ERROR not a known deck, can't hook up for master sync";
+        return;
+    }
+
+
 }
 
 void EngineSync::disconnectMaster() {
@@ -184,7 +213,7 @@ bool EngineSync::setDeckMaster(QString deck) {
     // mix.
 
     qDebug() << "***********************************************asked to set a new master:" << deck;
-    
+
     if (pChannel) {
         disconnectMaster();
         m_pMasterBuffer = pChannel->getEngineBuffer();
@@ -278,7 +307,7 @@ void EngineSync::slotSourceRateChanged(double rate_engine) {
         m_dMasterBpm = rate_engine * filebpm;
         //qDebug() << "file bpm " << filebpm;
         //qDebug()<< "announcing a master bpm of" <<  m_dMasterBpm;
-        
+
         if (m_dMasterBpm != 0) {
             m_pSyncRateSlider->set(m_dMasterBpm);
         }
@@ -303,10 +332,10 @@ void EngineSync::slotSyncRateSliderChanged(double new_bpm) {
 }
 
 void EngineSync::slotMasterBpmChanged(double new_bpm) {
-    qDebug() << "~~~~~~~~~~~~~~~~~~~~~~new master bpm" << new_bpm;
+//    qDebug() << "~~~~~~~~~~~~~~~~~~~~~~new master bpm" << new_bpm;
     m_pSyncRateSlider->set(new_bpm);
     if (new_bpm != m_dMasterBpm) {
-        qDebug() << "set slider";
+  //      qDebug() << "set slider";
         if (m_sSyncSource != "[Master]") {
             //qDebug() << "can't set master sync when sync isn't internal";
             //XXX(Owen):
@@ -324,7 +353,7 @@ void EngineSync::slotMasterBpmChanged(double new_bpm) {
             m_pMasterBpm->set(m_dMasterBpm);
             return;
         }
-        qDebug() << "using it";
+    //    qDebug() << "using it";
         m_dMasterBpm = new_bpm;
         updateSamplesPerBeat();
 
@@ -361,17 +390,25 @@ void EngineSync::slotInternalMasterChanged(double state) {
     }
 }
 
-void EngineSync::slotDeckStateChanged(double state) {
-    //figure out who called us
-    ControlObject *caller = qobject_cast<ControlObject* >(QObject::sender());
-    if (caller == NULL) {
-        qDebug() << "FATAL ERROR: Couldn't get control object from sender in slotDeckStateChanged. "
-                 << "Undefined behavior may ensue.";
-        return;
-    }
-    QString group = caller->getKey().group;
+void EngineSync::slotDeck1StateChanged(double state) {
+    deckXStateChanged("[Channel1]", state);
+}
+
+void EngineSync::slotDeck2StateChanged(double state) {
+    deckXStateChanged("[Channel2]", state);
+}
+
+void EngineSync::slotDeck3StateChanged(double state) {
+    deckXStateChanged("[Channel3]", state);
+}
+
+void EngineSync::slotDeck4StateChanged(double state) {
+    deckXStateChanged("[Channel4]", state);
+}
+
+void EngineSync::deckXStateChanged(QString group, double state) {
     qDebug() << "got a master state change from" << group;
-    
+
     // In the following logic, m_sSyncSourcea acts like "previous sync source".
     if (state == SYNC_MASTER) {
         // TODO: don't allow setting of master if not playing

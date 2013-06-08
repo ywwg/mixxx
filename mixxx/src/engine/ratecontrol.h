@@ -72,7 +72,7 @@ public:
     virtual void trackLoaded(TrackPointer pTrack);
     virtual void trackUnloaded(TrackPointer pTrack);
 
-    
+
   private slots:
     void slotFileBpmChanged(double);
     void slotMasterBpmChanged(double);
@@ -82,13 +82,14 @@ public:
     void slotSyncStateChanged(double);
     void slotControlVinylScratching(double);
     void slotWheelSensitivity(double);
-    
+    void slotSetStatuses();
+
   protected:
 	static double m_dWheelSensitivity;
 
   private:
     QString m_sGroup;
-  
+
     double getJogFactor() const;
     double getWheelFactor() const;
 
@@ -117,7 +118,7 @@ public:
     ControlObject* m_pBackButton;
     ControlObject* m_pForwardButton;
     ControlObject* m_pWheelSensitivity;
-    
+
     ControlTTRotary* m_pWheel;
     ControlTTRotary* m_pScratch;
     ControlTTRotary* m_pOldScratch;
@@ -129,9 +130,9 @@ public:
     Rotary* m_pJogFilter;
 
     ControlObject *m_pSampleRate;
-    
+
     TrackPointer m_pTrack;
-    
+
     //For Master Sync
     ControlObject *m_pMasterBpm;
     ControlObject *m_pSyncInternalEnabled;
@@ -141,7 +142,7 @@ public:
     double m_dSyncedRate;
     int m_iSyncState;
     bool m_bUserTweakingSync;
-    
+
     /** The current loaded file's detected BPM */
     ControlObject* m_pFileBpm;
     double m_dFileBpm;
@@ -204,7 +205,7 @@ public:
       * pressed, because there is a fixed limit on the range of the pitch
       * slider */
     double m_dOldRate;
-    
+
     /** Handle for configuration */
     ConfigObject<ConfigValue>* m_pConfig;
 };
