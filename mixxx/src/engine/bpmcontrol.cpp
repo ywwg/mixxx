@@ -624,11 +624,8 @@ double BpmControl::getPhaseOffset(double reference_position) {
         }
     }
 
-    return dNewPlaypos - dThisPosition;
-}
-
-void BpmControl::setEngineBpmByRate(double rate) {
-    m_pEngineBpm->set(rate * m_pFileBpm->get());
+    seekAbs(dNewPlaypos);
+    return true;
 }
 
 void BpmControl::slotAdjustBpm() {
@@ -670,9 +667,9 @@ void BpmControl::trackUnloaded(TrackPointer pTrack) {
     if (m_pTrack) {
         disconnect(m_pTrack.data(), SIGNAL(beatsUpdated()),
                    this, SLOT(slotUpdatedTrackBeats()));
+        m_pTrack.clear();
+        m_pBeats.clear();
     }
-    m_pTrack.clear();
-    m_pBeats.clear();
 }
 
 void BpmControl::slotUpdatedTrackBeats()
