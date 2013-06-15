@@ -800,6 +800,13 @@ QMimeData* BaseSqlTableModel::mimeData(const QModelIndexList &indexes) const {
     return mimeData;
 }
 
+void BaseSqlTableModel::setLibraryPrefix(QString sPrefix)
+{
+    m_sPrefix = sPrefix;
+    if (sPrefix[sPrefix.length()-1] == '/' || sPrefix[sPrefix.length()-1] == '\\')
+        m_sPrefix.chop(1);
+}
+
 QAbstractItemDelegate* BaseSqlTableModel::delegateForColumn(const int i, QObject* pParent) {
     if (i == fieldIndex(LIBRARYTABLE_RATING)) {
         return new StarDelegate(pParent);
