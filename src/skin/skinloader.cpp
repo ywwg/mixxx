@@ -1,12 +1,15 @@
 // skinloader.cpp
 // Created 6/21/2010 by RJ Ryan (rryan@mit.edu)
 
-#include <QString>
+#include "skin/skinloader.h"
+
+#include <QApplication>
+#include <QDesktopWidget>
 #include <QDir>
+#include <QString>
 #include <QtDebug>
 
 #include "vinylcontrol/vinylcontrolmanager.h"
-#include "skin/skinloader.h"
 #include "skin/legacyskinparser.h"
 #include "controllers/controllermanager.h"
 #include "library/library.h"
@@ -24,7 +27,6 @@ SkinLoader::~SkinLoader() {
 }
 
 QString SkinLoader::getConfiguredSkinPath() {
-    const QString defaultSkin = "Deere1920x1080-FullHD";//XXX: App Store //"Outline1024x600-Netbook";
 
     QString qSkinPath = m_pConfig->getResourcePath();
     qSkinPath.append("skins/");

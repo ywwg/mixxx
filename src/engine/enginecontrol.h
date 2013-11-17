@@ -8,7 +8,9 @@
 #include <QList>
 
 #include "configobject.h"
+#include "controlobjectthread.h"
 #include "trackinfoobject.h"
+#include "control/controlvalue.h"
 
 class EngineMaster;
 class EngineBuffer;
@@ -60,7 +62,7 @@ class EngineControl : public QObject {
     // hintReader allows the EngineControl to provide hints to the reader to
     // indicate that the given portion of a song is a potential imminent seek
     // target.
-    virtual void hintReader(QList<Hint>& hintList);
+    virtual void hintReader(QVector<Hint>* pHintList);
 
     virtual void setEngineMaster(EngineMaster* pEngineMaster);
     void setEngineBuffer(EngineBuffer* pEngineBuffer);
@@ -78,19 +80,22 @@ class EngineControl : public QObject {
   protected:
     void seek(double fractionalPosition);
     void seekAbs(double sample);
+    EngineBuffer* pickSyncTarget();
 
     const char* getGroup();
     ConfigObject<ConfigValue>* getConfig();
     EngineMaster* getEngineMaster();
     EngineBuffer* getEngineBuffer();
 
-  private:
     const char* m_pGroup;
     ConfigObject<ConfigValue>* m_pConfig;
-    double m_dCurrentSample;
+
+  private:
+    ControlValueAtomic<double> m_dCurrentSample;
     double m_dTotalSamples;
     EngineMaster* m_pEngineMaster;
     EngineBuffer* m_pEngineBuffer;
+    ControlObjectThread m_numDecks;
 };
 
 #endif /* ENGINECONTROL_H */
