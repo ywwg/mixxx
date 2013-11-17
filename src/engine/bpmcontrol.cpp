@@ -20,7 +20,6 @@ BpmControl::BpmControl(const char* _group,
                        ConfigObject<ConfigValue>* _config) :
         EngineControl(_group, _config),
         m_dFileBpm(0.0),
-        m_dLoopSize(0.0),
         m_dPreviousSample(0),
         m_dSyncAdjustment(1.0),
         m_dUserOffset(0.0),
@@ -426,12 +425,6 @@ double BpmControl::getSyncAdjustment(bool userTweakingSync) {
         return m_dSyncAdjustment;
     }
 
-    //If we aren't quantized or looping, don't worry about offset
-    if (!m_pQuantize->get() || (m_dLoopSize < 1.0 && m_dLoopSize > 0)) {
-        m_dSyncAdjustment = 1.0;
-        return;
-    }
-
     // This is the deck position at the start of the callback.
     double dThisPosition = getCurrentSample();
     double dPrevBeat = m_pBeats->findPrevBeat(dThisPosition);
@@ -545,7 +538,7 @@ bool BpmControl::syncPhase() {
     }
 
     double dNewPlaypos = dThisPosition + offset;
-    emit(seekAbs(dNewPlaypos));
+    seekAbs(dNewPlaypos);
     return true;
 }
 

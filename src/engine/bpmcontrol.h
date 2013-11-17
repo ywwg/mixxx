@@ -28,7 +28,6 @@ class BpmControl : public EngineControl {
     double getSyncedRate() const { return m_dSyncedRate; }
     // Get the phase offset from the specified position.
     double getPhaseOffset(double reference_position);
-    void setLoopSize(double size) { m_dLoopSize = size; }
 
     void setCurrentSample(const double dCurrentSample, const double dTotalSamples);
     double process(const double dRate,
