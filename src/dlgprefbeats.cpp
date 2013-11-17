@@ -53,6 +53,8 @@ DlgPrefBeats::DlgPrefBeats(QWidget *parent, ConfigObject<ConfigValue> *_config)
             this, SLOT(minBpmRangeChanged(int)));
     connect(txtMaxBpm, SIGNAL(valueChanged(int)),
             this, SLOT(maxBpmRangeChanged(int)));
+    connect(txtMaxLen, SIGNAL(valueChanged(int)),
+            this, SLOT(maxBpmRangeChanged(int)));
 
     connect(bReanalyse,SIGNAL(stateChanged(int)),
             this, SLOT(slotReanalyzeChanged(int)));
@@ -93,6 +95,7 @@ void DlgPrefBeats::loadSettings(){
     }
     m_minBpm = m_pconfig->getValueString(ConfigKey(BPM_CONFIG_KEY, BPM_RANGE_START)).toInt();
     m_maxBpm = m_pconfig->getValueString(ConfigKey(BPM_CONFIG_KEY, BPM_RANGE_END)).toInt();
+    m_maxLen = m_pconfig->getValueString(ConfigKey(BPM_CONFIG_KEY, BPM_MAX_LENGTH)).toInt();
 
     slotUpdate();
 }
@@ -117,6 +120,7 @@ void DlgPrefBeats::setDefaults() {
 
     m_minBpm = 70;
     m_maxBpm = 140;
+    m_maxLen = 30;
     //slotApply();
     slotUpdate();
 }
@@ -153,6 +157,11 @@ void DlgPrefBeats::maxBpmRangeChanged(int value){
     slotUpdate();
 }
 
+void DlgPrefBeats::maxLenChanged(int value){
+    m_maxLen = value;
+    slotUpdate();
+}
+
 void DlgPrefBeats::slotUpdate(){
     bfixedtempo->setEnabled(m_banalyserEnabled);
     boffset->setEnabled((m_banalyserEnabled && m_bfixedtempoEnabled));
@@ -161,6 +170,7 @@ void DlgPrefBeats::slotUpdate(){
     bFastAnalysis->setEnabled(m_banalyserEnabled);
     txtMaxBpm->setEnabled(m_banalyserEnabled && m_bfixedtempoEnabled);
     txtMinBpm->setEnabled(m_banalyserEnabled && m_bfixedtempoEnabled);
+    txtMaxLen->setEnabled(m_banalyserEnabled && m_bfixedtempoEnabled);
     bReanalyse->setEnabled(m_banalyserEnabled);
 
     if (!m_banalyserEnabled) {
@@ -185,6 +195,7 @@ void DlgPrefBeats::slotUpdate(){
     plugincombo->setCurrentIndex(comboselected);
     txtMaxBpm->setValue(m_maxBpm);
     txtMinBpm->setValue(m_minBpm);
+    txtMaxLen->setValue(m_maxLen);
     bReanalyse->setChecked(m_bReanalyze);
 }
 
@@ -220,6 +231,7 @@ void DlgPrefBeats::slotApply() {
 
     m_pconfig->set(ConfigKey(BPM_CONFIG_KEY, BPM_RANGE_START), ConfigValue(m_minBpm));
     m_pconfig->set(ConfigKey(BPM_CONFIG_KEY, BPM_RANGE_END), ConfigValue(m_maxBpm));
+    m_pconfig->set(ConfigKey(BPM_CONFIG_KEY, BPM_MAX_LENGTH), ConfigValue(m_maxLen));
     m_pconfig->Save();
 }
 

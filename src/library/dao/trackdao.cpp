@@ -89,7 +89,7 @@ void TrackDAO::finish() {
 }
 
 void TrackDAO::initialize() {
-    qDebug() << "TrackDAO::initialize" << QThread::currentThread() << m_database.connectionName();
+    //qDebug() << "TrackDAO::initialize" << QThread::currentThread() << m_database.connectionName();
 }
 
 /** Retrieve the track id for the track that's located at "location" on disk.
@@ -143,8 +143,8 @@ QList<int> TrackDAO::getTrackIds(const QList<QFileInfo>& files) {
 // Some code (eg. drag and drop) needs to just get a track's location, and it's
 // not worth retrieving a whole TrackInfoObject.
 QString TrackDAO::getTrackLocation(const int trackId) {
-    qDebug() << "TrackDAO::getTrackLocation"
-             << QThread::currentThread() << m_database.connectionName();
+    //qDebug() << "TrackDAO::getTrackLocation"
+    //         << QThread::currentThread() << m_database.connectionName();
     QSqlQuery query(m_database);
     QString trackLocation = "";
     query.prepare("SELECT track_locations.location FROM track_locations "
@@ -171,13 +171,13 @@ bool TrackDAO::trackExistsInDatabase(const QString& absoluteFilePath) {
     return (getTrackId(absoluteFilePath) != -1);
 }
 
-void TrackDAO::saveTrack(TrackPointer track) {
+void TrackDAO::saveTrack(TrackPointer track, bool override_dirty) {
     if (track) {
-        saveTrack(track.data());
+        saveTrack(track.data(), override_dirty);
     }
 }
 
-void TrackDAO::saveTrack(TrackInfoObject* pTrack) {
+void TrackDAO::saveTrack(TrackInfoObject* pTrack, bool override_dirty) {
     if (!pTrack) {
         qWarning() << "TrackDAO::saveTrack() was given NULL track.";
         return;
@@ -186,18 +186,27 @@ void TrackDAO::saveTrack(TrackInfoObject* pTrack) {
     // If track's id is not -1, then update, otherwise add.
     int trackId = pTrack->getId();
     if (trackId != -1) {
-        if (pTrack->isDirty()) {
+        if (pTrack->isDirty() || override_dirty) {
             //qDebug() << this << "Dirty tracks before clean save:" << m_dirtyTracks.size();
             //qDebug() << "TrackDAO::saveTrack. Dirty. Calling update";
             updateTrack(pTrack);
 
-            // Write audio meta data, if enabled in the preferences
-            // TODO(DSC) Only wite tag if file Metatdate is dirty
-            writeAudioMetaData(pTrack);
+            //Write audio meta data, if enabled in the preferences
+            if (m_pConfig && m_pConfig->getValueString(ConfigKey("[Library]","WriteAudioTags")).toInt() == 1)
+            {
+    			if (pTrack->isLoaded())
+    			{
+    				qDebug() << "Track reports it is currently loaded, not saving metadata:" << pTrack->getTitle();
+    				//don't remove from dirtytracks or call it clean
+    				return;
+    			}
+    			else
+		            writeAudioMetaData(pTrack);
+		    }
 
             //qDebug() << this << "Dirty tracks remaining after clean save:" << m_dirtyTracks.size();
         } else {
-            //qDebug() << "TrackDAO::saveTrack. Not Dirty";
+            qDebug() << "TrackDAO::saveTrack. Not Dirty";
             //qDebug() << this << "Dirty tracks remaining:" << m_dirtyTracks.size();
             //qDebug() << "Skipping track update for track" << pTrack->getId();
         }

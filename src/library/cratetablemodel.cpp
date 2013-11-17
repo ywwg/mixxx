@@ -10,7 +10,7 @@
 #include "mixxxutils.cpp"
 #include "playermanager.h"
 
-CrateTableModel::CrateTableModel(QObject* pParent, 
+CrateTableModel::CrateTableModel(QObject* pParent,
                                  TrackCollection* pTrackCollection)
         : BaseSqlTableModel(pParent, pTrackCollection,
                             "mixxx.db.model.crate"),
@@ -164,7 +164,8 @@ TrackModel::CapabilitiesFlags CrateTableModel::getCapabilities() const {
             | TRACKMODELCAPS_REMOVE
             | TRACKMODELCAPS_MANIPULATEBEATS
             | TRACKMODELCAPS_CLEAR_BEATS
-            | TRACKMODELCAPS_RESETPLAYED;
+            | TRACKMODELCAPS_RESETPLAYED
+            | TRACKMODELCAPS_SYNCTAGS;
 
     bool locked = m_crateDAO.isCrateLocked(m_iCrateId);
     if (locked) {

@@ -48,6 +48,7 @@ VinylControlXwax::VinylControlXwax(ConfigObject<ConfigValue> * pConfig, QString 
     bForceResync    = false;
     iOldMode        = MIXXX_VCMODE_ABSOLUTE;
     dUiUpdateTime   = -1.0f;
+    m_dKnobTweak = 0.0f;
     m_bNeedleSkipPrevention = (bool)(m_pConfig->getValueString( ConfigKey( VINYL_PREF_KEY, "needle_skip_prevention" ) ).toInt());
     signalenabled->slotSet(m_pConfig->getValueString( ConfigKey( VINYL_PREF_KEY, "show_signal_quality" ) ).toInt());
 
@@ -279,6 +280,7 @@ void VinylControlXwax::analyzeSamples(const short *samples, size_t nFrames)
 
     int reportedMode = mode->get();
     bool reportedPlayButton = playButton->get();
+    m_dKnobTweak = m_pVinylPitchTweakKnob->get();
 
     if (iVCMode != reportedMode)
     {
@@ -434,7 +436,7 @@ void VinylControlXwax::analyzeSamples(const short *samples, size_t nFrames)
         //or 1 (plays back at that rate)
 
         if (reportedPlayButton)
-            controlScratch->slotSet(rateDir->get() * (rateSlider->get() * fRateRange) + 1.0f);
+            controlScratch->slotSet(rateDir->get() * (rateSlider->get() * fRateRange) + 1.0f + m_dKnobTweak);
         else
             controlScratch->slotSet(0.0f);
 
@@ -667,8 +669,8 @@ void VinylControlXwax::enableConstantMode()
     mode->slotSet((double)iVCMode);
     togglePlayButton(true);
     double rate = controlScratch->get();
-    rateSlider->slotSet(rateDir->get() * (fabs(rate) - 1.0f) / fRateRange);
-    controlScratch->slotSet(rate);
+    rateSlider->slotSet(rateDir->get() * (fabs(rate + m_dKnobTweak) - 1.0f) / fRateRange);
+    controlScratch->slotSet(rate + m_dKnobTweak);
 }
 
 void VinylControlXwax::enableConstantMode(double rate)
@@ -795,7 +797,7 @@ bool VinylControlXwax::checkEnabled(bool was, bool is)
         //This allows for single-deck control, dj handoffs, etc.
 
         togglePlayButton(playButton->get() || fabs(controlScratch->get()) > 0.05f);
-        controlScratch->slotSet(rateDir->get() * (rateSlider->get() * fRateRange) + 1.0f);
+        controlScratch->slotSet(rateDir->get() * (rateSlider->get() * fRateRange) + 1.0f + m_dKnobTweak);
         resetSteadyPitch(0.0f, 0.0f);
         bForceResync = true;
         if (!was)

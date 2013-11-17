@@ -59,6 +59,7 @@ class BaseSqlTableModel : public QAbstractTableModel, public TrackModel {
     void select();
     QString getTrackLocation(const QModelIndex& index) const;
     QAbstractItemDelegate* delegateForColumn(const int i, QObject* pParent);
+    virtual void setLibraryPrefix(QString sPrefix);
 
     // Methods reimplemented from QAbstractItemModel
     void sort(int column, Qt::SortOrder order);
@@ -138,6 +139,7 @@ class BaseSqlTableModel : public QAbstractTableModel, public TrackModel {
     QString m_previewDeckGroup;
     int m_iPreviewDeckTrackId;
     QVector<QHash<int, QVariant> > m_headerInfo;
+    QString m_sPrefix;
 
     DISALLOW_COPY_AND_ASSIGN(BaseSqlTableModel);
 };

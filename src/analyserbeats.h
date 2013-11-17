@@ -39,7 +39,7 @@ class AnalyserBeats: public Analyser {
     bool m_bPreferencesFastAnalysis;
 
     int m_iSampleRate, m_iTotalSamples;
-    int m_iMinBpm, m_iMaxBpm;
+    int m_iMinBpm, m_iMaxBpm, m_iMaxLen;
 };
 
 #endif /* ANALYSERVAMPTEST_H_ */

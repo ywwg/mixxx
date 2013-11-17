@@ -97,7 +97,7 @@ void GLWaveformRendererFilteredSignal::draw(QPainter* painter, QPaintEvent* /*ev
 
     if (m_pHighKillControlObject && m_pHighKillControlObject->get() == 1.0) {
         highGain = 0;
-    }    
+    }
 
     float meanIndex;
 
@@ -151,19 +151,19 @@ void GLWaveformRendererFilteredSignal::draw(QPainter* painter, QPaintEvent* /*ev
                 glVertex2f(meanIndex,lowGain*maxLow[0]);
                 glVertex2f(meanIndex,-1.f*lowGain*maxLow[1]);
 
-                glColor4f(m.redF(),m.greenF(),m.blueF(),0.85);
-                glVertex2f(meanIndex,midGain*maxMid[0]);
-                glVertex2f(meanIndex,-1.f*midGain*maxMid[1]);
-
                 glColor4f(h.redF(),h.greenF(),h.blueF(),0.9);
                 glVertex2f(meanIndex,highGain*maxHigh[0]);
                 glVertex2f(meanIndex,-1.f*highGain*maxHigh[1]);
+
+                glColor4f(m.redF(),m.greenF(),m.blueF(),0.85);
+                glVertex2f(meanIndex,midGain*maxMid[0]);
+                glVertex2f(meanIndex,-1.f*midGain*maxMid[1]);
             }
         }
         glEnd();
     } else { //top || bottom
         glMatrixMode(GL_PROJECTION);
-        glPushMatrix();        
+        glPushMatrix();
         glLoadIdentity();
         if( m_alignment == Qt::AlignBottom)
             glOrtho(firstVisualIndex, lastVisualIndex, 0.0, 255.0, -10.0, 10.0);
@@ -171,7 +171,7 @@ void GLWaveformRendererFilteredSignal::draw(QPainter* painter, QPaintEvent* /*ev
             glOrtho(firstVisualIndex, lastVisualIndex, 255.0, 0.0, -10.0, 10.0);
 
         glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();        
+        glPushMatrix();
         glLoadIdentity();
 
         glScalef(1.f,visualGain*m_waveformRenderer->getGain(),1.f);
@@ -201,13 +201,13 @@ void GLWaveformRendererFilteredSignal::draw(QPainter* painter, QPaintEvent* /*ev
                 glVertex2f(float(visualIndex),0.f);
                 glVertex2f(float(visualIndex),lowGain*math_max(maxLow[0],maxLow[1]));
 
-                glColor4f(m.redF(),m.greenF(),m.blueF(),0.85);
-                glVertex2f(float(visualIndex),0.f);
-                glVertex2f(float(visualIndex),midGain*math_max(maxMid[0],maxMid[1]));
-
                 glColor4f(h.redF(),h.greenF(),h.blueF(),0.9);
                 glVertex2f(float(visualIndex),0.f);
                 glVertex2f(float(visualIndex),highGain*math_max(maxHigh[0],maxHigh[1]));
+
+                glColor4f(m.redF(),m.greenF(),m.blueF(),0.85);
+                glVertex2f(float(visualIndex),0.f);
+                glVertex2f(float(visualIndex),midGain*math_max(maxMid[0],maxMid[1]));
             }
         }
         glEnd();

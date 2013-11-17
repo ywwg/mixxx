@@ -58,6 +58,7 @@ ControlValueDelegate::ControlValueDelegate(QObject *parent)
         m_channelControlValues.append("volume");
         m_channelControlValues.append("wheel");
         m_channelControlValues.append("jog");
+        m_channelControlValues.append("vinylpitchtweak");
         m_channelControlValues.append("vinylcontrol_enabled");
         m_channelControlValues.append("vinylcontrol_mode");
         m_channelControlValues.append("vinylcontrol_cueing");
@@ -150,6 +151,10 @@ ControlValueDelegate::ControlValueDelegate(QObject *parent)
         m_masterControlValues.append("volume");
         m_masterControlValues.append("sync_master");
         m_masterControlValues.append("sync_bpm");
+        m_masterControlValues.append("wheelsensitivity");
+        m_masterControlValues.append("pfl_delay");
+        m_masterControlValues.append("bypass_eq");
+
     }
     if (m_playlistControlValues.isEmpty())
     {

@@ -71,6 +71,7 @@ class VinylControlXwax : public VinylControl {
     SteadyPitch *m_pSteadySubtle, *m_pSteadyGross;
     QTime tSinceSteadyPitch;
     double dUiUpdateTime;
+    double m_dKnobTweak;
 
     ControlObjectThread *trackSelector, *trackLoader;
     double dLastTrackSelectPos;

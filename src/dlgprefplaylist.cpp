@@ -30,7 +30,8 @@ DlgPrefPlaylist::DlgPrefPlaylist(QWidget * parent, ConfigObject<ConfigValue> * c
           m_pconfig(config) {
     setupUi(this);
     slotUpdate();
-    checkbox_ID3_sync->setVisible(false);
+    //Owen edit: my workaround works well enough for my personal use
+    //checkbox_ID3_sync->setVisible(false);
 
     connect(PushButtonBrowsePlaylist, SIGNAL(clicked()),
             this, SLOT(slotBrowseDir()));

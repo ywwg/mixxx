@@ -37,6 +37,7 @@ class WOverview : public WWidget {
     WOverview(const char* pGroup, ConfigObject<ConfigValue>* pConfig, QWidget *parent=NULL);
     virtual ~WOverview();
     void setup(QDomNode node);
+    void setLibraryPrefix(QString sPrefix);
 
   public slots:
     void setValue(double);
@@ -95,6 +96,7 @@ class WOverview : public WWidget {
     ConfigObject<ConfigValue>* m_pConfig;
     ControlObjectThread* m_endOfTrackControl;
     double m_endOfTrack;
+    QString m_sPrefix;
     ControlObjectThread* m_trackSamplesControl;
     ControlObjectThread* m_playControl;
 

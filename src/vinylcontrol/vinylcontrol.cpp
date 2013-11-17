@@ -27,6 +27,7 @@ VinylControl::VinylControl(ConfigObject<ConfigValue> * pConfig, QString group)
     rateRange           = new ControlObjectThread(group, "rateRange");
     vinylStatus         = new ControlObjectThread(group, "vinylcontrol_status");
     rateDir             = new ControlObjectThread(group, "rate_dir");
+    m_pVinylPitchTweakKnob = new ControlObjectThread(group,  "vinylpitchtweak");
     loopEnabled         = new ControlObjectThread(group, "loop_enabled");
     signalenabled       = new ControlObjectThread(group, "vinylcontrol_signal_enabled");
 
@@ -103,6 +104,7 @@ VinylControl::~VinylControl()
     delete rateRange;
     delete vinylStatus;
     delete rateDir;
+    delete m_pVinylPitchTweakKnob;
     delete loopEnabled;
     delete signalenabled;
 }
@@ -111,4 +113,3 @@ float VinylControl::getSpeed()
 {
     return dVinylScratch;
 }
-

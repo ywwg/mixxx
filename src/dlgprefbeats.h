@@ -34,6 +34,7 @@ class DlgPrefBeats : public DlgPreferencePage, public Ui::DlgBeatsDlg {
     void fastAnalysisEnabled(int i);
     void minBpmRangeChanged(int value);
     void maxBpmRangeChanged(int value);
+    void maxLenChanged(int value);
     void slotReanalyzeChanged(int value);
 
   signals:
@@ -49,6 +50,7 @@ class DlgPrefBeats : public DlgPreferencePage, public Ui::DlgBeatsDlg {
     QString m_selectedAnalyser;
     int m_minBpm;
     int m_maxBpm;
+    int m_maxLen;
     bool m_banalyserEnabled, m_bfixedtempoEnabled, m_boffsetEnabled, m_FastAnalysisEnabled, m_bReanalyze;
 };
 

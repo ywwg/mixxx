@@ -38,12 +38,12 @@ class BpmControl : public EngineControl {
   public slots:
     virtual void trackLoaded(TrackPointer pTrack);
     virtual void trackUnloaded(TrackPointer pTrack);
+    void slotControlBeatSync(double);
 
   private slots:
     void slotSetEngineBpm(double);
     void slotFileBpmChanged(double);
     void slotControlPlay(double);
-    void slotControlBeatSync(double);
     void slotControlBeatSyncPhase(double);
     void slotControlBeatSyncTempo(double);
     void slotTapFilter(double,int);

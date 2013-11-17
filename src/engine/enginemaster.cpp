@@ -29,6 +29,7 @@
 #include "enginebuffer.h"
 #include "enginechannel.h"
 #include "engineclipping.h"
+#include "enginepfldelay.h"
 #include "enginevumeter.h"
 #include "enginexfader.h"
 #include "engine/sidechain/enginesidechain.h"
@@ -104,6 +105,13 @@ EngineMaster::EngineMaster(ConfigObject<ConfigValue> * _config,
     // Headphone Clipping
     m_pHeadClipping = new EngineClipping("");
 
+    // Headphone Delay
+    m_pHeadDelay = new EnginePflDelay();
+
+    // Eq Bypass
+    m_pBypassEq = new ControlPushButton(ConfigKey(group, "bypass_eq"));
+    m_pBypassEq->setButtonMode(ControlPushButton::TOGGLE);
+
     // Allocate buffers
     m_pHead = SampleUtil::alloc(MAX_BUFFER_LEN);
     m_pMaster = SampleUtil::alloc(MAX_BUFFER_LEN);
@@ -172,7 +180,6 @@ EngineMaster::~EngineMaster() {
         ChannelInfo* pChannelInfo = channel_it.next();
         channel_it.remove();
         SampleUtil::free(pChannelInfo->m_pBuffer);
-        delete pChannelInfo->m_pChannel;
         delete pChannelInfo->m_pVolumeControl;
         delete pChannelInfo;
     }
@@ -403,6 +410,9 @@ void EngineMaster::process(const CSAMPLE *, const CSAMPLE *pOut, const int iBuff
     m_headphoneVolumeOld = headphoneVolume;
     m_pHeadClipping->process(m_pHead, m_pHead, iBufferSize);
 
+    //delay the headphone sound by the appropriate amount
+    m_pHeadDelay->process(m_pHead, m_pHead, iBufferSize);
+
     //Master/headphones interleaving is now done in
     //SoundManager::requestBuffer() - Albert Nov 18/07
 
@@ -446,6 +456,9 @@ EngineChannel* EngineMaster::getChannel(QString group) {
     return NULL;
 }
 
+int EngineMaster::numChannels() const {
+    return m_channels.size();
+}
 const CSAMPLE* EngineMaster::getDeckBuffer(unsigned int i) const {
     return getChannelBuffer(PlayerManager::groupForDeck(i));
 }

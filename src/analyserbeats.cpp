@@ -28,7 +28,8 @@ AnalyserBeats::AnalyserBeats(ConfigObject<ConfigValue> *_config)
           m_iSampleRate(0),
           m_iTotalSamples(0),
           m_iMinBpm(0),
-          m_iMaxBpm(9999) {
+          m_iMaxBpm(9999),
+          m_iMaxLen(1000) {
 }
 
 AnalyserBeats::~AnalyserBeats(){
@@ -130,6 +131,12 @@ bool AnalyserBeats::initialise(TrackPointer tio, int sampleRate, int totalSample
         m_bShouldAnalyze = true;
     }
 
+    // If the track is too long, don't analyze
+    if (((float)m_iTotalSamples / m_iSampleRate) / 60 > m_iMaxLen)
+    {
+        qDebug() << "Track is longer than " << m_iMaxLen << " minutes as per preferences, not analyzing";
+        m_bShouldAnalyze = false;
+    }
 
     if (!m_bShouldAnalyze) {
         qDebug() << "Beat calculation will not start";

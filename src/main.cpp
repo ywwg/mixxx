@@ -36,6 +36,8 @@
 #include "errordialoghandler.h"
 #include "util/version.h"
 
+#include <QFile>
+#include <QFileInfo>
 #ifdef __FFMPEGFILE__
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -112,6 +114,31 @@ void MessageHandler(QtMsgType type,
         // QApplication is initialized
         QString logFileName = CmdlineArgs::Instance().getSettingsPath() + "/mixxx.log";
 
+        //backup old logfiles
+        //FIXME: cout << doesn't get printed until after mixxx quits (???)
+        for (int i=9; i>0; i--)
+        {
+            QString oldlogname = QString("%1.%2").arg(logFileName).arg(i);
+            QFileInfo logbackup(oldlogname);
+            if (logbackup.exists())
+            {
+                QString olderlogname = QString("%1.%2").arg(logFileName).arg(i+1);
+                // this should only happen with number 10
+                if (QFileInfo(olderlogname).exists())
+                    QFile::remove(olderlogname);
+                if (!QFile::rename(oldlogname, olderlogname))
+                    std::cout << "Error backing up old logfile\n" << oldlogname.toStdString();
+            }
+        }
+        QFileInfo log(logFileName);
+        if (log.exists())
+        {
+            QString olderlogname = QString("%1.1").arg(logFileName);
+            if(QFileInfo(olderlogname).exists())
+                QFile::remove(olderlogname);
+            if (!QFile::rename(logFileName, olderlogname))
+                std::cout << "Error backing up logfile\n" << logFileName.toStdString();
+        }
         // XXX will there ever be a case that we can't write to our current
         // working directory?
         Logfile.setFileName(logFileName);
@@ -259,11 +286,13 @@ int main(int argc, char * argv[])
     //LADSPALoader ladspaloader;
 #endif
 
-    // Check if one of the command line arguments is "--no-visuals"
-//    bool bVisuals = true;
-//    for (int i=0; i<argc; ++i)
-//        if(QString("--no-visuals")==argv[i])
-//            bVisuals = false;
+    // This is just a stupid test to make sure corefiles are being created
+    for (int i=0; i<argc; ++i) {
+        if(QString("--crash")==argv[i]) {
+            QString *crasher = NULL;
+            crasher->append("crashnow");
+        }
+    }
 
 
     // set up the plugin paths...

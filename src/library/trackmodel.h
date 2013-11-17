@@ -42,7 +42,9 @@ class TrackModel {
         TRACKMODELCAPS_RESETPLAYED       = 0x02000,
         TRACKMODELCAPS_HIDE              = 0x04000,
         TRACKMODELCAPS_UNHIDE            = 0x08000,
-        TRACKMODELCAPS_PURGE             = 0x10000
+        TRACKMODELCAPS_PURGE             = 0x10000,
+        TRACKMODELCAPS_DELETEFS          = 0x20000,
+        TRACKMODELCAPS_SYNCTAGS          = 0x40000
     };
     typedef int CapabilitiesFlags; /** Enables us to do ORing */
 
@@ -127,7 +129,7 @@ class TrackModel {
         m_iDefaultSortColumn = sortColumn;
         m_eDefaultSortOrder = sortOrder;
     }
-    
+
     virtual int fieldIndex(const QString& fieldName) const {
         Q_UNUSED(fieldName);
         return -1;

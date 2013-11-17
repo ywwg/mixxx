@@ -64,6 +64,9 @@ ControlObject* ControlObject::getControl(const ConfigKey& key, bool warn) {
     if (pCDP) {
         return pCDP->getCreatorCO();
     }
+
+	if (key.group != "" || key.item != "")
+    	qWarning() << "ControlObject::getControl returning NULL for (" << key.group << "," << key.item << ")";
     return NULL;
 }
 

@@ -116,6 +116,13 @@ EngineBuffer::EngineBuffer(const char * _group, ConfigObject<ConfigValue> * _con
             this, SLOT(slotControlPlayRequest(double)),
             Qt::DirectConnection);
 
+    // Play and Sync
+    m_playSyncButton = new ControlPushButton(ConfigKey(m_group, "play_sync"));
+    m_playSyncButton->set(0);
+    connect(m_playSyncButton, SIGNAL(valueChanged(double)),
+            this, SLOT(slotControlPlaySync(double)),
+            Qt::DirectConnection);
+
     //Play from Start Button (for sampler)
     m_playStartButton = new ControlPushButton(ConfigKey(m_group, "start_play"));
     connect(m_playStartButton, SIGNAL(valueChanged(double)),
@@ -176,6 +183,16 @@ EngineBuffer::EngineBuffer(const char * _group, ConfigObject<ConfigValue> * _con
 
     m_pRepeat = new ControlPushButton(ConfigKey(m_group, "repeat"));
     m_pRepeat->setButtonMode(ControlPushButton::TOGGLE);
+
+#ifdef __VINYLCONTROL__
+    //a midi knob to tweak the vinyl pitch for decks with crappy sliders
+    m_pVinylPitchTweakKnob = new ControlPotmeter(ConfigKey(_group, "vinylpitchtweak"), -0.005, 0.005);
+    /*m_pVinylStatus = new ControlObject(ConfigKey(group,"vinylcontrol_status"));
+    m_pVinylSeek = new ControlObject(ConfigKey(group,"vinylcontrol_seek"));
+    connect(m_pVinylSeek, SIGNAL(valueChanged(double)),
+            this, SLOT(slotControlVinylSeek(double)),
+            Qt::DirectConnection);*/
+#endif
 
     // Sample rate
     m_pSampleRate = new ControlObjectSlave("[Master]", "samplerate", this);
@@ -260,6 +277,7 @@ EngineBuffer::~EngineBuffer()
     delete m_pReadAheadManager;
     delete m_pReader;
 
+    delete m_playSyncButton;
     delete m_playButton;
     delete m_playStartButton;
     delete m_stopStartButton;
@@ -285,6 +303,10 @@ EngineBuffer::~EngineBuffer()
 
     delete m_pKeylock;
     delete m_pEject;
+
+#ifdef __VINYLCONTROL__
+    delete m_pVinylPitchTweakKnob;
+#endif
 
     delete [] m_pDitherBuffer;
     delete [] m_pCrossFadeBuffer;
@@ -420,6 +442,8 @@ void EngineBuffer::slotTrackLoaded(TrackPointer pTrack,
     m_file_length_old = iTrackNumSamples;
     m_pTrackSamples->set(iTrackNumSamples);
     m_pTrackSampleRate->set(iTrackSampleRate);
+    //fix the duration
+    pTrack->setDuration(iTrackNumSamples / (2 * iTrackSampleRate));
     m_pause.unlock();
 
     // All EngingeControls are connected directly
@@ -518,6 +542,14 @@ void EngineBuffer::slotControlPlayRequest(double v)
 
     // set and confirm must be called in any case to update the widget toggle state
     m_playButton->setAndConfirm(v);
+}
+
+void EngineBuffer::slotControlPlaySync(double v)
+{
+    if (v == 0.0) {
+        m_playButton->set(1);
+    }
+    m_pBpmControl->slotControlBeatSync(1);
 }
 
 void EngineBuffer::slotControlStart(double v)

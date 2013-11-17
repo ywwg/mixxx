@@ -115,6 +115,7 @@ void TrackInfoObject::populateLocation(const QFileInfo& fileInfo) {
 
 void TrackInfoObject::initialize(bool parseHeader) {
     m_bDirty = false;
+    m_bIsLoaded = false;
     m_bLocationChanged = false;
 
     m_sArtist = "";
@@ -163,6 +164,17 @@ bool TrackInfoObject::isValid() const {
     return m_bIsValid;
 }
 
+bool TrackInfoObject::isLoaded() const
+{
+	QMutexLocker lock(&m_qMutex);
+	return m_bIsLoaded;
+}
+
+void TrackInfoObject::setLoaded(bool val)
+{
+	QMutexLocker lock(&m_qMutex);
+	m_bIsLoaded = val;
+}
 
 int TrackInfoObject::parse() {
     // Add basic information derived from the filename:
@@ -558,6 +570,7 @@ bool TrackInfoObject::getPlayed() const {
 
 void TrackInfoObject::setPlayedAndUpdatePlaycount(bool bPlayed) {
     QMutexLocker lock(&m_qMutex);
+    bool dirty = false;
     if (bPlayed) {
         ++m_iTimesPlayed;
         setDirty(true);
@@ -567,6 +580,18 @@ void TrackInfoObject::setPlayedAndUpdatePlaycount(bool bPlayed) {
         setDirty(true);
     }
     m_bPlayed = bPlayed;
+	if (dirty)
+   	{
+		if (bPlayed)
+		{
+			qDebug() << "Track Played:" << m_sArtist << " - " << m_sTitle << " - " << m_sLocation;
+		}
+		else
+		{
+			qDebug() << "Track Unplayed:" << m_sArtist << " - " << m_sTitle << " - " << m_sLocation;
+	    }
+		setDirty(true);
+	}
 }
 
 void TrackInfoObject::setPlayed(bool bPlayed) {

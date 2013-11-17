@@ -24,6 +24,8 @@ double RateControl::m_dPermSmall = 0.05;
 int RateControl::m_iRateRampSensitivity = 250;
 enum RateControl::RATERAMP_MODE RateControl::m_eRateRampMode = RateControl::RATERAMP_STEP;
 
+double RateControl::m_dWheelSensitivity = 1.0;
+
 RateControl::RateControl(const char* _group,
                          ConfigObject<ConfigValue>* _config)
     : EngineControl(_group, _config),
@@ -122,6 +124,17 @@ RateControl::RateControl(const char* _group,
     // Wheel to control playback position/speed
     m_pWheel = new ControlTTRotary(ConfigKey(_group, "wheel"));
 
+    // Adjust jog wheel sensitivity factor
+    QString wheel_sense_str = m_pConfig->getValueString(ConfigKey("[Master]","wheelsensitivity"));
+    if (wheel_sense_str.isNull() || wheel_sense_str.isEmpty())
+    {
+        m_dWheelSensitivity = 1.0f;
+    } else {
+        m_dWheelSensitivity = wheel_sense_str.toDouble();
+    }
+    m_pWheelSensitivity = new ControlPotmeter(ConfigKey("[Master]", "wheelsensitivity"), 0., 2.);
+    connect(m_pWheelSensitivity, SIGNAL(valueChanged(double)), this, SLOT(slotWheelSensitivity(double)));
+
     // Scratch controller, this is an accumulator which is useful for
     // controllers that return individiual +1 or -1s, these get added up and
     // cleared when we read
@@ -170,6 +183,9 @@ RateControl::RateControl(const char* _group,
 }
 
 RateControl::~RateControl() {
+    QString str;
+    str = str.setNum(m_dWheelSensitivity, 'f');
+    m_pConfig->set(ConfigKey("[Master]","wheelsensitivity"), str);
     delete m_pRateSlider;
     delete m_pRateRange;
     delete m_pRateDir;
@@ -196,6 +212,7 @@ RateControl::~RateControl() {
     delete m_pJog;
     delete m_pJogFilter;
     delete m_pScratchController;
+    delete m_pWheelSensitivity;
 }
 
 void RateControl::setBpmControl(BpmControl* bpmcontrol) {
@@ -368,6 +385,11 @@ void RateControl::trackUnloaded(TrackPointer pTrack) {
     m_pTrack.clear();
 }
 
+void RateControl::slotWheelSensitivity(double val)
+{
+    m_dWheelSensitivity = val;
+}
+
 double RateControl::getRawRate() const {
     return m_pRateSlider->get() *
         m_pRateRange->get() *
@@ -394,7 +416,7 @@ double RateControl::getJogFactor() const {
         jogFactor = 0.0f;
     }
 
-    return jogFactor;
+    return jogFactor * m_dWheelSensitivity;
 }
 
 double RateControl::calculateRate(double baserate, bool paused, int iSamplesPerBuffer,

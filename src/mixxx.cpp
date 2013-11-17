@@ -33,6 +33,7 @@
 #include "defs_urls.h"
 #include "dlgabout.h"
 #include "dlgpreferences.h"
+#include "engine/enginedeck.h"
 #include "engine/enginemaster.h"
 #include "engine/enginemicrophone.h"
 #include "engine/enginepassthrough.h"
@@ -52,6 +53,7 @@
 #include "soundsourceproxy.h"
 #include "trackinfoobject.h"
 #include "upgrade.h"
+#include "logparser.h"
 #include "waveform/waveformwidgetfactory.h"
 #include "widget/wwaveformviewer.h"
 #include "widget/wwidget.h"
@@ -341,7 +343,8 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
     // writing meta data may ruine your MP3 file if done simultaneously.
     // see Bug #728197
     // For safety reasons, we deactivate this feature.
-    m_pConfig->set(ConfigKey("[Library]","WriteAudioTags"), ConfigValue(0));
+    //OWEN EDIT: No!
+    //m_pConfig->set(ConfigKey("[Library]","WriteAudioTags"), ConfigValue(0));
 
 
     // library dies in seemingly unrelated qtsql error about not having a
@@ -399,6 +402,12 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
             .length() < 1)
     {
         m_pConfig->set(ConfigKey("[BPM]", "BPMRangeEnd"),ConfigValue(135));
+    }
+
+    if (m_pConfig->getValueString(ConfigKey("[BPM]", "BPMMaxLength"))
+            .length() < 1)
+    {
+        m_pConfig->set(ConfigKey("[BPM]", "BPMMaxLength"),ConfigValue(30));
     }
 
     if (m_pConfig->getValueString(ConfigKey("[BPM]", "AnalyzeEntireSong"))
@@ -836,6 +845,10 @@ QString buildWhatsThis(const QString& title, const QString& text) {
 // initializes all QActions of the application
 void MixxxApp::initActions()
 {
+    m_pFileLoadTracklist = new QAction(tr("Mark &Tracks as Played..."), this);
+    m_pFileLoadTracklist->setShortcut(tr("Ctrl+L"));
+    m_pFileLoadTracklist->setShortcutContext(Qt::ApplicationShortcut);
+
     QString loadTrackText = tr("Load Track to Deck %1");
     QString loadTrackStatusText = tr("Loads a track in deck %1");
     QString openText = tr("Open");
@@ -1011,6 +1024,12 @@ void MixxxApp::initActions()
                                                   "OptionsMenu_EnableVinyl1"),
                                                   tr("Ctrl+y"))));
     m_pOptionsVinylControl->setShortcutContext(Qt::ApplicationShortcut);
+
+    m_pFileLoadTracklist->setStatusTip(tr("Loads a Mixxx logfile and marks tracks as played"));
+    m_pFileLoadTracklist->setWhatsThis(tr("Load\nLoads a Mixxx logfile and marks tracks as played"));
+    connect(m_pFileLoadTracklist, SIGNAL(triggered()),
+            this, SLOT(slotFileLoadTracklist()));
+
     // Either check or uncheck the vinyl control menu item depending on what
     // it was saved as.
     m_pOptionsVinylControl->setCheckable(true);
@@ -1161,6 +1180,7 @@ void MixxxApp::initMenuBar()
     connect(m_pOptionsMenu, SIGNAL(aboutToShow()),
             this, SLOT(slotOptionsMenuShow()));
     // menuBar entry fileMenu
+    m_pFileMenu->addAction(m_pFileLoadTracklist);
     m_pFileMenu->addAction(m_pFileLoadSongPlayer1);
     m_pFileMenu->addAction(m_pFileLoadSongPlayer2);
     m_pFileMenu->addSeparator();
@@ -1222,6 +1242,34 @@ void MixxxApp::initMenuBar()
 
     menuBar()->addSeparator();
     menuBar()->addMenu(m_pHelpMenu);
+}
+
+void MixxxApp::slotFileLoadTracklist()
+{
+    QString s =
+        QFileDialog::getOpenFileName(
+            this,
+            tr("Load Mixxx logfile"),
+            QDir::homePath().append("/").append(SETTINGS_PATH),
+            QString("Logfile (*.log*);;All Files(*)"));
+
+    if (s != QString::null) {
+        MixxxLogParser logparser(s);
+        QStringList loaded_tracks = logparser.getPlayedTracks();
+        QStringListIterator iter(loaded_tracks);
+        while (iter.hasNext())
+        {
+            QString location = iter.next();
+            //ripped from playermanager
+            TrackDAO& trackDao = m_pLibrary->getTrackCollection()->getTrackDAO();
+            TrackPointer pTrack = trackDao.getTrack(trackDao.getTrackId(location));
+            if (pTrack != NULL)
+            {
+                qDebug() << "Marking " << pTrack->getTitle() << "as played";
+                pTrack->setPlayed(true);
+            }
+        }
+    }
 }
 
 void MixxxApp::slotFileLoadSongPlayer(int deck) {

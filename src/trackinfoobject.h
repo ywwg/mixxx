@@ -250,6 +250,9 @@ public:
     /** Set the track's full file path */
     void setLocation(QString location);
 
+    bool isLoaded() const;
+	void setLoaded(bool val);
+
     // Get the track's Beats list
     BeatsPointer getBeats() const;
 
@@ -379,6 +382,9 @@ public:
 
     /** True if object contains valid information */
     bool m_bIsValid;
+
+    /** True if the track is currently in a player */
+    bool m_bIsLoaded;
 
     // Storage for the track's beats
     BeatsPointer m_pBeats;

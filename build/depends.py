@@ -220,7 +220,7 @@ class Qt(Dependence):
 
             if qt5:
                 # Note that -reduce-relocations is enabled by default in Qt5.
-                # So we must build the code with position independent code               
+                # So we must build the code with position independent code
                 build.env.Append(CCFLAGS = '-fPIE')
 
         elif build.platform_is_bsd:
@@ -471,7 +471,7 @@ class MixxxCore(Feature):
                    "engine/enginechannel.cpp",
                    "engine/enginemaster.cpp",
                    "engine/enginesync.cpp",
-                   "engine/enginedelay.cpp",
+                   "engine/enginepfldelay.cpp",
                    "engine/engineflanger.cpp",
                    "engine/enginefiltereffect.cpp",
                    "engine/enginevumeter.cpp",
@@ -642,6 +642,7 @@ class MixxxCore(Feature):
                    "library/parser.cpp",
                    "library/parserpls.cpp",
                    "library/parserm3u.cpp",
+                   "logparser.cpp",
                    "library/parsercsv.cpp",
 
                    "soundsourceproxy.cpp",

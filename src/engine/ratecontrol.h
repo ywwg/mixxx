@@ -70,6 +70,10 @@ public:
     void slotControlFastBack(double);
     virtual void trackLoaded(TrackPointer pTrack);
     virtual void trackUnloaded(TrackPointer pTrack);
+    void slotWheelSensitivity(double);
+
+  protected:
+    static double m_dWheelSensitivity;
 
   private slots:
     void slotSyncStateChanged(double);
@@ -103,6 +107,7 @@ public:
     ControlPushButton* m_pReverseButton;
     ControlObject* m_pBackButton;
     ControlObject* m_pForwardButton;
+    ControlObject* m_pWheelSensitivity;
 
     ControlTTRotary* m_pWheel;
     ControlTTRotary* m_pScratch;

@@ -23,6 +23,7 @@
 #include "engine/enginechannel.h"
 #include "soundmanagerutil.h"
 #include "recording/recordingmanager.h"
+#include <QtCore>
 
 class EngineWorkerScheduler;
 class EngineBuffer;
@@ -37,6 +38,7 @@ class ControlPotmeter;
 class ControlPushButton;
 class EngineVinylSoundEmu;
 class EngineSideChain;
+class EnginePflDelay;
 class SyncWorker;
 class EngineSync;
 
@@ -51,6 +53,7 @@ class EngineMaster : public EngineObject, public AudioSource {
 
     // Get access to the sample buffers. None of these are thread safe. Only to
     // be called by SoundManager.
+    int numChannels() const;
     const CSAMPLE* buffer(AudioOutput output) const;
 
     void process(const CSAMPLE *, const CSAMPLE *pOut, const int iBufferSize);
@@ -165,8 +168,10 @@ class EngineMaster : public EngineObject, public AudioSource {
     ControlObject* m_pMasterAudioBufferSize;
     ControlObject* m_pMasterUnderflowCount;
     ControlPotmeter* m_pMasterRate;
+    ControlPushButton *m_pBypassEq;
     EngineClipping* m_pClipping;
     EngineClipping* m_pHeadClipping;
+    EnginePflDelay* m_pHeadDelay;
 
 #ifdef __LADSPA__
     EngineLADSPA* m_pLadspa;

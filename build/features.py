@@ -824,7 +824,7 @@ class FFMPEG(Feature):
 
         # Supported version are FFMPEG 0.11-2.0 and Libav 0.8.x-9.x
         # FFMPEG is multimedia library that can be found http://ffmpeg.org/
-        # Libav is fork of FFMPEG that is used mainly in Debian and Ubuntu 
+        # Libav is fork of FFMPEG that is used mainly in Debian and Ubuntu
         # that can be found http://libav.org
         if build.platform_is_linux or build.platform_is_osx \
            or build.platform_is_bsd:
@@ -836,13 +836,13 @@ class FFMPEG(Feature):
                                 'operating system packages.')
             if not conf.CheckForPKG('libavformat', '53.21.0'):
                 raise Exception('Missing libavformat  or it\'s too old!'
-                                'It can be separated from main package so' 
+                                'It can be separated from main package so'
                                 'check your operating system packages.')
 
             # Needed to build new FFMPEG
-            build.env.Append(CCFLAGS = '-D__STDC_CONSTANT_MACROS') 
-            build.env.Append(CCFLAGS = '-D__STDC_LIMIT_MACROS') 
-            build.env.Append(CCFLAGS = '-D__STDC_FORMAT_MACROS') 
+            build.env.Append(CCFLAGS = '-D__STDC_CONSTANT_MACROS')
+            build.env.Append(CCFLAGS = '-D__STDC_LIMIT_MACROS')
+            build.env.Append(CCFLAGS = '-D__STDC_FORMAT_MACROS')
 
             #Grabs the libs and cflags for ffmpeg
             build.env.ParseConfig('pkg-config libavcodec --silence-errors \
@@ -853,14 +853,14 @@ class FFMPEG(Feature):
                                    --cflags --libs')
 
             # What are libavresample and libswresample??
-            # Libav forked from FFMPEG in version 0.10 and there wasn't any 
-            # separated library for resampling audio. There we resample API 
-            # (actually two and they are both a big mess). API is now marked as 
-            # depricated but both are  still available in current version 
+            # Libav forked from FFMPEG in version 0.10 and there wasn't any
+            # separated library for resampling audio. There we resample API
+            # (actually two and they are both a big mess). API is now marked as
+            # depricated but both are  still available in current version
             # FFMPEG up to version 1.2 or Libav up to version 9
-            # In some point developers FFMPEG decided to make libswresample 
-            # (Software Resample). Libav people also noticed API problem and 
-            # created libavresample. After that libavresample were imported in 
+            # In some point developers FFMPEG decided to make libswresample
+            # (Software Resample). Libav people also noticed API problem and
+            # created libavresample. After that libavresample were imported in
             # FFMPEG and it's API/ABI compatible with LibAV.
             # If you have FFMPEG version 0.10 or Libav version 0.8.x your
             # resampling is done through inner API
@@ -869,13 +869,13 @@ class FFMPEG(Feature):
             # Libav after 0.8.x and between 9 have some libavresample
             # Libav 9 have libavresample have libavresample
             # Most Linux systems have separated packages for libswresample/
-            # libavresample so you can have them installed or not in you 
+            # libavresample so you can have them installed or not in you
             # system most use libavresample.
-            # Ubuntu/Debian only have Libav 0.8.x available (There is PPA for 
+            # Ubuntu/Debian only have Libav 0.8.x available (There is PPA for
             # libav 9)
             # Fedora uses newest FFMPEG 1.x/2.x (With compability libs)
             # openSUSE uses newest FFMPEG 1.x/2.x (With compability libs)
-            # Mac OS X does have FFMPEG available (with libswresample) from 
+            # Mac OS X does have FFMPEG available (with libswresample) from
             # macports or homebrew
             # Microsoft Windows can download FFMPEG or Libav resample libraries
 
@@ -897,12 +897,12 @@ class FFMPEG(Feature):
                 self.status = "Enabled --  with old resample API"
 
         else:
-            # aptitude install libavcodec-dev libavformat-dev liba52-0.7.4-dev 
+            # aptitude install libavcodec-dev libavformat-dev liba52-0.7.4-dev
             # libdts-dev
             # Append some stuff to CFLAGS in Windows also
-            build.env.Append(CCFLAGS = '-D__STDC_CONSTANT_MACROS') 
-            build.env.Append(CCFLAGS = '-D__STDC_LIMIT_MACROS') 
-            build.env.Append(CCFLAGS = '-D__STDC_FORMAT_MACROS') 
+            build.env.Append(CCFLAGS = '-D__STDC_CONSTANT_MACROS')
+            build.env.Append(CCFLAGS = '-D__STDC_LIMIT_MACROS')
+            build.env.Append(CCFLAGS = '-D__STDC_FORMAT_MACROS')
 
             build.env.Append(LIBS = 'avcodec')
             build.env.Append(LIBS = 'avformat')
@@ -925,7 +925,7 @@ class FFMPEG(Feature):
         # Non-crosscompiled builds need this too, don't they?
         if build.crosscompile and build.platform_is_windows \
            and build.toolchain_is_gnu:
-            build.env.Append(CPPPATH=os.path.join(build.crosscompile_root, 
+            build.env.Append(CPPPATH=os.path.join(build.crosscompile_root,
                                                   'include', 'ffmpeg'))
 
     def sources(self, build):
@@ -1034,7 +1034,12 @@ class Optimize(Feature):
             # and getting rid of -fomit-frame-pointer, -ffast-math, and
             # -funroll-loops. We need to justify our use of these aggressive
             # optimizations with data.
-            build.env.Append(CCFLAGS='-O3 -fomit-frame-pointer -ffast-math -funroll-loops')
+            #build.env.Append(CCFLAGS='-O3 -fomit-frame-pointer -ffast-math -funroll-loops')
+            #build.env.Append(CCFLAGS='-O0 -g')# -fomit-frame-pointer -ffast-math -funroll-loops')
+            #owen's previous options:
+            #build.env.Append(CCFLAGS='-O2')# -fomit-frame-pointer -ffast-math -funroll-loops')
+            #based on https://bugs.launchpad.net/mixxx/+bug/876080
+            build.env.Append(CCFLAGS='-Os -fomit-frame-pointer -ffast-math')
 
             if optimize_level == 1:
                 # only includes what we already applied
@@ -1049,7 +1054,7 @@ class Optimize(Feature):
                 build.env.Append(CPPDEFINES = ['__SSE__','__SSE2__','__SSE3__'])
             elif optimize_level == 4:
                 self.status = "Enabled (Intel Core 2)"
-                build.env.Append(CCFLAGS = '-march=nocona -mmmx -msse -msse2 -msse3 -mfpmath=sse -ffast-math -funroll-loops')
+                build.env.Append(CCFLAGS = '-march=nocona -mmmx -msse -msse2 -msse3')
                 build.env.Append(CPPDEFINES = ['__SSE__','__SSE2__','__SSE3__'])
             elif optimize_level == 5:
                 self.status = "Enabled (Athlon Athlon-4/XP/MP)"

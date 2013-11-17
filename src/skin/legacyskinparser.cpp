@@ -612,6 +612,8 @@ QWidget* LegacySkinParser::parseOverview(QDomElement node) {
 
     setupWidget(node, overviewWidget);
     overviewWidget->setup(node);
+    QString prefix = m_pConfig->getValueString(ConfigKey("[Playlist]", "Directory"));
+    overviewWidget->setLibraryPrefix(prefix);
     setupConnections(node, overviewWidget);
     overviewWidget->installEventFilter(m_pKeyboard);
     overviewWidget->installEventFilter(m_pControllerManager->getControllerLearningEventFilter());
@@ -642,6 +644,8 @@ QWidget* LegacySkinParser::parseVisual(QDomElement node) {
         return NULL;
 
     WWaveformViewer* viewer = new WWaveformViewer(pSafeChannelStr, m_pConfig, m_pParent);
+    QString prefix = m_pConfig->getValueString(ConfigKey("[Playlist]", "Directory"));
+    viewer->setLibraryPrefix(prefix);
     viewer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     WaveformWidgetFactory* factory = WaveformWidgetFactory::instance();
     factory->setWaveformWidget(viewer, node);
