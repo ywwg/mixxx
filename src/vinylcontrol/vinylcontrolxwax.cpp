@@ -326,7 +326,7 @@ void VinylControlXwax::analyzeSamples(const short *samples, size_t nFrames)
         }
         else if (iVCMode == MIXXX_VCMODE_RELATIVE || iVCMode == MIXXX_VCMODE_CONSTANT)
         {
-            if (iPosition != -1 && iPosition > m_uiSafeZone)
+            if (iPosition != -1 && iPosition > static_cast<int>(m_uiSafeZone))
                 enableRecordEndMode();
         }
     }
@@ -341,7 +341,7 @@ void VinylControlXwax::analyzeSamples(const short *samples, size_t nFrames)
             disableRecordEndMode();
         }
         else if (iPosition != -1 &&
-                 iPosition <= m_uiSafeZone &&
+                 iPosition <= static_cast<int>(m_uiSafeZone) &&
                  dVinylPosition > 0 &&
                  checkSteadyPitch(dVinylPitch, filePosition) > 0.5)
 
@@ -368,7 +368,7 @@ void VinylControlXwax::analyzeSamples(const short *samples, size_t nFrames)
 
     if (!atRecordEnd)
     {
-        if (iPosition != -1 && iPosition > m_uiSafeZone)
+        if (iPosition != -1 && iPosition > static_cast<int>(m_uiSafeZone))
         {
             //only enable if pitch is steady, though.  Heavy scratching can
             //produce crazy results and trigger this mode

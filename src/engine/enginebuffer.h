@@ -56,6 +56,7 @@ class EngineBufferScale;
 class EngineBufferScaleDummy;
 class EngineBufferScaleLinear;
 class EngineBufferScaleST;
+class EngineSync;
 class EngineWorkerScheduler;
 class EngineMaster;
 
@@ -92,14 +93,15 @@ class EngineBuffer : public EngineObject
 {
      Q_OBJECT
 public:
-    EngineBuffer(const char *_group, ConfigObject<ConfigValue> *_config);
+    EngineBuffer(const char *_group, ConfigObject<ConfigValue> *_config,
+                 EngineMaster* pMixingEngine);
     ~EngineBuffer();
     bool getPitchIndpTimeStretch(void);
 
     void bindWorkers(EngineWorkerScheduler* pWorkerScheduler);
 
     // Add an engine control to the EngineBuffer
-    void addControl(EngineControl* pControl);
+    void addControl(EngineControl* pControl, bool owned=true);
 
     // Return the current rate (not thread-safe)
     double getRate();
@@ -178,6 +180,9 @@ private:
     // Pointer to the loop control object
     LoopingControl* m_pLoopingControl;
 
+    // Pointer to the master sync object
+    EngineSync* m_pEngineSync;
+
     // Pointer to the rate control object
     RateControl* m_pRateControl;
 
@@ -190,7 +195,12 @@ private:
     // Pointer to the cue control object
     CueControl* m_pCueControl;
 
-    QList<EngineControl*> m_engineControls;
+    struct EngineControlOwnership {
+        EngineControl* pEngineControl;
+        bool owned;
+    };
+
+    QList<EngineControlOwnership*> m_engineControls;
 
     // The read ahead manager for EngineBufferScale's that need to read ahead
     ReadAheadManager* m_pReadAheadManager;

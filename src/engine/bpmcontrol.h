@@ -5,6 +5,7 @@
 #ifndef BPMCONTROL_H
 #define BPMCONTROL_H
 
+#include "controlobject.h"
 #include "engine/enginecontrol.h"
 #include "engine/enginesync.h"
 #include "tapfilter.h"
@@ -22,7 +23,7 @@ class BpmControl : public EngineControl {
     virtual ~BpmControl();
 
     double getBpm() const;
-    double getFileBpm() const { return m_dFileBpm; }
+    double getFileBpm() const { return m_pFileBpm ? m_pFileBpm->get() : 0.0; }
     void onEngineRateChange(double rate);
     double getSyncAdjustment(bool userTweakingSync);
     double getSyncedRate() const { return m_dSyncedRate; }
@@ -52,10 +53,8 @@ class BpmControl : public EngineControl {
     void slotUpdatedTrackBeats();
     void slotBeatsTranslate(double);
     void slotMasterBpmChanged(double);
-    void slotSyncMasterChanged(double);
-    void slotSyncSlaveChanged(double);
-    void slotSyncInternalChanged(double);
-    void slotSyncStateChanged(double);
+    void slotMasterSyncSliderChanged(double);
+    void slotSyncModeChanged(double);
     void slotSetStatuses();
 
   private:
@@ -101,20 +100,18 @@ class BpmControl : public EngineControl {
     // playposition.
     ControlPushButton* m_pTranslateBeats;
 
-    double m_dFileBpm;
     double m_dLoopSize; // Only used to see if we shouldn't quantize position.
     double m_dPreviousSample;
 
     // Master Sync objects and values.
-    ControlObject *m_pMasterBpm;
+    ControlObject *m_pMasterBpm, *m_pMasterSyncSlider;
     ControlObject *m_pSyncInternalEnabled;
     ControlPushButton *m_pSyncMasterEnabled, *m_pSyncSlaveEnabled;
-    ControlObject *m_pSyncState;
+    ControlObject *m_pSyncMode;
     ControlObject* m_pMasterBeatDistance;
     double m_dSyncAdjustment;
     double m_dUserOffset;
     double m_dSyncedRate;
-    int m_iSyncState;
 
     TapFilter m_tapFilter;
 

@@ -25,50 +25,12 @@ class EngineChannel;
 class ControlObject;
 class ControlPushButton;
 class ControlPotmeter;
+class RateControl;
 
-enum SYNC_STATE {
+enum SYNC_MODE {
     SYNC_NONE = 0,
     SYNC_SLAVE = 1,
     SYNC_MASTER = 2
-};
-
-class SyncChannel : public QObject {
-    Q_OBJECT
-  public:
-    SyncChannel(EngineChannel* pChannel);
-    virtual ~SyncChannel();
-
-    const QString& getGroup() const {
-        return m_group;
-    }
-
-    EngineChannel* getChannel();
-    void setState(double state);
-    double getState() const;
-    double getFileBpm() const;
-    void setBpm(double bpm);
-
-    ControlObject* getRateEngineControl();
-    ControlObject* getBeatDistanceControl();
-
-  signals:
-    void channelSyncStateChanged(SyncChannel*, double);
-    void channelRateSliderChanged(SyncChannel*, double);
-
-  private slots:
-    void slotChannelSyncStateChanged(double);
-    void slotChannelRateSliderChanged(double);
-
-  private:
-    EngineChannel* m_pChannel;
-    QString m_group;
-    ControlObject* m_pChannelSyncState;
-    ControlObject* m_pFileBpm;
-    ControlObject* m_pRateEngine;
-    ControlObject* m_pBeatDistance;
-    ControlObject* m_pRateSlider;
-    ControlObject* m_pRateRange;
-    ControlObject* m_pRateDir;
 };
 
 class EngineSync : public EngineControl {
@@ -79,32 +41,36 @@ class EngineSync : public EngineControl {
     virtual ~EngineSync();
 
     void addChannel(EngineChannel* pChannel);
+    RateControl* addDeck(const char* group);
     EngineChannel* getMaster() const;
-    void onCallbackStart(int bufferSize);
+    void process(int bufferSize);
+    RateControl* getRateControlForGroup(const QString& group);
+    const QString getSyncSource() const { return m_sSyncSource; }
+    void setChannelSyncMode(RateControl*, int);
+    void setChannelRateSlider(RateControl*, double);
 
   private slots:
     void slotMasterBpmChanged(double);
-    void slotSourceRateChanged(double);
     void slotSyncRateSliderChanged(double);
+    void slotSourceRateChanged(double);
     void slotSourceBeatDistanceChanged(double);
     void slotSampleRateChanged(double);
     void slotInternalMasterChanged(double);
-    void slotChannelSyncStateChanged(SyncChannel*, double);
-    void slotChannelRateSliderChanged(SyncChannel*, double);
 
   private:
     void setMaster(const QString& group);
-    bool setChannelMaster(SyncChannel* pSyncChannel);
+    bool setChannelMaster(RateControl* pRateControl);
     void setInternalMaster();
     QString chooseNewMaster(const QString& dontpick);
-    void disableChannelMaster(const QString& deck);
+    void disableChannelMaster();
     void updateSamplesPerBeat();
     void setPseudoPosition(double percent);
     void resetInternalBeatDistance();
     double getInternalBeatDistance() const;
-    SyncChannel* getSyncChannelForGroup(const QString& group);
 
-    SyncChannel* m_pChannelMaster;
+    ConfigObject<ConfigValue>* m_pConfig;
+
+    RateControl* m_pChannelMaster;
 
     ControlObject* m_pMasterBpm;
     ControlObject* m_pMasterBeatDistance;
@@ -112,12 +78,14 @@ class EngineSync : public EngineControl {
     ControlPushButton* m_pSyncInternalEnabled;
     ControlPotmeter* m_pSyncRateSlider;
 
-    QList<SyncChannel*> m_channels;
+    QList<RateControl*> m_ratecontrols;
     QString m_sSyncSource;
     int m_iSampleRate;
     double m_dSourceRate;
     double m_dMasterBpm;
     double m_dSamplesPerBeat;
+
+    // Used for maintaining internal master sync.
     double m_dPseudoBufferPos;
 };
 

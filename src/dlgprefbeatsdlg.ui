@@ -6,18 +6,18 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>500</width>
+    <width>537</width>
     <height>400</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Beat Detection Settings</string>
+   <string>Beat Detection Preferences</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
     <widget class="QCheckBox" name="banalyserenabled">
      <property name="toolTip">
-      <string>When beat detection is enabled, Mixxx detects the beats per minute and beats of your tracks,
+      <string>When beat detection is enabled, Mixxx detects the beats per minute and beats of your tracks, 
 automatically shows a beat-grid for them, and allows you to synchronize tracks using their beat information.</string>
      </property>
      <property name="text">
@@ -28,7 +28,7 @@ automatically shows a beat-grid for them, and allows you to synchronize tracks u
    <item row="2" column="0">
     <widget class="QGroupBox" name="groupBox">
      <property name="title">
-      <string>Choose Analyser</string>
+      <string>Choose Analyzer</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -49,7 +49,7 @@ automatically shows a beat-grid for them, and allows you to synchronize tracks u
          </size>
         </property>
         <property name="text">
-         <string>Beat Analyser:</string>
+         <string>Beat Analyzer:</string>
         </property>
        </widget>
       </item>
@@ -81,14 +81,14 @@ automatically shows a beat-grid for them, and allows you to synchronize tracks u
    <item row="3" column="0">
     <widget class="QGroupBox" name="groupBox_2">
      <property name="title">
-      <string>Analyser Settings</string>
+      <string>Analyzer Settings</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
        <widget class="QCheckBox" name="bFastAnalysis">
         <property name="toolTip">
-         <string>Enable fast beat detection.
-If activated Mixxx only analyzes the first minute of a track for beat information.
+         <string>Enable fast beat detection. 
+If activated Mixxx only analyzes the first minute of a track for beat information. 
 This can speed up beat detection on slower computers but may result in lower quality beatgrids.</string>
         </property>
         <property name="text">
@@ -99,8 +99,8 @@ This can speed up beat detection on slower computers but may result in lower qua
       <item>
        <widget class="QCheckBox" name="bfixedtempo">
         <property name="toolTip">
-         <string>Converts beats detected by the analyser into a fixed-tempo beatgrid.
-Use this setting if your tracks have a constant tempo (e.g. most electronic music).
+         <string>Converts beats detected by the analyzer into a fixed-tempo beatgrid. 
+Use this setting if your tracks have a constant tempo (e.g. most electronic music). 
 Often results in higher quality beatgrids, but will not do well on tracks that have tempo shifts.</string>
         </property>
         <property name="text">
@@ -111,7 +111,7 @@ Often results in higher quality beatgrids, but will not do well on tracks that h
       <item>
        <widget class="QCheckBox" name="boffset">
         <property name="toolTip">
-         <string>Attempts to correct the phase (first beat) of fixed-tempo beatgrids
+         <string>Attempts to correct the phase (first beat) of fixed-tempo beatgrids 
 by analyzing the beats to discard outliers.</string>
         </property>
         <property name="text">
@@ -123,10 +123,10 @@ by analyzing the beats to discard outliers.</string>
        <widget class="QCheckBox" name="bReanalyse">
         <property name="toolTip">
          <string>e.g. from 3rd-party programs or Mixxx versions before 1.11.
-(Not checked: Analyse only, if no beats exist.)</string>
+(Not checked: Analyze only, if no beats exist.)</string>
         </property>
         <property name="text">
-         <string>Re-analyse beats when settings change or beat detection data is outdated</string>
+         <string>Re-analyze beats when settings change or beat detection data is outdated</string>
         </property>
        </widget>
       </item>

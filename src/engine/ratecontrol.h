@@ -7,6 +7,7 @@
 #include <QObject>
 
 #include "configobject.h"
+#include "controlobject.h"
 #include "engine/enginecontrol.h"
 #include "engine/enginesync.h"
 
@@ -21,7 +22,11 @@ class ControlTTRotary;
 class ControlObject;
 class ControlPotmeter;
 class ControlPushButton;
+class EngineChannel;
 class PositionScratchController;
+#ifdef __VINYLCONTROL__
+class VinylControlControl;
+#endif
 
 // RateControl is an EngineControl that is in charge of managing the rate of
 // playback of a given channel of audio in the Mixxx engine. Using input from
@@ -29,10 +34,14 @@ class PositionScratchController;
 class RateControl : public EngineControl {
     Q_OBJECT
 public:
-    RateControl(const char* _group, ConfigObject<ConfigValue>* _config);
+    RateControl(const char* _group, ConfigObject<ConfigValue>* _config, EngineSync* enginesync);
     virtual ~RateControl();
 
     void setBpmControl(BpmControl* bpmcontrol);
+    void setEngineChannel(EngineChannel* pChannel);
+#ifdef __VINYLCONTROL__
+    void setVinylControlControl(VinylControlControl* vinylcontrolcontrol);
+#endif
     // Must be called during each callback of the audio thread so that
     // RateControl has a chance to update itself.
     double process(const double dRate,
@@ -42,6 +51,15 @@ public:
     // Returns the current engine rate.
     double calculateRate(double baserate, bool paused, int iSamplesPerBuffer, bool* isScratching);
     double getRawRate() const;
+    ControlObject* getRateEngineControl();
+    ControlObject* getBeatDistanceControl();
+//    BpmControl* getBpmControl();
+    double getMode() const;
+    void setMode(double state);
+    double getFileBpm() const { return m_pFileBpm ? m_pFileBpm->get() : 0.0; }
+    EngineChannel* getChannel() { Q_ASSERT(m_pChannel); return m_pChannel; }
+    const QString getGroup() const { return m_sGroup; }
+
 
     // Set rate change when temp rate button is pressed
     static void setTemp(double v);
@@ -76,7 +94,10 @@ public:
     static double m_dWheelSensitivity;
 
   private slots:
-    void slotSyncStateChanged(double);
+    void slotSyncModeChanged(double);
+    void slotSyncMasterChanged(double);
+    void slotSyncSlaveChanged(double);
+    void slotChannelRateSliderChanged(double);
 
   private:
     double getJogFactor() const;
@@ -97,11 +118,14 @@ public:
     static double m_dTemp, m_dTempSmall, m_dPerm, m_dPermSmall;
 
     QString m_sGroup;
+    EngineChannel* m_pChannel;
+    EngineSync* m_pEngineSync;
     ControlPushButton *buttonRateTempDown, *buttonRateTempDownSmall,
         *buttonRateTempUp, *buttonRateTempUpSmall;
     ControlPushButton *buttonRatePermDown, *buttonRatePermDownSmall,
         *buttonRatePermUp, *buttonRatePermUpSmall;
-    ControlObject *m_pRateDir, *m_pRateRange;
+    ControlObject *m_pRateDir, *m_pRateRange, *m_pRateEngine;
+    ControlObject* m_pBeatDistance;
     ControlPotmeter* m_pRateSlider;
     ControlPotmeter* m_pRateSearch;
     ControlPushButton* m_pReverseButton;
@@ -118,6 +142,9 @@ public:
     ControlObject* m_pJog;
     ControlObject* m_pVCEnabled;
     ControlObject* m_pVCScratching;
+#ifdef __VINYLCONTROL__
+    VinylControlControl *m_pVinylControlControl;
+#endif
     Rotary* m_pJogFilter;
 
     ControlObject *m_pSampleRate;
@@ -126,12 +153,10 @@ public:
 
     // For Master Sync
     BpmControl* m_pBpmControl;
-    ControlObject* m_pSyncState;
-    int m_iSyncState;
+    ControlObject* m_pSyncMode;
 
     // The current loaded file's detected BPM
     ControlObject* m_pFileBpm;
-    double m_dFileBpm;
 
     // Enumerations which hold the state of the pitchbend buttons.
     // These enumerations can be used like a bitmask.
