@@ -52,11 +52,11 @@ WTrackTableView::WTrackTableView(QWidget * parent,
             this, SLOT(slotScaleBpm(int)));
 
     m_pNumSamplers = new ControlObjectThread(
-            "[Master]", "num_samplers");
+            "[Skin]", "num_samplers");
     m_pNumDecks = new ControlObjectThread(
-            "[Master]", "num_decks");
+            "[Skin]", "num_decks");
     m_pNumPreviewDecks = new ControlObjectThread(
-            "[Master]", "num_preview_decks");
+            "[Skin]", "num_preview_decks");
 
     m_pMenu = new QMenu(this);
 

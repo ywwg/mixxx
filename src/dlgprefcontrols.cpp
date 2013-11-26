@@ -212,6 +212,15 @@ DlgPrefControls::DlgPrefControls(QWidget * parent, MixxxApp * mixxx,
     ComboBoxAutoDjRequeue->setCurrentIndex(m_pConfig->getValueString(ConfigKey("[Auto DJ]", "Requeue")).toInt());
     connect(ComboBoxAutoDjRequeue, SIGNAL(activated(int)), this, SLOT(slotSetAutoDjRequeue(int)));
 
+    // Ordering of decks, if configurable
+    ControlObject* skin_num_decks = ControlObject::getControl(ConfigKey("[Skin]", "num_decks"));
+    int deck_count = static_cast<int>(skin_num_decks->get());
+    updateDeckOrderCombo(deck_count);
+    connect(ComboBoxDeckOrder, SIGNAL(activated(int)), this, SLOT(slotSetDeckOrder(int)));
+    connect(skin_num_decks, SIGNAL(valueChanged(double)),
+            this, SLOT(slotSkinNumDecksControlChanged(double)),
+            Qt::DirectConnection);
+
 #ifdef __AUTODJCRATES__
 
     // The minimum available for randomly-selected tracks
@@ -465,6 +474,13 @@ void DlgPrefControls::slotSetAutoDjRequeue(int)
     m_pConfig->set(ConfigKey("[Auto DJ]", "Requeue"), ConfigValue(ComboBoxAutoDjRequeue->currentIndex()));
 }
 
+void DlgPrefControls::slotSetDeckOrder(int)
+{
+    QString deckorder = ComboBoxDeckOrder->currentText();
+    m_pConfig->set(ConfigKey("[Controls]", "DeckOrder"), ConfigValue(deckorder));
+    m_pPlayerManager->slotSkinNumDecksControlChanged(deckorder.length());
+}
+
 void DlgPrefControls::slotSetAutoDjMinimumAvailable(int a_iValue) {
 #ifdef __AUTODJCRATES__
     QString str;
@@ -514,6 +530,8 @@ void DlgPrefControls::slotSetSkin(int)
     checkSkinResolution(ComboBoxSkinconf->currentText())
             ? warningLabel->hide() : warningLabel->show();
     slotUpdateSchemes();
+    const int deck_count = ControlObject::get(ConfigKey("[Skin]", "num_decks"));
+    updateDeckOrderCombo(deck_count);
 }
 
 void DlgPrefControls::slotSetPositionDisplay(int)
@@ -757,4 +775,34 @@ bool DlgPrefControls::checkSkinResolution(QString skin)
     QString skinHeight = res.right(res.count()-skinWidth.count()-1);
 
     return !(skinWidth.toInt() > screenWidth || skinHeight.toInt() > screenHeight);
+}
+
+void DlgPrefControls::updateDeckOrderCombo(int deck_count) {
+    // We always try to find the configured order because the skin deckcount value isn't set
+    // at construction time. We'll receive a signal when that value changes, this function
+    // will get called, and then we'll set the proper ordering. Since we update the config
+    // every time they change the value, this shouldn't cause weird overwrites.
+
+    QString config_order = m_pConfig->getValueString(ConfigKey("[Controls]", "DeckOrder"));
+    //textDeckOrder->setVisible(deck_count != 0);
+    //ComboBoxDeckOrder->setVisible(deck_count != 0);
+    ComboBoxDeckOrder->clear();
+    if (deck_count == 0) {
+        return;
+    }
+
+    int deckorder_index = 0;
+    int i = 0;
+    foreach(const PlayerManager::DeckOrderingManager::deck_order_t& order,
+            PlayerManager::getDeckOrderings(deck_count)) {
+        ComboBoxDeckOrder->addItem(order.label);
+        if (order.label == config_order) {
+            deckorder_index = i;
+        }
+        ++i;
+    }
+    ComboBoxDeckOrder->setCurrentIndex(deckorder_index);
+    if (ComboBoxDeckOrder->currentText() != config_order) {
+        m_pConfig->set(ConfigKey("[Controls]", "DeckOrder"), ConfigValue(ComboBoxDeckOrder->currentText()));
+    }
 }

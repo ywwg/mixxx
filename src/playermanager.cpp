@@ -19,6 +19,11 @@
 #include "util/stat.h"
 #include "engine/enginedeck.h"
 
+// static
+PlayerManager::DeckOrderingManager PlayerManager::s_deckOrderingManager =
+    PlayerManager::DeckOrderingManager();
+PlayerManager::DeckOrderingManager::deck_order_t PlayerManager::s_currentDeckOrder;
+
 PlayerManager::PlayerManager(ConfigObject<ConfigValue>* pConfig,
                              SoundManager* pSoundManager,
                              EngineMaster* pEngine) :
@@ -31,7 +36,11 @@ PlayerManager::PlayerManager(ConfigObject<ConfigValue>* pConfig,
         m_pAnalyserQueue(NULL),
         m_pCONumDecks(new ControlObject(ConfigKey("[Master]", "num_decks"), true, true)),
         m_pCONumSamplers(new ControlObject(ConfigKey("[Master]", "num_samplers"), true, true)),
-        m_pCONumPreviewDecks(new ControlObject(ConfigKey("[Master]", "num_preview_decks"), true, true)) {
+        m_pCONumPreviewDecks(new ControlObject(ConfigKey("[Master]", "num_preview_decks"),
+                             true, true)),
+        m_pCOSkinNumDecks(new ControlObject(ConfigKey("[Skin]", "num_decks"), true, true)),
+        m_pCOSkinNumSamplers(new ControlObject(ConfigKey("[Skin]", "num_samplers"), true, true)),
+        m_pCOSkinNumPreviewDecks(new ControlObject(ConfigKey("[Skin]", "num_preview_decks"), true, true)) {
 
     connect(m_pCONumDecks, SIGNAL(valueChanged(double)),
             this, SLOT(slotNumDecksControlChanged(double)),
@@ -43,6 +52,17 @@ PlayerManager::PlayerManager(ConfigObject<ConfigValue>* pConfig,
             this, SLOT(slotNumPreviewDecksControlChanged(double)),
             Qt::DirectConnection);
 
+    // Make sure the number of internal decks is in sync with the number of decks in the skin.
+    connect(m_pCOSkinNumDecks, SIGNAL(valueChanged(double)),
+            this, SLOT(slotSkinNumDecksControlChanged(double)),
+            Qt::DirectConnection);
+    connect(m_pCOSkinNumSamplers, SIGNAL(valueChanged(double)),
+            this, SLOT(slotNumSamplersControlChanged(double)),
+            Qt::DirectConnection);
+    connect(m_pCOSkinNumPreviewDecks, SIGNAL(valueChanged(double)),
+            this, SLOT(slotNumPreviewDecksControlChanged(double)),
+            Qt::DirectConnection);
+
     // This is parented to the PlayerManager so does not need to be deleted
     SamplerBank* pSamplerBank = new SamplerBank(this);
     Q_UNUSED(pSamplerBank);
@@ -51,6 +71,9 @@ PlayerManager::PlayerManager(ConfigObject<ConfigValue>* pConfig,
     m_pCONumDecks->set(0);
     m_pCONumSamplers->set(0);
     m_pCONumPreviewDecks->set(0);
+    m_pCOSkinNumDecks->set(0);
+    m_pCOSkinNumSamplers->set(0);
+    m_pCOSkinNumPreviewDecks->set(0);
 
     // register the engine's outputs
     m_pSoundManager->registerOutput(AudioOutput(AudioOutput::MASTER),
@@ -74,6 +97,9 @@ PlayerManager::~PlayerManager() {
     delete m_pCONumSamplers;
     delete m_pCONumDecks;
     delete m_pCONumPreviewDecks;
+    delete m_pCOSkinNumDecks;
+    delete m_pCOSkinNumSamplers;
+    delete m_pCOSkinNumPreviewDecks;
     if (m_pAnalyserQueue) {
         delete m_pAnalyserQueue;
     }
@@ -178,6 +204,37 @@ void PlayerManager::slotNumDecksControlChanged(double v) {
 
     while (m_decks.size() < num) {
         addDeckInner();
+    }
+}
+
+void PlayerManager::slotSkinNumDecksControlChanged(double v) {
+    QString config_order = m_pConfig->getValueString(ConfigKey("[Controls]", "DeckOrder"));
+    bool found_valid = false;
+    foreach(const PlayerManager::DeckOrderingManager::deck_order_t& order,
+            PlayerManager::getDeckOrderings(v)) {
+        if (order.label == config_order) {
+            found_valid = true;
+            s_currentDeckOrder = order;
+        }
+    }
+    if (!found_valid) {
+        s_currentDeckOrder = s_deckOrderingManager.getDefaultOrder(v);
+    }
+    slotNumDecksControlChanged(v);
+    reorientDecks();
+}
+
+void PlayerManager::reorientDecks() {
+    int total_decks = static_cast<int>(m_pCOSkinNumDecks->get());
+    for (int i = 1; i < total_decks + 1; ++i) {
+        ControlObject* orientation =
+            ControlObject::getControl(
+                ConfigKey(QString("[Channel%1]").arg(i), "orientation"));
+        if (i > total_decks / 2) {
+            orientation->set(EngineChannel::RIGHT);
+        } else {
+            orientation->set(EngineChannel::LEFT);
+        }
     }
 }
 
@@ -372,9 +429,9 @@ void PlayerManager::slotLoadToSampler(QString location, int sampler) {
 
 void PlayerManager::slotLoadTrackIntoNextAvailableDeck(TrackPointer pTrack) {
     QMutexLocker locker(&m_mutex);
-    QList<Deck*>::iterator it = m_decks.begin();
-    while (it != m_decks.end()) {
-        Deck* pDeck = *it;
+
+    foreach(const int& i, s_currentDeckOrder.load_order) {
+        Deck* pDeck = m_decks.at(i);
         ControlObject* playControl =
                 ControlObject::getControl(ConfigKey(pDeck->getGroup(), "play"));
         if (playControl && playControl->get() != 1.) {
@@ -382,7 +439,6 @@ void PlayerManager::slotLoadTrackIntoNextAvailableDeck(TrackPointer pTrack) {
             pDeck->slotLoadTrack(pTrack, false);
             return;
         }
-        it++;
     }
 }
 

@@ -68,6 +68,7 @@ class DlgPrefControls : public DlgPreferencePage, public Ui::DlgPrefControlsDlg 
     void slotSetAutoDjMinimumAvailable(int);
     void slotSetAutoDjUseIgnoreTime(int);
     void slotSetAutoDjIgnoreTime(const QTime &a_rTime);
+    void slotSetDeckOrder(int);
     void slotSetRateRamp(bool);
     void slotSetRateRampSensitivity(int);
     void slotSetLocale(int);
@@ -84,13 +85,17 @@ class DlgPrefControls : public DlgPreferencePage, public Ui::DlgPrefControlsDlg 
     void slotSetVisualGainHigh(double gain);
     void slotSetNormalizeOverview( bool normalize);
 
-  protected:
+private slots:
+    void slotSkinNumDecksControlChanged(double v) { updateDeckOrderCombo(v); }
+
+protected:
     void timerEvent(QTimerEvent *);
 
   private:
     void initWaveformControl();
     void notifyRebootNecessary();
     bool checkSkinResolution(QString skin);
+    void updateDeckOrderCombo(int deck_count);
 
     ConfigObject<ConfigValue>* m_pConfig;
     int m_timer;
