@@ -11,95 +11,16 @@
 
 #include <QtDebug>
 
-#include "defs.h"
 #include "configobject.h"
 #include "controlobject.h"
-#include "deck.h"
-#include "engine/enginebuffer.h"
-#include "engine/enginechannel.h"
-#include "engine/enginemaster.h"
-#include "engine/enginesync.h"
-#include "engine/ratecontrol.h"
+#include "test/mockedenginebackendtest.h"
+#include "test/mixxxtest.h"
 
-#include "mixxxtest.h"
-
-using ::testing::Return;
-using ::testing::_;
 
 namespace {
 
-class EngineSyncTest : public MixxxTest {
-  protected:
-    virtual void SetUp() {
-        m_pNumDecks = new ControlObject(ConfigKey("[Master]", "num_decks"));
-        m_pNumDecks->set(2);
-
-        m_pEngineMaster = new EngineMaster(m_pConfig.data(), "[Master]", false, false);
-        m_pChannel1 = new EngineDeck(m_sGroup1, m_pConfig.data(), m_pEngineMaster, EngineChannel::CENTER);
-        m_pChannel2 = new EngineDeck(m_sGroup2, m_pConfig.data(), m_pEngineMaster, EngineChannel::CENTER);
-        m_pEngineSync = m_pEngineMaster->getEngineSync();
-        m_pRateControl1 = m_pEngineSync->addDeck(m_sGroup1);
-        m_pRateControl2 = m_pEngineSync->addDeck(m_sGroup2);
-
-        m_pEngineSync->addChannel(m_pChannel1);
-        m_pEngineSync->addChannel(m_pChannel2);
-    }
-
-    virtual void TearDown() {
-        // I get crashes if I delete this.  Better to just leak like a sieve.
-        //delete m_pEngineMaster;
-        delete m_pNumDecks;
-
-        delete m_pChannel1;
-        delete m_pChannel2;
-
-        // Clean up the rest of the controls.
-        QList<ControlDoublePrivate*> leakedControls;
-        QList<ConfigKey> leakedConfigKeys;
-
-        ControlDoublePrivate::getControls(&leakedControls);
-        int count = leakedControls.size();
-        while (leakedControls.size() > 0) {
-            foreach (ControlDoublePrivate* pCOP, leakedControls) {
-                ConfigKey key = pCOP->getKey();
-                leakedConfigKeys.append(key);
-            }
-
-            foreach (ConfigKey key, leakedConfigKeys) {
-                ControlObject* pCo = ControlObject::getControl(key, false);
-                if (pCo) {
-                    delete pCo;
-                }
-            }
-
-            ControlDoublePrivate::getControls(&leakedControls);
-            // Sometimes we can't delete all of the controls.  Give up.
-            if (leakedControls.size() == count) {
-                break;
-            }
-            count = leakedControls.size();
-        }
-    }
-
-    double getRateSliderValue(double rate) const {
-        return (rate - 1.0) / kRateRangeDivisor;
-    }
-
-    ControlObject* m_pNumDecks;
-
-    EngineSync* m_pEngineSync;
-    EngineMaster* m_pEngineMaster;
-    RateControl *m_pRateControl1, *m_pRateControl2;
-    EngineDeck *m_pChannel1, *m_pChannel2;
-
-    static const char* m_sGroup1;
-    static const char* m_sGroup2;
-    static const double kRateRangeDivisor;
+class EngineSyncTest : public MockedEngineBackendTest {
 };
-
-const char* EngineSyncTest::m_sGroup1 = "[Test1]";
-const char* EngineSyncTest::m_sGroup2 = "[Test2]";
-const double EngineSyncTest::kRateRangeDivisor = 4.0;
 
 TEST_F(EngineSyncTest, ControlObjectsExist) {
     // This isn't exhaustive, but certain COs have a habit of not being set up properly.
@@ -166,6 +87,39 @@ TEST_F(EngineSyncTest, SetMasterSuccess) {
     EXPECT_EQ(0, ControlObject::getControl(ConfigKey(m_sGroup2, "sync_master"))->get());
     EXPECT_EQ(1, ControlObject::getControl(ConfigKey("[Master]", "sync_master"))->get());
     ASSERT_EQ("[Master]", m_pEngineSync->getSyncSource().toStdString());
+}
+
+TEST_F(EngineSyncTest, SetSlaveNoMaster) {
+    // If we set the first channel to slave, Internal should become master.
+    QScopedPointer<ControlObjectThread> pButtonMasterSync1(getControlObjectThread(
+            ConfigKey(m_sGroup1, "sync_mode")));
+    pButtonMasterSync1->slotSet(SYNC_SLAVE);
+
+    // The master sync should now be Internal.
+    ASSERT_EQ(NULL, m_pEngineSync->getMaster());
+    EXPECT_EQ(1, ControlObject::getControl(ConfigKey(m_sGroup1, "sync_slave"))->get());
+    EXPECT_EQ(0, ControlObject::getControl(ConfigKey(m_sGroup1, "sync_master"))->get());
+    EXPECT_EQ(1, ControlObject::getControl(ConfigKey("[Master]", "sync_master"))->get());
+    ASSERT_EQ("[Master]", m_pEngineSync->getSyncSource().toStdString());
+}
+
+TEST_F(EngineSyncTest, InternalMasterSetSlaveSliderMoves) {
+    // If internal is master, and we turn on a slave, the slider should move.
+    QScopedPointer<ControlObjectThread> pButtonMasterSyncInternal(getControlObjectThread(
+            ConfigKey("[Master]", "sync_master")));
+    pButtonMasterSyncInternal->slotSet(1);
+    ControlObject::getControl(ConfigKey("[Master]", "sync_bpm"))->set(100.0);
+
+	// Set the file bpm of channel 1 to 160bpm.
+    ControlObject::getControl(ConfigKey(m_sGroup1, "file_bpm"))->set(80.0);
+
+    QScopedPointer<ControlObjectThread> pButtonMasterSync1(getControlObjectThread(
+            ConfigKey(m_sGroup1, "sync_mode")));
+    pButtonMasterSync1->slotSet(SYNC_SLAVE);
+
+    ASSERT_FLOAT_EQ(getRateSliderValue(1.25),
+                    ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))->get());
+    ASSERT_FLOAT_EQ(100.0, ControlObject::getControl(ConfigKey(m_sGroup1, "bpm"))->get());
 }
 
 TEST_F(EngineSyncTest, SetMasterByLights) {
@@ -249,11 +203,13 @@ TEST_F(EngineSyncTest, RateChangeTest) {
     // Set the file bpm of channel 1 to 160bpm.
     ControlObject::getControl(ConfigKey(m_sGroup1, "file_bpm"))->set(160.0);
     ASSERT_FLOAT_EQ(160.0, ControlObject::getControl(ConfigKey(m_sGroup1, "file_bpm"))->get());
+    ASSERT_FLOAT_EQ(160.0, ControlObject::getControl(ConfigKey("[Master]", "sync_bpm"))->get());
 
     // Set the rate of channel 1 to 1.2.
     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))->set(getRateSliderValue(1.2));
     ASSERT_FLOAT_EQ(getRateSliderValue(1.2),
                     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))->get());
+    ASSERT_FLOAT_EQ(192.0, ControlObject::getControl(ConfigKey(m_sGroup1, "bpm"))->get());
 
     // Set the file bpm of channel 2 to 120bpm.
     ControlObject::getControl(ConfigKey(m_sGroup2, "file_bpm"))->set(120.0);
@@ -262,6 +218,10 @@ TEST_F(EngineSyncTest, RateChangeTest) {
     // rate slider for channel 2 should now be 1.6 = 160 * 1.2 / 120.
     ASSERT_FLOAT_EQ(getRateSliderValue(1.6),
                     ControlObject::getControl(ConfigKey(m_sGroup2, "rate"))->get());
+    ASSERT_FLOAT_EQ(192.0, ControlObject::getControl(ConfigKey(m_sGroup2, "bpm"))->get());
+
+    // Internal master should also be 192.
+    ASSERT_FLOAT_EQ(192.0, ControlObject::getControl(ConfigKey("[Master]", "sync_bpm"))->get());
 }
 
 TEST_F(EngineSyncTest, RateChangeTestWeirdOrder) {
@@ -275,6 +235,7 @@ TEST_F(EngineSyncTest, RateChangeTestWeirdOrder) {
 
     // Set the file bpm of channel 1 to 160bpm.
     ControlObject::getControl(ConfigKey(m_sGroup1, "file_bpm"))->set(160.0);
+    ASSERT_FLOAT_EQ(160.0, ControlObject::getControl(ConfigKey("[Master]", "sync_bpm"))->get());
 
     // Set the file bpm of channel 2 to 120bpm.
     ControlObject::getControl(ConfigKey(m_sGroup2, "file_bpm"))->set(120.0);
@@ -285,6 +246,10 @@ TEST_F(EngineSyncTest, RateChangeTestWeirdOrder) {
     // Rate slider for channel 2 should now be 1.6 = (160 * 1.2 / 120) - 1.0.
     ASSERT_FLOAT_EQ(getRateSliderValue(1.6),
                     ControlObject::getControl(ConfigKey(m_sGroup2, "rate"))->get());
+    ASSERT_FLOAT_EQ(192.0, ControlObject::getControl(ConfigKey(m_sGroup2, "bpm"))->get());
+
+    // Internal Master BPM should read the same.
+    ASSERT_FLOAT_EQ(192.0, ControlObject::getControl(ConfigKey("[Master]", "sync_bpm"))->get());
 }
 
 TEST_F(EngineSyncTest, RateChangeOverride) {
@@ -308,17 +273,17 @@ TEST_F(EngineSyncTest, RateChangeOverride) {
     // Rate slider for channel 2 should now be 1.6 = (160 * 1.2 / 120).
     ASSERT_FLOAT_EQ(getRateSliderValue(1.6),
                     ControlObject::getControl(ConfigKey(m_sGroup2, "rate"))->get());
+    ASSERT_FLOAT_EQ(192.0, ControlObject::getControl(ConfigKey(m_sGroup2, "bpm"))->get());
 
-    qDebug() << "twiddle the rate!";
     // Try to twiddle the rate slider on channel 2.
     QScopedPointer<ControlObjectThread> pSlider2(getControlObjectThread(
             ConfigKey(m_sGroup2, "rate")));
-    qDebug() << "current setting " << pSlider2->get();
     pSlider2->slotSet(getRateSliderValue(0.8));
 
     // Rate should get reset back to where it was.
     ASSERT_FLOAT_EQ(getRateSliderValue(1.6),
                     ControlObject::getControl(ConfigKey(m_sGroup2, "rate"))->get());
+    ASSERT_FLOAT_EQ(192.0, ControlObject::getControl(ConfigKey(m_sGroup2, "bpm"))->get());
 }
 
 TEST_F(EngineSyncTest, InternalRateChangeTest) {
@@ -344,25 +309,64 @@ TEST_F(EngineSyncTest, InternalRateChangeTest) {
     ControlObject::getControl(ConfigKey("[Master]", "sync_slider"))->set(150.0);
     ASSERT_FLOAT_EQ(150.0, ControlObject::getControl(ConfigKey("[Master]", "sync_bpm"))->get());
 
+    // Set decks playing, and process a buffer to update all the COs.
+    ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
+    ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(1.0);
+
+    ProcessBuffer();
+
     // Rate sliders for channels 1 and 2 should change appropriately.
     ASSERT_FLOAT_EQ(getRateSliderValue(0.9375),
                     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))->get());
+    ASSERT_FLOAT_EQ(150.0, ControlObject::getControl(ConfigKey(m_sGroup1, "bpm"))->get());
     ASSERT_FLOAT_EQ(getRateSliderValue(1.25),
                     ControlObject::getControl(ConfigKey(m_sGroup2, "rate"))->get());
-//    ASSERT_FLOAT_EQ(150.0, ControlObject::getControl(ConfigKey(m_sGroup1, "rateEngine"))->get());
-//    ASSERT_FLOAT_EQ(150.0, ControlObject::getControl(ConfigKey(m_sGroup2, "rateEngine"))->get());
+    ASSERT_FLOAT_EQ(150.0, ControlObject::getControl(ConfigKey(m_sGroup2, "bpm"))->get());
+    ASSERT_FLOAT_EQ(0.9375, ControlObject::getControl(ConfigKey(m_sGroup1, "rateEngine"))->get());
+    ASSERT_FLOAT_EQ(1.25, ControlObject::getControl(ConfigKey(m_sGroup2, "rateEngine"))->get());
 
     // Set the internal rate to 80.
     ControlObject::getControl(ConfigKey("[Master]", "sync_slider"))->set(80.0);
+
+    // Update COs again.
+    ProcessBuffer();
+
     ASSERT_FLOAT_EQ(80.0, ControlObject::getControl(ConfigKey("[Master]", "sync_bpm"))->get());
 
     // Rate sliders for channels 1 and 2 should change appropriately.
     ASSERT_FLOAT_EQ(getRateSliderValue(0.5),
                     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))->get());
+    ASSERT_FLOAT_EQ(80.0, ControlObject::getControl(ConfigKey(m_sGroup1, "bpm"))->get());
     ASSERT_FLOAT_EQ(getRateSliderValue(0.6666667),
                     ControlObject::getControl(ConfigKey(m_sGroup2, "rate"))->get());
-//    ASSERT_FLOAT_EQ(80.0, ControlObject::getControl(ConfigKey(m_sGroup1, "rateEngine"))->get());
-//    ASSERT_FLOAT_EQ(80.0, ControlObject::getControl(ConfigKey(m_sGroup2, "rateEngine"))->get());
+    ASSERT_FLOAT_EQ(80.0, ControlObject::getControl(ConfigKey(m_sGroup2, "bpm"))->get());
+    ASSERT_FLOAT_EQ(0.5, ControlObject::getControl(ConfigKey(m_sGroup1, "rateEngine"))->get());
+    ASSERT_FLOAT_EQ(0.6666667, ControlObject::getControl(ConfigKey(m_sGroup2, "rateEngine"))->get());
+}
+
+TEST_F(EngineSyncTest, MasterStopChooseNewTest) {
+	// If the master is playing, and stop is pushed, pick a new master.
+	ControlObject::getControl(ConfigKey(m_sGroup1, "file_bpm"))->set(120.0);
+	ControlObject::getControl(ConfigKey(m_sGroup2, "file_bpm"))->set(128.0);
+
+	ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))->set(SYNC_MASTER);
+	ControlObject::getControl(ConfigKey(m_sGroup2, "sync_mode"))->set(SYNC_SLAVE);
+
+	QScopedPointer<ControlObjectThread> pChannel1Play(getControlObjectThread(
+            ConfigKey(m_sGroup1, "play")));
+	pChannel1Play->set(1.0);
+    ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(1.0);
+
+    ProcessBuffer();
+
+    pChannel1Play->set(0.0);
+
+    ProcessBuffer();
+
+    ASSERT_EQ(SYNC_SLAVE, ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))->get());
+    ASSERT_EQ(SYNC_MASTER, ControlObject::getControl(ConfigKey(m_sGroup2, "sync_mode"))->get());
+    EXPECT_EQ(1, ControlObject::getControl(ConfigKey(m_sGroup1, "sync_slave"))->get());
+    EXPECT_EQ(1, ControlObject::getControl(ConfigKey(m_sGroup2, "sync_master"))->get());
 }
 
 }  // namespace

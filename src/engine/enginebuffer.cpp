@@ -77,6 +77,7 @@ EngineBuffer::EngineBuffer(const char* _group, ConfigObject<ConfigValue>* _confi
     m_pScaleLinear(NULL),
     m_pScaleST(NULL),
     m_bScalerChanged(false),
+    m_bScalerOverride(false),
     m_bSeekQueued(0),
     m_dQueuedPosition(0),
     m_bLastBufferPaused(true),
@@ -213,9 +214,10 @@ EngineBuffer::EngineBuffer(const char* _group, ConfigObject<ConfigValue>* _confi
     m_pLoopingControl = new LoopingControl(_group, _config);
     addControl(m_pLoopingControl);
 
-    m_pRateControl = pMixingEngine->getEngineSync()->addDeck(_group);
+    m_pRateControl = new RateControl(_group, _config, pMixingEngine->getEngineSync());
+    pMixingEngine->getEngineSync()->addDeck(m_pRateControl);
     // Add the Rate Controller
-    addControl(m_pRateControl, /* owned */ false);
+    addControl(m_pRateControl);
 #ifdef __VINYLCONTROL__
     VinylControlControl *vcc = new VinylControlControl(_group, _config);
     addControl(vcc);
@@ -314,17 +316,10 @@ EngineBuffer::~EngineBuffer()
     delete [] m_pDitherBuffer;
     delete [] m_pCrossFadeBuffer;
 
-    int unowned = 0;
-    while (m_engineControls.size() > unowned) {
-        EngineControlOwnership* eco = m_engineControls.takeLast();
-        EngineControl* pControl = eco->pEngineControl;
-        if (eco->owned) {
-            qDebug() << "Enginebuffer deleting " << pControl;
-            delete pControl;
-        } else {
-            ++unowned;
-        }
-        delete eco;
+    while (m_engineControls.size() > 0) {
+        EngineControl* pControl = m_engineControls.takeLast();
+        qDebug() << "Enginebuffer deleting " << pControl;
+        delete pControl;
     }
 }
 
@@ -355,6 +350,7 @@ void EngineBuffer::setPitchIndpTimeStretch(bool b)
     //causes some weird bad pointer somewhere, which will either cause
     //the waveform the roll in a weird way or fire an ASSERT from
     //visualchannel.cpp or something. Need to valgrind this or something.
+	if (m_bScalerOverride) { return; }
 
     if (b == true) {
         m_pScale = m_pScaleST;
@@ -376,8 +372,8 @@ double EngineBuffer::getFileBpm() {
 
 void EngineBuffer::setEngineMaster(EngineMaster * pEngineMaster) {
     m_engineLock.lock();
-    foreach (EngineControlOwnership* eco, m_engineControls) {
-        eco->pEngineControl->setEngineMaster(pEngineMaster);
+    foreach (EngineControl* pControl, m_engineControls) {
+        pControl->setEngineMaster(pEngineMaster);
     }
     m_engineLock.unlock();
 }
@@ -410,9 +406,10 @@ void EngineBuffer::setNewPlaypos(double newpos)
 
     // Must hold the engineLock while using m_engineControls
     m_engineLock.lock();
-    for (QList<EngineControlOwnership*>::iterator it = m_engineControls.begin();
+    for (QList<EngineControl*>::iterator it = m_engineControls.begin();
          it != m_engineControls.end(); it++) {
-        (*it)->pEngineControl->notifySeek(m_filepos_play);
+        EngineControl *pControl = *it;
+        pControl->notifySeek(m_filepos_play);
     }
     m_engineLock.unlock();
 }
@@ -439,6 +436,11 @@ void EngineBuffer::slotTrackLoading() {
     // Set play here, to signal the user that the play command is adopted
     m_playButton->set((double)m_bPlayAfterLoading);
     m_pTrackSamples->set(0); // Stop renderer
+}
+
+void EngineBuffer::loadFakeTrack() {
+	TrackPointer pTrack(new TrackInfoObject(), &QObject::deleteLater);
+    slotTrackLoaded(pTrack, 44100, 44100 * 10);
 }
 
 // WARNING: Always called from the EngineWorker thread pool
@@ -774,9 +776,9 @@ void EngineBuffer::process(const CSAMPLE *, const CSAMPLE * pOut, const int iBuf
         }
 
         m_engineLock.lock();
-        QListIterator<EngineControlOwnership*> it(m_engineControls);
+        QListIterator<EngineControl*> it(m_engineControls);
         while (it.hasNext()) {
-            EngineControl* pControl = it.next()->pEngineControl;
+            EngineControl* pControl = it.next();
             pControl->setCurrentSample(m_filepos_play, m_file_length_old);
             pControl->process(resample_rate, m_filepos_play, m_file_length_old, iBufferSize);
         }
@@ -935,9 +937,9 @@ void EngineBuffer::hintReader(const double dRate) {
         m_hintList.append(hint);
     }
 
-    QListIterator<EngineControlOwnership*> it(m_engineControls);
+    QListIterator<EngineControl*> it(m_engineControls);
     while (it.hasNext()) {
-        EngineControl* pControl = it.next()->pEngineControl;
+        EngineControl* pControl = it.next();
         pControl->hintReader(&m_hintList);
     }
     m_pReader->hintAndMaybeWake(m_hintList);
@@ -953,14 +955,10 @@ void EngineBuffer::slotLoadTrack(TrackPointer pTrack, bool play) {
     m_pReader->newTrack(pTrack);
 }
 
-void EngineBuffer::addControl(EngineControl* pControl, bool owned) {
+void EngineBuffer::addControl(EngineControl* pControl) {
     // Connect to signals from EngineControl here...
     m_engineLock.lock();
-    // Don't delete a control if we don't own it.
-    EngineControlOwnership* eco = new EngineControlOwnership;
-    eco->pEngineControl = pControl;
-    eco->owned = owned;
-    m_engineControls.push_back(eco);
+    m_engineControls.push_back(pControl);
     m_engineLock.unlock();
 
     pControl->setEngineBuffer(this);
@@ -1006,3 +1004,9 @@ void EngineBuffer::setReader(CachingReader* pReader) {
             Qt::DirectConnection);
 }
 */
+
+void EngineBuffer::setScaler(EngineBufferScale* pScale) {
+	m_pScale = pScale;
+	// This bool is permanently set and can't be undone.
+	m_bScalerOverride = true;
+}

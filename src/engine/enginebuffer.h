@@ -101,7 +101,7 @@ public:
     void bindWorkers(EngineWorkerScheduler* pWorkerScheduler);
 
     // Add an engine control to the EngineBuffer
-    void addControl(EngineControl* pControl, bool owned=true);
+    void addControl(EngineControl* pControl);
 
     // Return the current rate (not thread-safe)
     double getRate();
@@ -126,6 +126,12 @@ public:
 
     // For dependency injection of readers.
     //void setReader(CachingReader* pReader);
+
+    // For dependency injection of scalers.
+    void setScaler(EngineBufferScale* pScale);
+
+    // For dependency injection of fake tracks.
+    void loadFakeTrack();
 
   public slots:
     void slotControlPlaySync(double);
@@ -158,7 +164,7 @@ public:
     void slotTrackLoadFailed(TrackPointer pTrack,
                              QString reason);
 
-private:
+  private:
     void setPitchIndpTimeStretch(bool b);
 
     void updateIndicators(double rate, int iBufferSize);
@@ -195,12 +201,7 @@ private:
     // Pointer to the cue control object
     CueControl* m_pCueControl;
 
-    struct EngineControlOwnership {
-        EngineControl* pEngineControl;
-        bool owned;
-    };
-
-    QList<EngineControlOwnership*> m_engineControls;
+    QList<EngineControl*> m_engineControls;
 
     // The read ahead manager for EngineBufferScale's that need to read ahead
     ReadAheadManager* m_pReadAheadManager;
@@ -278,6 +279,8 @@ private:
     EngineBufferScaleDummy* m_pScaleDummy;
     // Indicates whether the scaler has changed since the last process()
     bool m_bScalerChanged;
+    // Indicates that dependency injection has taken place.
+    bool m_bScalerOverride;
 
     QAtomicInt m_bSeekQueued;
     // TODO(XXX) make a macro or something.

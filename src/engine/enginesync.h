@@ -41,7 +41,7 @@ class EngineSync : public EngineControl {
     virtual ~EngineSync();
 
     void addChannel(EngineChannel* pChannel);
-    RateControl* addDeck(const char* group);
+    void addDeck(RateControl* pRate);
     EngineChannel* getMaster() const;
     void process(int bufferSize);
     RateControl* getRateControlForGroup(const QString& group);
@@ -61,7 +61,7 @@ class EngineSync : public EngineControl {
     void setMaster(const QString& group);
     bool setChannelMaster(RateControl* pRateControl);
     void setInternalMaster();
-    QString chooseNewMaster(const QString& dontpick);
+    void chooseNewMaster(const QString& dontpick);
     void disableChannelMaster();
     void updateSamplesPerBeat();
     void setPseudoPosition(double percent);
@@ -80,9 +80,6 @@ class EngineSync : public EngineControl {
 
     QList<RateControl*> m_ratecontrols;
     QString m_sSyncSource;
-    int m_iSampleRate;
-    double m_dSourceRate;
-    double m_dMasterBpm;
     double m_dSamplesPerBeat;
 
     // Used for maintaining internal master sync.

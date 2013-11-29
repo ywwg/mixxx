@@ -27,30 +27,19 @@ BpmControl::BpmControl(const char* _group,
         m_sGroup(_group) {
 
     m_pPlayButton = new ControlObjectSlave(_group, "play", this);
+    m_pPlayButton->connectValueChanged(SLOT(slotControlPlay(double)), Qt::DirectConnection);
     m_pRateSlider = new ControlObjectSlave(_group, "rate", this);
     m_pRateSlider->connectValueChanged(SLOT(slotAdjustBpm()), Qt::DirectConnection);
-    m_pNumDecks = ControlObject::getControl("[Master]", "num_decks");
     m_pQuantize = ControlObject::getControl(_group, "quantize");
+    m_pRateRange = new ControlObjectSlave(_group, "rateRange", this);
+    m_pRateRange->connectValueChanged(SLOT(slotAdjustBpm()), Qt::DirectConnection);
+    m_pRateDir = new ControlObjectSlave(_group, "rate_dir", this);
+    m_pRateDir->connectValueChanged(SLOT(slotAdjustBpm()), Qt::DirectConnection);
 
-    m_pRateRange = ControlObject::getControl(_group, "rateRange");
-    connect(m_pRateRange, SIGNAL(valueChanged(double)),
-            this, SLOT(slotAdjustBpm()),
-            Qt::DirectConnection);
-    connect(m_pRateRange, SIGNAL(valueChangedFromEngine(double)),
-            this, SLOT(slotAdjustBpm()),
-            Qt::DirectConnection);
 
-    m_pRateDir = ControlObject::getControl(_group, "rate_dir");
-    connect(m_pRateDir, SIGNAL(valueChanged(double)),
-            this, SLOT(slotAdjustBpm()),
-            Qt::DirectConnection);
-    connect(m_pRateDir, SIGNAL(valueChangedFromEngine(double)),
-            this, SLOT(slotAdjustBpm()),
-            Qt::DirectConnection);
-
-    m_pLoopEnabled = ControlObject::getControl(_group, "loop_enabled");
-    m_pLoopStartPosition = ControlObject::getControl(_group, "loop_start_position");
-    m_pLoopEndPosition = ControlObject::getControl(_group, "loop_end_position");
+    m_pLoopEnabled = new ControlObjectSlave(_group, "loop_enabled", this);
+    m_pLoopStartPosition = new ControlObjectSlave(_group, "loop_start_position", this);
+    m_pLoopEndPosition = new ControlObjectSlave(_group, "loop_end_position", this);
 
     m_pFileBpm = new ControlObject(ConfigKey(_group, "file_bpm"));
     connect(m_pFileBpm, SIGNAL(valueChanged(double)),
@@ -207,6 +196,12 @@ void BpmControl::slotControlPlay(double v) {
         if (m_pQuantize->get() > 0.0) {
             syncPhase();
         }
+    } else {
+        // If the stop button was pushed while master, choose a new master.
+        // As usual, if vinyl is on don't do anything.
+        if (m_pSyncMode->get() == SYNC_MASTER && !(m_pVCEnabled && m_pVCEnabled->get() > 0)) {
+            m_pSyncMode->set(SYNC_SLAVE);
+        }
     }
 }
 
@@ -280,7 +275,7 @@ bool BpmControl::syncTempo() {
         // The desired rate is the other decks effective rate divided by this
         // deck's file BPM. This gives us the playback rate that will produce an
         // effective BPM equivalent to the other decks.
-        double fDesiredRate = fOtherBpm / fThisFileBpm;
+        double desiredRate = fOtherBpm / fThisFileBpm;
 
         // Test if this buffer's bpm is the double of the other one, and adjust
         // the rate scale. I believe this is intended to account for our BPM
@@ -289,27 +284,31 @@ bool BpmControl::syncTempo() {
 
         float fFileBpmDelta = fabs(fThisFileBpm - fOtherFileBpm);
         if (fabs(fThisFileBpm * 2.0 - fOtherFileBpm) < fFileBpmDelta) {
-            fDesiredRate /= 2.0;
+            desiredRate /= 2.0;
         } else if (fabs(fThisFileBpm - 2.0 * fOtherFileBpm) < fFileBpmDelta) {
-            fDesiredRate *= 2.0;
+            desiredRate *= 2.0;
         }
 
         // Subtract the base 1.0, now fDesiredRate is the percentage
         // increase/decrease in playback rate, not the playback rate.
-        fDesiredRate -= 1.0;
+        double desiredRateShift = desiredRate - 1.0;
 
         // Ensure the rate is within resonable boundaries. Remember, this is the
         // percent to scale the rate, not the rate itself. If fDesiredRate was -1,
         // that would mean the deck would be completely stopped. If fDesiredRate
         // is 1, that means it is playing at 2x speed. This limit enforces that
         // we are scaled between 0.5x and 2x.
-        if (fDesiredRate < 1.0 && fDesiredRate > -0.5) {
+        if (desiredRateShift < 1.0 && desiredRateShift > -0.5)
+        {
+            m_pEngineBpm->set(m_pFileBpm->get() * desiredRate);
+
+
             // Adjust the rateScale. We have to divide by the range and
             // direction to get the correct rateScale.
-            fDesiredRate = fDesiredRate / (m_pRateRange->get() * m_pRateDir->get());
-
+            double desiredRateSlider = desiredRateShift / (m_pRateRange->get() * m_pRateDir->get());
             // And finally, set the slider
-            m_pRateSlider->set(fDesiredRate);
+            m_pRateSlider->set(desiredRateSlider);
+
             return true;
         }
     }
@@ -347,6 +346,7 @@ void BpmControl::slotMasterSyncSliderChanged(double bpm) {
     if (m_pSyncMode->get() == SYNC_SLAVE) {
         double newRate = bpm / m_pFileBpm->get();
         m_pRateSlider->set((newRate - 1.0) / m_pRateDir->get() / m_pRateRange->get());
+        m_pEngineBpm->set(bpm);
     }
 }
 
@@ -354,6 +354,8 @@ void BpmControl::slotSyncModeChanged(double state) {
     slotSetStatuses();
     if (state == SYNC_SLAVE) {
         slotMasterBpmChanged(m_pMasterBpm->get());
+        // Update the slider immediately.
+        slotMasterSyncSliderChanged(m_pMasterBpm->get());
     }
 }
 
