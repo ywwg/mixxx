@@ -120,23 +120,19 @@ XoneK2.shift_on = function (channel, control, value, status) {
 XoneK2.leftBottomKnob = function (channel, control, value, status) {
     if (XoneK2.shift_status)
     {
-        cur_vol = engine.getValue("[Master]", "sync_slider");
-        if (value == 1) {
-            cur_vol += 0.1;
-        } else {
-            cur_vol -= 0.1;
-        }
-        engine.setValue("[Master]", "sync_slider", cur_vol);
-    }
-    else
-    {
-        cur_vol = engine.getValue("[Master]", "headMix");
-        if (value == 1) {
+/*        cur_vol = engine.getValue("[Master]", "headMix");
+        if (value == 1)
             cur_vol += 0.02;
-        } else {
+        else
             cur_vol -= 0.02;
-        }
-        engine.setValue("[Master]", "headMix", cur_vol);
+        engine.setValue("[Master]", "headMix", cur_vol);*/
+    } else {
+        cur_vol = engine.getValue("[Master]", "sync_slider");
+        if (value == 1)
+            cur_vol += 0.02;
+        else
+            cur_vol -= 0.02;
+        engine.setValue("[Master]", "sync_slider", cur_vol);
     }
 }
 
@@ -178,9 +174,9 @@ XoneK2.Playbutton4 = function (channel, control, value, status) {
     XoneK2.PlayButton(value, 4);
 }
 
-XoneK2.encoderJog = function (value, deck) {
+XoneK2.PlayButton = function (value, deck) {
     if (!value) return;
-    
+
     channel = "[Channel" + deck + "]"
 
     if (XoneK2.shift_status) {
@@ -208,7 +204,7 @@ XoneK2.Vinyl4 = function (channel, control, value, status) {
 
 XoneK2.Vinyl = function (value, deck) {
     if (!value) return;
-    
+
     channel = "[Channel" + deck + "]"
 
     if (XoneK2.shift_status) {
