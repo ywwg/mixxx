@@ -51,9 +51,7 @@ public:
     // Returns the current engine rate.
     double calculateRate(double baserate, bool paused, int iSamplesPerBuffer, bool* isScratching);
     double getRawRate() const;
-    ControlObject* getRateEngineControl();
     ControlObject* getBeatDistanceControl();
-//    BpmControl* getBpmControl();
     double getMode() const;
     void setMode(double state);
     double getFileBpm() const { return m_pFileBpm ? m_pFileBpm->get() : 0.0; }
@@ -94,6 +92,7 @@ public:
     static double m_dWheelSensitivity;
 
   private slots:
+    void slotControlPlay(double);
     void slotSyncModeChanged(double);
     void slotSyncMasterChanged(double);
     void slotSyncSlaveChanged(double);
@@ -131,6 +130,7 @@ public:
     ControlPushButton* m_pReverseButton;
     ControlObject* m_pBackButton;
     ControlObject* m_pForwardButton;
+    ControlObject* m_pPlayButton;
     ControlObject* m_pWheelSensitivity;
 
     ControlTTRotary* m_pWheel;

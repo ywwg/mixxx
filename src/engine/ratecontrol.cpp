@@ -78,6 +78,15 @@ RateControl::RateControl(const char* _group,
     m_pReverseButton = new ControlPushButton(ConfigKey(_group, "reverse"));
     m_pReverseButton->set(0);
 
+    // Play button.  We only listen to this to disable master if the deck is stopped.
+    m_pPlayButton = ControlObject::getControl(ConfigKey(_group, "play"));
+    connect(m_pPlayButton, SIGNAL(valueChanged(double)),
+            this, SLOT(slotControlPlay(double)),
+            Qt::DirectConnection);
+    connect(m_pPlayButton, SIGNAL(valueChangedFromEngine(double)),
+            this, SLOT(slotControlPlay(double)),
+            Qt::DirectConnection);
+
     // Forward button
     m_pForwardButton = new ControlPushButton(ConfigKey(_group, "fwd"));
     connect(m_pForwardButton, SIGNAL(valueChanged(double)),
@@ -186,9 +195,6 @@ RateControl::RateControl(const char* _group,
 
     m_pSyncMode = new ControlObject(ConfigKey(_group, "sync_mode"));
     connect(m_pSyncMode, SIGNAL(valueChanged(double)),
-                this, SLOT(slotSyncModeChanged(double)),
-                Qt::DirectConnection);
-    connect(m_pSyncMode, SIGNAL(valueChangedFromEngine(double)),
                 this, SLOT(slotSyncModeChanged(double)),
                 Qt::DirectConnection);
 }
@@ -404,6 +410,20 @@ void RateControl::slotControlRateTempUpSmall(double)
     }
 }
 
+void RateControl::slotControlPlay(double state) {
+    // If the stop button was pushed while master, choose a new master.
+    // As usual, if vinyl is on don't do anything.
+    if (state == 0.0) {
+        if (m_pVCEnabled && m_pVCEnabled->get() > 0.0) {
+            return;
+        }
+        if (m_pSyncMode->get() == SYNC_MASTER) {
+            m_pSyncMode->set(SYNC_SLAVE);
+            m_pEngineSync->setChannelSyncMode(this, SYNC_SLAVE);
+        }
+    }
+}
+
 void RateControl::slotSyncModeChanged(double state) {
     m_pEngineSync->setChannelSyncMode(this, state);
 }
@@ -413,14 +433,8 @@ void RateControl::slotSyncMasterChanged(double state) {
         if (m_pSyncMode->get() == SYNC_MASTER) {
             return;
         }
-
-//        if (m_pTrack.isNull()) {
-//            qDebug() << "rejecting, no track";
-//            m_pSyncMasterEnabled->set(false);
-//            return;
-//        }
-
         m_pSyncMode->set(SYNC_MASTER);
+        slotSyncModeChanged(SYNC_MASTER);
     } else {
         // Turning off master turns off sync mode
         if (m_pSyncMode->get() != SYNC_MASTER) {
@@ -428,6 +442,7 @@ void RateControl::slotSyncMasterChanged(double state) {
         }
         // Unset ourselves
         m_pSyncMode->set(SYNC_NONE);
+        slotSyncModeChanged(SYNC_NONE);
     }
 }
 
@@ -436,15 +451,12 @@ void RateControl::slotSyncSlaveChanged(double state) {
         if (m_pSyncMode->get() == SYNC_SLAVE) {
             return;
         }
-//        if (m_pTrack.isNull()) {
-//            qDebug() << m_sGroup << " no track loaded, can't be slave";
-//            m_pSyncSlaveEnabled->set(false);
-//            return;
-//        }
         m_pSyncMode->set(SYNC_SLAVE);
+        slotSyncModeChanged(SYNC_SLAVE);
     } else {
         // Turning off slave turns off syncing
         m_pSyncMode->set(SYNC_NONE);
+        slotSyncModeChanged(SYNC_NONE);
     }
 }
 
@@ -507,10 +519,6 @@ double RateControl::getJogFactor() const {
     }
 
     return jogFactor * m_dWheelSensitivity;
-}
-
-ControlObject* RateControl::getRateEngineControl() {
-    return m_pRateEngine;
 }
 
 ControlObject* RateControl::getBeatDistanceControl() {
