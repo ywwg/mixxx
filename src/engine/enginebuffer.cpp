@@ -701,7 +701,6 @@ void EngineBuffer::process(const CSAMPLE *, const CSAMPLE * pOut, const int iBuf
             }
 
             rate = m_pScale->setTempo(rate);
-            m_pBpmControl->onEngineRateChange(rate);
             resample_rate = rate * baserate;
             m_pScale->setBaseRate(baserate);
             m_rate_old = resample_rate;
