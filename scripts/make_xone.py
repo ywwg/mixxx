@@ -29,7 +29,7 @@ MAX_DECKS = 2
 fname = ""
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "",["mastersync","4decks"])
+    opts, args = getopt.getopt(sys.argv[1:], "", ["mastersync","4decks"])
     for o, a in opts:
         if o == "--mastersync":
             # This is an alternative layout for my work on master sync
@@ -57,38 +57,31 @@ button_definitions = """0x34	0x35	0x36	0x37
 0x58	0x59	0x5A	0x5B
 0x7C	0x7d	0x7e	0x7f
 
-
 0x30	0x31	0x32	0x33
 0x54	0x55	0x56	0x57
 0x78	0x79	0x7A	0x7b
-
 
 
 0x2c	0x2d	0x2e	0x2f
 0x50	0x51	0x52	0x53
 0x74	0x75	0x76	0x77
 
-
 0x28	0x29	0x2a	0x2b
 0x4c	0x4d	0x4e	0x4f
 0x70	0x71	0x72	0x73
-
 
 
 0x24	0x25	0x26	0x27
 0x48	0x49	0x4a	0x4b
 0x6c	0x6d	0x6e	0x6f
 
-
 0x20	0x21	0x22	0x23
 0x44	0x45	0x46	0x47
 0x68	0x69	0x6a	0x6b
 
-
 0x1c	0x1d	0x1e	0x1f
 0x40	0x41	0x42	0x43
 0x64	0x65	0x66	0x67
-
 
 0x18	0x19	0x1A	0x1b
 0x3c	0x3d	0x3e	0x3f
@@ -160,12 +153,12 @@ button_mapping = {'spinknob':['beatsync','<button/>'],
            'button4':{'red':['play','<normal/>'],        'orange':['reloop_exit','<button/>'], 'green':['hotcue_4_activate','<button/>']}}
 
 if MASTER_SYNC_LAYOUT:
-    button_mapping = {'spinknob':['beatsync','<button/>'],
+    button_mapping = {'spinknob':['eject','<button/>'],
            'knoblight1':['pfl','<button/>'], 'knoblight2':['quantize','<normal/>'], 'knoblight3':['filterLowKill','<normal/>'],
            'button1':{'red':['sync_master','<button/>'], 'orange':['beatloop_4','<button/>'],  'green':['hotcue_1_activate','<button/>']},
            'button2':{'red':['sync_slave','<button/>'],  'orange':['loop_double','<button/>'], 'green':['hotcue_2_activate','<button/>']},
            'button3':{'red':['XoneK2.Vinyl%i','<Script-Binding/>'], 'orange':['loop_halve','<button/>'],  'green':['hotcue_3_activate','<button/>']},
-           'button4':{'red':['XoneK2.Playbutton%i','<Script-Binding/>'],        'orange':['reloop_exit','<button/>'], 'green':['hotcue_4_activate','<button/>']}}
+           'button4':{'red':['XoneK2.Playbutton%i','<Script-Binding/>'], 'orange':['reloop_exit','<button/>'], 'green':['hotcue_4_activate','<button/>']}}
 
 
 light_mapping = {#'spinknob':'jog',
