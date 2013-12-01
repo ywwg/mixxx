@@ -88,7 +88,7 @@ XoneK2.encoderJog = function (value, deck) {
         jogValue *= 5;
     }
 
-    if (engine.getValue("[Channel" + deck + "]", "play") == 1 && 
+    if (engine.getValue("[Channel" + deck + "]", "play") == 1 &&
         engine.getValue("[Channel" + deck + "]", "reverse") == 1) {
         jogValue= -(jogValue);
     }
@@ -180,7 +180,7 @@ XoneK2.PlayButton = function (value, deck) {
     channel = "[Channel" + deck + "]"
 
     if (XoneK2.shift_status) {
-        engine.setValue(channel, "cue", 1);
+        engine.setValue(channel, "cue_default", 1);
     } else {
         engine.setValue(channel, "play", !engine.getValue(channel, "play"));
     }
