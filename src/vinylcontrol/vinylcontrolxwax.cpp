@@ -608,10 +608,11 @@ void VinylControlXwax::analyzeSamples(const short *samples, size_t nFrames)
             averagePitch = dVinylPitch;
         }
 
-        controlScratch->slotSet(averagePitch + dDriftControl);
+        controlScratch->slotSet(averagePitch + dDriftControl + m_dKnobTweak);
         if (iPosition != -1 && reportedPlayButton && uiUpdateTime(filePosition)) {
             rateSlider->slotSet(rateDir->get() *
-                                (fabs(averagePitch + dDriftControl) - 1.0f) / fRateRange);
+                                (averagePitch + dDriftControl + m_dKnobTweak - 1.0f) /
+                                fRateRange);
             dUiUpdateTime = filePosition;
         }
 
