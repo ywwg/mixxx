@@ -87,9 +87,6 @@ class DlgPrefControls : public DlgPreferencePage, public Ui::DlgPrefControlsDlg 
   private slots:
     void slotSkinNumDecksControlChanged(double v) { updateDeckOrderCombo(v); }
 
-  protected:
-    void timerEvent(QTimerEvent *);
-  
   private:
     void initWaveformControl();
     void notifyRebootNecessary();
