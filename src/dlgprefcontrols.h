@@ -46,8 +46,6 @@ class DlgPrefControls : public DlgPreferencePage, public Ui::DlgPrefControlsDlg 
   public slots:
     void slotUpdate();
     void slotApply();
-    void slotShow();
-    void slotHide();
 
     void slotSetRateRange(int pos);
     void slotSetRateDir(int pos);
@@ -84,13 +82,14 @@ class DlgPrefControls : public DlgPreferencePage, public Ui::DlgPrefControlsDlg 
     void slotSetVisualGainMid(double gain);
     void slotSetVisualGainHigh(double gain);
     void slotSetNormalizeOverview( bool normalize);
-
-private slots:
+    void slotWaveformMeasured(float frameRate, int rtErrorCnt);
+  
+  private slots:
     void slotSkinNumDecksControlChanged(double v) { updateDeckOrderCombo(v); }
 
-protected:
+  protected:
     void timerEvent(QTimerEvent *);
-
+  
   private:
     void initWaveformControl();
     void notifyRebootNecessary();
@@ -98,7 +97,6 @@ protected:
     void updateDeckOrderCombo(int deck_count);
 
     ConfigObject<ConfigValue>* m_pConfig;
-    int m_timer;
     ControlObject* m_pControlPositionDisplay;
     QList<ControlObjectThread*> m_cueControls;
     QList<ControlObjectThread*> m_rateControls;
