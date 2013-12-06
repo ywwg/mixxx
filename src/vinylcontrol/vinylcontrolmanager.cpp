@@ -27,7 +27,9 @@ VinylControlManager::VinylControlManager(QObject* pParent,
           m_pProcessor(new VinylControlProcessor(this, pConfig)),
           m_iTimerId(-1),
           m_pVcEnabled1(NULL),
-          m_pVcEnabled2(NULL) {
+          m_pVcEnabled2(NULL),
+          m_pVcEnabled3(NULL),
+          m_pVcEnabled4(NULL) {
     // Register every possible VC input with SoundManager to route to the
     // VinylControlProcessor.
     for (int i = 0; i < kMaximumVinylControlInputs; ++i) {
@@ -43,12 +45,20 @@ VinylControlManager::~VinylControlManager() {
     // turn off vinyl control so it won't be enabled on load (this is redundant to mixxx.cpp)
     m_pConfig->set(ConfigKey("[Channel1]","vinylcontrol_enabled"), false);
     m_pConfig->set(ConfigKey("[Channel2]","vinylcontrol_enabled"), false);
+    m_pConfig->set(ConfigKey("[Channel3]","vinylcontrol_enabled"), false);
+    m_pConfig->set(ConfigKey("[Channel4]","vinylcontrol_enabled"), false);
     m_pConfig->set(ConfigKey(VINYL_PREF_KEY,"cueing_ch1"),
         ConfigValue((int)ControlObject::get(
             ConfigKey("[Channel1]","vinylcontrol_cueing"))));
     m_pConfig->set(ConfigKey(VINYL_PREF_KEY,"cueing_ch2"),
         ConfigValue((int)ControlObject::get(
             ConfigKey("[Channel2]","vinylcontrol_cueing"))));
+    m_pConfig->set(ConfigKey(VINYL_PREF_KEY,"cueing_ch3"),
+        ConfigValue((int)ControlObject::get(
+            ConfigKey("[Channel3]","vinylcontrol_cueing"))));
+    m_pConfig->set(ConfigKey(VINYL_PREF_KEY,"cueing_ch4"),
+        ConfigValue((int)ControlObject::get(
+            ConfigKey("[Channel4]","vinylcontrol_cueing"))));
 }
 
 void VinylControlManager::init() {
@@ -57,16 +67,28 @@ void VinylControlManager::init() {
     m_pVcEnabled1->set(0);
     m_pVcEnabled2 = new ControlObjectThread("[Channel2]", "vinylcontrol_enabled", this);
     m_pVcEnabled2->set(0);
+    m_pVcEnabled3 = new ControlObjectThread("[Channel3]", "vinylcontrol_enabled", this);
+    m_pVcEnabled3->set(0);
+    m_pVcEnabled4 = new ControlObjectThread("[Channel4]", "vinylcontrol_enabled", this);
+    m_pVcEnabled4->set(0);
 
     ControlObject::set(ConfigKey("[Channel1]", "vinylcontrol_mode"),
             m_pConfig->getValueString(ConfigKey(VINYL_PREF_KEY, "mode")).toDouble());
     ControlObject::set(ConfigKey("[Channel2]", "vinylcontrol_mode"),
+            m_pConfig->getValueString(ConfigKey(VINYL_PREF_KEY, "mode")).toDouble());
+    ControlObject::set(ConfigKey("[Channel3]", "vinylcontrol_mode"),
+            m_pConfig->getValueString(ConfigKey(VINYL_PREF_KEY, "mode")).toDouble());
+    ControlObject::set(ConfigKey("[Channel4]", "vinylcontrol_mode"),
             m_pConfig->getValueString(ConfigKey(VINYL_PREF_KEY, "mode")).toDouble());
 
     ControlObject::set(ConfigKey("[Channel1]", "vinylcontrol_cueing"),
             m_pConfig->getValueString(ConfigKey(VINYL_PREF_KEY, "cueing_ch1")).toDouble());
     ControlObject::set(ConfigKey("[Channel2]", "vinylcontrol_cueing"),
             m_pConfig->getValueString(ConfigKey(VINYL_PREF_KEY, "cueing_ch2")).toDouble());
+    ControlObject::set(ConfigKey("[Channel3]", "vinylcontrol_cueing"),
+            m_pConfig->getValueString(ConfigKey(VINYL_PREF_KEY, "cueing_ch3")).toDouble());
+    ControlObject::set(ConfigKey("[Channel4]", "vinylcontrol_cueing"),
+            m_pConfig->getValueString(ConfigKey(VINYL_PREF_KEY, "cueing_ch4")).toDouble());
 }
 
 void VinylControlManager::requestReloadConfig() {
@@ -78,6 +100,10 @@ bool VinylControlManager::vinylInputEnabled(int deck) {
     case 1:
         return m_pVcEnabled1->get() != 0;
     case 2:
+        return m_pVcEnabled2->get() != 0;
+    case 3:
+        return m_pVcEnabled2->get() != 0;
+    case 4:
         return m_pVcEnabled2->get() != 0;
     default:
         return false;

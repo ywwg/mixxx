@@ -57,6 +57,8 @@ class VinylControlManager : public QObject {
     int m_iTimerId;
     ControlObjectThread* m_pVcEnabled1;
     ControlObjectThread* m_pVcEnabled2;
+    ControlObjectThread* m_pVcEnabled3;
+    ControlObjectThread* m_pVcEnabled4;
 };
 
 #endif // VINYLCONTROLMANAGER_H
