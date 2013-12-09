@@ -502,7 +502,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>sync_slave</key>
+                <key>sync_enabled</key>
                 <status>0x9F</status>
                 <midino>0x20</midino>
                 <options>
@@ -511,7 +511,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>sync_slave</key>
+                <key>sync_enabled</key>
                 <status>0x8F</status>
                 <midino>0x20</midino>
                 <options>
@@ -718,7 +718,7 @@
             </control>
             <control>
                 <group>[Channel2]</group>
-                <key>sync_slave</key>
+                <key>sync_enabled</key>
                 <status>0x9F</status>
                 <midino>0x21</midino>
                 <options>
@@ -727,7 +727,7 @@
             </control>
             <control>
                 <group>[Channel2]</group>
-                <key>sync_slave</key>
+                <key>sync_enabled</key>
                 <status>0x8F</status>
                 <midino>0x21</midino>
                 <options>
@@ -934,7 +934,7 @@
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>sync_slave</key>
+                <key>sync_enabled</key>
                 <status>0x9F</status>
                 <midino>0x22</midino>
                 <options>
@@ -943,7 +943,7 @@
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>sync_slave</key>
+                <key>sync_enabled</key>
                 <status>0x8F</status>
                 <midino>0x22</midino>
                 <options>
@@ -1150,7 +1150,7 @@
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>sync_slave</key>
+                <key>sync_enabled</key>
                 <status>0x9F</status>
                 <midino>0x23</midino>
                 <options>
@@ -1159,7 +1159,7 @@
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>sync_slave</key>
+                <key>sync_enabled</key>
                 <status>0x8F</status>
                 <midino>0x23</midino>
                 <options>
