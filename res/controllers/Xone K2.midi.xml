@@ -506,7 +506,7 @@
                 <status>0x9F</status>
                 <midino>0x20</midino>
                 <options>
-                    <button/>
+                    <normal/>
                 </options>
             </control>
             <control>
@@ -515,7 +515,7 @@
                 <status>0x8F</status>
                 <midino>0x20</midino>
                 <options>
-                    <button/>
+                    <normal/>
                 </options>
             </control>
             <control>
@@ -722,7 +722,7 @@
                 <status>0x9F</status>
                 <midino>0x21</midino>
                 <options>
-                    <button/>
+                    <normal/>
                 </options>
             </control>
             <control>
@@ -731,7 +731,7 @@
                 <status>0x8F</status>
                 <midino>0x21</midino>
                 <options>
-                    <button/>
+                    <normal/>
                 </options>
             </control>
             <control>
@@ -938,7 +938,7 @@
                 <status>0x9F</status>
                 <midino>0x22</midino>
                 <options>
-                    <button/>
+                    <normal/>
                 </options>
             </control>
             <control>
@@ -947,7 +947,7 @@
                 <status>0x8F</status>
                 <midino>0x22</midino>
                 <options>
-                    <button/>
+                    <normal/>
                 </options>
             </control>
             <control>
@@ -1154,7 +1154,7 @@
                 <status>0x9F</status>
                 <midino>0x23</midino>
                 <options>
-                    <button/>
+                    <normal/>
                 </options>
             </control>
             <control>
@@ -1163,7 +1163,7 @@
                 <status>0x8F</status>
                 <midino>0x23</midino>
                 <options>
-                    <button/>
+                    <normal/>
                 </options>
             </control>
             <control>
