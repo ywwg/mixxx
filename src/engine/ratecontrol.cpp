@@ -45,6 +45,7 @@ RateControl::RateControl(const char* _group,
       m_bTempStarted(false),
       m_dTempRateChange(0.0),
       m_dRateTemp(0.0),
+      m_dOldBpm(0.0),
       m_eRampBackMode(RATERAMP_RAMPBACK_NONE),
       m_dRateTempRampbackChange(0.0) {
     m_pScratchController = new PositionScratchController(_group);
@@ -58,14 +59,12 @@ RateControl::RateControl(const char* _group,
     // This value affects tests.
     m_pRateRange->set(2.0);
     m_pRateSlider = new ControlPotmeter(ConfigKey(_group, "rate"), -1.f, 1.f);
-    if (m_pRateSlider) {
-        connect(m_pRateSlider, SIGNAL(valueChanged(double)),
-                this, SLOT(slotChannelRateSliderChanged(double)),
-                Qt::DirectConnection);
-        connect(m_pRateSlider, SIGNAL(valueChangedFromEngine(double)),
-                this, SLOT(slotChannelRateSliderChanged(double)),
-                Qt::DirectConnection);
-    }
+    connect(m_pRateSlider, SIGNAL(valueChanged(double)),
+            this, SLOT(slotRateSliderChanged(double)),
+            Qt::DirectConnection);
+    connect(m_pRateSlider, SIGNAL(valueChangedFromEngine(double)),
+            this, SLOT(slotRateSliderChanged(double)),
+            Qt::DirectConnection);
 
     m_pRateEngine = ControlObject::getControl(ConfigKey(_group, "rateEngine"));
     m_pBeatDistance = new ControlObject(ConfigKey(_group, "beat_distance"));
@@ -195,8 +194,20 @@ RateControl::RateControl(const char* _group,
 
     m_pSyncMode = new ControlObject(ConfigKey(_group, "sync_mode"));
     connect(m_pSyncMode, SIGNAL(valueChanged(double)),
-                this, SLOT(slotSyncModeChanged(double)),
-                Qt::DirectConnection);
+            this, SLOT(slotSyncModeChanged(double)),
+            Qt::DirectConnection);
+
+    m_pSyncMasterEnabled = new ControlPushButton(ConfigKey(_group, "sync_master"));
+    m_pSyncMasterEnabled->setButtonMode(ControlPushButton::TOGGLE);
+    connect(m_pSyncMasterEnabled, SIGNAL(valueChanged(double)),
+            this, SLOT(slotSyncMasterEnabledChanged(double)),
+            Qt::DirectConnection);
+
+    m_pSyncEnabled = new ControlPushButton(ConfigKey(_group, "sync_enabled"));
+    m_pSyncEnabled->setButtonMode(ControlPushButton::LONGPRESSLATCHING);
+    connect(m_pSyncEnabled, SIGNAL(valueChanged(double)),
+            this, SLOT(slotSyncEnabledChanged(double)),
+            Qt::DirectConnection);
 }
 
 RateControl::~RateControl() {
@@ -207,6 +218,8 @@ RateControl::~RateControl() {
     delete m_pRateRange;
     delete m_pRateDir;
     delete m_pBeatDistance;
+    delete m_pSyncMasterEnabled;
+    delete m_pSyncEnabled;
 
     delete m_pRateSearch;
 
@@ -235,16 +248,6 @@ RateControl::~RateControl() {
 
 void RateControl::setBpmControl(BpmControl* bpmcontrol) {
     m_pBpmControl = bpmcontrol;
-    ControlObject* sync_master_button =
-            ControlObject::getControl(ConfigKey(getGroup(), "sync_master"));
-    connect(sync_master_button, SIGNAL(valueChanged(double)),
-            this, SLOT(slotSyncMasterChanged(double)),
-            Qt::DirectConnection);
-    ControlObject* sync_slave_button =
-            ControlObject::getControl(ConfigKey(getGroup(), "sync_slave"));
-    connect(sync_slave_button, SIGNAL(valueChanged(double)),
-            this, SLOT(slotSyncSlaveChanged(double)),
-            Qt::DirectConnection);
 }
 
 void RateControl::setEngineChannel(EngineChannel* pChannel) {
@@ -411,26 +414,14 @@ void RateControl::slotControlRateTempUpSmall(double)
 }
 
 void RateControl::slotControlPlay(double state) {
-    // I'm not liking this behavior, disable for now.
-
-    // If the stop button was pushed while master, choose a new master.
-    // As usual, if vinyl is on don't do anything.
-//    if (state == 0.0) {
-//        if (m_pVCEnabled && m_pVCEnabled->get() > 0.0) {
-//            return;
-//        }
-//        if (m_pSyncMode->get() == SYNC_MASTER) {
-//            m_pSyncMode->set(SYNC_SLAVE);
-//            m_pEngineSync->setChannelSyncMode(this, SYNC_SLAVE);
-//        }
-//    }
+    m_pEngineSync->setDeckPlaying(this, state);
 }
 
 void RateControl::slotSyncModeChanged(double state) {
     m_pEngineSync->setChannelSyncMode(this, state);
 }
 
-void RateControl::slotSyncMasterChanged(double state) {
+void RateControl::slotSyncMasterEnabledChanged(double state) {
     if (state) {
         if (m_pSyncMode->get() == SYNC_MASTER) {
             return;
@@ -438,40 +429,42 @@ void RateControl::slotSyncMasterChanged(double state) {
         m_pSyncMode->set(SYNC_MASTER);
         slotSyncModeChanged(SYNC_MASTER);
     } else {
-        // Turning off master turns off sync mode
+        // Turning off master goes back to follower mode.
         if (m_pSyncMode->get() != SYNC_MASTER) {
             return;
         }
         // Unset ourselves
-        m_pSyncMode->set(SYNC_NONE);
-        slotSyncModeChanged(SYNC_NONE);
+        m_pSyncMode->set(SYNC_FOLLOWER);
+        slotSyncModeChanged(SYNC_FOLLOWER);
     }
 }
 
-void RateControl::slotSyncSlaveChanged(double state) {
-    if (state) {
-        if (m_pSyncMode->get() == SYNC_SLAVE) {
-            return;
+void RateControl::slotSyncEnabledChanged(double v) {
+    if (v) {
+        if (m_pSyncMode->get() == SYNC_NONE) {
+            m_pEngineSync->setChannelSyncMode(this);
         }
-        m_pSyncMode->set(SYNC_SLAVE);
-        slotSyncModeChanged(SYNC_SLAVE);
     } else {
-        // Turning off slave turns off syncing
-        m_pSyncMode->set(SYNC_NONE);
-        slotSyncModeChanged(SYNC_NONE);
+        if (m_pSyncMode->get() != SYNC_NONE) {
+            // Turning off slave turns off syncing
+            m_pSyncMode->set(SYNC_NONE);
+            slotSyncModeChanged(SYNC_NONE);
+        }
     }
 }
 
-void RateControl::slotChannelRateSliderChanged(double v) {
-    if (m_pSyncMode->get() == SYNC_SLAVE) {
-        // bpm control will override this value.
-        return;
-    }
+void RateControl::slotRateSliderChanged(double v) {
+    // Notify Master Sync of a change to the rate slider.
     if (!m_pFileBpm) {
        return;
     }
+
     const double new_bpm = m_pFileBpm->get() * (1.0 + m_pRateDir->get() * m_pRateRange->get() * v);
-    m_pEngineSync->setChannelRateSlider(this, new_bpm);
+    if (qFuzzyCompare(new_bpm, m_dOldBpm)) {
+        return;
+    }
+    m_dOldBpm = new_bpm;
+    m_pEngineSync->channelRateSliderChanged(this, new_bpm);
 }
 
 
@@ -531,8 +524,9 @@ double RateControl::getMode() const {
     return m_pSyncMode->get();
 }
 
-void RateControl::setMode(double state) {
-    m_pSyncMode->set(state);
+void RateControl::setMode(double mode) {
+    m_pSyncMode->set(mode);
+    m_pSyncMasterEnabled->set(mode == SYNC_MASTER);
 }
 
 double RateControl::calculateRate(double baserate, bool paused, int iSamplesPerBuffer,
@@ -549,8 +543,9 @@ double RateControl::calculateRate(double baserate, bool paused, int iSamplesPerB
         bool bVinylControlEnabled = m_pVCEnabled && m_pVCEnabled->get() > 0.0;
         bool scratchEnable = m_pScratchToggle->get() != 0 || bVinylControlEnabled;
 
-        // if master sync is on, respond to it -- but vinyl always overrides
-        if (m_pSyncMode->get() == SYNC_SLAVE && !paused && !bVinylControlEnabled)
+        // If master sync is on, respond to it -- but vinyl and scratch mode always override.
+        if (m_pSyncMode->get() == SYNC_FOLLOWER && !paused &&
+            !bVinylControlEnabled && !m_pScratchController->isEnabled())
         {
             if (m_pBpmControl == NULL) {
                 qDebug() << "ERROR: calculateRate m_pBpmControl is null during master sync";
@@ -559,10 +554,8 @@ double RateControl::calculateRate(double baserate, bool paused, int iSamplesPerB
 
             rate = m_pBpmControl->getSyncedRate();
             double userTweak = getTempRate() + wheelFactor + jogFactor;
-            bool userTweakingSync = (userTweak != 0.0);
-            if (userTweakingSync) {
-                rate += userTweak;
-            }
+            bool userTweakingSync = userTweak != 0.0;
+            rate += userTweak;
 
             rate *= m_pBpmControl->getSyncAdjustment(userTweakingSync);
             return rate;
@@ -609,6 +602,7 @@ double RateControl::calculateRate(double baserate, bool paused, int iSamplesPerB
             if (scratchEnable) {
                 rate = scratchFactor;
             } else {
+
                 rate = 1. + getRawRate() + getTempRate();
                 rate += wheelFactor;
 
@@ -637,6 +631,7 @@ double RateControl::calculateRate(double baserate, bool paused, int iSamplesPerB
             *isScratching = true;
         }
     }
+
     return rate;
 }
 
@@ -798,6 +793,6 @@ void RateControl::notifySeek(double playPos) {
 void RateControl::checkTrackPosition(double fractionalPlaypos) {
     // If we're close to the end, and master, disable master so we don't stop the party.
     if (m_pSyncMode->get() == SYNC_MASTER && fractionalPlaypos > TRACK_POSITION_MASTER_HANDOFF) {
-        slotSyncModeChanged(SYNC_SLAVE);
+        slotSyncModeChanged(SYNC_NONE);
     }
 }

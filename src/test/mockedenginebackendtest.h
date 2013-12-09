@@ -26,17 +26,23 @@ using ::testing::_;
 
 class MockScaler : public EngineBufferScale {
   public:
-	MockScaler() : EngineBufferScale() {
-		SampleUtil::applyGain(m_buffer, 0, MAX_BUFFER_LEN);
-	}
-    void setBaseRate(double dBaseRate) { m_dBaseRate = dBaseRate; }
-    double setTempo(double dTempo) { return m_dTempo = dTempo; }
+    MockScaler() : EngineBufferScale() {
+        SampleUtil::applyGain(m_buffer, 0, MAX_BUFFER_LEN);
+    }
+    void setScaleParameters(int iSampleRate,
+                            double* rate_adjust,
+                            double* tempo_adjust,
+                            double* pitch_adjust) {
+        m_iSampleRate = m_iSampleRate;
+        m_dRateAdjust = *rate_adjust;
+        m_dTempoAdjust = *tempo_adjust;
+        m_dPitchAdjust = *pitch_adjust;
+    }
     void clear() { }
     CSAMPLE *getScaled(unsigned long buf_size) {
         m_samplesRead += buf_size;
         return m_buffer;
     }
-
 };
 
 
@@ -139,10 +145,11 @@ class MockedEngineBackendTest : public MixxxTest {
     static const char* m_sGroup1;
     static const char* m_sGroup2;
     static const char* m_sGroup3;
+    static const char* m_sMasterGroup;
     static const double kRateRangeDivisor;
 };
 
-
+const char* MockedEngineBackendTest::m_sMasterGroup = "[Master]";
 const char* MockedEngineBackendTest::m_sGroup1 = "[Test1]";
 const char* MockedEngineBackendTest::m_sGroup2 = "[Test2]";
 const char* MockedEngineBackendTest::m_sGroup3 = "[Test3]";

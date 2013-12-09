@@ -37,12 +37,10 @@ class DlgPrefBeats : public DlgPreferencePage, public Ui::DlgBeatsDlg {
     void maxLenChanged(int value);
     void slotReanalyzeChanged(int value);
 
-  signals:
-    void apply(const QString &);
-
   private:
     void populate();
     void loadSettings();
+
     // Pointer to config object
     ConfigObject<ConfigValue>* m_pconfig;
     QList<QString> m_listName;

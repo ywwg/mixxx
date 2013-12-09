@@ -96,9 +96,9 @@ public:
   private slots:
     void slotControlPlay(double);
     void slotSyncModeChanged(double);
-    void slotSyncMasterChanged(double);
-    void slotSyncSlaveChanged(double);
-    void slotChannelRateSliderChanged(double);
+    void slotSyncMasterEnabledChanged(double);
+    void slotSyncEnabledChanged(double);
+    void slotRateSliderChanged(double);
 
   private:
     double getJogFactor() const;
@@ -155,6 +155,7 @@ public:
 
     // For Master Sync
     BpmControl* m_pBpmControl;
+    ControlPushButton *m_pSyncMasterEnabled, *m_pSyncEnabled;
     ControlObject* m_pSyncMode;
 
     // The current loaded file's detected BPM
@@ -163,14 +164,14 @@ public:
     // Enumerations which hold the state of the pitchbend buttons.
     // These enumerations can be used like a bitmask.
     enum RATERAMP_DIRECTION {
-        RATERAMP_NONE = 0,	// No buttons are held down
-        RATERAMP_DOWN = 1,	// Down button is being held
-        RATERAMP_UP = 2,	// Up button is being held
-        RATERAMP_BOTH = 3	// Both buttons are being held down
+        RATERAMP_NONE = 0,  // No buttons are held down
+        RATERAMP_DOWN = 1,  // Down button is being held
+        RATERAMP_UP = 2,    // Up button is being held
+        RATERAMP_BOTH = 3   // Both buttons are being held down
     };
 
     // Rate ramping mode:
-    //	RATERAMP_STEP: pitch takes a temporary step up/down a certain amount.
+    //  RATERAMP_STEP: pitch takes a temporary step up/down a certain amount.
     //  RATERAMP_LINEAR: pitch moves up/down in a progresively linear fashion.
     enum RATERAMP_MODE {
         RATERAMP_STEP = 0,
@@ -179,9 +180,9 @@ public:
 
     // This defines how the rate returns to normal. Currently unused.
     // Rate ramp back mode:
-    //	RATERAMP_RAMPBACK_NONE: returns back to normal all at once.
-    //	RATERAMP_RAMPBACK_SPEED: moves back in a linearly progresive manner.
-    //	RATERAMP_RAMPBACK_PERIOD: returns to normal within a period of time.
+    //  RATERAMP_RAMPBACK_NONE: returns back to normal all at once.
+    //  RATERAMP_RAMPBACK_SPEED: moves back in a linearly progresive manner.
+    //  RATERAMP_RAMPBACK_PERIOD: returns to normal within a period of time.
     enum RATERAMP_RAMPBACK_MODE {
         RATERAMP_RAMPBACK_NONE,
         RATERAMP_RAMPBACK_SPEED,
@@ -193,19 +194,20 @@ public:
     //  The rate ramping buttons which are currently being pressed.
     int m_ePbPressed;
 
-    /** This is true if we've already started to ramp the rate */
+    // This is true if we've already started to ramp the rate
     bool m_bTempStarted;
-    /** Set to the rate change used for rate temp */
+    // Set to the rate change used for rate temp
     double m_dTempRateChange;
-    /** Set the Temporary Rate Change Mode */
+    // Set the Temporary Rate Change Mode
     static enum RATERAMP_MODE m_eRateRampMode;
-    /** The Rate Temp Sensitivity, the higher it is the slower it gets */
+    // The Rate Temp Sensitivity, the higher it is the slower it gets
     static int m_iRateRampSensitivity;
-    /** Temporary pitchrate, added to the permanent rate for calculateRate */
+    // Temporary pitchrate, added to the permanent rate for calculateRate
     double m_dRateTemp;
-    /** */
+    // Previously-known bpm value, used for determining if sync speed has actually changed.
+    double m_dOldBpm;
     enum RATERAMP_RAMPBACK_MODE m_eRampBackMode;
-    /** Return speed for temporary rate change */
+    // Return speed for temporary rate change
     double m_dRateTempRampbackChange;
 };
 
