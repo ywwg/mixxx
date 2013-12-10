@@ -67,6 +67,9 @@
 		<attribute config_key="[Master],num_decks">4</attribute>
 		<attribute config_key="[Master],num_samplers">0</attribute>
 		<attribute config_key="[Master],num_preview_decks">1</attribute>
+		<attribute config_key="[Skin],num_decks">4</attribute>
+		<attribute config_key="[Skin],num_samplers">0</attribute>
+		<attribute config_key="[Skin],num_preview_decks">1</attribute>
 		<!--Optionally, make elements visible on skin load-->
 		<attribute config_key="[Spinny1],show_spinny">1</attribute>
 		<attribute config_key="[Spinny2],show_spinny">1</attribute>
@@ -1026,7 +1029,7 @@
 					<ConfigKey>[Vinylcontrol],show_vinylcontrol</ConfigKey>
 				</Connection>
 			</PushButton>-->
-			
+
 			<!-- Master -->
 	        <PushButton>
 			    <TooltipId>sync_master</TooltipId>
@@ -1569,7 +1572,7 @@
 					    </Connection>
 				    </VuMeter>
 		        </Children>
-		    </WidgetGroup> <!-- /Channel3 mixer -->		    
+		    </WidgetGroup> <!-- /Channel3 mixer -->
 		    <WidgetGroup> <!-- Channel4 controls -->
 				<Pos>321,0</Pos>
 			    <Size>82,250</Size>
@@ -1928,28 +1931,6 @@
 				    <ButtonState>LeftButton</ButtonState>
 			    </Connection>
 		    </PushButton>
-		    <!-- Slave -->
-	        <PushButton>
-			    <TooltipId>sync_slave</TooltipId>
-			    <Style></Style>
-			    <NumberStates>2</NumberStates>
-			    <State>
-				    <Number>0</Number>
-				    <Pressed>btn_mastersync_slave_on.png</Pressed>
-				    <Unpressed>btn_mastersync_slave_off.png</Unpressed>
-			    </State>
-			    <State>
-				    <Number>1</Number>
-				    <Pressed>btn_mastersync_slave_on.png</Pressed>
-				    <Unpressed>btn_mastersync_slave_on.png</Unpressed>
-			    </State>
-			    <Pos>114,18</Pos>
-			    <Connection>
-				    <ConfigKey>[Channel1],sync_slave</ConfigKey>
-				    <EmitOnPressAndRelease>true</EmitOnPressAndRelease>
-				    <ButtonState>LeftButton</ButtonState>
-			    </Connection>
-		    </PushButton>
 			<!--
 			**********************************************
 			Visual- Vinyl control status indicator // we need 4 of them for top-bottom-left-right
@@ -2153,7 +2134,7 @@
 				<!--CSS alignments not respected see bug lp:605530 , lets call <Alignment>-->
 				<Alignment>right</Alignment>
 			</TrackProperty>
-            
+
             <WidgetGroup> <!-- Channel1 Toggle Buttons -->
                 <Pos>279,130</Pos>
                 <Size>78,44</Size>
@@ -2274,7 +2255,7 @@
 		        </Children>
             </WidgetGroup> <!-- /Channel1 Toggle Buttons -->
             <!-- Playback control sub-widget -->
-			<WidgetGroup> 
+			<WidgetGroup>
 				<Pos>0,174</Pos>
 				<Size>356,138</Size>
 				<Style>QGroupBox { border: 0px solid yellow; } QWidget { margin: 0; padding: 0; }</Style>
@@ -2328,15 +2309,20 @@
 					        <PushButton>
 						        <TooltipId>beatsync_beatsync_tempo</TooltipId>
 						        <Style></Style>
-						        <NumberStates>1</NumberStates>
+						        <NumberStates>2</NumberStates>
 						        <State>
 							        <Number>0</Number>
 							        <Pressed>btn_sync1_overdown.png</Pressed>
 							        <Unpressed>btn_sync1.png</Unpressed>
 						        </State>
+						        <State>
+							        <Number>1</Number>
+							        <Pressed>btn_sync1_overdown.png</Pressed>
+							        <Unpressed>btn_sync1_overdown.png</Unpressed>
+						        </State>
 						        <Pos>54,5</Pos>
 						        <Connection>
-							        <ConfigKey>[Channel1],beatsync</ConfigKey>
+							        <ConfigKey>[Channel1],sync_enabled</ConfigKey>
 							        <EmitOnPressAndRelease>true</EmitOnPressAndRelease>
 							        <ButtonState>LeftButton</ButtonState>
 						        </Connection>
@@ -3148,28 +3134,6 @@
 				    <ButtonState>LeftButton</ButtonState>
 			    </Connection>
 		    </PushButton>
-		    <!-- Slave -->
-	        <PushButton>
-			    <TooltipId>sync_slave</TooltipId>
-			    <Style></Style>
-			    <NumberStates>2</NumberStates>
-			    <State>
-				    <Number>0</Number>
-				    <Pressed>btn_mastersync_slave_on.png</Pressed>
-				    <Unpressed>btn_mastersync_slave_off.png</Unpressed>
-			    </State>
-			    <State>
-				    <Number>1</Number>
-				    <Pressed>btn_mastersync_slave_on.png</Pressed>
-				    <Unpressed>btn_mastersync_slave_on.png</Unpressed>
-			    </State>
-			    <Pos>114,18</Pos>
-			    <Connection>
-				    <ConfigKey>[Channel2],sync_slave</ConfigKey>
-				    <EmitOnPressAndRelease>true</EmitOnPressAndRelease>
-				    <ButtonState>LeftButton</ButtonState>
-			    </Connection>
-		    </PushButton>
 			<!--
 			**********************************************
 			Visual- Vinyl control status indicator // we need 4 of them for top-bottom-left-right
@@ -3373,7 +3337,7 @@
 				<!--CSS alignments not respected see bug lp:605530 , lets call <Alignment>-->
 				<Alignment>right</Alignment>
 			</TrackProperty>
-            
+
             <WidgetGroup> <!-- Channel2 Toggle Buttons -->
                 <Pos>279,130</Pos>
                 <Size>78,44</Size>
@@ -3548,15 +3512,20 @@
 					        <PushButton>
 						        <TooltipId>beatsync_beatsync_tempo</TooltipId>
 						        <Style></Style>
-						        <NumberStates>1</NumberStates>
+						        <NumberStates>2</NumberStates>
 						        <State>
 							        <Number>0</Number>
 							        <Pressed>btn_sync1_overdown.png</Pressed>
 							        <Unpressed>btn_sync1.png</Unpressed>
 						        </State>
+						        <State>
+							        <Number>1</Number>
+							        <Pressed>btn_sync1_overdown.png</Pressed>
+							        <Unpressed>btn_sync1_overdown.png</Unpressed>
+						        </State>
 						        <Pos>54,5</Pos>
 						        <Connection>
-							        <ConfigKey>[Channel2],beatsync</ConfigKey>
+							        <ConfigKey>[Channel2],sync_enabled</ConfigKey>
 							        <EmitOnPressAndRelease>true</EmitOnPressAndRelease>
 							        <ButtonState>LeftButton</ButtonState>
 						        </Connection>
@@ -4369,28 +4338,6 @@
 				    <ButtonState>LeftButton</ButtonState>
 			    </Connection>
 		    </PushButton>
-		    <!-- Slave -->
-	        <PushButton>
-			    <TooltipId>sync_slave</TooltipId>
-			    <Style></Style>
-			    <NumberStates>2</NumberStates>
-			    <State>
-				    <Number>0</Number>
-				    <Pressed>btn_mastersync_slave_on.png</Pressed>
-				    <Unpressed>btn_mastersync_slave_off.png</Unpressed>
-			    </State>
-			    <State>
-				    <Number>1</Number>
-				    <Pressed>btn_mastersync_slave_on.png</Pressed>
-				    <Unpressed>btn_mastersync_slave_on.png</Unpressed>
-			    </State>
-			    <Pos>114,18</Pos>
-			    <Connection>
-				    <ConfigKey>[Channel3],sync_slave</ConfigKey>
-				    <EmitOnPressAndRelease>true</EmitOnPressAndRelease>
-				    <ButtonState>LeftButton</ButtonState>
-			    </Connection>
-		    </PushButton>
 			<!--
 			**********************************************
 			Visual- Vinyl control status indicator // we need 4 of them for top-bottom-left-right
@@ -4594,7 +4541,7 @@
 				<!--CSS alignments not respected see bug lp:605530 , lets call <Alignment>-->
 				<Alignment>right</Alignment>
 			</TrackProperty>
-            
+
             <WidgetGroup> <!-- Channel3 Toggle Buttons -->
                 <Pos>279,130</Pos>
                 <Size>78,44</Size>
@@ -4769,15 +4716,20 @@
 					        <PushButton>
 						        <TooltipId>beatsync_beatsync_tempo</TooltipId>
 						        <Style></Style>
-						        <NumberStates>1</NumberStates>
+						        <NumberStates>2</NumberStates>
 						        <State>
 							        <Number>0</Number>
 							        <Pressed>btn_sync1_overdown.png</Pressed>
 							        <Unpressed>btn_sync1.png</Unpressed>
 						        </State>
+						        <State>
+							        <Number>1</Number>
+							        <Pressed>btn_sync1_overdown.png</Pressed>
+							        <Unpressed>btn_sync1_overdown.png</Unpressed>
+						        </State>
 						        <Pos>54,5</Pos>
 						        <Connection>
-							        <ConfigKey>[Channel3],beatsync</ConfigKey>
+							        <ConfigKey>[Channel3],sync_enabled</ConfigKey>
 							        <EmitOnPressAndRelease>true</EmitOnPressAndRelease>
 							        <ButtonState>LeftButton</ButtonState>
 						        </Connection>
@@ -5589,28 +5541,6 @@
 				    <ButtonState>LeftButton</ButtonState>
 			    </Connection>
 		    </PushButton>
-		    <!-- Slave -->
-	        <PushButton>
-			    <TooltipId>sync_slave</TooltipId>
-			    <Style></Style>
-			    <NumberStates>2</NumberStates>
-			    <State>
-				    <Number>0</Number>
-				    <Pressed>btn_mastersync_slave_on.png</Pressed>
-				    <Unpressed>btn_mastersync_slave_off.png</Unpressed>
-			    </State>
-			    <State>
-				    <Number>1</Number>
-				    <Pressed>btn_mastersync_slave_on.png</Pressed>
-				    <Unpressed>btn_mastersync_slave_on.png</Unpressed>
-			    </State>
-			    <Pos>114,18</Pos>
-			    <Connection>
-				    <ConfigKey>[Channel4],sync_slave</ConfigKey>
-				    <EmitOnPressAndRelease>true</EmitOnPressAndRelease>
-				    <ButtonState>LeftButton</ButtonState>
-			    </Connection>
-		    </PushButton>
 			<!--
 			**********************************************
 			Visual- Vinyl control status indicator // we need 4 of them for top-bottom-left-right
@@ -5814,7 +5744,7 @@
 				<!--CSS alignments not respected see bug lp:605530 , lets call <Alignment>-->
 				<Alignment>right</Alignment>
 			</TrackProperty>
-            
+
             <WidgetGroup> <!-- Channel4 Toggle Buttons -->
                 <Pos>279,130</Pos>
                 <Size>78,44</Size>
@@ -5989,15 +5919,20 @@
 					        <PushButton>
 						        <TooltipId>beatsync_beatsync_tempo</TooltipId>
 						        <Style></Style>
-						        <NumberStates>1</NumberStates>
+						        <NumberStates>2</NumberStates>
 						        <State>
 							        <Number>0</Number>
 							        <Pressed>btn_sync1_overdown.png</Pressed>
 							        <Unpressed>btn_sync1.png</Unpressed>
 						        </State>
+						        <State>
+							        <Number>1</Number>
+							        <Pressed>btn_sync1_overdown.png</Pressed>
+							        <Unpressed>btn_sync1_overdown.png</Unpressed>
+						        </State>
 						        <Pos>54,5</Pos>
 						        <Connection>
-							        <ConfigKey>[Channel4],beatsync</ConfigKey>
+							        <ConfigKey>[Channel4],sync_enabled</ConfigKey>
 							        <EmitOnPressAndRelease>true</EmitOnPressAndRelease>
 							        <ButtonState>LeftButton</ButtonState>
 						        </Connection>
