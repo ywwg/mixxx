@@ -1047,7 +1047,7 @@
 			    </State>
 			    <Pos>4,4</Pos>
 			    <Connection>
-				    <ConfigKey>[Master],sync_master</ConfigKey>
+				    <ConfigKey>[InternalClock],sync_master</ConfigKey>
 				    <EmitOnPressAndRelease>true</EmitOnPressAndRelease>
 				    <ButtonState>LeftButton</ButtonState>
 			    </Connection>
