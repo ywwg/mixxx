@@ -1066,7 +1066,7 @@
 				<Pos>4,25</Pos>
 				<Size>30,33</Size>
 				<Connection>
-					<ConfigKey>[Master],sync_bpm</ConfigKey>
+					<ConfigKey>[InternalClock],bpm</ConfigKey>
 				</Connection>
 			</NumberBpm>
 			<!--
