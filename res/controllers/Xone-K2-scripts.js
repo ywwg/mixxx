@@ -127,12 +127,12 @@ XoneK2.leftBottomKnob = function (channel, control, value, status) {
             cur_vol -= 0.02;
         engine.setValue("[Master]", "headMix", cur_vol);*/
     } else {
-        cur_vol = engine.getValue("[Master]", "sync_slider");
+        cur_vol = engine.getValue("[InternalClock]", "bpm");
         if (value == 1)
-            cur_vol += 0.02;
+            cur_vol += 0.1;
         else
-            cur_vol -= 0.02;
-        engine.setValue("[Master]", "sync_slider", cur_vol);
+            cur_vol -= 0.1;
+        engine.setValue("[InternalClock]", "bpm", cur_vol);
     }
 }
 
