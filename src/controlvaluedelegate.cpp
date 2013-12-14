@@ -147,8 +147,6 @@ ControlValueDelegate::ControlValueDelegate(QObject *parent)
         m_masterControlValues.append("balance");
         m_masterControlValues.append("crossfader");
         m_masterControlValues.append("volume");
-        m_masterControlValues.append("sync_master");
-        m_masterControlValues.append("sync_bpm");
         m_masterControlValues.append("wheelsensitivity");
         m_masterControlValues.append("pfl_delay");
         m_masterControlValues.append("bypass_eq");

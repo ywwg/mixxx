@@ -37,10 +37,12 @@
 #include <QTextStream>
 #endif
 
+class EngineChannel;
 class EngineControl;
 class BpmControl;
 class KeyControl;
 class RateControl;
+class SyncControl;
 class LoopingControl;
 class ClockControl;
 class CueControl;
@@ -96,8 +98,8 @@ class EngineBuffer : public EngineObject {
      Q_OBJECT
 public:
     EngineBuffer(const char *_group, ConfigObject<ConfigValue> *_config,
-                 EngineMaster* pMixingEngine);
-    ~EngineBuffer();
+                 EngineChannel* pChannel, EngineMaster* pMixingEngine);
+    virtual ~EngineBuffer();
     bool getPitchIndpTimeStretch(void);
 
     void bindWorkers(EngineWorkerScheduler* pWorkerScheduler);
@@ -190,6 +192,7 @@ public:
 
     LoopingControl* m_pLoopingControl;
     EngineSync* m_pEngineSync;
+    SyncControl* m_pSyncControl;
     RateControl* m_pRateControl;
     BpmControl* m_pBpmControl;
     KeyControl* m_pKeyControl;

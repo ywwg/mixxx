@@ -265,6 +265,36 @@ class Qt(Dependence):
             # the search path and a QObject.h in QtCore.framework/Headers.
             build.env.Append(CCFLAGS=['-F%s' % os.path.join(framework_path)])
             build.env.Append(LINKFLAGS=['-F%s' % os.path.join(framework_path)])
+
+            # Copied verbatim from qt4.py and qt5.py.
+            # TODO(rryan): Get our fixes merged upstream so we can use qt4.py
+            # and qt5.py for OS X.
+            qt4_module_defines = {
+                'QtScript'   : ['QT_SCRIPT_LIB'],
+                'QtSvg'      : ['QT_SVG_LIB'],
+                'Qt3Support' : ['QT_QT3SUPPORT_LIB','QT3_SUPPORT'],
+                'QtSql'      : ['QT_SQL_LIB'],
+                'QtXml'      : ['QT_XML_LIB'],
+                'QtOpenGL'   : ['QT_OPENGL_LIB'],
+                'QtGui'      : ['QT_GUI_LIB'],
+                'QtNetwork'  : ['QT_NETWORK_LIB'],
+                'QtCore'     : ['QT_CORE_LIB'],
+            }
+            qt5_module_defines = {
+                'QtScript'   : ['QT_SCRIPT_LIB'],
+                'QtSvg'      : ['QT_SVG_LIB'],
+                'QtSql'      : ['QT_SQL_LIB'],
+                'QtXml'      : ['QT_XML_LIB'],
+                'QtOpenGL'   : ['QT_OPENGL_LIB'],
+                'QtGui'      : ['QT_GUI_LIB'],
+                'QtNetwork'  : ['QT_NETWORK_LIB'],
+                'QtCore'     : ['QT_CORE_LIB'],
+                'QtWidgets'  : ['QT_WIDGETS_LIB'],
+            }
+
+            module_defines = qt5_module_defines if qt5 else qt4_module_defines
+            for module in qt_modules:
+                build.env.AppendUnique(CPPDEFINES=module_defines.get(module, []))
         elif build.platform_is_windows:
             # This automatically converts QtCore to QtCore[45][d] where
             # appropriate.
@@ -503,6 +533,11 @@ class MixxxCore(Feature):
                    "dlghidden.cpp",
                    "dlgmissing.cpp",
 
+                   "engine/sync/basesyncablelistener.cpp",
+                   "engine/sync/enginesync.cpp",
+                   "engine/sync/synccontrol.cpp",
+                   "engine/sync/internalclock.cpp",
+
                    "engine/engineworker.cpp",
                    "engine/engineworkerscheduler.cpp",
                    "engine/enginebuffer.cpp",
@@ -517,7 +552,6 @@ class MixxxCore(Feature):
                    "engine/enginepregain.cpp",
                    "engine/enginechannel.cpp",
                    "engine/enginemaster.cpp",
-                   "engine/enginesync.cpp",
                    "engine/enginepfldelay.cpp",
                    "engine/engineflanger.cpp",
                    "engine/enginefiltereffect.cpp",

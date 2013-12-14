@@ -7,15 +7,13 @@
 #include <QObject>
 
 #include "configobject.h"
-#include "controlobject.h"
 #include "engine/enginecontrol.h"
-#include "engine/enginesync.h"
+#include "engine/sync/syncable.h"
 
 const int RATE_TEMP_STEP = 500;
 const int RATE_TEMP_STEP_SMALL = RATE_TEMP_STEP * 10.;
 const int RATE_SENSITIVITY_MIN = 100;
 const int RATE_SENSITIVITY_MAX = 2500;
-const double TRACK_POSITION_MASTER_HANDOFF = 0.98;
 
 class BpmControl;
 class Rotary;
@@ -23,6 +21,7 @@ class ControlTTRotary;
 class ControlObject;
 class ControlPotmeter;
 class ControlPushButton;
+class ControlObjectSlave;
 class EngineChannel;
 class PositionScratchController;
 #ifdef __VINYLCONTROL__
@@ -35,11 +34,10 @@ class VinylControlControl;
 class RateControl : public EngineControl {
     Q_OBJECT
 public:
-    RateControl(const char* _group, ConfigObject<ConfigValue>* _config, EngineSync* enginesync);
+    RateControl(const char* _group, ConfigObject<ConfigValue>* _config);
     virtual ~RateControl();
 
     void setBpmControl(BpmControl* bpmcontrol);
-    void setEngineChannel(EngineChannel* pChannel);
 #ifdef __VINYLCONTROL__
     void setVinylControlControl(VinylControlControl* vinylcontrolcontrol);
 #endif
@@ -52,13 +50,6 @@ public:
     // Returns the current engine rate.
     double calculateRate(double baserate, bool paused, int iSamplesPerBuffer, bool* isScratching);
     double getRawRate() const;
-    ControlObject* getBeatDistanceControl();
-    double getMode() const;
-    void setMode(double state);
-    double getFileBpm() const { return m_pFileBpm ? m_pFileBpm->get() : 0.0; }
-    EngineChannel* getChannel() { Q_ASSERT(m_pChannel); return m_pChannel; }
-    const QString getGroup() const { return m_sGroup; }
-
 
     // Set rate change when temp rate button is pressed
     static void setTemp(double v);
@@ -73,7 +64,6 @@ public:
     /** Set Rate Ramp Sensitivity */
     static void setRateRampSensitivity(int);
     virtual void notifySeek(double dNewPlaypos);
-    void checkTrackPosition(double fractionalPlaypos);
 
   public slots:
     void slotControlRatePermDown(double);
@@ -93,16 +83,10 @@ public:
   protected:
     static double m_dWheelSensitivity;
 
-  private slots:
-    void slotControlPlay(double);
-    void slotSyncModeChanged(double);
-    void slotSyncMasterEnabledChanged(double);
-    void slotSyncEnabledChanged(double);
-    void slotRateSliderChanged(double);
-
   private:
     double getJogFactor() const;
     double getWheelFactor() const;
+    SyncMode getSyncMode() const;
 
     /** Set rate change of the temporary pitch rate */
     void setRateTemp(double v);
@@ -118,21 +102,16 @@ public:
     /** Values used when temp and perm rate buttons are pressed */
     static double m_dTemp, m_dTempSmall, m_dPerm, m_dPermSmall;
 
-    QString m_sGroup;
-    EngineChannel* m_pChannel;
-    EngineSync* m_pEngineSync;
     ControlPushButton *buttonRateTempDown, *buttonRateTempDownSmall,
         *buttonRateTempUp, *buttonRateTempUpSmall;
     ControlPushButton *buttonRatePermDown, *buttonRatePermDownSmall,
         *buttonRatePermUp, *buttonRatePermUpSmall;
-    ControlObject *m_pRateDir, *m_pRateRange, *m_pRateEngine;
-    ControlObject* m_pBeatDistance;
+    ControlObject *m_pRateDir, *m_pRateRange;
     ControlPotmeter* m_pRateSlider;
     ControlPotmeter* m_pRateSearch;
     ControlPushButton* m_pReverseButton;
     ControlObject* m_pBackButton;
     ControlObject* m_pForwardButton;
-    ControlObject* m_pPlayButton;
     ControlObject* m_pWheelSensitivity;
 
     ControlTTRotary* m_pWheel;
@@ -155,11 +134,9 @@ public:
 
     // For Master Sync
     BpmControl* m_pBpmControl;
-    ControlPushButton *m_pSyncMasterEnabled, *m_pSyncEnabled;
-    ControlObject* m_pSyncMode;
 
-    // The current loaded file's detected BPM
-    ControlObject* m_pFileBpm;
+    ControlPushButton *m_pSyncMasterEnabled, *m_pSyncEnabled;
+    ControlObjectSlave* m_pSyncMode;
 
     // Enumerations which hold the state of the pitchbend buttons.
     // These enumerations can be used like a bitmask.
@@ -204,8 +181,6 @@ public:
     static int m_iRateRampSensitivity;
     // Temporary pitchrate, added to the permanent rate for calculateRate
     double m_dRateTemp;
-    // Previously-known bpm value, used for determining if sync speed has actually changed.
-    double m_dOldBpm;
     enum RATERAMP_RAMPBACK_MODE m_eRampBackMode;
     // Return speed for temporary rate change
     double m_dRateTempRampbackChange;

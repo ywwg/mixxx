@@ -33,7 +33,7 @@
 #include "enginevumeter.h"
 #include "enginexfader.h"
 #include "engine/sidechain/enginesidechain.h"
-#include "engine/enginesync.h"
+#include "engine/sync/enginesync.h"
 #include "sampleutil.h"
 #include "util/timer.h"
 #include "playermanager.h"
@@ -69,10 +69,9 @@ EngineMaster::EngineMaster(ConfigObject<ConfigValue> * _config,
     m_pMasterSync = new EngineSync(_config);
 
     // The last-used bpm value is saved in the destructor of EngineSync.
-    double default_bpm = _config->getValueString(ConfigKey("[Master]", "sync_bpm"),
+    double default_bpm = _config->getValueString(ConfigKey("[InternalClock]", "bpm"),
                                                  "124.0").toDouble();
-    ControlObject::getControl(ConfigKey("[Master]","sync_bpm"))->set(default_bpm);
-    ControlObject::getControl(ConfigKey("[Master]","sync_slider"))->set(default_bpm);
+    ControlObject::getControl(ConfigKey("[InternalClock]","bpm"))->set(default_bpm);
 
 #ifdef __LADSPA__
     // LADSPA
@@ -284,8 +283,9 @@ void EngineMaster::process(const CSAMPLE *, const CSAMPLE *pOut, const int iBuff
     }
     ScopedTimer t("EngineMaster::process");
 
-    // Update internal master sync if necessary.
-    m_pMasterSync->process(iBufferSize);
+    int iSampleRate = static_cast<int>(m_pMasterSampleRate->get());
+    // Update internal master sync.
+    m_pMasterSync->onCallbackStart(iSampleRate, iBufferSize);
 
     CSAMPLE **pOutput = (CSAMPLE**)pOut;
     Q_UNUSED(pOutput);
@@ -441,8 +441,6 @@ void EngineMaster::addChannel(EngineChannel* pChannel) {
         pBuffer->bindWorkers(m_pWorkerScheduler);
         pBuffer->setEngineMaster(this);
     }
-
-    m_pMasterSync->addChannel(pChannel);
 }
 
 EngineChannel* EngineMaster::getChannel(QString group) {
