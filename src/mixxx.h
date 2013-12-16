@@ -139,7 +139,6 @@ class MixxxApp : public QMainWindow {
     bool confirmExit();
 
     // Pointer to the root GUI widget
-    QWidget* m_pView;
     QWidget* m_pWidgetParent;
 
     // The mixing engine.

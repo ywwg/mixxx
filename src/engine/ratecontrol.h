@@ -38,9 +38,6 @@ public:
     virtual ~RateControl();
 
     void setBpmControl(BpmControl* bpmcontrol);
-#ifdef __VINYLCONTROL__
-    void setVinylControlControl(VinylControlControl* vinylcontrolcontrol);
-#endif
     // Must be called during each callback of the audio thread so that
     // RateControl has a chance to update itself.
     double process(const double dRate,
@@ -66,6 +63,7 @@ public:
     virtual void notifySeek(double dNewPlaypos);
 
   public slots:
+    void slotReverseRollActivate(double);
     void slotControlRatePermDown(double);
     void slotControlRatePermDownSmall(double);
     void slotControlRatePermUp(double);
@@ -110,6 +108,7 @@ public:
     ControlPotmeter* m_pRateSlider;
     ControlPotmeter* m_pRateSearch;
     ControlPushButton* m_pReverseButton;
+    ControlPushButton* m_pReverseRollButton;
     ControlObject* m_pBackButton;
     ControlObject* m_pForwardButton;
     ControlObject* m_pWheelSensitivity;
@@ -134,6 +133,7 @@ public:
 
     ControlPushButton *m_pSyncMasterEnabled, *m_pSyncEnabled;
     ControlObjectSlave* m_pSyncMode;
+    ControlObjectSlave* m_pSlipEnabled;
 
     // Enumerations which hold the state of the pitchbend buttons.
     // These enumerations can be used like a bitmask.
