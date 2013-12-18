@@ -156,7 +156,7 @@ if MASTER_SYNC_LAYOUT:
     button_mapping = {'spinknob':['eject','<button/>'],
            'knoblight1':['pfl','<button/>'], 'knoblight2':['quantize','<normal/>'], 'knoblight3':['filterLowKill','<normal/>'],
            'button1':{'red':['sync_master','<button/>'], 'orange':['beatloop_4','<button/>'],  'green':['hotcue_1_activate','<button/>']},
-           'button2':{'red':['sync_slave','<button/>'],  'orange':['loop_double','<button/>'], 'green':['hotcue_2_activate','<button/>']},
+           'button2':{'red':['sync_enabled','<normal/>'],  'orange':['loop_double','<button/>'], 'green':['hotcue_2_activate','<button/>']},
            'button3':{'red':['XoneK2.Vinyl%i','<Script-Binding/>'], 'orange':['loop_halve','<button/>'],  'green':['hotcue_3_activate','<button/>']},
            'button4':{'red':['XoneK2.Playbutton%i','<Script-Binding/>'], 'orange':['reloop_exit','<button/>'], 'green':['hotcue_4_activate','<button/>']}}
 
@@ -172,7 +172,7 @@ if MASTER_SYNC_LAYOUT:
     light_mapping = {#'spinknob':'jog',
            'knoblight1':'pfl', 'knoblight2':'quantize', 'knoblight3':'filterLowKill',
            'button1':{'red':'sync_master', 'orange':'beatloop_4',   'green':'hotcue_1_enabled'},
-           'button2':{'red':'sync_slave',  'orange':'loop_double',  'green':'hotcue_2_enabled'},
+           'button2':{'red':'sync_enabled',  'orange':'loop_double',  'green':'hotcue_2_enabled'},
            'button3':{'red':'vinylcontrol_enabled', 'orange':'loop_halve',   'green':'hotcue_3_enabled'},
            'button4':{'red':'play',        'orange':'loop_enabled', 'green':'hotcue_4_enabled'}}
 

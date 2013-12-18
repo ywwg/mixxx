@@ -502,20 +502,20 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>sync_slave</key>
+                <key>sync_enabled</key>
                 <status>0x9F</status>
                 <midino>0x20</midino>
                 <options>
-                    <button/>
+                    <normal/>
                 </options>
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>sync_slave</key>
+                <key>sync_enabled</key>
                 <status>0x8F</status>
                 <midino>0x20</midino>
                 <options>
-                    <button/>
+                    <normal/>
                 </options>
             </control>
             <control>
@@ -718,20 +718,20 @@
             </control>
             <control>
                 <group>[Channel2]</group>
-                <key>sync_slave</key>
+                <key>sync_enabled</key>
                 <status>0x9F</status>
                 <midino>0x21</midino>
                 <options>
-                    <button/>
+                    <normal/>
                 </options>
             </control>
             <control>
                 <group>[Channel2]</group>
-                <key>sync_slave</key>
+                <key>sync_enabled</key>
                 <status>0x8F</status>
                 <midino>0x21</midino>
                 <options>
-                    <button/>
+                    <normal/>
                 </options>
             </control>
             <control>
@@ -934,20 +934,20 @@
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>sync_slave</key>
+                <key>sync_enabled</key>
                 <status>0x9F</status>
                 <midino>0x22</midino>
                 <options>
-                    <button/>
+                    <normal/>
                 </options>
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>sync_slave</key>
+                <key>sync_enabled</key>
                 <status>0x8F</status>
                 <midino>0x22</midino>
                 <options>
-                    <button/>
+                    <normal/>
                 </options>
             </control>
             <control>
@@ -1150,20 +1150,20 @@
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>sync_slave</key>
+                <key>sync_enabled</key>
                 <status>0x9F</status>
                 <midino>0x23</midino>
                 <options>
-                    <button/>
+                    <normal/>
                 </options>
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>sync_slave</key>
+                <key>sync_enabled</key>
                 <status>0x8F</status>
                 <midino>0x23</midino>
                 <options>
-                    <button/>
+                    <normal/>
                 </options>
             </control>
             <control>
@@ -1498,7 +1498,7 @@
             </output>
             <output>
                 <group>[Channel1]</group>
-                <key>sync_slave</key>
+                <key>sync_enabled</key>
                 <status>0x9F</status>
                 <midino>0x20</midino>
                 <minimum>0.5</minimum>
@@ -1582,7 +1582,7 @@
             </output>
             <output>
                 <group>[Channel2]</group>
-                <key>sync_slave</key>
+                <key>sync_enabled</key>
                 <status>0x9F</status>
                 <midino>0x21</midino>
                 <minimum>0.5</minimum>
@@ -1666,7 +1666,7 @@
             </output>
             <output>
                 <group>[Channel3]</group>
-                <key>sync_slave</key>
+                <key>sync_enabled</key>
                 <status>0x9F</status>
                 <midino>0x22</midino>
                 <minimum>0.5</minimum>
@@ -1750,7 +1750,7 @@
             </output>
             <output>
                 <group>[Channel4]</group>
-                <key>sync_slave</key>
+                <key>sync_enabled</key>
                 <status>0x9F</status>
                 <midino>0x23</midino>
                 <minimum>0.5</minimum>

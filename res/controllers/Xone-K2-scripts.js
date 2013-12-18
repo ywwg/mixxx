@@ -127,12 +127,12 @@ XoneK2.leftBottomKnob = function (channel, control, value, status) {
             cur_vol -= 0.02;
         engine.setValue("[Master]", "headMix", cur_vol);*/
     } else {
-        cur_vol = engine.getValue("[Master]", "sync_slider");
+        cur_vol = engine.getValue("[InternalClock]", "bpm");
         if (value == 1)
-            cur_vol += 0.02;
+            cur_vol += 0.1;
         else
-            cur_vol -= 0.02;
-        engine.setValue("[Master]", "sync_slider", cur_vol);
+            cur_vol -= 0.1;
+        engine.setValue("[InternalClock]", "bpm", cur_vol);
     }
 }
 
@@ -180,7 +180,8 @@ XoneK2.PlayButton = function (value, deck) {
     channel = "[Channel" + deck + "]"
 
     if (XoneK2.shift_status) {
-        engine.setValue(channel, "cue_default", 1);
+        engine.setValue(channel, "cue_default", 1.0);
+        engine.setValue(channel, "cue_default", 0.0);
     } else {
         engine.setValue(channel, "play", !engine.getValue(channel, "play"));
     }
