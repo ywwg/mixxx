@@ -16,13 +16,13 @@
 ***************************************************************************/
 
 #include <QtDebug>
-#include <QtCore>
-#include <QtGui>
 #include <QTranslator>
 #include <QMenu>
 #include <QMenuBar>
 #include <QFileDialog>
 #include <QDesktopWidget>
+#include <QDesktopServices>
+#include <QUrl>
 
 #include "mixxx.h"
 
@@ -37,6 +37,7 @@
 #include "engine/enginemicrophone.h"
 #include "engine/enginepassthrough.h"
 #include "library/library.h"
+#include "library/library_preferences.h"
 #include "library/libraryscanner.h"
 #include "library/librarytablemodel.h"
 #include "controllers/controllermanager.h"
@@ -238,7 +239,8 @@ void MixxxApp::initializeKeyboard() {
 }
 
 MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
-        : m_runtime_timer("MixxxApp::runtime"),
+        : m_pWidgetParent(NULL),
+          m_runtime_timer("MixxxApp::runtime"),
           m_cmdLineArgs(args),
           m_pVinylcontrol1Enabled(NULL),
           m_pVinylcontrol2Enabled(NULL) {
@@ -312,37 +314,12 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
     m_pEngine->addChannel(pPassthrough2);
     m_pSoundManager->registerInput(passthroughInput2, pPassthrough2);
 
-    // Get Music dir
-    bool hasChanged_MusicDir = false;
-    QDir dir(m_pConfig->getValueString(ConfigKey("[Playlist]","Directory")));
-    if (m_pConfig->getValueString(
-        ConfigKey("[Playlist]","Directory")).length() < 1 || !dir.exists())
-    {
-        // TODO this needs to be smarter, we can't distinguish between an empty
-        // path return value (not sure if this is normally possible, but it is
-        // possible with the Windows 7 "Music" library, which is what
-        // QDesktopServices::storageLocation(QDesktopServices::MusicLocation)
-        // resolves to) and a user hitting 'cancel'. If we get a blank return
-        // but the user didn't hit cancel, we need to know this and let the
-        // user take some course of action -- bkgood
-        QString fd = QFileDialog::getExistingDirectory(
-            this, tr("Choose music library directory"),
-            QDesktopServices::storageLocation(QDesktopServices::MusicLocation));
-
-        if (fd != "")
-        {
-            m_pConfig->set(ConfigKey("[Playlist]","Directory"), fd);
-            m_pConfig->Save();
-            hasChanged_MusicDir = true;
-        }
-    }
     // Do not write meta data back to ID3 when meta data has changed
     // Because multiple TrackDao objects can exists for a particular track
     // writing meta data may ruine your MP3 file if done simultaneously.
     // see Bug #728197
     // For safety reasons, we deactivate this feature.
     m_pConfig->set(ConfigKey("[Library]","WriteAudioTags"), ConfigValue(0));
-
 
     // library dies in seemingly unrelated qtsql error about not having a
     // sqlite driver if this path doesn't exist. Normally config->Save()
@@ -388,24 +365,43 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
                              m_pRecordingManager);
     m_pPlayerManager->bindToLibrary(m_pLibrary);
 
+    // Get Music dir
+    bool hasChanged_MusicDir = false;
+
+    QStringList dirs = m_pLibrary->getDirs();
+    if (dirs.size() < 1) {
+        // TODO(XXX) this needs to be smarter, we can't distinguish between an empty
+        // path return value (not sure if this is normally possible, but it is
+        // possible with the Windows 7 "Music" library, which is what
+        // QDesktopServices::storageLocation(QDesktopServices::MusicLocation)
+        // resolves to) and a user hitting 'cancel'. If we get a blank return
+        // but the user didn't hit cancel, we need to know this and let the
+        // user take some course of action -- bkgood
+        QString fd = QFileDialog::getExistingDirectory(
+            this, tr("Choose music library directory"),
+            QDesktopServices::storageLocation(QDesktopServices::MusicLocation));
+        if (!fd.isEmpty()) {
+            //adds Folder to database
+            m_pLibrary->slotRequestAddDir(fd);
+            hasChanged_MusicDir = true;
+        }
+    }
+
     // Call inits to invoke all other construction parts
 
     // Intialize default BPM system values
     if (m_pConfig->getValueString(ConfigKey("[BPM]", "BPMRangeStart"))
-            .length() < 1)
-    {
+            .length() < 1) {
         m_pConfig->set(ConfigKey("[BPM]", "BPMRangeStart"),ConfigValue(65));
     }
 
     if (m_pConfig->getValueString(ConfigKey("[BPM]", "BPMRangeEnd"))
-            .length() < 1)
-    {
+            .length() < 1) {
         m_pConfig->set(ConfigKey("[BPM]", "BPMRangeEnd"),ConfigValue(135));
     }
 
     if (m_pConfig->getValueString(ConfigKey("[BPM]", "AnalyzeEntireSong"))
-            .length() < 1)
-    {
+            .length() < 1) {
         m_pConfig->set(ConfigKey("[BPM]", "AnalyzeEntireSong"),ConfigValue(1));
     }
 
@@ -415,6 +411,7 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
     m_pControllerManager = new ControllerManager(m_pConfig);
 
     WaveformWidgetFactory::create();
+    WaveformWidgetFactory::instance()->startVSync(this);
     WaveformWidgetFactory::instance()->setConfig(m_pConfig);
 
     m_pSkinLoader = new SkinLoader(m_pConfig);
@@ -425,7 +422,7 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
 
     // Initialize preference dialog
     m_pPrefDlg = new DlgPreferences(this, m_pSkinLoader, m_pSoundManager, m_pPlayerManager,
-                                    m_pControllerManager, m_pVCManager, m_pConfig);
+                                    m_pControllerManager, m_pVCManager, m_pConfig, m_pLibrary);
     m_pPrefDlg->setWindowIcon(QIcon(":/images/ic_mixxx_window.png"));
     m_pPrefDlg->setHidden(true);
 
@@ -472,28 +469,23 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
     pContextWidget->hide();
     SharedGLContext::setWidget(pContextWidget);
 
-    // Use frame as container for view, needed for fullscreen display
-    m_pView = new QFrame();
-
-    m_pWidgetParent = NULL;
-    // Loads the skin as a child of m_pView
-    // assignment intentional in next line
-    if (!(m_pWidgetParent = m_pSkinLoader->loadDefaultSkin(
-        m_pView, m_pKeyboard, m_pPlayerManager, m_pControllerManager, m_pLibrary, m_pVCManager))) {
-        reportCriticalErrorAndQuit("default skin cannot be loaded see <b>mixxx</b> trace for more information.");
+    // Load skin to a QWidget that we set as the central widget. Assignment
+    // intentional in next line.
+    if (!(m_pWidgetParent = m_pSkinLoader->loadDefaultSkin(this, m_pKeyboard,
+                                                           m_pPlayerManager,
+                                                           m_pControllerManager,
+                                                           m_pLibrary,
+                                                           m_pVCManager))) {
+        reportCriticalErrorAndQuit(
+            "default skin cannot be loaded see <b>mixxx</b> trace for more information.");
 
         //TODO (XXX) add dialog to warn user and launch skin choice page
         resize(640,480);
     } else {
-        // keep gui centered (esp for fullscreen)
-        m_pView->setLayout( new QHBoxLayout(m_pView));
-        m_pView->layout()->setContentsMargins(0,0,0,0);
-        m_pView->layout()->addWidget(m_pWidgetParent);
-
         // this has to be after the OpenGL widgets are created or depending on a
         // million different variables the first waveform may be horribly
         // corrupted. See bug 521509 -- bkgood ?? -- vrince
-        setCentralWidget(m_pView);
+        setCentralWidget(m_pWidgetParent);
     }
 
     //move the app in the center of the primary screen
@@ -552,8 +544,7 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
             m_pLibrary, SLOT(slotRefreshLibraryModels()));
 
     if (rescan || hasChanged_MusicDir) {
-        m_pLibraryScanner->scan(
-            m_pConfig->getValueString(ConfigKey("[Playlist]", "Directory")), this);
+        m_pLibraryScanner->scan(this);
     }
 }
 
@@ -573,9 +564,9 @@ MixxxApp::~MixxxApp() {
     qDebug() << "delete soundmanager " << qTime.elapsed();
     delete m_pSoundManager;
 
-    // View depends on MixxxKeyboard, PlayerManager, Library
+    // GUI depends on MixxxKeyboard, PlayerManager, Library
     qDebug() << "delete view " << qTime.elapsed();
-    delete m_pView;
+    delete m_pWidgetParent;
 
     // SkinLoader depends on Config
     qDebug() << "delete SkinLoader " << qTime.elapsed();
@@ -1255,7 +1246,7 @@ void MixxxApp::slotFileLoadSongPlayer(int deck) {
         QFileDialog::getOpenFileName(
             this,
             loadTrackText,
-            m_pConfig->getValueString(ConfigKey("[Playlist]", "Directory")),
+            m_pConfig->getValueString(PREF_LEGACY_LIBRARY_DIR),
             QString("Audio (%1)")
                 .arg(SoundSourceProxy::supportedFileExtensionsString()));
 
@@ -1472,19 +1463,17 @@ void MixxxApp::setToolTipsCfg(int tt) {
 }
 
 void MixxxApp::rebootMixxxView() {
-
-    if (!m_pWidgetParent || !m_pView)
-        return;
-
     qDebug() << "Now in rebootMixxxView...";
 
     QPoint initPosition = pos();
     QSize initSize = size();
 
-    m_pView->hide();
-
-    WaveformWidgetFactory::instance()->stop();
-    WaveformWidgetFactory::instance()->destroyWidgets();
+    if (m_pWidgetParent) {
+        m_pWidgetParent->hide();
+        WaveformWidgetFactory::instance()->destroyWidgets();
+        delete m_pWidgetParent;
+        m_pWidgetParent = NULL;
+    }
 
     // Workaround for changing skins while fullscreen, just go out of fullscreen
     // mode. If you change skins while in fullscreen (on Linux, at least) the
@@ -1493,14 +1482,9 @@ void MixxxApp::rebootMixxxView() {
     bool wasFullScreen = m_pViewFullScreen->isChecked();
     slotViewFullScreen(false);
 
-    //delete the view cause swaping central widget do not remove the old one !
-    if (m_pView) {
-        delete m_pView;
-    }
-    m_pView = new QFrame();
-
-    // assignment in next line intentional
-    if (!(m_pWidgetParent = m_pSkinLoader->loadDefaultSkin(m_pView,
+    // Load skin to a QWidget that we set as the central widget. Assignment
+    // intentional in next line.
+    if (!(m_pWidgetParent = m_pSkinLoader->loadDefaultSkin(this,
                                                            m_pKeyboard,
                                                            m_pPlayerManager,
                                                            m_pControllerManager,
@@ -1510,29 +1494,20 @@ void MixxxApp::rebootMixxxView() {
         QMessageBox::critical(this,
                               tr("Error in skin file"),
                               tr("The selected skin cannot be loaded."));
-    }
-    else {
-        // keep gui centered (esp for fullscreen)
-        m_pView->setLayout( new QHBoxLayout(m_pView));
-        m_pView->layout()->setContentsMargins(0,0,0,0);
-        m_pView->layout()->addWidget(m_pWidgetParent);
-
-        // don't move this before loadDefaultSkin above. bug 521509 --bkgood
-        // NOTE: (vrince) I don't know this comment is relevant now ...
-        setCentralWidget(m_pView);
-        update();
-        adjustSize();
-        //qDebug() << "view size" << m_pView->size() << size();
+        // m_pWidgetParent is NULL, we can't continue.
+        return;
     }
 
-    if( wasFullScreen) {
+    setCentralWidget(m_pWidgetParent);
+    update();
+    adjustSize();
+
+    if (wasFullScreen) {
         slotViewFullScreen(true);
     } else {
-        move(initPosition.x() + (initSize.width() - m_pView->width()) / 2,
-             initPosition.y() + (initSize.height() - m_pView->height()) / 2);
+        move(initPosition.x() + (initSize.width() - m_pWidgetParent->width()) / 2,
+             initPosition.y() + (initSize.height() - m_pWidgetParent->height()) / 2);
     }
-
-    WaveformWidgetFactory::instance()->start();
 
 #ifdef __APPLE__
     // Original the following line fixes issue on OSX where menu bar went away
@@ -1581,8 +1556,7 @@ void MixxxApp::closeEvent(QCloseEvent *event) {
 
 void MixxxApp::slotScanLibrary() {
     m_pLibraryRescan->setEnabled(false);
-    m_pLibraryScanner->scan(
-        m_pConfig->getValueString(ConfigKey("[Playlist]", "Directory")),this);
+    m_pLibraryScanner->scan(this);
 }
 
 void MixxxApp::slotEnableRescanLibraryAction() {
@@ -1598,15 +1572,15 @@ void MixxxApp::slotOptionsMenuShow() {
 }
 
 void MixxxApp::slotToCenterOfPrimaryScreen() {
-    if (!m_pView)
+    if (!m_pWidgetParent)
         return;
 
     QDesktopWidget* desktop = QApplication::desktop();
     int primaryScreen = desktop->primaryScreen();
     QRect primaryScreenRect = desktop->availableGeometry(primaryScreen);
 
-    move(primaryScreenRect.left() + (primaryScreenRect.width() - m_pView->width()) / 2,
-         primaryScreenRect.top() + (primaryScreenRect.height() - m_pView->height()) / 2);
+    move(primaryScreenRect.left() + (primaryScreenRect.width() - m_pWidgetParent->width()) / 2,
+         primaryScreenRect.top() + (primaryScreenRect.height() - m_pWidgetParent->height()) / 2);
 }
 
 void MixxxApp::checkDirectRendering() {
