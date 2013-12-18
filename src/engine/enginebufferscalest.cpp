@@ -39,7 +39,6 @@ EngineBufferScaleST::EngineBufferScaleST(ReadAheadManager *pReadAheadManager)
     m_pSoundTouch->setTempo(1.0);
     m_pSoundTouch->setPitch(1.0);
     m_pSoundTouch->setSetting(SETTING_USE_QUICKSEEK, 1);
-    m_pSoundTouch->setSetting(SETTING_USE_AA_FILTER, 1);
 
     buffer_back = new CSAMPLE[kiSoundTouchReadAheadLength*2];
 }

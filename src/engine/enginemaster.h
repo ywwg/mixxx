@@ -23,7 +23,6 @@
 #include "engine/enginechannel.h"
 #include "soundmanagerutil.h"
 #include "recording/recordingmanager.h"
-#include <QtCore>
 
 class EngineWorkerScheduler;
 class EngineBuffer;
