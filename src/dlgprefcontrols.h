@@ -24,6 +24,7 @@
 #include "configobject.h"
 #include "preferences/dlgpreferencepage.h"
 
+class ControlObjectSlave;
 class ControlObjectThread;
 class ControlPotmeter;
 class SkinLoader;
@@ -87,6 +88,9 @@ class DlgPrefControls : public DlgPreferencePage, public Ui::DlgPrefControlsDlg 
   private slots:
     void slotSkinNumDecksControlChanged(double v) { updateDeckOrderCombo(v); }
 
+    void slotNumDecksChanged(double);
+    void slotNumSamplersChanged(double);
+
   private:
     void initWaveformControl();
     void notifyRebootNecessary();
@@ -95,6 +99,8 @@ class DlgPrefControls : public DlgPreferencePage, public Ui::DlgPrefControlsDlg 
 
     ConfigObject<ConfigValue>* m_pConfig;
     ControlObject* m_pControlPositionDisplay;
+    ControlObjectSlave* m_pNumDecks;
+    ControlObjectSlave* m_pNumSamplers;
     QList<ControlObjectThread*> m_cueControls;
     QList<ControlObjectThread*> m_rateControls;
     QList<ControlObjectThread*> m_rateDirControls;
@@ -102,6 +108,9 @@ class DlgPrefControls : public DlgPreferencePage, public Ui::DlgPrefControlsDlg 
     MixxxApp *m_mixxx;
     SkinLoader* m_pSkinLoader;
     PlayerManager* m_pPlayerManager;
+
+    int m_iNumConfiguredDecks;
+    int m_iNumConfiguredSamplers;
 };
 
 #endif
