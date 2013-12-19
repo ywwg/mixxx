@@ -27,12 +27,12 @@ EnginePflDelay::EnginePflDelay()
     //make sure it's zeroed out
     SampleUtil::applyGain(m_pDelayBuffer, 0.0f, kiMaxDelay);
     m_iDelayPos = 0;
-    
+
     m_pDelayPot = new ControlPotmeter(ConfigKey("[Master]", "pfl_delay"), 0, 1);
     connect(m_pDelayPot, SIGNAL(valueChanged(double)),
             this, SLOT(slotDelayChanged(double)),
             Qt::DirectConnection);
-            
+
     m_iDelay = 0;
 }
 
@@ -51,7 +51,7 @@ void EnginePflDelay::slotDelayChanged(double new_delay)
     SampleUtil::applyGain(m_pDelayBuffer, 0.0f, kiMaxDelay);
 }
 
-void EnginePflDelay::process(const CSAMPLE * pIn, const CSAMPLE * pOut, const int iBufferSize)
+void EnginePflDelay::process(const CSAMPLE * pIn, CSAMPLE * pOut, int iBufferSize)
 {
     int iDelaySourcePos = (m_iDelayPos+kiMaxDelay-m_iDelay)%kiMaxDelay;
     CSAMPLE * pOutput = (CSAMPLE *)pOut;
@@ -70,4 +70,3 @@ void EnginePflDelay::process(const CSAMPLE * pIn, const CSAMPLE * pOut, const in
         iDelaySourcePos = (iDelaySourcePos+1)%kiMaxDelay;
     }
 }
-

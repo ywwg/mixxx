@@ -21,18 +21,18 @@
 
 class ControlPotmeter;
 
-const int kiMaxDelay = MAX_BUFFER_LEN; 
+const int kiMaxDelay = MAX_BUFFER_LEN;
 
 class EnginePflDelay : public EngineObject {
     Q_OBJECT
 public:
     EnginePflDelay();
     ~EnginePflDelay();
-    void process(const CSAMPLE* pIn, const CSAMPLE* pOut, const int iBufferSize);
-    
+    void process(const CSAMPLE* pIn, CSAMPLE* pOut, int iBufferSize);
+
 public slots:
     void slotDelayChanged(double);
-    
+
 private:
     ControlPotmeter *m_pDelayPot;
     CSAMPLE *m_pDelayBuffer;
