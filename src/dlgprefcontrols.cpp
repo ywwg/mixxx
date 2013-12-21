@@ -197,13 +197,9 @@ DlgPrefControls::DlgPrefControls(QWidget * parent, MixxxApp * mixxx,
     connect(ComboBoxAutoDjRequeue, SIGNAL(activated(int)), this, SLOT(slotSetAutoDjRequeue(int)));
 
     // Ordering of decks, if configurable
-    ControlObject* num_decks = ControlObject::getControl(ConfigKey("[Master]", "num_decks"));
-    int deck_count = static_cast<int>(num_decks->get());
+    int deck_count = static_cast<int>(m_pNumDecks->get());
     updateDeckOrderCombo(deck_count);
     connect(ComboBoxDeckOrder, SIGNAL(activated(int)), this, SLOT(slotSetDeckOrder(int)));
-    connect(num_decks, SIGNAL(valueChanged(double)),
-            this, SLOT(slotSkinNumDecksControlChanged(double)),
-            Qt::DirectConnection);
 
 #ifdef __AUTODJCRATES__
 
@@ -462,6 +458,8 @@ void DlgPrefControls::slotSetDeckOrder(int)
 {
     QString deckorder = ComboBoxDeckOrder->currentText();
     m_pConfig->set(ConfigKey("[Controls]", "DeckOrder"), ConfigValue(deckorder));
+    updateDeckOrderCombo(static_cast<int>(m_pNumDecks->get()));
+    m_pPlayerManager->setDeckOrder(deckorder);
 }
 
 void DlgPrefControls::slotSetAutoDjMinimumAvailable(int a_iValue) {
@@ -513,7 +511,7 @@ void DlgPrefControls::slotSetSkin(int)
     checkSkinResolution(ComboBoxSkinconf->currentText())
             ? warningLabel->hide() : warningLabel->show();
     slotUpdateSchemes();
-    const int deck_count = ControlObject::get(ConfigKey("[Master]", "num_decks"));
+    const int deck_count = static_cast<int>(m_pNumDecks->get());
     updateDeckOrderCombo(deck_count);
 }
 
@@ -614,6 +612,7 @@ void DlgPrefControls::slotApply()
     else
         m_pConfig->set(ConfigKey("[Controls]","RateDir"), ConfigValue(1));
 
+    slotSetDeckOrder(ComboBoxDeckOrder->currentIndex());
 }
 
 void DlgPrefControls::slotSetFrameRate(int frameRate) {
@@ -777,6 +776,7 @@ void DlgPrefControls::slotNumDecksChanged(double new_count) {
     m_iNumConfiguredDecks = numdecks;
     slotSetRateDir(m_pConfig->getValueString(ConfigKey("[Controls]","RateDir")).toInt());
     slotSetRateRange(m_pConfig->getValueString(ConfigKey("[Controls]","RateRange")).toInt());
+    updateDeckOrderCombo(numdecks);
 }
 
 void DlgPrefControls::slotNumSamplersChanged(double new_count) {
@@ -816,7 +816,7 @@ void DlgPrefControls::updateDeckOrderCombo(int deck_count) {
         return;
     }
 
-    int deckorder_index = 0;
+    int deckorder_index = -1;
     int i = 0;
     foreach(const PlayerManager::DeckOrderingManager::deck_order_t& order,
             PlayerManager::getDeckOrderings(deck_count)) {
@@ -826,9 +826,12 @@ void DlgPrefControls::updateDeckOrderCombo(int deck_count) {
         }
         ++i;
     }
-    ComboBoxDeckOrder->setCurrentIndex(deckorder_index);
-    if (ComboBoxDeckOrder->currentText() != config_order) {
-        m_pConfig->set(ConfigKey("[Controls]", "DeckOrder"), ConfigValue(ComboBoxDeckOrder->currentText()));
+    if (deckorder_index >= 0) {
+        ComboBoxDeckOrder->setCurrentIndex(deckorder_index);
+        if (ComboBoxDeckOrder->currentText() != config_order) {
+            m_pConfig->set(ConfigKey("[Controls]", "DeckOrder"),
+                           ConfigValue(ComboBoxDeckOrder->currentText()));
+        }
     }
 }
 

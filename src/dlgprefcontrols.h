@@ -72,7 +72,6 @@ class DlgPrefControls : public DlgPreferencePage, public Ui::DlgPrefControlsDlg 
     void slotSetRateRampSensitivity(int);
     void slotSetLocale(int);
 
-
     void slotSetFrameRate(int frameRate);
     void slotSetWaveformType(int index);
     void slotSetWaveformOverviewType(int index);
@@ -84,10 +83,8 @@ class DlgPrefControls : public DlgPreferencePage, public Ui::DlgPrefControlsDlg 
     void slotSetVisualGainHigh(double gain);
     void slotSetNormalizeOverview( bool normalize);
     void slotWaveformMeasured(float frameRate, int rtErrorCnt);
-  
-  private slots:
-    void slotSkinNumDecksControlChanged(double v) { updateDeckOrderCombo(v); }
 
+  private slots:
     void slotNumDecksChanged(double);
     void slotNumSamplersChanged(double);
 
