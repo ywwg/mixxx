@@ -2088,7 +2088,7 @@
 				background-color: transparent; color: #EECE33; text-align: left;padding-left: 1px; }
 				</Style>
 				<Channel>1</Channel>
-				<Pos>210,53</Pos>
+				<Pos>210,25</Pos>
 				<Size>150,33</Size>
 				<!--CSS alignments not respected see bug lp:605530 , lets call <Alignment>-->
 				<Alignment>right</Alignment>
@@ -3296,7 +3296,7 @@
 				background-color: transparent; color: #EECE33; text-align: left;padding-left: 1px; }
 				</Style>
 				<Channel>2</Channel>
-				<Pos>210,53</Pos>
+				<Pos>210,25</Pos>
 				<Size>150,33</Size>
 				<!--CSS alignments not respected see bug lp:605530 , lets call <Alignment>-->
 				<Alignment>right</Alignment>
@@ -4505,7 +4505,7 @@
 				background-color: transparent; color: #EECE33; text-align: left;padding-left: 1px; }
 				</Style>
 				<Channel>3</Channel>
-				<Pos>210,53</Pos>
+				<Pos>210,25</Pos>
 				<Size>150,33</Size>
 				<!--CSS alignments not respected see bug lp:605530 , lets call <Alignment>-->
 				<Alignment>right</Alignment>
@@ -5713,7 +5713,7 @@
 				background-color: transparent; color: #EECE33; text-align: left;padding-left: 1px; }
 				</Style>
 				<Channel>4</Channel>
-				<Pos>210,53</Pos>
+				<Pos>210,25</Pos>
 				<Size>150,33</Size>
 				<!--CSS alignments not respected see bug lp:605530 , lets call <Alignment>-->
 				<Alignment>right</Alignment>
