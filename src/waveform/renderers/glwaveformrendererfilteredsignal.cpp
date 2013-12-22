@@ -79,24 +79,27 @@ void GLWaveformRendererFilteredSignal::draw(QPainter* painter, QPaintEvent* /*ev
 
     WaveformWidgetFactory* factory = WaveformWidgetFactory::instance();
     double visualGain = factory->getVisualGain(::WaveformWidgetFactory::All);
-    lowGain *= factory->getVisualGain(WaveformWidgetFactory::Low);
-    midGain *= factory->getVisualGain(WaveformWidgetFactory::Mid);
-    highGain *= factory->getVisualGain(WaveformWidgetFactory::High);
+    lowGain *= factory->getVisualGain(WaveformWidgetFactory::Low) * 0.8;
+    lowGain += 0.2;
+    midGain *= factory->getVisualGain(WaveformWidgetFactory::Mid) * 0.8;
+    midGain += 0.2;
+    highGain *= factory->getVisualGain(WaveformWidgetFactory::High) * 0.8;
+    highGain += 0.2;
 
     float maxLow[2];
     float maxMid[2];
     float maxHigh[2];
 
     if (m_pLowKillControlObject && m_pLowKillControlObject->get() == 1.0) {
-        lowGain = 0;
+        lowGain = 0.2;
     }
 
     if (m_pMidKillControlObject && m_pMidKillControlObject->get() == 1.0) {
-        midGain = 0;
+        midGain = 0.2;
     }
 
     if (m_pHighKillControlObject && m_pHighKillControlObject->get() == 1.0) {
-        highGain = 0;
+        highGain = 0.2;
     }
 
     float meanIndex;
@@ -147,17 +150,17 @@ void GLWaveformRendererFilteredSignal::draw(QPainter* painter, QPaintEvent* /*ev
 
                 meanIndex = visualIndex;
 
-                glColor4f(l.redF(),l.greenF(),l.blueF(),0.8);
-                glVertex2f(meanIndex,lowGain*maxLow[0]);
-                glVertex2f(meanIndex,-1.f*lowGain*maxLow[1]);
+                glColor4f(l.redF(), l.greenF(), l.blueF(), 0.8 * lowGain);
+                glVertex2f(meanIndex, maxLow[0]);
+                glVertex2f(meanIndex, -1.f * maxLow[1]);
 
-                glColor4f(h.redF(),h.greenF(),h.blueF(),0.9);
-                glVertex2f(meanIndex,highGain*maxHigh[0]);
-                glVertex2f(meanIndex,-1.f*highGain*maxHigh[1]);
+                glColor4f(h.redF(), h.greenF(), h.blueF(), highGain);
+                glVertex2f(meanIndex, maxHigh[0]);
+                glVertex2f(meanIndex, -1.f * maxHigh[1]);
 
-                glColor4f(m.redF(),m.greenF(),m.blueF(),0.85);
-                glVertex2f(meanIndex,midGain*maxMid[0]);
-                glVertex2f(meanIndex,-1.f*midGain*maxMid[1]);
+                glColor4f(m.redF(), m.greenF(), m.blueF(), 0.85 * midGain);
+                glVertex2f(meanIndex, maxMid[0]);
+                glVertex2f(meanIndex, -1.f * maxMid[1]);
             }
         }
         glEnd();
@@ -197,17 +200,17 @@ void GLWaveformRendererFilteredSignal::draw(QPainter* painter, QPaintEvent* /*ev
                 maxHigh[0] = (float)data[visualIndex].filtered.high;
                 maxHigh[1] = (float)data[visualIndex+1].filtered.high;
 
-                glColor4f(l.redF(),l.greenF(),l.blueF(),0.8);
-                glVertex2f(float(visualIndex),0.f);
-                glVertex2f(float(visualIndex),lowGain*math_max(maxLow[0],maxLow[1]));
+                glColor4f(l.redF(), l.greenF(), l.blueF(), 0.8 * lowGain);
+                glVertex2f(float(visualIndex), 0.f);
+                glVertex2f(float(visualIndex), math_max(maxLow[0],maxLow[1]));
 
-                glColor4f(h.redF(),h.greenF(),h.blueF(),0.9);
-                glVertex2f(float(visualIndex),0.f);
-                glVertex2f(float(visualIndex),highGain*math_max(maxHigh[0],maxHigh[1]));
+                glColor4f(h.redF(), h.greenF(), h.blueF(), highGain);
+                glVertex2f(float(visualIndex), 0.f);
+                glVertex2f(float(visualIndex), math_max(maxHigh[0], maxHigh[1]));
 
-                glColor4f(m.redF(),m.greenF(),m.blueF(),0.85);
-                glVertex2f(float(visualIndex),0.f);
-                glVertex2f(float(visualIndex),midGain*math_max(maxMid[0],maxMid[1]));
+                glColor4f(m.redF(), m.greenF(), m.blueF(), 0.85 * midGain);
+                glVertex2f(float(visualIndex), 0.f);
+                glVertex2f(float(visualIndex), math_max(maxMid[0], maxMid[1]));
             }
         }
         glEnd();
