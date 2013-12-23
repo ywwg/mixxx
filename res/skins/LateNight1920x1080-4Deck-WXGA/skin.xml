@@ -317,10 +317,10 @@
 														<Size>me,45f</Size>
 														<BgColor></BgColor>
 														<BgColor>#FFFFFF</BgColor>
-														<SignalHighColor>#FFE300</SignalHighColor>
-														<SignalMidColor>#EECE33</SignalMidColor>
-														<SignalLowColor>#FF0035</SignalLowColor>
 														<SignalColor>#FF8000</SignalColor>
+				                                        <SignalHighColor>#F0EBD1</SignalHighColor>
+				                                        <SignalMidColor>#EECE33</SignalMidColor>
+				                                        <SignalLowColor>#E4C739</SignalLowColor>
 														<PlayPosColor>#00FF00</PlayPosColor>
 														<DefaultMark>
 															<Align>bottom</Align>
@@ -538,6 +538,9 @@
 						<BgColor>#1C1C1C</BgColor>
 						<BgPixmap>style/style_bg_waveform1.png</BgPixmap>
 						<SignalColor>#EECE33</SignalColor>
+				        <SignalHighColor>#F0EBD1</SignalHighColor>
+				        <SignalMidColor>#EECE33</SignalMidColor>
+				        <SignalLowColor>#E4C739</SignalLowColor>
 						<BeatColor>#ffffff</BeatColor>
 						<BeatHighlightColor></BeatHighlightColor>
 						<PlayPosColor>#00FF00</PlayPosColor>
@@ -592,6 +595,9 @@
 						<BgColor>#1C1C1C</BgColor>
 						<BgPixmap>style/style_bg_waveform2.png</BgPixmap>
 						<SignalColor>#EECE33</SignalColor>
+				        <SignalHighColor>#F0EBD1</SignalHighColor>
+				        <SignalMidColor>#EECE33</SignalMidColor>
+				        <SignalLowColor>#E4C739</SignalLowColor>
 						<BeatColor>#ffffff</BeatColor>
 						<BeatHighlightColor></BeatHighlightColor>
 						<PlayPosColor>#00FF00</PlayPosColor>
@@ -646,7 +652,10 @@
 						<BgColor>#1C1C1C</BgColor>
 						<BgPixmap>style/style_bg_waveform1.png</BgPixmap>
 						<SignalColor>#EECE33</SignalColor>
-						<BeatColor>#ffffff</BeatColor>
+				        <SignalHighColor>#F0EBD1</SignalHighColor>
+				        <SignalMidColor>#EECE33</SignalMidColor>
+				        <SignalLowColor>#E4C739</SignalLowColor>
+ 						<BeatColor>#ffffff</BeatColor>
 						<BeatHighlightColor></BeatHighlightColor>
 						<PlayPosColor>#00FF00</PlayPosColor>
 						<EndOfTrackColor>#EA0000</EndOfTrackColor>
@@ -700,6 +709,9 @@
 						<BgColor>#1C1C1C</BgColor>
 						<BgPixmap>style/style_bg_waveform2.png</BgPixmap>
 						<SignalColor>#EECE33</SignalColor>
+			            <SignalHighColor>#F0EBD1</SignalHighColor>
+			            <SignalMidColor>#EECE33</SignalMidColor>
+			            <SignalLowColor>#E4C739</SignalLowColor>
 						<BeatColor>#ffffff</BeatColor>
 						<BeatHighlightColor></BeatHighlightColor>
 						<PlayPosColor>#00FF00</PlayPosColor>
@@ -2001,6 +2013,9 @@
 				<BgPixmap></BgPixmap>
 				-->
 				<SignalColor>#EECE33</SignalColor>
+				<SignalHighColor>#F0EBD1</SignalHighColor>
+				<SignalMidColor>#EECE33</SignalMidColor>
+				<SignalLowColor>#E4C739</SignalLowColor>
 				<PlayPosColor>#00FF00</PlayPosColor>
 				<EndOfTrackColor>#EA0000</EndOfTrackColor>
 				<DefaultMark>
@@ -3209,6 +3224,9 @@
 				<BgPixmap></BgPixmap>
 				-->
 				<SignalColor>#EECE33</SignalColor>
+				<SignalHighColor>#F0EBD1</SignalHighColor>
+				<SignalMidColor>#EECE33</SignalMidColor>
+				<SignalLowColor>#E4C739</SignalLowColor>
 				<PlayPosColor>#00FF00</PlayPosColor>
 				<EndOfTrackColor>#EA0000</EndOfTrackColor>
 				<DefaultMark>
@@ -4418,6 +4436,9 @@
 				<BgPixmap></BgPixmap>
 				-->
 				<SignalColor>#EECE33</SignalColor>
+				<SignalHighColor>#F0EBD1</SignalHighColor>
+				<SignalMidColor>#EECE33</SignalMidColor>
+				<SignalLowColor>#E4C739</SignalLowColor>
 				<PlayPosColor>#00FF00</PlayPosColor>
 				<EndOfTrackColor>#EA0000</EndOfTrackColor>
 				<DefaultMark>
@@ -5626,6 +5647,9 @@
 				<BgPixmap></BgPixmap>
 				-->
 				<SignalColor>#EECE33</SignalColor>
+				<SignalHighColor>#F0EBD1</SignalHighColor>
+				<SignalMidColor>#EECE33</SignalMidColor>
+				<SignalLowColor>#E4C739</SignalLowColor>
 				<PlayPosColor>#00FF00</PlayPosColor>
 				<EndOfTrackColor>#EA0000</EndOfTrackColor>
 				<DefaultMark>
