@@ -7,14 +7,13 @@
 #include "widget/wpixmapstore.h"
 #include "xmlparse.h"
 
-WWidgetGroup::WWidgetGroup(QWidget* parent)
-        : QGroupBox(parent),
+WWidgetGroup::WWidgetGroup(QWidget* pParent)
+        : QGroupBox(pParent),
           m_pPixmapBack(NULL) {
     setObjectName("WidgetGroup");
 }
 
 WWidgetGroup::~WWidgetGroup() {
-    WPixmapStore::deletePixmap(m_pPixmapBack);
 }
 
 void WWidgetGroup::setup(QDomNode node) {

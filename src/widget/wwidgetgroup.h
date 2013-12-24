@@ -9,11 +9,14 @@
 #include <QString>
 #include <QWidget>
 
+#include "widget/wpixmapstore.h"
+
 class WWidgetGroup : public QGroupBox {
     Q_OBJECT
   public:
-    WWidgetGroup(QWidget *parent=0);
+    WWidgetGroup(QWidget* pParent=NULL);
     virtual ~WWidgetGroup();
+
     void setup(QDomNode node);
     void setPixmapBackground(const QString &filename);
     void addWidget(QWidget* pChild);
@@ -24,7 +27,7 @@ class WWidgetGroup : public QGroupBox {
 
   private:
     // Associated background pixmap
-    QPixmap *m_pPixmapBack;
+    QPixmapPointer m_pPixmapBack;
     QPixmap m_pixmapBackScaled;
 };
 
