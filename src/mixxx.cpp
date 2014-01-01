@@ -302,13 +302,13 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
     m_pEngine->addChannel(pMicrophone);
     m_pSoundManager->registerInput(micInput, pMicrophone);
 
-    EnginePassthrough* pPassthrough1 = new EnginePassthrough("[Channel1]");
+    EnginePassthrough* pPassthrough1 = new EnginePassthrough("[Passthrough1]");
     // What should channelbase be?
     AudioInput passthroughInput1 = AudioInput(AudioPath::EXTPASSTHROUGH, 0, 0);
     m_pEngine->addChannel(pPassthrough1);
     m_pSoundManager->registerInput(passthroughInput1, pPassthrough1);
 
-    EnginePassthrough* pPassthrough2 = new EnginePassthrough("[Channel2]");
+    EnginePassthrough* pPassthrough2 = new EnginePassthrough("[Passthrough2]");
     // What should channelbase be?
     AudioInput passthroughInput2 = AudioInput(AudioPath::EXTPASSTHROUGH, 0, 1);
     m_pEngine->addChannel(pPassthrough2);

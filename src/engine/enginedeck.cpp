@@ -35,7 +35,7 @@ EngineDeck::EngineDeck(const char* group,
                        EngineChannel::ChannelOrientation defaultOrientation)
         : EngineChannel(group, defaultOrientation),
           m_pConfig(pConfig),
-          m_pPassing(new ControlPushButton(ConfigKey(group, "passthrough_enabled"))),
+          m_pPassing(new ControlPushButton(ConfigKey(group, "passthrough"))),
           // Need a +1 here because the CircularBuffer only allows its size-1
           // items to be held at once (it keeps a blank spot open persistently)
           m_sampleBuffer(MAX_BUFFER_LEN+1) {
