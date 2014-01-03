@@ -68,6 +68,7 @@ class DlgPrefSound : public DlgPreferencePage, public Ui::DlgPrefSoundDlg  {
     void updateAPIs();
     void sampleRateChanged(int index);
     void audioBufferChanged(int index);
+    void pflDelayChanged(int delay_fraction);
     void updateAudioBufferSizes(int sampleRateIndex);
     void refreshDevices();
     void settingChanged();
@@ -79,7 +80,6 @@ class DlgPrefSound : public DlgPreferencePage, public Ui::DlgPrefSoundDlg  {
     void connectSoundItem(DlgPrefSoundItem *item);
     void loadSettings(const SoundManagerConfig &config);
     void insertItem(DlgPrefSoundItem *pItem, QVBoxLayout *pLayout);
-    void pflDelayChanged(int delay_fraction);
 
     SoundManager *m_pSoundManager;
     PlayerManager *m_pPlayerManager;

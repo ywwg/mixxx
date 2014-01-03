@@ -395,6 +395,7 @@ void DlgPrefSound::pflDelayChanged(int delay_fraction)
 {
     float fraction = (float)delay_fraction / 1000.0;
     m_pflDelay->slotSet(fraction);
+    settingChanged();
 }
 
 // Slot called whenever the selected sample rate is changed. Populates the
