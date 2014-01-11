@@ -6,10 +6,6 @@
 #include "mathstuff.h"
 #include "sampleutil.h"
 
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
-#define CALC_DELAY(delaytime) \
-        (f_clamp (delaytime * sample_rate, 1.f, (float)(buffer_mask + 1)))
-
 // static
 QString DelayEffect::getId() {
     return "org.mixxx.effects.reverb";
@@ -20,9 +16,14 @@ EffectManifest DelayEffect::getManifest() {
     EffectManifest manifest;
     manifest.setId(getId());
     manifest.setName(QObject::tr("Reverb"));
-    manifest.setAuthor("The Mixxx Team, SWH Plugins");
+    manifest.setAuthor("The Mixxx Team, Steve Harris");
     manifest.setVersion("1.0");
-    manifest.setDescription("TODO");
+    manifest.setDescription(QObject::tr("Tape Delay Simulation.  Correctly "
+            "models the tape motion and some of the smear effect, there is no "
+            "simulation for the head saturation yet, as I don't have a good "
+            "model of it. When I get one I will add it. The way the tape "
+            "accelerates and decelerates gives a nicer delay effect for many "
+            "purposes."));
 
     EffectManifestParameter* time = manifest.addParameter();
     time->setId("delay_time");
