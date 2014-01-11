@@ -47,16 +47,12 @@ void WSliderComposed::setup(QDomNode node, const SkinContext& context) {
     unsetPixmaps();
 
     if (context.hasNode(node, "Slider")) {
-        QString pathSlider = getPath(context.selectString(node, "Slider"));
+        QString pathSlider = context.getSkinPath(context.selectString(node, "Slider"));
         setSliderPixmap(pathSlider);
     }
 
-    QString pathHandle = getPath(context.selectString(node, "Handle"));
-    QString pathHorizontal = context.selectString(node, "Horizontal");
-    bool h = false;
-    if (pathHorizontal.contains("true",Qt::CaseInsensitive)) {
-        h = true;
-    }
+    QString pathHandle = context.getSkinPath(context.selectString(node, "Handle"));
+    bool h = context.selectBool(node, "Horizontal", false);
     setHandlePixmap(h, pathHandle);
 
     if (context.hasNode(node, "EventWhileDrag")) {
@@ -85,7 +81,7 @@ void WSliderComposed::setHandlePixmap(bool bHorizontal, const QString& filenameH
         m_iHandleLength = m_bHorizontal ?
                 m_pHandle->width() : m_pHandle->height();
 
-        setValue(m_value);
+        onConnectedControlValueChanged(getValue());
         update();
     }
 }
@@ -108,24 +104,28 @@ void WSliderComposed::mouseMoveEvent(QMouseEvent * e) {
 
         int sliderLength = m_bHorizontal ? width() : height();
 
+        // Clamp to the range [0, sliderLength - m_iHandleLength].
         if (m_iPos > (sliderLength - m_iHandleLength)) {
             m_iPos = sliderLength - m_iHandleLength;
         } else if (m_iPos < 0) {
             m_iPos = 0;
         }
 
-        // value ranges from 0 to 127
-        m_value = (double)m_iPos * (127. / (double)(sliderLength - m_iHandleLength));
+        // Divide by (sliderLength - m_iHandleLength) to produce a normalized
+        // value in the range of [0.0, 1.0].  1.0
+        double newValue = static_cast<double>(m_iPos) /
+                static_cast<double>(sliderLength - m_iHandleLength);
         if (!m_bHorizontal) {
-            m_value = 127. - m_value;
+            newValue = 1.0 - newValue;
         }
+        setValue(newValue);
 
         // Emit valueChanged signal
         if (m_bEventWhileDrag) {
             if (e->button() == Qt::RightButton) {
-                emit(valueChangedRightUp(m_value));
+                setConnectedControlRightUp(newValue);
             } else {
-                emit(valueChangedLeftUp(m_value));
+                setConnectedControlLeftUp(newValue);
             }
         }
 
@@ -135,9 +135,17 @@ void WSliderComposed::mouseMoveEvent(QMouseEvent * e) {
 }
 
 void WSliderComposed::wheelEvent(QWheelEvent *e) {
-    double wheelDirection = ((QWheelEvent *)e)->delta() / 120.;
-    double newValue = getValue() + (wheelDirection);
-    this->updateValue(newValue);
+    // For legacy (MIDI) reasons this is tuned to 127.
+    double wheelDirection = ((QWheelEvent *)e)->delta() / (120.0 * 127.0);
+    double newValue = getValue() + wheelDirection;
+
+    // Clamp to [0.0, 1.0]
+    newValue = math_max(0.0, math_min(1.0, newValue));
+
+    setValue(newValue);
+    setConnectedControlDown(newValue);
+    setConnectedControlUp(newValue);
+    update();
 
     e->accept();
 
@@ -149,9 +157,9 @@ void WSliderComposed::mouseReleaseEvent(QMouseEvent * e) {
         mouseMoveEvent(e);
 
         if (e->button() == Qt::RightButton) {
-            emit(valueChangedRightUp(m_value));
+            setConnectedControlRightUp(getValue());
         } else {
-            emit(valueChangedLeftUp(m_value));
+            setConnectedControlLeftUp(getValue());
         }
 
         m_bDrag = false;
@@ -169,7 +177,7 @@ void WSliderComposed::mousePressEvent(QMouseEvent * e) {
         m_bDrag = true;
     } else {
         if (e->button() == Qt::RightButton) {
-            emit(valueReset());
+            resetConnectedControls();
             m_bRightButtonPressed = true;
         } else {
             if (m_bHorizontal) {
@@ -199,18 +207,18 @@ void WSliderComposed::paintEvent(QPaintEvent *) {
     }
 }
 
-void WSliderComposed::setValue(double fValue) {
-    if (!m_bDrag && m_value != fValue) {
+void WSliderComposed::onConnectedControlValueChanged(double dValue) {
+    if (!m_bDrag && getValue() != dValue) {
         // Set value without emitting a valueChanged signal
         // and force display update
-        m_value = fValue;
+        setValue(dValue);
 
         // Calculate handle position
         if (!m_bHorizontal) {
-            fValue = 127-fValue;
+            dValue = 1.0 - dValue;
         }
         int sliderLength = m_bHorizontal ? width() : height();
-        m_iPos = (int)((fValue / 127.) * (double)(sliderLength - m_iHandleLength));
+        m_iPos = static_cast<int>(dValue * (sliderLength - m_iHandleLength));
 
         if (m_iPos > (sliderLength - m_iHandleLength)) {
             m_iPos = sliderLength - m_iHandleLength;

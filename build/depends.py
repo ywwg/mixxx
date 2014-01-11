@@ -505,9 +505,6 @@ class MixxxCore(Feature):
                    "control/controlbehavior.cpp",
                    "controlobjectslave.cpp",
                    "controlobjectthread.cpp",
-                   "controlobjectthreadwidget.cpp",
-                   "controlobjectthreadmain.cpp",
-                   "controlevent.cpp",
                    "controllogpotmeter.cpp",
                    "controlobject.cpp",
                    "controlpotmeter.cpp",
@@ -612,6 +609,7 @@ class MixxxCore(Feature):
                    "soundsource.cpp",
 
                    "sharedglcontext.cpp",
+                   "widget/wbasewidget.cpp",
                    "widget/wwidget.cpp",
                    "widget/wwidgetgroup.cpp",
                    "widget/wwidgetstack.cpp",

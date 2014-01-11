@@ -9,6 +9,7 @@
 
 WWidgetGroup::WWidgetGroup(QWidget* pParent)
         : QFrame(pParent),
+          WBaseWidget(this),
           m_pPixmapBack(NULL) {
     setObjectName("WidgetGroup");
 }
@@ -80,7 +81,7 @@ void WWidgetGroup::setup(QDomNode node, const SkinContext& context) {
 
     // Set background pixmap if available
     if (context.hasNode(node, "BackPath")) {
-        setPixmapBackground(WWidget::getPath(context.selectString(node, "BackPath")));
+        setPixmapBackground(context.getSkinPath(context.selectString(node, "BackPath")));
     }
 
     QLayout* pLayout = NULL;

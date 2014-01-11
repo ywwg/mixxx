@@ -1,11 +1,9 @@
-#include "controlobjectthreadmain.h"
-
 #include "defs.h"
 #include "glwaveformrendererfilteredsignal.h"
 #include "trackinfoobject.h"
 #include "waveform/waveform.h"
 #include "waveformwidgetrenderer.h"
-
+#include "controlobjectthread.h"
 #include "waveform/waveformwidgetfactory.h"
 
 #include <QDomNode>
