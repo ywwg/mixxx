@@ -990,7 +990,7 @@ QWidget* LegacySkinParser::parseSpinny(QDomElement node) {
     WSpinny* spinny = new WSpinny(m_pParent, m_pVCManager);
     if (!spinny->isValid()) {
         delete spinny;
-        QLabel* dummy = new QLabel(m_pParent);
+        WLabel* dummy = new WLabel(m_pParent);
         //: Shown when Spinny can not be displayd. Please keep \n unchanged
         dummy->setText(tr("No OpenGL\nsupport."));
         return dummy;
@@ -1676,6 +1676,12 @@ void LegacySkinParser::setupConnections(QDomNode node, WBaseWidget* pWidget) {
                     break;
                 default:
                     break;
+            }
+
+            // Legacy behavior, the last widget that is marked
+            // connectValueToWidget is the display connection.
+            if (connectValueToWidget) {
+                pWidget->setDisplayConnection(pConnection);
             }
 
             // We only add info for controls that this widget affects, not

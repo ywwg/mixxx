@@ -21,14 +21,33 @@ class ControlWidgetConnection : public QObject {
         EMIT_ON_PRESS_AND_RELEASE = 0x03
     };
 
+    static QString emitOptionToString(EmitOption option) {
+        switch (option) {
+            case EMIT_NEVER:
+                return "NEVER";
+            case EMIT_ON_PRESS:
+                return "PRESS";
+            case EMIT_ON_RELEASE:
+                return "RELEASE";
+            case EMIT_ON_PRESS_AND_RELEASE:
+                return "PRESS_AND_RELEASE";
+            default:
+                return "UNKNOWN";
+        }
+    }
+
     // Takes ownership of pControl.
     ControlWidgetConnection(WBaseWidget* pBaseWidget,
                             ControlObjectSlave* pControl);
     virtual ~ControlWidgetConnection();
 
-    virtual void reset() = 0;
-    virtual void setDown(double v) = 0;
-    virtual void setUp(double v) = 0;
+    double getControlParameter() const;
+
+    virtual void resetControl() = 0;
+    virtual void setControlParameterDown(double v) = 0;
+    virtual void setControlParameterUp(double v) = 0;
+
+    virtual QString toDebugString() const = 0;
 
   protected slots:
     virtual void slotControlValueChanged(double v) = 0;
@@ -48,10 +67,12 @@ class ValueControlWidgetConnection : public ControlWidgetConnection {
                                  EmitOption emitOption);
     virtual ~ValueControlWidgetConnection();
 
+    QString toDebugString() const;
+
   protected:
-    void reset();
-    void setDown(double v);
-    void setUp(double v);
+    void resetControl();
+    void setControlParameterDown(double v);
+    void setControlParameterUp(double v);
 
   protected slots:
     void slotControlValueChanged(double v);
@@ -69,10 +90,12 @@ class DisabledControlWidgetConnection : public ControlWidgetConnection {
                                     ControlObjectSlave* pControl);
     virtual ~DisabledControlWidgetConnection();
 
+    QString toDebugString() const;
+
   protected:
-    void reset();
-    void setDown(double v);
-    void setUp(double v);
+    void resetControl();
+    void setControlParameterDown(double v);
+    void setControlParameterUp(double v);
 
   protected slots:
     void slotControlValueChanged(double v);
@@ -108,24 +131,42 @@ class WBaseWidget {
     void addRightConnection(ControlWidgetConnection* pConnection);
     void addConnection(ControlWidgetConnection* pConnection);
 
+    // Set a ControlWidgetConnection to be the display connection for the
+    // widget. The connection should also be added via an addConnection method
+    // or it will not be deleted or receive updates.
+    void setDisplayConnection(ControlWidgetConnection* pConnection);
+
+    double getControlParameter() const;
+    double getControlParameterLeft() const;
+    double getControlParameterRight() const;
+    double getControlParameterDisplay() const;
+
   protected:
     virtual void onConnectedControlValueChanged(double v) {
         Q_UNUSED(v);
     }
 
-    void resetConnectedControls();
-    void setConnectedControlDown(double v);
-    void setConnectedControlUp(double v);
-    void setConnectedControlLeftDown(double v);
-    void setConnectedControlLeftUp(double v);
-    void setConnectedControlRightDown(double v);
-    void setConnectedControlRightUp(double v);
+    void resetControlParameters();
+    void setControlParameterDown(double v);
+    void setControlParameterUp(double v);
+    void setControlParameterLeftDown(double v);
+    void setControlParameterLeftUp(double v);
+    void setControlParameterRightDown(double v);
+    void setControlParameterRightUp(double v);
+
+    // Tooltip handling. We support "debug tooltips" which are basically a way
+    // to expose debug information about widgets via the tooltip. To enable
+    // this, when widgets should call updateTooltip before they are about to
+    // display a tooltip.
+    void updateTooltip();
+    virtual void fillDebugTooltip(QStringList* debug);
 
   private:
     QWidget* m_pWidget;
     bool m_bDisabled;
     QString m_baseTooltip;
     QList<ControlWidgetConnection*> m_connections;
+    ControlWidgetConnection* m_pDisplayConnection;
     QList<ControlWidgetConnection*> m_leftConnections;
     QList<ControlWidgetConnection*> m_rightConnections;
 

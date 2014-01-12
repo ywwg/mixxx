@@ -19,8 +19,8 @@
 #define WWIDGET_H
 
 #include <QWidget>
+#include <QEvent>
 #include <QString>
-#include <QDomNode>
 
 #include "configobject.h"
 #include "widget/wbasewidget.h"
@@ -42,21 +42,12 @@ public:
     virtual ~WWidget();
 
     Q_PROPERTY(bool controlDisabled READ controlDisabled);
-    Q_PROPERTY(double value READ getValue);
-
-    double getValue() const {
-        return m_value;
-    }
-
-    void setValue(double value) {
-        m_value = value;
-    }
+    Q_PROPERTY(double value READ getControlParameterDisplay);
 
     virtual void onConnectedControlValueChanged(double value);
 
-  private:
-    // Value/state of widget
-    double m_value;
+  protected:
+    bool event(QEvent* pEvent);
 };
 
 #endif

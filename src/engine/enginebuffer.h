@@ -43,6 +43,7 @@ class BpmControl;
 class KeyControl;
 class RateControl;
 class SyncControl;
+class VinylControlControl;
 class LoopingControl;
 class ClockControl;
 class CueControl;
@@ -206,6 +207,7 @@ class EngineBuffer : public EngineObject {
     LoopingControl* m_pLoopingControl;
     EngineSync* m_pEngineSync;
     SyncControl* m_pSyncControl;
+    VinylControlControl* m_pVinylControlControl;
     RateControl* m_pRateControl;
     BpmControl* m_pBpmControl;
     KeyControl* m_pKeyControl;

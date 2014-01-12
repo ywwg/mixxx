@@ -106,9 +106,6 @@ class VinylControlXwax : public VinylControl {
     // Whether the configured timecode is CD-based or not.
     bool m_bCDControl;
 
-    // Whether the needle-skip prevention user-preference is enabled.
-    bool m_bNeedleSkipPrevention;
-
     // Whether track select mode is enabled.
     bool m_bTrackSelectMode;
 
