@@ -33,7 +33,6 @@
 
 WOverview::WOverview(const char *pGroup, ConfigObject<ConfigValue>* pConfig, QWidget* parent) :
         WWidget(parent),
-        m_sPrefix(""),
         m_pWaveform(NULL),
         m_pWaveformSourceImage(NULL),
         m_actualCompletion(0),
@@ -43,6 +42,7 @@ WOverview::WOverview(const char *pGroup, ConfigObject<ConfigValue>* pConfig, QWi
         m_group(pGroup),
         m_pConfig(pConfig),
         m_endOfTrack(0),
+        m_sPrefix(""),
         m_bDrag(false),
         m_iPos(0),
         m_a(1.0),
