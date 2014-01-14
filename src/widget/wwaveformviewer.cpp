@@ -74,12 +74,12 @@ void WWaveformViewer::mousePressEvent(QMouseEvent* event) {
         double audioSamplePerPixel = m_waveformWidget->getAudioSamplePerPixel();
         double targetPosition = -1.0 * event->pos().x() * audioSamplePerPixel * 2;
         m_pScratchPosition->slotSet(targetPosition);
-        m_pScratchPositionEnable->slotSet(1.0f);
+        m_pScratchPositionEnable->slotSet(1.0);
     } else if (event->button() == Qt::RightButton) {
         // If we are scratching then disable and reset because the two shouldn't
         // be used at once.
         if (m_bScratching) {
-            m_pScratchPositionEnable->slotSet(0.0f);
+            m_pScratchPositionEnable->slotSet(0.0);
             m_bScratching = false;
         }
         setControlParameterRightDown(0.5);
@@ -124,7 +124,7 @@ void WWaveformViewer::mouseMoveEvent(QMouseEvent* event) {
 
 void WWaveformViewer::mouseReleaseEvent(QMouseEvent* /*event*/) {
     if (m_bScratching) {
-        m_pScratchPositionEnable->slotSet(0.0f);
+        m_pScratchPositionEnable->slotSet(0.0);
         m_bScratching = false;
     }
     if (m_bBending) {

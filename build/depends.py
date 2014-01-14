@@ -616,6 +616,7 @@ class MixxxCore(Feature):
                    "soundsource.cpp",
 
                    "sharedglcontext.cpp",
+                   "widget/controlwidgetconnection.cpp",
                    "widget/wbasewidget.cpp",
                    "widget/wwidget.cpp",
                    "widget/wwidgetgroup.cpp",
@@ -667,6 +668,7 @@ class MixxxCore(Feature):
                    "library/basesqltablemodel.cpp",
                    "library/basetrackcache.cpp",
                    "library/librarytablemodel.cpp",
+                   "library/searchquery.cpp",
                    "library/searchqueryparser.cpp",
                    "library/analysislibrarytablemodel.cpp",
                    "library/missingtablemodel.cpp",
@@ -795,7 +797,6 @@ class MixxxCore(Feature):
                    "skin/skinloader.cpp",
                    "skin/legacyskinparser.cpp",
                    "skin/colorschemeparser.cpp",
-                   "skin/propertybinder.cpp",
                    "skin/tooltips.cpp",
                    "skin/skincontext.cpp",
 
