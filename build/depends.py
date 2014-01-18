@@ -894,9 +894,9 @@ class MixxxCore(Feature):
             if build.toolchain_is_msvs:
                 build.env.Append(LINKFLAGS="/MANIFEST")
         elif build.platform_is_osx:
-            #Need extra room for code signing (App Store)
-            build.env.Append(LINKFLAGS="-headerpad=ffff")
-            build.env.Append(LINKFLAGS="-headerpad_max_install_names")
+            # Need extra room for code signing (App Store)
+            build.env.Append(LINKFLAGS="-Wl,-headerpad,ffff")
+            build.env.Append(LINKFLAGS="-Wl,-headerpad_max_install_names")
 
         return sources
 
@@ -1006,21 +1006,15 @@ class MixxxCore(Feature):
                 build.platform_is_bsd:
             mixxx_files = [
                 ('SETTINGS_PATH', '.mixxx/'),
-                ('BPMSCHEME_FILE', 'mixxxbpmscheme.xml'),
-                ('SETTINGS_FILE', 'mixxx.cfg'),
-                ('TRACK_FILE', 'mixxxtrack.xml')]
+                ('SETTINGS_FILE', 'mixxx.cfg')]
         elif build.platform_is_osx:
             mixxx_files = [
                 ('SETTINGS_PATH', 'Library/Application Support/Mixxx/'),
-                ('BPMSCHEME_FILE', 'mixxxbpmscheme.xml'),
-                ('SETTINGS_FILE', 'mixxx.cfg'),
-                ('TRACK_FILE', 'mixxxtrack.xml')]
+                ('SETTINGS_FILE', 'mixxx.cfg')]
         elif build.platform_is_windows:
             mixxx_files = [
                 ('SETTINGS_PATH', 'Local Settings/Application Data/Mixxx/'),
-                ('BPMSCHEME_FILE', 'mixxxbpmscheme.xml'),
-                ('SETTINGS_FILE', 'mixxx.cfg'),
-                ('TRACK_FILE', 'mixxxtrack.xml')]
+                ('SETTINGS_FILE', 'mixxx.cfg')]
         # Escape the filenames so they don't end up getting screwed up in the
         # shell.
         mixxx_files = [(k, r'\"%s\"' % v) for k, v in mixxx_files]
