@@ -40,14 +40,14 @@ HighLowEffect::~HighLowEffect() {
 
 double HighLowEffect::getLowFrequencyCorner(double depth) {
     // depth goes from 0 to -1
-    // freq corner should go from 2^(6 + 8) down to 2^6.
-    return pow(2.0, 14.0 - (-depth * 8.0));
+    // freq corner should go from 2^(5 + 8) down to 2^5.
+    return pow(2.0, 14.0 - (-depth * 9.0));
 }
 
 double HighLowEffect::getHighFrequencyCorner(double depth) {
     // depth goes from 0 to 1
-    // freq corner should go from 2^6 up to 2^(6+8).
-    return pow(2.0, 6.0 + depth * 8.0);
+    // freq corner should go from 2^5 up to 2^(5+8).
+    return pow(2.0, 5.0 + depth * 9.0);
 }
 
 void HighLowEffect::processGroup(const QString& group,
@@ -57,9 +57,7 @@ void HighLowEffect::processGroup(const QString& group,
     double depth = m_pDepthParameter ?
             m_pDepthParameter->value().toDouble() : 0.0;
 
-    // TODO(rryan) what if bandpass_gain changes?
     bool parametersChanged = (depth != pState->oldDepth);
-
 
     if (parametersChanged) {
         if (pState->oldDepth == 0.0) {
