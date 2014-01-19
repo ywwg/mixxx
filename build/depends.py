@@ -562,6 +562,7 @@ class MixxxCore(Feature):
                    "effects/native/bitcrushereffect.cpp",
                    "effects/native/flangereffect.cpp",
                    "effects/native/filtereffect.cpp",
+                   "effects/native/highloweffect.cpp",
                    "effects/native/reverbeffect.cpp",
                    "effects/native/echoeffect.cpp",
 

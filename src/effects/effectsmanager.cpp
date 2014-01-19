@@ -119,6 +119,14 @@ void EffectsManager::setupDefaults() {
     m_pEffectChainManager->addEffectChain(pChain);
 
     pChain = EffectChainPointer(new EffectChain(
+        this, "org.mixxx.effectchain.highlow"));
+    pChain->setName(tr("HighLow"));
+    pChain->setParameter(0.0f);
+    pEffect = instantiateEffect("org.mixxx.effects.highlow");
+    pChain->addEffect(pEffect);
+    m_pEffectChainManager->addEffectChain(pChain);
+
+    pChain = EffectChainPointer(new EffectChain(
         this, "org.mixxx.effectchain.reverb"));
     pChain->setName(tr("Reverb"));
     pChain->setParameter(0.0f);
