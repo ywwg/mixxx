@@ -11,49 +11,140 @@ DNHS5500.init = function init(id,debug) {
     //engine.connectControl("[Channel1]","keylock","DNHS5500.keylocklights");
     engine.connectControl("[Channel1]","rate","DNHS5500.rateDisplay");
     engine.connectControl("[Channel2]","rate","DNHS5500.rateDisplay");
+
+    DNHS5500.hasRecentWheelVelocity = [1, 1];
+    DNHS5500.recentWheelVelocity = [0, 0];
+    DNHS5500.scratchDecay = [0, 0];
 }
 DNHS5500.shutdown = function shutdown() {}
 
 // The button that enables/disables scratching
-//DNHS5500.wheelTouch = function (channel, control, value, status) {
-   // if ((status & 0x04) == 0x90) {    // If button down
-    //if ((status & 0xF0) == 0x90) {    // If button down
-  //if (value == 0x7F) {  // Some wheels send 0x90 on press and release, so you need to check the value
-        //var alpha = 1.0/8;
-        //var beta = alpha/32;
-        //engine.scratchEnable(DNHS5500.currentDeck, 128, 33+1/3, alpha, beta);
-        //engine.scratchEnable(0, 128, 33+1/3, alpha, beta);
-        // Keep track of whether we're scratching on this virtual deck - for v1.10.x or below
-        // MyController.scratching[MyController.currentDeck] = true;
-    //}
-    //else {    // If button up
-        //engine.scratchDisable(DNHS5500.currentDeck);
-        //MyController.scratching[MyController.currentDeck] = false;  // Only for v1.10.x and below
-    //}
+DNHS5500.wheelTouch = function (channel, control, value, status) {
+    // This is documented but never happens.
+    // Jogwheel touch values.
+    if (value == 0x40) {
+        print ("wheel touch scratch on");
+        DNHS5500.scratchEnable(channel + 1);
+    }
+}
+
+DNHS5500.scratchEnable = function (deck) {
+    print ("scratch on");
+    var alpha = 1.0/64;
+    var beta = alpha/64;
+    engine.scratchEnable(deck, 1480, 33+1/3, alpha, beta);
+}
+
+DNHS5500.scratchEnableDamped = function (deck) {
+    print ("scratch on damp");
+    var alpha = 1.0/256;
+    var beta = alpha/256;
+    engine.scratchEnable(deck, 1480, 33+1/3, alpha, beta);
+}
+
+DNHS5500.wheelRelease = function (channel, control, value, status) {
+    // This is documented but never happens.
+    // Jogwheel touch values.
+    if (value == 0x00) {
+        engine.scratchDisable(channel + 1, true);
+    }
+}
+
+DNHS5500.wheelTurn = function (channel, control, value, status) {
+    // Reports the velocity of the top disc-like wheel, as well as touch events.
+    var deckNumber = channel + 1;
+    if (deckNumber == 1) {
+        var group = "[Channel1]";
+    } else if (deckNumber == 2) {
+        var group = "[Channel2]";
+    } else {
+        print ("weird deck number " + channel);
+        return;
+    }
+
+    // Velocity values.
+
+    var velocity = value - 0x40;
+
+    print ("wheel info!");
+    DNHS5500.hasRecentWheelVelocity[channel] = true;
+    DNHS5500.recentWheelVelocity[channel] = velocity;
+
+    var currentlyPlaying = engine.getValue(group, "play");
+    if (currentlyPlaying) {
+        // If the velocity is not 1, we must be scratching.
+        if (velocity != 1) {
+            print ("playing, not 1 velo, scratch on");
+            DNHS5500.scratchEnable(deckNumber);
+        }
+    }
+
+    if (engine.isScratching(deckNumber)) {
+        engine.scratchTick(deckNumber, velocity);
+    } else {
+        engine.setValue(group, "jog", velocity);
+    }
+}
+
+//DNHS5500.resetScratchDecay = function (deckNumber) {
+//    var deckIndex = deckNumber - 1;
+//    print ("starting decay");
+//    DNHS5500.scratchDecay[deckIndex] = 300;
 //}
-// The wheel that actually controls the scratching
-//DNHS5500.wheelTurn = function (channel, control, value, status) {
-//print("channel="+channel+"control="+control+"value="+value+"status="+status);    // See if we're scratching. If not, skip this.
-    //if (!engine.isScratching(DNHS5500.currentDeck)) return; // for 1.11.0 and above
-    ////if (!MyController.scratching[MyController.currentDeck]) return; // for 1.10.x and below
 
-    // --- Choose only one of the following!
+//DNHS5500.doScratchDecay = function (deckNumber) {
+//    var deckIndex = deckNumber - 1;
 
-    //// A: For a control that centers on 0:    var newValue;
-    //if (value-64 > 0) newValue = value-128;
-    //else newValue = value;
+//    print ("scratch decay " + DNHS5500.scratchDecay[deckIndex]);
+//    DNHS5500.scratchDecay[deckIndex] -= 1;
 
-    // B: For a control that centers on 0x40 (64):
-    //var newValue=(value-64);
-
-    // --- End choice
-
-    // In either case, register the movement
-    //engine.scratchTick(DNHS5500.currentDeck,newValue);
+//    if (DNHS5500.scratchDecay[deckIndex] <= 0) {
+//        print ("decay complete, disabling scratch");
+//        DNHS5500.scratchDecay[deckIndex] = 0;
+//        engine.scratchDisable(deckNumber,);
+//        print ("scratch disabled??? " + engine.isScratching(deckNumber));
+//    }
 //}
+
+DNHS5500.platterTurn = function (channel, control, value, status) {
+    // Reports the velocity of the lower platter.
+    var velocity = value - 0x40;
+    var deckNumber = channel + 1;
+    if (deckNumber == 1) {
+        var group = "[Channel1]";
+    } else if (deckNumber == 2) {
+        var group = "[Channel2]";
+    } else {
+        print ("weird deck number " + channel);
+        return;
+    }
+
+    print ("platter turn");
+
+    var currentlyPlaying = engine.getValue(group, "play");
+    if (currentlyPlaying && velocity == 1) {
+        if (!DNHS5500.hasRecentWheelVelocity[deckNumber - 1]) {
+            if (!engine.isScratching(deckNumber)) {
+                print ("no recent wheel info, think scratching");
+                DNHS5500.scratchEnableDamped(deckNumber);
+                //DNHS5500.resetScratchDecay(deckNumber);
+            }
+        } else if (DNHS5500.recentWheelVelocity[deckNumber - 1] == 1) {
+            if (engine.isScratching(deckNumber)) {
+                print ("think not scratching");
+                //DNHS5500.scratchEnable(deckNumber, false);
+                //DNHS5500.doScratchDecay(deckNumber);
+                engine.scratchDisable(deckNumber, true);
+                //DNHS5500.scratchDecay[deckNumber - 1] = 300;
+            }
+        }
+
+        DNHS5500.hasRecentWheelVelocity[channel] = false;
+    }
+}
 
 var duration = engine.getValue("[Channel1]","duration");
-print ("DURATION"+duration /60);
+//print ("DURATION"+duration /60);
 //midi.sendShortMsg(0xB0,0x72,44); // little pitch numbers
 //var BPMRound = String.format("%.2g%n",engine.getValue("[Channel1]","bpm"));
 //print(engine.getValue("[Channel1]","rate"));
@@ -165,6 +256,10 @@ DNHS5500.PlayButton1 = function (channel, control, value, status) {    // Play b
      	var playpos = (engine.getValue(channelname,"playposition"));
 	    var cuepoint = (engine.getValue(channelname,"cue_point"));
 	    print ("cuepoint="+cuepoint);
+	    // Platter off
+        midi.sendShortMsg(channelmidi,0x66,0x00);
+        // Scratch on
+        DNHS5500.scratchEnable(channel + 1);
         if (playpos !=cuepoint) {
             midi.sendShortMsg(channelmidi,0x4C,0x27);    // FIX BLINK Turn on the Play LED
             midi.sendShortMsg(channelmidi,0x4B,0x26);    // Turn off the CUE LED
@@ -172,9 +267,13 @@ DNHS5500.PlayButton1 = function (channel, control, value, status) {    // Play b
             midi.sendShortMsg(channelmidi,0x4B,0x27);    // Turn off the Play LED
             midi.sendShortMsg(channelmidi,0x4A,0x26);    // Turn on the CUE LED
 	    }
-    } else {    // If not currently playing,
-    	engine.setValue(channelname,"play",1);    // Start
-        midi.sendShortMsg(channelmidi,0x4A,0x27);    // Turn on the Play LED
-        midi.sendShortMsg(channelmidi,0x4B,0x26);    // Turn off the CUE LED
+    } else {
+        // Start playing.
+    	engine.setValue(channelname, "play", 1);
+        midi.sendShortMsg(channelmidi, 0x4A, 0x27);    // Turn on the Play LED
+        midi.sendShortMsg(channelmidi, 0x4B, 0x26);    // Turn off the CUE LED
+        midi.sendShortMsg(channelmidi, 0x66, 0x7F);    // Turn on platter!
+        midi.sendShortMsg(channelmidi, 0x67, 0x00);    // platter FWD
+        engine.scratchDisable(channel + 1, true);
     }
 }

@@ -1231,7 +1231,7 @@ void ControllerEngine::scratchProcess(int timerId) {
     // Reset accumulator
     m_intervalAccumulator[deck] = 0;
 
-    //if (m_ramp[deck]) qDebug() << "Ramping to" << m_rampTo[deck] << " Currently at:" << filter->currentPitch();
+    if (m_ramp[deck]) qDebug() << "Ramping to" << m_rampTo[deck] << " Currently at:" << filter->currentPitch();
 
     // If we're ramping and the current pitch is really close to the rampTo
     // value or we're in brake mode and have crossed over the zero value, end scratching
@@ -1332,7 +1332,8 @@ void ControllerEngine::scratchDisable(int deck, bool ramp) {
 bool ControllerEngine::isScratching(int deck) {
     // PlayerManager::groupForDeck is 0-indexed.
     QString group = PlayerManager::groupForDeck(deck - 1);
-    return getValue(group, "scratch2_enable") > 0;
+    // Don't report that we are scratching if we're ramping.
+    return getValue(group, "scratch2_enable") > 0 && !m_ramp[deck];
 }
 
 /*  -------- ------------------------------------------------------
