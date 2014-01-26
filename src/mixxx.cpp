@@ -503,7 +503,7 @@ MixxxMainWindow::~MixxxMainWindow() {
     ControlDoublePrivate::getControls(&leakedControls);
 
     if (leakedControls.size() > 0) {
-        qDebug() << "WARNING: The following" << leakedControls.size() 
+        qDebug() << "WARNING: The following" << leakedControls.size()
                  << "controls were leaked:";
         foreach (QSharedPointer<ControlDoublePrivate> pCDP, leakedControls) {
             if (pCDP.isNull()) {
@@ -1278,7 +1278,7 @@ void MixxxMainWindow::initMenuBar()
     menuBar()->addMenu(m_pHelpMenu);
 }
 
-void MixxxApp::slotFileLoadTracklist()
+void MixxxMainWindow::slotFileLoadTracklist()
 {
     QString s =
         QFileDialog::getOpenFileName(
