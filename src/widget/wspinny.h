@@ -12,6 +12,7 @@
 #include "skin/skincontext.h"
 #include "widget/wbasewidget.h"
 
+class ControlObject;
 class ControlObjectThread;
 class VisualPlayPosition;
 class VinylControlManager;
@@ -68,6 +69,7 @@ class WSpinny : public QGLWidget, public WBaseWidget, public VinylSignalQualityL
     ControlObjectThread* m_pSignalEnabled;
     ControlObjectThread* m_pSlipEnabled;
     ControlObjectThread* m_pSlipPosition;
+    ControlObject* m_pSpinnyAngle;
 
 #ifdef __VINYLCONTROL__
     VinylControlManager* m_pVCManager;
@@ -81,7 +83,6 @@ class WSpinny : public QGLWidget, public WBaseWidget, public VinylSignalQualityL
     int m_iVinylScopeSize;
 
     QString m_group;
-    float m_fAngle; //Degrees
     double m_dAngleLastPlaypos;
     float m_fGhostAngle;
     double m_dGhostAngleLastPlaypos;

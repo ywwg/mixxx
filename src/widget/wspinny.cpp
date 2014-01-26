@@ -31,11 +31,11 @@ WSpinny::WSpinny(QWidget* parent, VinylControlManager* pVCMan)
           m_pScratchPos(NULL),
           m_pVinylControlSpeedType(NULL),
           m_pVinylControlEnabled(NULL),
+          m_pSpinnyAngle(NULL),
           m_iVinylInput(-1),
           m_bVinylActive(false),
           m_bSignalActive(true),
           m_iVinylScopeSize(0),
-          m_fAngle(0.0f),
           m_dAngleLastPlaypos(-1),
           m_fGhostAngle(0.0f),
           m_dGhostAngleLastPlaypos(-1),
@@ -72,6 +72,7 @@ WSpinny::~WSpinny() {
         delete m_pScratchPos;
         delete m_pSlipEnabled;
         delete m_pSlipPosition;
+        delete m_pSpinnyAngle;
     #ifdef __VINYLCONTROL__
         delete m_pVinylControlSpeedType;
         delete m_pVinylControlEnabled;
@@ -159,6 +160,8 @@ void WSpinny::setup(QDomNode node, const SkinContext& context, QString group) {
     m_pSlipPosition = new ControlObjectThread(
             group, "slip_playposition");
 
+    m_pSpinnyAngle = new ControlObject(ConfigKey(group, "spinny_angle"));
+
 #ifdef __VINYLCONTROL__
     m_pVinylControlSpeedType = new ControlObjectThread(
             group, "vinylcontrol_speed_type");
@@ -226,7 +229,7 @@ void WSpinny::paintEvent(QPaintEvent *e) {
     m_pVisualPlayPos->getPlaySlipAt(0, &playPosition, &slipPosition);
 
     if (playPosition != m_dAngleLastPlaypos) {
-        m_fAngle = calculateAngle(playPosition);
+        m_pSpinnyAngle->set(calculateAngle(playPosition));
         m_dAngleLastPlaypos = playPosition;
     }
 
@@ -237,7 +240,7 @@ void WSpinny::paintEvent(QPaintEvent *e) {
 
     if (m_pFgImage && !m_pFgImage->isNull()) {
         // Now rotate the image and draw it on the screen.
-        p.rotate(m_fAngle);
+        p.rotate(m_pSpinnyAngle->get());
         p.drawImage(-(m_pFgImage->width() / 2),
                 -(m_pFgImage->height() / 2), *m_pFgImage);
     }
