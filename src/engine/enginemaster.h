@@ -179,7 +179,6 @@ class EngineMaster : public QObject, public AudioSource {
     ControlObject* m_pMasterAudioBufferSize;
     ControlObject* m_pMasterUnderflowCount;
     ControlPotmeter* m_pMasterRate;
-    ControlPushButton *m_pBypassEq;
     EngineClipping* m_pClipping;
     EngineClipping* m_pHeadClipping;
     EnginePflDelay* m_pHeadDelay;

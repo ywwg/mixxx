@@ -150,7 +150,6 @@ ControlValueDelegate::ControlValueDelegate(QObject *parent)
         m_masterControlValues.append("volume");
         m_masterControlValues.append("wheelsensitivity");
         m_masterControlValues.append("pfl_delay");
-        m_masterControlValues.append("bypass_eq");
 
     }
     if (m_playlistControlValues.isEmpty())

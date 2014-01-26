@@ -81,8 +81,6 @@ EngineFilterBlock::EngineFilterBlock(const char* group)
     filterKillHigh = new ControlPushButton(ConfigKey(group, "filterHighKill"));
     filterKillHigh->setButtonMode(ControlPushButton::POWERWINDOW);
 
-    bypassEq = ControlObject::getControl(ConfigKey("[Master]","bypass_eq"));
-
     m_pTemp1 = new CSAMPLE[MAX_BUFFER_LEN];
     m_pTemp2 = new CSAMPLE[MAX_BUFFER_LEN];
     m_pTemp3 = new CSAMPLE[MAX_BUFFER_LEN];
@@ -161,12 +159,6 @@ void EngineFilterBlock::process(const CSAMPLE* pIn, CSAMPLE* pOutput, const int 
     }
 
     float fLow=0.f, fMid=0.f, fHigh=0.f;
-
-    if (bypassEq->get())
-    {
-        SampleUtil::copyWithGain(pOutput, pIn, 1.0, iBufferSize);
-        return;
-    }
 
     if (filterKillLow->get()==0.)
         fLow = filterpotLow->get(); //*0.7;

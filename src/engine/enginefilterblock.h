@@ -53,7 +53,6 @@ class EngineFilterBlock : public EngineObject {
     ControlLogpotmeter *filterpotLow, *filterpotMid, *filterpotHigh;
     ControlPushButton *filterKillLow, *filterKillMid, *filterKillHigh;
     ControlObjectSlave* m_pSampleRate;
-    ControlObject *bypassEq;
 
     static ControlPotmeter *s_loEqFreq, *s_hiEqFreq;
     static ControlPushButton *s_lofiEq;
