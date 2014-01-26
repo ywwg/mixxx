@@ -1,48 +1,60 @@
 // (called <manufacturer><device>.init(ID,debugging) and <manufacturer><device>.shutdown() )
 function DNHS5500() {}
-DNHS5500.debug=3;
+
+// Eventually we will support 2 of these devices -- in that case
+// one device will be decks 1 and 3, and the other will be 2 and 4.
+// More work needed.
+DNHS5500.firstDeckGroup = "[Channel1]";
+DNHS5500.secondDeckGroup = "[Channel2]";
+DNHS5500.midiChannelBase = 0xB0;
+
+DNHS5500.userScratching = [false, false];
 
 DNHS5500.init = function init(id,debug) {
-    engine.connectControl("[Channel1]","track_samples","DNHS5500.loadLights");
-    engine.connectControl("[Channel2]","track_samples","DNHS5500.loadLights");
-    engine.connectControl("[Channel1]","rate", "DNHS5500.rateDisplay");
-    engine.connectControl("[Channel2]","rate", "DNHS5500.rateDisplay");
-    engine.connectControl("[Channel1]", "play", "DNHS5500.playChanged");
-    engine.connectControl("[Channel2]", "play", "DNHS5500.playChanged");
-    engine.connectControl("[Channel1]", "spinny_angle", "DNHS5500.spinnyAngleChanged");
-    engine.connectControl("[Channel2]", "spinny_angle", "DNHS5500.spinnyAngleChanged");
-    engine.connectControl("[Channel1]", "playposition", "DNHS5500.playPositionChanged");
-    engine.connectControl("[Channel2]", "playposition", "DNHS5500.playPositionChanged");
-    engine.connectControl("[Channel1]","eject","DNHS5500.eject");
-    engine.connectControl("[Channel2]","eject","DNHS5500.eject");
+    engine.connectControl(DNHS5500.firstDeckGroup,"track_samples","DNHS5500.loadLights");
+    engine.connectControl(DNHS5500.secondDeckGroup,"track_samples","DNHS5500.loadLights");
+    engine.connectControl(DNHS5500.firstDeckGroup,"rate", "DNHS5500.rateDisplay");
+    engine.connectControl(DNHS5500.secondDeckGroup,"rate", "DNHS5500.rateDisplay");
+    engine.connectControl(DNHS5500.firstDeckGroup, "play", "DNHS5500.playChanged");
+    engine.connectControl(DNHS5500.secondDeckGroup, "play", "DNHS5500.playChanged");
+    engine.connectControl(DNHS5500.firstDeckGroup, "spinny_angle", "DNHS5500.spinnyAngleChanged");
+    engine.connectControl(DNHS5500.secondDeckGroup, "spinny_angle", "DNHS5500.spinnyAngleChanged");
+    engine.connectControl(DNHS5500.firstDeckGroup, "playposition", "DNHS5500.playPositionChanged");
+    engine.connectControl(DNHS5500.secondDeckGroup, "playposition", "DNHS5500.playPositionChanged");
+    engine.connectControl(DNHS5500.firstDeckGroup,"eject","DNHS5500.eject");
+    engine.connectControl(DNHS5500.secondDeckGroup,"eject","DNHS5500.eject");
+    engine.connectControl(DNHS5500.firstDeckGroup,"scratch2_enable","DNHS5500.scratchLight");
+    engine.connectControl(DNHS5500.secondDeckGroup,"scratch2_enable","DNHS5500.scratchLight");
 
 
     // Lights on this controller are chosen by midi value, not control value.
-    engine.connectControl("[Channel1]","keylock","DNHS5500.keylockLight");
-    engine.connectControl("[Channel2]","keylock","DNHS5500.keylockLight");
-    engine.connectControl("[Channel1]","hotcue_1_enabled","DNHS5500.hotcue1Light");
-    engine.connectControl("[Channel2]","hotcue_1_enabled","DNHS5500.hotcue1Light");
-    engine.connectControl("[Channel1]","hotcue_2_enabled","DNHS5500.hotcue2Light");
-    engine.connectControl("[Channel2]","hotcue_2_enabled","DNHS5500.hotcue2Light");
-    engine.connectControl("[Channel1]","hotcue_3_enabled","DNHS5500.hotcue3Light");
-    engine.connectControl("[Channel2]","hotcue_3_enabled","DNHS5500.hotcue3Light");
-    engine.connectControl("[Channel1]","reverse","DNHS5500.reverseLight");
-    engine.connectControl("[Channel2]","reverse","DNHS5500.reverseLight");
-    engine.connectControl("[Channel1]","scratch2_enable","DNHS5500.scratchLight");
-    engine.connectControl("[Channel2]","scratch2_enable","DNHS5500.scratchLight");
-    engine.connectControl("[Channel1]","loop_enabled","DNHS5500.loopEnabledLight");
-    engine.connectControl("[Channel2]","loop_enabled","DNHS5500.loopEnabledLight");
-//    engine.connectControl("[Channel1]","reloop_exit","DNHS5500.exitReloopLight");
-//    engine.connectControl("[Channel2]","reloop_exit","DNHS5500.exitReloopLight");
-    engine.connectControl("[Channel1]","loop_start_position","DNHS5500.loopInLight");
-    engine.connectControl("[Channel2]","loop_start_position","DNHS5500.loopInLight");
-    engine.connectControl("[Channel1]","loop_end_position","DNHS5500.loopOutLight");
-    engine.connectControl("[Channel2]","loop_end_position","DNHS5500.loopOutLight");
-    engine.connectControl("[Channel1]","repeat","DNHS5500.repeatLight");
-    engine.connectControl("[Channel2]","repeat","DNHS5500.repeatLight");
+    engine.connectControl(DNHS5500.firstDeckGroup,"play_indicator","DNHS5500.playLight");
+    engine.connectControl(DNHS5500.secondDeckGroup,"play_indicator","DNHS5500.playLight");
+    engine.connectControl(DNHS5500.firstDeckGroup,"cue_indicator","DNHS5500.cueLight");
+    engine.connectControl(DNHS5500.secondDeckGroup,"cue_indicator","DNHS5500.cueLight");
+    engine.connectControl(DNHS5500.firstDeckGroup,"keylock","DNHS5500.keylockLight");
+    engine.connectControl(DNHS5500.secondDeckGroup,"keylock","DNHS5500.keylockLight");
+    engine.connectControl(DNHS5500.firstDeckGroup,"hotcue_1_enabled","DNHS5500.hotcue1Light");
+    engine.connectControl(DNHS5500.secondDeckGroup,"hotcue_1_enabled","DNHS5500.hotcue1Light");
+    engine.connectControl(DNHS5500.firstDeckGroup,"hotcue_2_enabled","DNHS5500.hotcue2Light");
+    engine.connectControl(DNHS5500.secondDeckGroup,"hotcue_2_enabled","DNHS5500.hotcue2Light");
+    engine.connectControl(DNHS5500.firstDeckGroup,"hotcue_3_enabled","DNHS5500.hotcue3Light");
+    engine.connectControl(DNHS5500.secondDeckGroup,"hotcue_3_enabled","DNHS5500.hotcue3Light");
+    engine.connectControl(DNHS5500.firstDeckGroup,"reverse","DNHS5500.reverseLight");
+    engine.connectControl(DNHS5500.secondDeckGroup,"reverse","DNHS5500.reverseLight");
+    engine.connectControl(DNHS5500.firstDeckGroup,"loop_enabled","DNHS5500.loopEnabledLight");
+    engine.connectControl(DNHS5500.secondDeckGroup,"loop_enabled","DNHS5500.loopEnabledLight");
+//    engine.connectControl(DNHS5500.firstDeckGroup,"reloop_exit","DNHS5500.exitReloopLight");
+//    engine.connectControl(DNHS5500.secondDeckGroup,"reloop_exit","DNHS5500.exitReloopLight");
+    engine.connectControl(DNHS5500.firstDeckGroup,"loop_start_position","DNHS5500.loopInLight");
+    engine.connectControl(DNHS5500.secondDeckGroup,"loop_start_position","DNHS5500.loopInLight");
+    engine.connectControl(DNHS5500.firstDeckGroup,"loop_end_position","DNHS5500.loopOutLight");
+    engine.connectControl(DNHS5500.secondDeckGroup,"loop_end_position","DNHS5500.loopOutLight");
+    engine.connectControl(DNHS5500.firstDeckGroup,"repeat","DNHS5500.repeatLight");
+    engine.connectControl(DNHS5500.secondDeckGroup,"repeat","DNHS5500.repeatLight");
 
-    DNHS5500.repeatLight(0, "[Channel1]");
-    DNHS5500.repeatLight(0, "[Channel2]");
+    DNHS5500.repeatLight(0, DNHS5500.firstDeckGroup);
+    DNHS5500.repeatLight(0, DNHS5500.secondDeckGroup);
 
     // The jog wheel does not send events when it's not moving, so we have to
     // detect that.  We do so by adding one to this accumulator every time
@@ -51,31 +63,58 @@ DNHS5500.init = function init(id,debug) {
     // number, we assume that the platter is stopped and send a zero.
     DNHS5500.wheelZeroVelocityAccum = [0, 0];
 
-    DNHS5500.scratchEnable(1);
-    DNHS5500.scratchEnable(2);
+    DNHS5500.scratchEnable(1, false);
+    DNHS5500.scratchEnable(2, false);
 }
 
 DNHS5500.shutdown = function shutdown() {
     // Turn off platter movement.
-    midi.sendShortMsg(0xB0, 0x66, 0x00);
-    midi.sendShortMsg(0xB1, 0x66, 0x00);
+    midi.sendShortMsg(DNHS5500.midiChannelBase, 0x66, 0x00);
+    midi.sendShortMsg(DNHS5500.midiChannelBase + 1, 0x66, 0x00);
+    DNHS5500.clearDisplay(DNHS5500.firstDeckGroup);
+    DNHS5500.clearDisplay(DNHS5500.secondDeckGroup);
 }
 
 DNHS5500.channelForGroup = function (group) {
-    if (group == "[Channel1]" || group == "[Channel3]") {
-        return 0xB0;
+    if (group == DNHS5500.firstDeckGroup) {
+        return DNHS5500.midiChannelBase;
     } else {
-        return 0xB1;
+        return DNHS5500.midiChannelBase + 1;
     }
 }
 
 // XXX: how to support decks 3 and 4?
 DNHS5500.groupForChannel = function (channel) {
     if (channel == 0) {
-        return "[Channel1]";
+        return DNHS5500.firstDeckGroup;
     } else {
-        return "[Channel2]";
+        return DNHS5500.secondDeckGroup;
     }
+}
+
+// XXX: support decks 3 and 4.
+DNHS5500.deckForChannel = function (channel) {
+    if (channel == 0) {
+        return 1;
+    } else {
+        return 2;
+    }
+}
+
+DNHS5500.clearDisplay = function (group) {
+    DNHS5500.hotcue1Light(0, group);
+    DNHS5500.hotcue2Light(0, group);
+    DNHS5500.hotcue3Light(0, group);
+    DNHS5500.loopInLight(0, group);
+    DNHS5500.loopOutLight(0, group);
+    DNHS5500.rateDisplayClear(group);
+    DNHS5500.spinnyAngleChanged(0, group);
+    DNHS5500.playPositionChanged(0, group);
+    DNHS5500.loopInLight(-1, group);
+    DNHS5500.loopOutLight(-1, group);
+    DNHS5500.scratchLight(0, group);
+    DNHS5500.playLight(0, group);
+    DNHS5500.cueLight(0, group);
 }
 
 DNHS5500.rateDisplay = function (value, group) { // rate +/- display output
@@ -109,6 +148,7 @@ DNHS5500.rateDisplay = function (value, group) { // rate +/- display output
 }
 
 DNHS5500.rateDisplayClear = function (group) {
+    var channelmidi = DNHS5500.channelForGroup(group);
     midi.sendShortMsg(channelmidi, 0x71, 0);
 	midi.sendShortMsg(channelmidi, 0x72, 0);
  	midi.sendShortMsg(channelmidi, 0x45, 0x01);
@@ -137,14 +177,13 @@ DNHS5500.playPositionChanged = function (value, group) {
     midi.sendShortMsg(channelmidi, 0x42, pos_minutes);
     midi.sendShortMsg(channelmidi, 0x43, pos_secs);
     midi.sendShortMsg(channelmidi, 0x44, pos_frac);
-
 }
 
 DNHS5500.spinnyAngleChanged = function (angle, group) {
 	var channelmidi = DNHS5500.channelForGroup(group);
     // The angle is 0-180 to the right, and 0- -180 to the left.
     var midi_value = 0;
-    if (angle >= 0) {
+    if (angle > 0) {
         // Values above and equal zero are mapped from 0x22 to 0x31, which is a range of 16 (0x10).
         midi_value = Math.round(angle * 16.0 / 180.0 + 0x22);
     } else {
@@ -157,39 +196,43 @@ DNHS5500.spinnyAngleChanged = function (angle, group) {
 
 // The button that enables/disables scratching
 DNHS5500.wheelTouch = function (channel, control, value, status) {
+    var decknum = DNHS5500.deckForChannel(channel);
     // This is documented but never happens.
     // Jogwheel touch values.
     if (value == 0x40) {
         print ("wheel touch scratch on");
-        DNHS5500.scratchEnable(channel + 1);
+        DNHS5500.scratchEnable(decknum, true);
+    } else {
+        engine.scratchDisable(decknum, true);
     }
 }
 
-DNHS5500.scratchEnable = function (deck) {
+DNHS5500.scratchEnable = function (deck, ramp) {
     print ("scratch on");
-    var alpha = 1.0/64;
-    var beta = alpha/64;
-    engine.scratchEnable(deck, 1480, 33+1/3, alpha, beta);
+    var alpha = 1.0/32;
+    var beta = alpha/32;
+    engine.scratchEnable(deck, 1480, 33+1/3, alpha, beta, ramp);
 }
 
 //DNHS5500.scratchEnableDamped = function (deck) {
 //    print ("scratch on damp");
 //    var alpha = 1.0/256;
 //    var beta = alpha/256;
-//    engine.scratchEnable(deck, 1480, 33+1/3, alpha, beta);
+//    engine.scratchEnable(deck, 1480, 33+1/3, alpha, beta, ramp);
 //}
 
 DNHS5500.wheelRelease = function (channel, control, value, status) {
+    var decknum = DNHS5500.deckForChannel(channel);
     // This is documented but never happens.
     // Jogwheel touch values.
     if (value == 0x00) {
-        engine.scratchDisable(channel + 1, true);
+        engine.scratchDisable(decknum, true);
     }
 }
 
 DNHS5500.wheelTurn = function (channel, control, value, status) {
     // Reports the velocity of the top disc-like wheel, as well as touch events.
-    var deckNumber = channel + 1;
+    var deckNumber = DNHS5500.deckForChannel(channel);
     var group = DNHS5500.groupForChannel(channel);
 
     // Velocity values.
@@ -206,7 +249,11 @@ DNHS5500.wheelTurn = function (channel, control, value, status) {
         velocity -= 1;
     }
 
+    var scratch3 = engine.getValue(group, "scratch2_enable");
+//    print("scratching??? " + engine.isScratching(deckNumber) + " " + currentlyPlaying  + " " + scratch3 + " " +velocity);
+
     if (engine.isScratching(deckNumber)) {
+//        print ("reporting scratch value");
         engine.scratchTick(deckNumber, velocity);
     } else {
         engine.setValue(group, "jog", velocity);
@@ -216,7 +263,7 @@ DNHS5500.wheelTurn = function (channel, control, value, status) {
 DNHS5500.platterTurn = function (channel, control, value, status) {
     // Reports the velocity of the lower platter.
     var velocity = value - 0x40;
-    var deckNumber = channel + 1;
+    var deckNumber = DNHS5500.deckForChannel(channel);
     var group = DNHS5500.groupForChannel(channel);
 
     var currentlyPlaying = engine.getValue(group, "play");
@@ -249,7 +296,7 @@ DNHS5500.playButton = function (channel, control, value, status) {
 
 DNHS5500.playChanged = function (value, group) {
 	var channelmidi = DNHS5500.channelForGroup(group);
-	if (group == "[Channel1]") {
+	if (group == DNHS5500.firstDeckGroup) {
 	    var deck = 1;
 	} else {
 	    var deck = 2;
@@ -258,9 +305,9 @@ DNHS5500.playChanged = function (value, group) {
    	var currentlyPlaying = engine.getValue(group, "play");
     if (currentlyPlaying == 1) {
         // Turn on the Play LED
-        midi.sendShortMsg(channelmidi, 0x4A, 0x27);
+        //midi.sendShortMsg(channelmidi, 0x4A, 0x27);
         // Turn off the CUE LED
-        midi.sendShortMsg(channelmidi, 0x4B, 0x26);
+        //midi.sendShortMsg(channelmidi, 0x4B, 0x26);
         // Turn on platter!
         midi.sendShortMsg(channelmidi, 0x66, 0x7F);
         // platter FWD
@@ -271,7 +318,15 @@ DNHS5500.playChanged = function (value, group) {
 	    // Platter off
         midi.sendShortMsg(channelmidi, 0x66, 0x00);
         // Scratch on
-        DNHS5500.scratchEnable(deck);
+        DNHS5500.scratchEnable(deck, false);
+    }
+}
+
+DNHS5500.selectTrack = function (channel, control, value, status) {
+    if (value > 0) {
+        engine.setValue("[Playlist]", "SelectPrevTrack", 1);
+    } else {
+        engine.setValue("[Playlist]", "SelectNextTrack", 1);
     }
 }
 
@@ -279,17 +334,8 @@ DNHS5500.eject = function (channel, control, value, status) {
     if (value == 0) {
         return;
     }
-
     var group = DNHS5500.groupForChannel(channel);
-
-    DNHS5500.hotcue1Light(0, group);
-    DNHS5500.hotcue2Light(0, group);
-    DNHS5500.hotcue3Light(0, group);
-    DNHS5500.loopInLight(0, group);
-    DNHS5500.loopOutLight(0, group);
-    DNHS5500.rateDispalyClear(group);
-    DNHS5500.spinnyAngleChanged(0, group);
-    DNHS5500.playPositionChanged(0, group);
+    DNHS5500.clearDisplay(group);
 }
 
 DNHS5500.loadLights = function (value, group) {
@@ -312,6 +358,14 @@ DNHS5500.toggleLightLayer2 = function (group, light, status) {
     } else {
         midi.sendShortMsg(channel, 0x4E, light);
     }
+}
+
+DNHS5500.playLight = function (value, group) {
+    DNHS5500.toggleLightLayer1(group, 0x27, value);
+}
+
+DNHS5500.cueLight = function (value, group) {
+    DNHS5500.toggleLightLayer1(group, 0x26, value);
 }
 
 DNHS5500.keylockLight = function (value, group) {
