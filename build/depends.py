@@ -517,6 +517,7 @@ class MixxxCore(Feature):
                    "controlpotmeter.cpp",
                    "controllinpotmeter.cpp",
                    "controlpushbutton.cpp",
+                   "controlindicator.cpp",
                    "controlttrotary.cpp",
 
                    "preferences/dlgpreferencepage.cpp",
@@ -583,7 +584,7 @@ class MixxxCore(Feature):
                    "engine/cuecontrol.cpp",
                    "engine/quantizecontrol.cpp",
                    "engine/clockcontrol.cpp",
-                   "engine/readaheadmanager.cpp",
+                   "engine/readaheadmanager.cpp", 
                    "cachingreader.cpp",
                    "cachingreaderworker.cpp",
 
@@ -645,6 +646,8 @@ class MixxxCore(Feature):
                    "widget/wtrackproperty.cpp",
                    "widget/wtime.cpp",
                    "widget/wkey.cpp",
+                   "widget/wcombobox.cpp",
+                   "widget/wsplitter.cpp",
 
                    "mathstuff.cpp",
 
@@ -754,6 +757,7 @@ class MixxxCore(Feature):
                    "waveform/waveformfactory.cpp",
                    "waveform/waveformwidgetfactory.cpp",
                    "waveform/vsyncthread.cpp",
+                   "waveform/guitick.cpp",
                    "waveform/renderers/waveformwidgetrenderer.cpp",
                    "waveform/renderers/waveformrendererabstract.cpp",
                    "waveform/renderers/waveformrenderbackground.cpp",
@@ -835,6 +839,7 @@ class MixxxCore(Feature):
                    "util/sleepableqthread.cpp",
                    "util/statsmanager.cpp",
                    "util/stat.cpp",
+                   "util/time.cpp",
                    "util/timer.cpp",
                    "util/performancetimer.cpp",
                    "util/version.cpp",
