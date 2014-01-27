@@ -11,6 +11,7 @@
 #include "util/performancetimer.h"
 #include "control/controlvalue.h"
 
+class ControlObject;
 class ControlObjectSlave;
 class VSyncThread;
 
@@ -38,8 +39,8 @@ class VisualPlayPositionData {
     double m_pSlipPosition;
 };
 
-
-class VisualPlayPosition {
+class VisualPlayPosition : public QObject {
+    Q_OBJECT
   public:
     VisualPlayPosition(const QString& m_key);
     ~VisualPlayPosition();
@@ -60,17 +61,34 @@ class VisualPlayPosition {
 
     void setInvalid() { m_valid = false; };
 
+    static double calculateAngle(
+            double tracksamples, double samplerate, double rotations_per_sec, double playpos);
+
+  public slots:
+    void slotTrackSamplesChanged(double);
+    void slotTrackSampleRateChanged(double);
+    void updateVinylControlSpeed(double rpm);
+
   private:
     ControlValueAtomic<VisualPlayPositionData> m_data;
-    ControlObjectSlave* m_audioBufferSize;
+    ControlObjectSlave* m_pAudioBufferSize;
+    ControlObjectSlave* m_pTrackSamples;
+    ControlObjectSlave* m_pTrackSampleRate;
+    ControlObjectSlave* m_pVinylControlSpeedType;
+    ControlObjectSlave* m_pVinylControlEnabled;
+    ControlObject* m_pSpinnyAngle;
     bool m_valid;
     QString m_key;
+    double m_track_samples;
+    double m_track_samplerate;
+    double m_dRotationsPerSecond;
 
     static QMap<QString, QWeakPointer<VisualPlayPosition> > m_listVisualPlayPosition;
     // Time info from the Sound device, updated just after audio callback is called
     static PaStreamCallbackTimeInfo m_timeInfo;
     // Time stamp for m_timeInfo in main CPU time
     static PerformanceTimer m_timeInfoTime;
+    static bool m_bClampFailedWarning;
 };
 
 #endif // VISUALPLAYPOSITION_H

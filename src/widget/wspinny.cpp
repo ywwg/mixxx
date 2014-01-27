@@ -32,6 +32,7 @@ WSpinny::WSpinny(QWidget* parent, VinylControlManager* pVCMan)
           m_pVinylControlSpeedType(NULL),
           m_pVinylControlEnabled(NULL),
           m_pSpinnyAngle(NULL),
+          m_pVCManager(NULL),
           m_iVinylInput(-1),
           m_bVinylActive(false),
           m_bSignalActive(true),
@@ -43,7 +44,8 @@ WSpinny::WSpinny(QWidget* parent, VinylControlManager* pVCMan)
           m_iStartMouseY(-1),
           m_iFullRotations(0),
           m_dPrevTheta(0.),
-          m_bClampFailedWarning(false) {
+          m_track_samples(0),
+          m_track_samplerate(0) {
 #ifdef __VINYLCONTROL__
     m_pVCManager = pVCMan;
 #endif
@@ -145,8 +147,12 @@ void WSpinny::setup(QDomNode node, const SkinContext& context, QString group) {
 
     m_pTrackSamples = new ControlObjectThread(
             group, "track_samples");
+    connect(m_pTrackSamples, SIGNAL(valueChanged(double)),
+            this, SLOT(slotTrackSamplesChanged(double)));
     m_pTrackSampleRate = new ControlObjectThread(
             group, "track_samplerate");
+    connect(m_pTrackSampleRate, SIGNAL(valueChanged(double)),
+            this, SLOT(slotTrackSampleRateChanged(double)));
 
     m_pScratch = new ControlObjectThread(
             group, "scratch2");
@@ -160,7 +166,7 @@ void WSpinny::setup(QDomNode node, const SkinContext& context, QString group) {
     m_pSlipPosition = new ControlObjectThread(
             group, "slip_playposition");
 
-    m_pSpinnyAngle = new ControlObject(ConfigKey(group, "spinny_angle"));
+    m_pSpinnyAngle = new ControlObjectThread(group, "spinny_angle");
 
 #ifdef __VINYLCONTROL__
     m_pVinylControlSpeedType = new ControlObjectThread(
@@ -185,9 +191,6 @@ void WSpinny::setup(QDomNode node, const SkinContext& context, QString group) {
     //speed as your physical decks, if you're using vinyl control.
     connect(m_pVinylControlSpeedType, SIGNAL(valueChanged(double)),
             this, SLOT(updateVinylControlSpeed(double)));
-
-
-
 #else
     //if no vinyl control, just call it 33
     this->updateVinylControlSpeed(33.0);
@@ -228,13 +231,11 @@ void WSpinny::paintEvent(QPaintEvent *e) {
     double slipPosition = -1;
     m_pVisualPlayPos->getPlaySlipAt(0, &playPosition, &slipPosition);
 
-    if (playPosition != m_dAngleLastPlaypos) {
-        m_pSpinnyAngle->set(calculateAngle(playPosition));
-        m_dAngleLastPlaypos = playPosition;
-    }
+    m_dAngleLastPlaypos = playPosition;
 
     if (slipPosition != m_dGhostAngleLastPlaypos) {
-        m_fGhostAngle = calculateAngle(slipPosition);
+        m_fGhostAngle = VisualPlayPosition::calculateAngle(
+                m_track_samples, m_track_samplerate, m_dRotationsPerSecond, slipPosition);
         m_dGhostAngleLastPlaypos = slipPosition;
     }
 
@@ -256,55 +257,6 @@ void WSpinny::paintEvent(QPaintEvent *e) {
         //and draw the beat marks from there.
         p.restore();
     }
-}
-
-/* Convert between a normalized playback position (0.0 - 1.0) and an angle
-   in our polar coordinate system.
-   Returns an angle clamped between -180 and 180 degrees. */
-double WSpinny::calculateAngle(double playpos) {
-    double trackFrames = m_pTrackSamples->get() / 2;
-    double trackSampleRate = m_pTrackSampleRate->get();
-    if (isnan(playpos) || isnan(trackFrames) || isnan(trackSampleRate) ||
-        trackFrames <= 0 || trackSampleRate <= 0) {
-        return 0.0;
-    }
-
-    // Convert playpos to seconds.
-    double t = playpos * trackFrames / trackSampleRate;
-
-    // Bad samplerate or number of track samples.
-    if (isnan(t)) {
-        return 0.0;
-    }
-
-    //33 RPM is approx. 0.5 rotations per second.
-    double angle = 360.0 * m_dRotationsPerSecond * t;
-    //Clamp within -180 and 180 degrees
-    //qDebug() << "pc:" << angle;
-    //angle = ((angle + 180) % 360.) - 180;
-    //modulo for doubles :)
-    const double originalAngle = angle;
-    if (angle > 0)
-    {
-        int x = (angle+180)/360;
-        angle = angle - (360*x);
-    } else
-    {
-        int x = (angle-180)/360;
-        angle = angle - (360*x);
-    }
-
-    if (angle <= -180 || angle > 180) {
-        // Only warn once per session. This can tank performance since it prints
-        // like crazy.
-        if (!m_bClampFailedWarning) {
-            qDebug() << "Angle clamping failed!" << t << originalAngle << "->" << angle
-                     << "Please file a bug or email mixxx-devel@lists.sourceforge.net";
-            m_bClampFailedWarning = true;
-        }
-        return 0.0;
-    }
-    return angle;
 }
 
 /** Given a normalized playpos, calculate the integer number of rotations
@@ -347,6 +299,14 @@ double WSpinny::calculatePositionFromAngle(double angle)
         return 0.0;
     }
     return playpos;
+}
+
+void WSpinny::slotTrackSamplesChanged(double samples) {
+    m_track_samples = samples;
+}
+
+void WSpinny::slotTrackSampleRateChanged(double samplerate) {
+    m_track_samplerate = samplerate;
 }
 
 void WSpinny::updateVinylControlSpeed(double rpm) {
