@@ -141,26 +141,24 @@ double VisualPlayPosition::calculateAngle(
         return 0.0;
     }
 
-    //33 RPM is approx. 0.5 rotations per second.
+    // 33 RPM is approx. 0.5 rotations per second.
     double angle = 360.0 * rotations_per_sec * t;
-    //Clamp within -180 and 180 degrees
+    // Clamp within -180 and 180 degrees
     //qDebug() << "pc:" << angle;
     //angle = ((angle + 180) % 360.) - 180;
     //modulo for doubles :)
     const double originalAngle = angle;
-    if (angle > 0)
-    {
-        int x = (angle+180)/360;
-        angle = angle - (360*x);
-    } else
-    {
-        int x = (angle-180)/360;
-        angle = angle - (360*x);
+    if (angle > 0) {
+        int x = (angle + 180) / 360;
+        angle = angle - (360 * x);
+    } else {
+        int x = (angle - 180) / 360;
+        angle = angle - (360 * x);
     }
 
     if (angle <= -180 || angle > 180) {
         // Only warn once per session. This can tank performance since it prints
-        // like crazy.
+        // like crazy.  Users may not notice it but we'll see it in the logs.
         if (!VisualPlayPosition::m_bClampFailedWarning) {
             qWarning() << "Angle clamping failed!" << t << originalAngle << "->" << angle
                        << "Please file a bug or email mixxx-devel@lists.sourceforge.net";
