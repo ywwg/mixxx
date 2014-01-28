@@ -75,7 +75,6 @@ class VisualPlayPosition : public QObject {
     ControlObjectSlave* m_pTrackSamples;
     ControlObjectSlave* m_pTrackSampleRate;
     ControlObjectSlave* m_pVinylControlSpeedType;
-    ControlObjectSlave* m_pVinylControlEnabled;
     ControlObject* m_pSpinnyAngle;
     bool m_valid;
     QString m_key;

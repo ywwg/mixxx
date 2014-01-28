@@ -14,33 +14,24 @@ bool VisualPlayPosition::m_bClampFailedWarning = false;
 
 VisualPlayPosition::VisualPlayPosition(const QString& group)
         : m_valid(false),
-          m_key(group),
-          m_track_samples(0),
-          m_track_samplerate(44100),
-          m_dRotationsPerSecond(33 + 1/3) {
+          m_key(group) {
     m_pAudioBufferSize = new ControlObjectSlave("[Master]", "audio_buffer_size");
     m_pTrackSamples = new ControlObjectSlave(group, "track_samples");
     m_pTrackSamples->connectValueChanged(this, SLOT(slotTrackSamplesChanged(double)));
+    m_track_samples = m_pTrackSamples->get();
     m_pTrackSampleRate = new ControlObjectSlave(group, "track_samplerate");
     m_pTrackSampleRate->connectValueChanged(this, SLOT(slotTrackSampleRateChanged(double)));
+    m_track_samplerate = m_pTrackSampleRate->get();
     m_pSpinnyAngle = new ControlObject(ConfigKey(group, "spinny_angle"));
 
 #ifdef __VINYLCONTROL__
     m_pVinylControlSpeedType = new ControlObjectSlave(group, "vinylcontrol_speed_type");
-    if (m_pVinylControlSpeedType) {
-        //Initialize the rotational speed.
-        this->updateVinylControlSpeed(m_pVinylControlSpeedType->get());
-    }
-
-    m_pVinylControlEnabled = new ControlObjectSlave(group, "vinylcontrol_enabled");
-    connect(m_pVinylControlEnabled, SIGNAL(valueChanged(double)),
-            this, SLOT(updateVinylControlEnabled(double)));
-
-    //Match the vinyl control's set RPM so that the spinny widget rotates at the same
-    //speed as your physical decks, if you're using vinyl control.
+    // Match the vinyl control's set RPM so that the spinny widget rotates at the same
+    // speed as your physical decks, if you're using vinyl control.
     m_pVinylControlSpeedType->connectValueChanged(this, SLOT(updateVinylControlSpeed(double)));
+    updateVinylControlSpeed(m_pVinylControlSpeedType->get());
 #else
-    //if no vinyl control, just call it 33.3333
+    // If no vinyl control, just call it 33.3333
     this->updateVinylControlSpeed(33. + 1./3.);
 #endif
 }
