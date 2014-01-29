@@ -61,6 +61,8 @@ DNHS5500.init = function init(id,debug) {
     DNHS5500.scratchEnable(2, false);
     DNHS5500.clearTrackDisplay(DNHS5500.firstDeckGroup);
     DNHS5500.clearTrackDisplay(DNHS5500.secondDeckGroup);
+
+    DNHS5500.braking = [false, false];
 }
 
 DNHS5500.shutdown = function shutdown() {
@@ -320,6 +322,8 @@ DNHS5500.playChanged = function (value, group) {
         midi.sendShortMsg(channelmidi, 0x66, 0x00);
         // Scratch on, don't ramp.
         DNHS5500.scratchEnable(deck, false);
+        // Reset brake. XXX: HACK;
+        DNHS5500.brake(deck - 1, 0, 1, 1);
     }
 }
 
@@ -337,6 +341,24 @@ DNHS5500.eject = function (channel, control, value, status) {
     }
     var group = DNHS5500.groupForChannel(channel);
     DNHS5500.clearTrackDisplay(group);
+}
+
+DNHS5500.brake = function (channel, control, value, status) {
+    if (value == 0) {
+        return;
+    }
+
+    var decknum = DNHS5500.deckForChannel(channel);
+    var group = DNHS5500.groupForChannel(channel);
+    if (DNHS5500.braking[channel] == true) {
+        DNHS5500.braking[channel] = false;
+        engine.brake(decknum, false);
+        DNHS5500.brakeLight(0, group);
+    } else {
+        DNHS5500.braking[channel] = true;
+        engine.brake(decknum, true);
+        DNHS5500.brakeLight(1, group);
+    }
 }
 
 DNHS5500.toggleLightLayer1 = function (group, light, status) {
@@ -422,4 +444,8 @@ DNHS5500.repeatLight = function (value, group) {
     } else {
         DNHS5500.toggleLightLayer2(group, 0x05, 1);
     }
+}
+
+DNHS5500.brakeLight = function (value, group) {
+    DNHS5500.toggleLightLayer1(group, 0x28, value);
 }
