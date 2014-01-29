@@ -125,21 +125,14 @@ double VisualPlayPosition::getEnginePlayPos() {
    Returns an angle clamped between -180 and 180 degrees. */
 // static
 double VisualPlayPosition::calculateAngle(
-        double tracksamples, double samplerate, double rotations_per_sec, double playpos) {
+        double tracksamples, double trackSampleRate, double rotations_per_sec, double playpos) {
     double trackFrames = tracksamples / 2;
-    double trackSampleRate = samplerate;
-    if (isnan(playpos) || isnan(trackFrames) || isnan(trackSampleRate) ||
-        trackFrames <= 0 || trackSampleRate <= 0) {
+    if (trackFrames <= 0 || trackSampleRate <= 0) {
         return 0.0;
     }
 
     // Convert playpos to seconds.
     double t = playpos * trackFrames / trackSampleRate;
-
-    // Bad samplerate or number of track samples.
-    if (isnan(t)) {
-        return 0.0;
-    }
 
     // 33 RPM is approx. 0.5 rotations per second.
     double angle = 360.0 * rotations_per_sec * t;

@@ -62,7 +62,7 @@ class VisualPlayPosition : public QObject {
     void setInvalid() { m_valid = false; };
 
     static double calculateAngle(
-            double tracksamples, double samplerate, double rotations_per_sec, double playpos);
+            double tracksamples, double trackSampleRate, double rotations_per_sec, double playpos);
 
   public slots:
     void slotTrackSamplesChanged(double);
