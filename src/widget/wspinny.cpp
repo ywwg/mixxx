@@ -37,7 +37,6 @@ WSpinny::WSpinny(QWidget* parent, VinylControlManager* pVCMan)
           m_bVinylActive(false),
           m_bSignalActive(true),
           m_iVinylScopeSize(0),
-          m_dAngleLastPlaypos(-1),
           m_fGhostAngle(0.0f),
           m_dGhostAngleLastPlaypos(-1),
           m_iStartMouseX(-1),
@@ -231,14 +230,6 @@ void WSpinny::paintEvent(QPaintEvent *e) {
     double slipPosition = -1;
     m_pVisualPlayPos->getPlaySlipAt(0, &playPosition, &slipPosition);
 
-    m_dAngleLastPlaypos = playPosition;
-
-    if (slipPosition != m_dGhostAngleLastPlaypos) {
-        m_fGhostAngle = VisualPlayPosition::calculateAngle(
-                m_track_samples, m_track_samplerate, m_dRotationsPerSecond, slipPosition);
-        m_dGhostAngleLastPlaypos = slipPosition;
-    }
-
     if (m_pFgImage && !m_pFgImage->isNull()) {
         // Now rotate the image and draw it on the screen.
         p.rotate(m_pSpinnyAngle->get());
@@ -247,6 +238,11 @@ void WSpinny::paintEvent(QPaintEvent *e) {
     }
 
     if (bGhostPlayback && m_pGhostImage && !m_pGhostImage->isNull()) {
+        if (slipPosition != m_dGhostAngleLastPlaypos) {
+            m_fGhostAngle = VisualPlayPosition::calculateAngle(
+                    m_track_samples, m_track_samplerate, m_dRotationsPerSecond, slipPosition);
+            m_dGhostAngleLastPlaypos = slipPosition;
+        }
         p.restore();
         p.save();
         p.rotate(m_fGhostAngle);

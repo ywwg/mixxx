@@ -1,5 +1,5 @@
-
 #ifndef _WSPINNY_H
+
 #define _WSPINNY_H
 
 #include <QGLWidget>
@@ -82,7 +82,6 @@ class WSpinny : public QGLWidget, public WBaseWidget, public VinylSignalQualityL
     int m_iVinylScopeSize;
 
     QString m_group;
-    double m_dAngleLastPlaypos;
     float m_fGhostAngle;
     double m_dGhostAngleLastPlaypos;
     int m_iStartMouseX;
