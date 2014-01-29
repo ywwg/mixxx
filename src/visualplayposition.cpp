@@ -101,11 +101,11 @@ void VisualPlayPosition::getPlaySlipAt(int usFromNow, double* playPosition, doub
 
     if (m_valid) {
         VisualPlayPositionData data = m_data.getValue();
-        int usElapsed = data.m_referenceTime.elapsed() / 1000;
+        int usElapsed = data.m_referenceTime.elapsed() / 1000.;
         int dacFromNow = usElapsed - data.m_callbackEntrytoDac;
         int offset = dacFromNow - usFromNow;
         double playPos = data.m_enginePlayPos;  // load playPos for the first sample in Buffer
-        playPos += data.m_positionStep * offset * data.m_rate / m_pAudioBufferSize->get() / 1000.;
+        playPos += data.m_positionStep * offset * data.m_rate / m_pAudioBufferSize->get() / 1000;
         *playPosition = playPos;
         *slipPosition = data.m_pSlipPosition;
     }
