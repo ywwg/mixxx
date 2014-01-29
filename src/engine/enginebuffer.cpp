@@ -190,9 +190,6 @@ EngineBuffer::EngineBuffer(const char* _group, ConfigObject<ConfigValue>* _confi
             this, SLOT(slotControlSeek(double)),
             Qt::DirectConnection);
 
-    // Control used to communicate ratio playpos to GUI thread
-    m_visualPlayPos = VisualPlayPosition::getVisualPlayPosition(m_group);
-
     m_pRepeat = new ControlPushButton(ConfigKey(m_group, "repeat"));
     m_pRepeat->setButtonMode(ControlPushButton::TOGGLE);
 
@@ -229,6 +226,9 @@ EngineBuffer::EngineBuffer(const char* _group, ConfigObject<ConfigValue>* _confi
     m_pVinylControlControl = new VinylControlControl(_group, _config);
     addControl(m_pVinylControlControl);
 #endif
+
+    // Control used to communicate ratio playpos to GUI thread
+    m_visualPlayPos = VisualPlayPosition::getVisualPlayPosition(m_group);
 
     m_pRateControl = new RateControl(_group, _config);
     // Add the Rate Controller

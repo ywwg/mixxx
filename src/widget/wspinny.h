@@ -30,6 +30,8 @@ class WSpinny : public QGLWidget, public WBaseWidget, public VinylSignalQualityL
     void dropEvent(QDropEvent *event);
 
   public slots:
+    void slotTrackSamplesChanged(double);
+    void slotTrackSampleRateChanged(double);
     void updateVinylControlSpeed(double rpm);
     void updateVinylControlEnabled(double enabled);
     void updateVinylControlSignalEnabled(double enabled);
@@ -47,7 +49,6 @@ class WSpinny : public QGLWidget, public WBaseWidget, public VinylSignalQualityL
     void hideEvent(QHideEvent* event);
     bool event(QEvent* pEvent);
 
-    double calculateAngle(double playpos);
     int calculateFullRotations(double playpos);
     double calculatePositionFromAngle(double angle);
 
@@ -69,11 +70,9 @@ class WSpinny : public QGLWidget, public WBaseWidget, public VinylSignalQualityL
     ControlObjectThread* m_pSignalEnabled;
     ControlObjectThread* m_pSlipEnabled;
     ControlObjectThread* m_pSlipPosition;
-    ControlObject* m_pSpinnyAngle;
+    ControlObjectThread* m_pSpinnyAngle;
 
-#ifdef __VINYLCONTROL__
     VinylControlManager* m_pVCManager;
-#endif
     double m_dInitialPos;
 
     int m_iVinylInput;
@@ -91,9 +90,10 @@ class WSpinny : public QGLWidget, public WBaseWidget, public VinylSignalQualityL
     int m_iFullRotations;
     double m_dPrevTheta;
     double m_dTheta;
+    double m_track_samples;
+    double m_track_samplerate;
     // Speed of the vinyl rotation.
     double m_dRotationsPerSecond;
-    bool m_bClampFailedWarning;
 };
 
 #endif //_WSPINNY_H
