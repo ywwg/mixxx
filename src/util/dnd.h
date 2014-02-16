@@ -21,7 +21,8 @@ class DragAndDropHelper {
   public:
     static QList<QFileInfo> supportedTracksFromUrls(const QList<QUrl>& urls,
                                                     bool firstOnly,
-                                                    bool acceptPlaylists) {
+                                                    bool acceptPlaylists,
+                                                    QString library_prefix = "") {
         QList<QFileInfo> fileLocations;
         foreach (const QUrl& url, urls) {
 
@@ -43,6 +44,15 @@ class DragAndDropHelper {
 
             if (file.isEmpty()) {
                 continue;
+            }
+
+            // total OWEN hack: because we strip out the library prefix
+            // in the view, we have to add it back here again to properly receive
+            // drops.
+            if (!QFile(file).exists() && library_prefix != "") {
+                if(QFile(library_prefix + "/" + file).exists()) {
+                    file = library_prefix + "/" + file;
+                }
             }
 
             if (acceptPlaylists && (file.endsWith(".m3u") || file.endsWith(".m3u8"))) {

@@ -174,7 +174,7 @@ void WWaveformViewer::dragEnterEvent(QDragEnterEvent * event) {
 void WWaveformViewer::dropEvent(QDropEvent * event) {
     if (event->mimeData()->hasUrls()) {
         QList<QFileInfo> files = DragAndDropHelper::supportedTracksFromUrls(
-                event->mimeData()->urls(), true, false);
+                event->mimeData()->urls(), true, false, m_sPrefix);
         if (!files.isEmpty()) {
             event->accept();
             emit(trackDropped(files.at(0).canonicalFilePath(), m_pGroup));
