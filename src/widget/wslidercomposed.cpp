@@ -65,7 +65,8 @@ void WSliderComposed::setup(QDomNode node, const SkinContext& context) {
 }
 
 void WSliderComposed::setSliderPixmap(const QString& filenameSlider) {
-    m_pSlider = WPixmapStore::getPaintable(filenameSlider);
+    m_pSlider = WPixmapStore::getPaintable(filenameSlider,
+                                           Paintable::STRETCH);
     if (!m_pSlider) {
         qDebug() << "WSliderComposed: Error loading slider pixmap:" << filenameSlider;
     } else {
@@ -76,7 +77,8 @@ void WSliderComposed::setSliderPixmap(const QString& filenameSlider) {
 
 void WSliderComposed::setHandlePixmap(bool bHorizontal, const QString& filenameHandle) {
     m_bHorizontal = bHorizontal;
-    m_pHandle = WPixmapStore::getPaintable(filenameHandle);
+    m_pHandle = WPixmapStore::getPaintable(filenameHandle,
+                                           Paintable::STRETCH);
     if (!m_pHandle) {
         qDebug() << "WSliderComposed: Error loading handle pixmap:" << filenameHandle;
     } else {
@@ -127,11 +129,7 @@ void WSliderComposed::mouseMoveEvent(QMouseEvent * e) {
 
         // Emit valueChanged signal
         if (m_bEventWhileDrag) {
-            if (e->button() == Qt::RightButton) {
-                setControlParameterRightUp(newValue);
-            } else {
-                setControlParameterLeftUp(newValue);
-            }
+            setControlParameterLeftUp(newValue);
         }
 
         // Update display
@@ -147,8 +145,7 @@ void WSliderComposed::wheelEvent(QWheelEvent *e) {
     // Clamp to [0.0, 1.0]
     newValue = math_max(0.0, math_min(1.0, newValue));
 
-    setControlParameterDown(newValue);
-    setControlParameterUp(newValue);
+    setControlParameter(newValue);
     onConnectedControlValueChanged(newValue);
     update();
 
@@ -160,13 +157,6 @@ void WSliderComposed::wheelEvent(QWheelEvent *e) {
 void WSliderComposed::mouseReleaseEvent(QMouseEvent * e) {
     if (!m_bEventWhileDrag) {
         mouseMoveEvent(e);
-
-        if (e->button() == Qt::RightButton) {
-            setControlParameterRightUp(getControlParameterRight());
-        } else {
-            setControlParameterLeftUp(getControlParameterLeft());
-        }
-
         m_bDrag = false;
     }
     if (e->button() == Qt::RightButton) {
@@ -182,7 +172,7 @@ void WSliderComposed::mousePressEvent(QMouseEvent * e) {
         m_bDrag = true;
     } else {
         if (e->button() == Qt::RightButton) {
-            resetControlParameters();
+            resetControlParameter();
             m_bRightButtonPressed = true;
         } else {
             if (m_bHorizontal) {

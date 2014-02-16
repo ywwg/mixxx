@@ -8,11 +8,12 @@
 #include <QMimeData>
 
 #include "controlobject.h"
-#include "controlobjectthread.h"
+#include "controlobjectslave.h"
 #include "trackinfoobject.h"
 #include "waveform/widgets/waveformwidgetabstract.h"
 #include "widget/wwaveformviewer.h"
 #include "waveform/waveformwidgetfactory.h"
+#include "util/dnd.h"
 
 WWaveformViewer::WWaveformViewer(const char *group, ConfigObject<ConfigValue>* pConfig, QWidget * parent)
         : WWidget(parent),
@@ -24,15 +25,15 @@ WWaveformViewer::WWaveformViewer(const char *group, ConfigObject<ConfigValue>* p
     m_bScratching = false;
     m_bBending = false;
 
-    m_pZoom = new ControlObjectThread(group, "waveform_zoom");
+    m_pZoom = new ControlObjectSlave(group, "waveform_zoom");
+    m_pZoom->connectValueChanged(this, SLOT(onZoomChange(double)));
 
-    connect(m_pZoom, SIGNAL(valueChanged(double)),
-            this, SLOT(onZoomChange(double)));
-
-    m_pScratchPositionEnable = new ControlObjectThread(
+    m_pScratchPositionEnable = new ControlObjectSlave(
             group, "scratch_position_enable");
-    m_pScratchPosition = new ControlObjectThread(
+    m_pScratchPosition = new ControlObjectSlave(
             group, "scratch_position");
+    m_pWheel = new ControlObjectSlave(
+            group, "wheel");
 
     setAttribute(Qt::WA_OpaquePaintEvent);
 
@@ -46,6 +47,7 @@ WWaveformViewer::~WWaveformViewer() {
     delete m_pZoom;
     delete m_pScratchPositionEnable;
     delete m_pScratchPosition;
+    delete m_pWheel;
 }
 
 void WWaveformViewer::setup(QDomNode node, const SkinContext& context) {
@@ -67,7 +69,7 @@ void WWaveformViewer::mousePressEvent(QMouseEvent* event) {
         // If we are pitch-bending then disable and reset because the two
         // shouldn't be used at once.
         if (m_bBending) {
-            setControlParameterRightDown(0.5);
+            m_pWheel->setParameter(0.5);
             m_bBending = false;
         }
         m_bScratching = true;
@@ -82,7 +84,7 @@ void WWaveformViewer::mousePressEvent(QMouseEvent* event) {
             m_pScratchPositionEnable->slotSet(0.0);
             m_bScratching = false;
         }
-        setControlParameterRightDown(0.5);
+        m_pWheel->setParameter(0.5);
         m_bBending = true;
 
         //also reset zoom:
@@ -118,7 +120,7 @@ void WWaveformViewer::mouseMoveEvent(QMouseEvent* event) {
         double v = 0.5 + (diff.x() / 1270.0);
         // clamp to [0.0, 1.0]
         v = math_min(1.0, math_max(0.0, v));
-        setControlParameterRightDown(v);
+        m_pWheel->setParameter(v);
     }
 }
 
@@ -128,7 +130,7 @@ void WWaveformViewer::mouseReleaseEvent(QMouseEvent* /*event*/) {
         m_bScratching = false;
     }
     if (m_bBending) {
-        setControlParameterRightDown(0.5);
+        m_pWheel->setParameter(0.5);
         m_bBending = false;
     }
     m_mouseAnchor = QPoint();
@@ -170,28 +172,16 @@ void WWaveformViewer::dragEnterEvent(QDragEnterEvent * event) {
 }
 
 void WWaveformViewer::dropEvent(QDropEvent * event) {
-    if (event->mimeData()->hasUrls() &&
-            event->mimeData()->urls().size() > 0) {
-        QList<QUrl> urls(event->mimeData()->urls());
-        QUrl url = urls.first();
-        QString name = url.toLocalFile();
-		//total OWEN hack: because we strip out the library prefix
-		//in the view, we have to add it back here again to properly receive
-		//drops
-        if (!QFile(name).exists())
-        {
-        	if(QFile(m_sPrefix+"/"+name).exists())
-        		name = m_sPrefix+"/"+name;
+    if (event->mimeData()->hasUrls()) {
+        QList<QFileInfo> files = DragAndDropHelper::supportedTracksFromUrls(
+                event->mimeData()->urls(), true, false);
+        if (!files.isEmpty()) {
+            event->accept();
+            emit(trackDropped(files.at(0).canonicalFilePath(), m_pGroup));
+            return;
         }
-        //If the file is on a network share, try just converting the URL to a string...
-        if (name == "")
-            name = url.toString();
-
-        event->accept();
-        emit(trackDropped(name, m_pGroup));
-    } else {
-        event->ignore();
     }
+    event->ignore();
 }
 
 void WWaveformViewer::onTrackLoaded( TrackPointer track) {

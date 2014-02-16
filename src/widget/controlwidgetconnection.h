@@ -8,6 +8,7 @@
 
 class ControlObjectSlave;
 class WBaseWidget;
+class ValueTransformer;
 
 class ControlWidgetConnection : public QObject {
     Q_OBJECT
@@ -34,12 +35,37 @@ class ControlWidgetConnection : public QObject {
         }
     }
 
-    // Takes ownership of pControl.
+    enum DirectionOption {
+        DIR_NON                  = 0x00,
+        DIR_FROM_WIDGET          = 0x01,
+        DIR_TO_WIDGET            = 0x02,
+        DIR_FROM_AND_TO_WIDGET   = 0x03
+    };
+
+    static QString directionOptionToString(DirectionOption option) {
+        switch (option) {
+            case DIR_NON:
+                return "NON";
+            case DIR_FROM_WIDGET:
+                return "FROM_WIDGET";
+            case DIR_TO_WIDGET:
+                return "TO_WIDGET";
+            case DIR_FROM_AND_TO_WIDGET:
+                return "FROM_AND_TO_WIDGET";
+            default:
+                return "UNKNOWN";
+        }
+    }
+
+    // Takes ownership of pControl and pTransformer.
     ControlWidgetConnection(WBaseWidget* pBaseWidget,
-                            ControlObjectSlave* pControl);
+                            ControlObjectSlave* pControl,
+                            ValueTransformer* pTransformer);
     virtual ~ControlWidgetConnection();
 
     double getControlParameter() const;
+    void setControlParameter(double v);
+    double getControlParameterForValue(double value) const;
 
     virtual void resetControl() = 0;
     virtual void setControlParameterDown(double v) = 0;
@@ -53,6 +79,7 @@ class ControlWidgetConnection : public QObject {
   protected:
     WBaseWidget* m_pWidget;
     QScopedPointer<ControlObjectSlave> m_pControl;
+    QScopedPointer<ValueTransformer> m_pValueTransformer;
 };
 
 class ControlParameterWidgetConnection : public ControlWidgetConnection {
@@ -60,24 +87,24 @@ class ControlParameterWidgetConnection : public ControlWidgetConnection {
   public:
     ControlParameterWidgetConnection(WBaseWidget* pBaseWidget,
                                      ControlObjectSlave* pControl,
-                                     bool connectValueFromWidget,
-                                     bool connectValueToWidget,
+                                     ValueTransformer* pTransformer,
+                                     DirectionOption directionOption,
                                      EmitOption emitOption);
     virtual ~ControlParameterWidgetConnection();
 
     QString toDebugString() const;
 
   protected:
-    void resetControl();
-    void setControlParameterDown(double v);
-    void setControlParameterUp(double v);
+    virtual void resetControl();
+    virtual void setControlParameter(double v);
+    virtual void setControlParameterDown(double v);
+    virtual void setControlParameterUp(double v);
 
   private slots:
     void slotControlValueChanged(double v);
 
   private:
-    bool m_bConnectValueFromWidget;
-    bool m_bConnectValueToWidget;
+    DirectionOption m_directionOption;
     EmitOption m_emitOption;
 };
 
@@ -86,15 +113,17 @@ class ControlWidgetPropertyConnection : public ControlWidgetConnection {
   public:
     ControlWidgetPropertyConnection(WBaseWidget* pBaseWidget,
                                     ControlObjectSlave* pControl,
+                                    ValueTransformer* pTransformer,
                                     const QString& property);
     virtual ~ControlWidgetPropertyConnection();
 
     QString toDebugString() const;
 
   protected:
-    void resetControl();
-    void setControlParameterDown(double v);
-    void setControlParameterUp(double v);
+    virtual void resetControl();
+    virtual void setControlParameter(double v);
+    virtual void setControlParameterDown(double v);
+    virtual void setControlParameterUp(double v);
 
   private slots:
     void slotControlValueChanged(double v);

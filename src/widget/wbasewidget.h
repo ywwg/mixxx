@@ -5,7 +5,7 @@
 #include <QWidget>
 #include <QList>
 
-class ControlWidgetConnection;
+#include "widget/controlwidgetconnection.h"
 
 class WBaseWidget {
   public:
@@ -39,14 +39,18 @@ class WBaseWidget {
     double getControlParameterRight() const;
     double getControlParameterDisplay() const;
 
+    virtual ControlWidgetConnection::EmitOption getDefaultEmitOption(
+        Qt::MouseButton state);
+    virtual ControlWidgetConnection::DirectionOption getDefaultDirectionOption(
+        Qt::MouseButton state);
+
   protected:
     virtual void onConnectedControlValueChanged(double v) {
         Q_UNUSED(v);
     }
 
-    void resetControlParameters();
-    void setControlParameterDown(double v);
-    void setControlParameterUp(double v);
+    void resetControlParameter();
+    void setControlParameter(double v);
     void setControlParameterLeftDown(double v);
     void setControlParameterLeftUp(double v);
     void setControlParameterRightDown(double v);

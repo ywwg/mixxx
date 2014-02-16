@@ -3,11 +3,14 @@
 #include "widget/wbasewidget.h"
 #include "controlobjectslave.h"
 #include "util/debug.h"
+#include "util/valuetransformer.h"
 
 ControlWidgetConnection::ControlWidgetConnection(WBaseWidget* pBaseWidget,
-                                                 ControlObjectSlave* pControl)
+                                                 ControlObjectSlave* pControl,
+                                                 ValueTransformer* pTransformer)
         : m_pWidget(pBaseWidget),
-          m_pControl(pControl) {
+          m_pControl(pControl),
+          m_pValueTransformer(pTransformer) {
     // If pControl is NULL then the creator of ControlWidgetConnection has
     // screwed up badly enough that we should just crash. This will not go
     // unnoticed in development.
@@ -18,20 +21,38 @@ ControlWidgetConnection::ControlWidgetConnection(WBaseWidget* pBaseWidget,
 ControlWidgetConnection::~ControlWidgetConnection() {
 }
 
+void ControlWidgetConnection::setControlParameter(double parameter) {
+    if (m_pValueTransformer != NULL) {
+        parameter = m_pValueTransformer->transformInverse(parameter);
+    }
+    m_pControl->setParameter(parameter);
+}
+
 double ControlWidgetConnection::getControlParameter() const {
-    return m_pControl->getParameter();
+    double parameter = m_pControl->getParameter();
+    if (m_pValueTransformer != NULL) {
+        parameter = m_pValueTransformer->transform(parameter);
+    }
+    return parameter;
+}
+
+double ControlWidgetConnection::getControlParameterForValue(double value) const {
+    double parameter = m_pControl->getParameterForValue(value);
+    if (m_pValueTransformer != NULL) {
+        parameter = m_pValueTransformer->transform(parameter);
+    }
+    return parameter;
 }
 
 ControlParameterWidgetConnection::ControlParameterWidgetConnection(WBaseWidget* pBaseWidget,
                                                                    ControlObjectSlave* pControl,
-                                                                   bool connectValueFromWidget,
-                                                                   bool connectValueToWidget,
+                                                                   ValueTransformer* pTransformer,
+                                                                   DirectionOption directionOption,
                                                                    EmitOption emitOption)
-        : ControlWidgetConnection(pBaseWidget, pControl),
-          m_bConnectValueFromWidget(connectValueFromWidget),
-          m_bConnectValueToWidget(connectValueToWidget),
+        : ControlWidgetConnection(pBaseWidget, pControl, pTransformer),
+          m_directionOption(directionOption),
           m_emitOption(emitOption) {
-    if (m_bConnectValueToWidget) {
+    if (directionOption & DIR_TO_WIDGET) {
         slotControlValueChanged(m_pControl->get());
     }
 }
@@ -41,45 +62,49 @@ ControlParameterWidgetConnection::~ControlParameterWidgetConnection() {
 
 QString ControlParameterWidgetConnection::toDebugString() const {
     const ConfigKey& key = m_pControl->getKey();
-    return QString("%1,%2 Parameter: %3 ToWidget: %4 FromWidget %5 Emit: %6")
+    return QString("%1,%2 Parameter: %3 Direction: %4 Emit: %5")
             .arg(key.group, key.item,
                  QString::number(m_pControl->getParameter()),
-                 ::toDebugString(m_bConnectValueToWidget),
-                 ::toDebugString(m_bConnectValueFromWidget),
+                 directionOptionToString(m_directionOption),
                  emitOptionToString(m_emitOption));
 }
 
 void ControlParameterWidgetConnection::slotControlValueChanged(double v) {
-    if (m_bConnectValueToWidget) {
-        m_pWidget->onConnectedControlValueChanged(
-                m_pControl->getParameterForValue(v));
-        // TODO(rryan): copied from WWidget. Keep?
-        //m_pWidget->toQWidget()->update();
+    if (m_directionOption & DIR_TO_WIDGET) {
+        double parameter = getControlParameterForValue(v);
+        m_pWidget->onConnectedControlValueChanged(parameter);
     }
 }
 
 void ControlParameterWidgetConnection::resetControl() {
-    if (m_bConnectValueFromWidget) {
+    if (m_directionOption & DIR_FROM_WIDGET) {
         m_pControl->reset();
     }
 }
 
+void ControlParameterWidgetConnection::setControlParameter(double v) {
+    if (m_directionOption & DIR_FROM_WIDGET) {
+        m_pControl->setParameter(v);
+    }
+}
+
 void ControlParameterWidgetConnection::setControlParameterDown(double v) {
-    if (m_bConnectValueFromWidget && m_emitOption & EMIT_ON_PRESS) {
+    if ((m_directionOption & DIR_FROM_WIDGET) && (m_emitOption & EMIT_ON_PRESS)) {
         m_pControl->setParameter(v);
     }
 }
 
 void ControlParameterWidgetConnection::setControlParameterUp(double v) {
-    if (m_bConnectValueFromWidget && m_emitOption & EMIT_ON_RELEASE) {
+    if ((m_directionOption & DIR_FROM_WIDGET) && (m_emitOption & EMIT_ON_RELEASE)) {
         m_pControl->setParameter(v);
     }
 }
 
 ControlWidgetPropertyConnection::ControlWidgetPropertyConnection(WBaseWidget* pBaseWidget,
                                                                  ControlObjectSlave* pControl,
+                                                                 ValueTransformer* pTransformer,
                                                                  const QString& propertyName)
-        : ControlWidgetConnection(pBaseWidget, pControl),
+        : ControlWidgetConnection(pBaseWidget, pControl, pTransformer),
           m_propertyName(propertyName.toAscii()) {
     slotControlValueChanged(m_pControl->get());
 }
@@ -96,7 +121,7 @@ QString ControlWidgetPropertyConnection::toDebugString() const {
 }
 
 void ControlWidgetPropertyConnection::slotControlValueChanged(double v) {
-    double dParameter = m_pControl->getParameterForValue(v);
+    double dParameter = getControlParameterForValue(v);
 
     if (!m_pWidget->toQWidget()->setProperty(m_propertyName.constData(),
                                              QVariant(dParameter))) {
@@ -107,6 +132,11 @@ void ControlWidgetPropertyConnection::slotControlValueChanged(double v) {
 
 void ControlWidgetPropertyConnection::resetControl() {
     // Do nothing.
+}
+
+void ControlWidgetPropertyConnection::setControlParameter(double v) {
+    // Do nothing.
+    Q_UNUSED(v);
 }
 
 void ControlWidgetPropertyConnection::setControlParameterDown(double v) {
