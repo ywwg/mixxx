@@ -76,10 +76,8 @@ void WLibrarySidebar::dragMoveEvent(QDragMoveEvent * event) {
             SidebarModel* sidebarModel = dynamic_cast<SidebarModel*>(model());
             bool accepted = true;
             if (sidebarModel) {
-                foreach (QUrl url, urls)
-                {
-                    if (!url.toLocalFile().startsWith("/"))
-                    {
+                foreach (QUrl url, urls) {
+                    if (!url.toLocalFile().startsWith("/")) {
                         url = QUrl::fromLocalFile(m_sLibraryPrefix + "/" + url.toLocalFile());
                     }
                     QModelIndex destIndex = this->indexAt(event->pos());
@@ -133,22 +131,19 @@ void WLibrarySidebar::dropEvent(QDropEvent * event) {
             //eg. dragging a track from Windows Explorer onto the sidebar
             SidebarModel* sidebarModel = dynamic_cast<SidebarModel*>(model());
             if (sidebarModel) {
-                QList<QUrl> absolute_urls;
-                foreach (QUrl url, urls)
-                {
-                    // OWEN EDIT: remap relative-path urls to absolute
-                    if (!url.toLocalFile().startsWith("/"))
-                    {
-                        url = QUrl::fromLocalFile(m_sLibraryPrefix + "/" + url.toLocalFile());
-                    }
-                    absolute_urls.append(url);
-                }
-
                 QModelIndex destIndex = indexAt(event->pos());
                 // event->source() will return NULL if something is droped from
                 // a different application
                 QList<QUrl> urls(event->mimeData()->urls());
-                if (sidebarModel->dropAccept(destIndex, urls, event->source())) {
+                QList<QUrl> absolute_urls;
+                foreach (QUrl url, urls) {
+                    // OWEN EDIT: remap relative-path urls to absolute
+                    if (!url.toLocalFile().startsWith("/")) {
+                        url = QUrl::fromLocalFile(m_sLibraryPrefix + "/" + url.toLocalFile());
+                    }
+                    absolute_urls.append(url);
+                }
+                if (sidebarModel->dropAccept(destIndex, absolute_urls, event->source())) {
                     event->acceptProposedAction();
                 } else {
                     event->ignore();
