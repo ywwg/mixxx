@@ -82,6 +82,16 @@ void WPushButton::setup(QDomNode node, const SkinContext& context) {
                               context.getSkinPath(context.selectString(state, "Unpressed")));
                 }
                 m_text.replace(iState, context.selectString(state, "Text"));
+                QString alignment = context.selectString(state, "Alignment");
+                qDebug() << "Alignment text is " << alignment;
+                if (alignment.toLower() == "left") {
+                    m_align.replace(iState, Qt::AlignLeft);
+                } else if (alignment.toLower() == "right") {
+                    m_align.replace(iState, Qt::AlignRight);
+                } else {
+                    // Default is center.
+                    m_align.replace(iState, Qt::AlignCenter);
+                }
             }
         }
         state = state.nextSibling();
@@ -205,6 +215,7 @@ void WPushButton::setStates(int iStates) {
     m_pressedPixmaps.resize(iStates);
     m_unpressedPixmaps.resize(iStates);
     m_text.resize(iStates);
+    m_align.resize(iStates);
 }
 
 void WPushButton::setPixmap(int iState, bool bPressed, const QString &filename) {
@@ -278,7 +289,7 @@ void WPushButton::paintEvent(QPaintEvent* e) {
 
     QString text = m_text.at(idx);
     if (!text.isEmpty()) {
-        p.drawText(rect(), Qt::AlignCenter, text);
+        p.drawText(rect(), m_align.at(idx), text);
     }
 }
 

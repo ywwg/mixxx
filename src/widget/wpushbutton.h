@@ -94,6 +94,7 @@ class WPushButton : public WWidget {
     ControlPushButton::ButtonMode m_rightButtonMode;
     bool m_hasDisplayConnection;
     QTimer m_clickTimer;
+    QVector<int> m_align;
 };
 
 #endif
