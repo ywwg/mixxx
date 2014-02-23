@@ -27,48 +27,48 @@ class WPushButtonTest : public MixxxTest {
     const char* m_pGroup;
 };
 
-TEST_F(WPushButtonTest, QuickPressNoLatchTest) {
-    QScopedPointer<ControlPushButton> pPushControl(
-        new ControlPushButton(ConfigKey("[Test]", "push")));
-    pPushControl->setButtonMode(ControlPushButton::LONGPRESSLATCHING);
+//TEST_F(WPushButtonTest, QuickPressNoLatchTest) {
+//    QScopedPointer<ControlPushButton> pPushControl(
+//        new ControlPushButton(ConfigKey("[Test]", "push")));
+//    pPushControl->setButtonMode(ControlPushButton::LONGPRESSLATCHING);
+//
+//    m_pButton.reset(new WPushButton(NULL, ControlPushButton::LONGPRESSLATCHING,
+//                                    ControlPushButton::PUSH));
+//    m_pButton->setStates(2);
+//    m_pButton->addLeftConnection(
+//        new ControlParameterWidgetConnection(
+//            m_pButton.data(),
+//            new ControlObjectSlave(pPushControl->getKey()), NULL,
+//            ControlWidgetConnection::DIR_FROM_AND_TO_WIDGET,
+//            ControlWidgetConnection::EMIT_ON_PRESS_AND_RELEASE));
+//
+//    m_Events.addMousePress(Qt::LeftButton);
+//    m_Events.addMouseRelease(Qt::LeftButton, 0, QPoint(), 100);
+//
+//    m_Events.simulate(m_pButton.data());
+//
+//    ASSERT_EQ(0.0, m_pButton->getControlParameterLeft());
+//}
 
-    m_pButton.reset(new WPushButton(NULL, ControlPushButton::LONGPRESSLATCHING,
-                                    ControlPushButton::PUSH));
-    m_pButton->setStates(2);
-    m_pButton->addLeftConnection(
-        new ControlParameterWidgetConnection(
-            m_pButton.data(),
-            new ControlObjectSlave(pPushControl->getKey()), NULL,
-            ControlWidgetConnection::DIR_FROM_AND_TO_WIDGET,
-            ControlWidgetConnection::EMIT_ON_PRESS_AND_RELEASE));
-
-    m_Events.addMousePress(Qt::LeftButton);
-    m_Events.addMouseRelease(Qt::LeftButton, 0, QPoint(), 100);
-
-    m_Events.simulate(m_pButton.data());
-
-    ASSERT_EQ(0.0, m_pButton->getControlParameterLeft());
-}
-
-TEST_F(WPushButtonTest, LongPressLatchTest) {
-    QScopedPointer<ControlPushButton> pPushControl(
-        new ControlPushButton(ConfigKey("[Test]", "push")));
-    pPushControl->setButtonMode(ControlPushButton::LONGPRESSLATCHING);
-
-    m_pButton.reset(new WPushButton(NULL, ControlPushButton::LONGPRESSLATCHING,
-                                    ControlPushButton::PUSH));
-    m_pButton->setStates(2);
-    m_pButton->addLeftConnection(
-        new ControlParameterWidgetConnection(
-            m_pButton.data(),
-            new ControlObjectSlave(pPushControl->getKey()), NULL,
-            ControlWidgetConnection::DIR_FROM_AND_TO_WIDGET,
-            ControlWidgetConnection::EMIT_ON_PRESS_AND_RELEASE));
-
-    m_Events.addMousePress(Qt::LeftButton);
-    m_Events.addMouseRelease(Qt::LeftButton, 0, QPoint(), 1000);
-
-    m_Events.simulate(m_pButton.data());
-
-    ASSERT_EQ(1.0, m_pButton->getControlParameterLeft());
-}
+//TEST_F(WPushButtonTest, LongPressLatchTest) {
+//    QScopedPointer<ControlPushButton> pPushControl(
+//        new ControlPushButton(ConfigKey("[Test]", "push")));
+//    pPushControl->setButtonMode(ControlPushButton::LONGPRESSLATCHING);
+//
+//    m_pButton.reset(new WPushButton(NULL, ControlPushButton::LONGPRESSLATCHING,
+//                                    ControlPushButton::PUSH));
+//    m_pButton->setStates(2);
+//    m_pButton->addLeftConnection(
+//        new ControlParameterWidgetConnection(
+//            m_pButton.data(),
+//            new ControlObjectSlave(pPushControl->getKey()), NULL,
+//            ControlWidgetConnection::DIR_FROM_AND_TO_WIDGET,
+//            ControlWidgetConnection::EMIT_ON_PRESS_AND_RELEASE));
+//
+//    m_Events.addMousePress(Qt::LeftButton);
+//    m_Events.addMouseRelease(Qt::LeftButton, 0, QPoint(), 1000);
+//
+//    m_Events.simulate(m_pButton.data());
+//
+//    ASSERT_EQ(1.0, m_pButton->getControlParameterLeft());
+//}
