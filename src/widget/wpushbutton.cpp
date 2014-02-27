@@ -81,7 +81,6 @@ void WPushButton::setup(QDomNode node, const SkinContext& context) {
                 }
                 m_text.replace(iState, context.selectString(state, "Text"));
                 QString alignment = context.selectString(state, "Alignment");
-                qDebug() << "Alignment text is " << alignment;
                 if (alignment.toLower() == "left") {
                     m_align.replace(iState, Qt::AlignLeft);
                 } else if (alignment.toLower() == "right") {
@@ -90,6 +89,7 @@ void WPushButton::setup(QDomNode node, const SkinContext& context) {
                     // Default is center.
                     m_align.replace(iState, Qt::AlignCenter);
                 }
+                m_style.replace(iState, context.selectString(state, "Style"));
             }
         }
         state = state.nextSibling();
@@ -192,6 +192,7 @@ void WPushButton::setStates(int iStates) {
     m_pressedPixmaps.resize(iStates);
     m_unpressedPixmaps.resize(iStates);
     m_text.resize(iStates);
+    m_style.resize(iStates);
     m_align.resize(iStates);
 }
 
@@ -228,6 +229,13 @@ void WPushButton::setPixmapBackground(const QString &filename,
 void WPushButton::onConnectedControlValueChanged(double v) {
     if (m_iNoStates == 1) {
         m_bPressed = (v == 1.0);
+    }
+    int idx = static_cast<int>(v) % m_iNoStates;
+    if (idx < m_style.size()) {
+        QString style = m_style.at(idx);
+        if (!style.isEmpty()) {
+            setStyleSheet(style);
+        }
     }
     update();
 }
