@@ -181,7 +181,7 @@ if MASTER_SYNC_LAYOUT:
     light_mapping = {#'spinknob':'jog',
            'knoblight1':'pfl', 'knoblight2':'quantize', 'knoblight3':'filterLowKill',
            'button1':{'red':'sync_master', 'orange':'beatloop_4',   'green':'hotcue_1_enabled'},
-           'button2':{'red':'sync_slave',  'orange':'loop_double',  'green':'hotcue_2_enabled'},
+           'button2':{'red':'sync_enabled',  'orange':'loop_double',  'green':'hotcue_2_enabled'},
            'button3':{'red':'cue_default', 'orange':'loop_halve',   'green':'hotcue_3_enabled'},
            'button4':{'red':'play',        'orange':'loop_enabled', 'green':'hotcue_4_enabled'}}
 
