@@ -319,7 +319,7 @@ for i, deck in enumerate(DECK_ORDER):
                 <options>
                     <Script-Binding/>
                 </options>
-            </control>""" % (deck+1, i+1, midi_cc['spinknob'][i]))
+            </control>""" % (deck+1, deck+1, midi_cc['spinknob'][i]))
 
 
 ########################################

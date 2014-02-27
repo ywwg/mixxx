@@ -83,16 +83,22 @@ XoneK2.encoderJog = function (value, deck) {
         jogValue = 1;
     }
 
-    //faster seek with shift held
-    if (XoneK2.shift_status) {
-        jogValue *= 5;
-    }
 
-    if (engine.getValue("[Channel" + deck + "]", "play") == 1 &&
-        engine.getValue("[Channel" + deck + "]", "reverse") == 1) {
-        jogValue= -(jogValue);
+    if (XoneK2.shift_status) {
+        pregain = engine.getValue("[Channel" + deck + "]", "pregain");
+        engine.setValue("[Channel" + deck + "]", "pregain", pregain + (.05 * jogValue));
+    } else {
+        //faster seek with shift held
+        //if (XoneK2.shift_status) {
+        //    jogValue *= 5;
+        //}
+
+        if (engine.getValue("[Channel" + deck + "]", "play") == 1 &&
+            engine.getValue("[Channel" + deck + "]", "reverse") == 1) {
+            jogValue= -(jogValue);
+        }
+        engine.setValue("[Channel"+deck+"]","jog",jogValue);
     }
-    engine.setValue("[Channel"+deck+"]","jog",jogValue);
 }
 
 XoneK2.shift_on = function (channel, control, value, status) {
