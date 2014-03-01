@@ -326,14 +326,12 @@ double BpmControl::getSyncAdjustment(bool userTweakingSync) {
 
     if (m_pBeats == NULL) {
         // No beat information.
-        qDebug() << getGroup() << "sync adjust 1.0";
         m_dSyncAdjustment = 1.0;
         return m_dSyncAdjustment;
     }
     if (m_pReverseButton->get()) {
         // If we are going backwards, we can't do the math correctly.
         m_dSyncAdjustment = 1.0;
-        qDebug() << getGroup() << "sync adjust 1.0";
         return m_dSyncAdjustment;
     }
 
@@ -347,7 +345,6 @@ double BpmControl::getSyncAdjustment(bool userTweakingSync) {
     if (!BpmControl::getBeatContext(m_pBeats, dThisPosition,
                                     &dPrevBeat, &dNextBeat,
                                     &dBeatLength, &my_percentage, 0.01)) {
-        qDebug() << getGroup() << "sync adjust 1.0";
         m_dSyncAdjustment = 1.0;
         return m_dSyncAdjustment;
     }
@@ -360,7 +357,6 @@ double BpmControl::getSyncAdjustment(bool userTweakingSync) {
                               dBeatLength;
     if (!m_pQuantize->get() || (loop_enabled && loop_size < 1.0 && loop_size > 0)) {
         m_dSyncAdjustment = 1.0;
-        qDebug() << getGroup() << "sync adjust 1.0";
         return m_dSyncAdjustment;
     }
 
@@ -422,7 +418,6 @@ double BpmControl::getSyncAdjustment(bool userTweakingSync) {
             m_dSyncAdjustment = 1.0;
         }
     }
-//    qDebug() << getGroup() << "sync adjust " << m_dSyncAdjustment;
     return m_dSyncAdjustment;
 }
 

@@ -57,8 +57,6 @@ void EngineBufferScaleRubberBand::setScaleParameters(int iSampleRate,
                                                      bool speed_affects_pitch,
                                                      double* speed_adjust,
                                                      double* pitch_adjust) {
-    qDebug() << "base rate " << base_rate << " speed affect " << speed_affects_pitch
-             << " speed_adjust " << *speed_adjust << " pitch adjust " << *pitch_adjust;
     if (m_iSampleRate != iSampleRate) {
         initializeRubberBand(iSampleRate);
         m_iSampleRate = iSampleRate;
@@ -208,14 +206,12 @@ CSAMPLE* EngineBufferScaleRubberBand::getScaled(unsigned long buf_size) {
             // kRubberBandBlockSize.
             int available = m_pRubberBand->available();
             if (available == 0) {
-                qDebug() << "RUBBERBAND BUG available == 0";
                 iLenFramesRequired = kRubberBandBlockSize;
             }
         }
         //qDebug() << "iLenFramesRequired" << iLenFramesRequired;
 
         if (remaining_frames > 0 && iLenFramesRequired > 0) {
-            qDebug() << "getnext " << (m_bBackwards ? -1.0 : 1.0) * m_dBaseRate * m_dSpeedAdjust;
             unsigned long iAvailSamples = m_pReadAheadManager
                     ->getNextSamples(
                         // The value doesn't matter here. All that matters is we

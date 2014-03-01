@@ -69,7 +69,6 @@ void EngineBufferScaleLinear::setScaleParameters(int iSampleRate,
 
     // Determine playback direction
     m_bBackwards = m_dRate < 0.0;
-    qDebug() << "linear is backwards? " << m_bBackwards;
 }
 
 void EngineBufferScaleLinear::clear() {

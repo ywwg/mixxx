@@ -347,11 +347,9 @@ void EngineBuffer::enablePitchAndTimeScaling(bool bEnable) {
     }
 
     if (bEnable && m_pScale != m_pScaleRB) {
-        qDebug() << getGroup() << "scaler now rubber band";
         m_pScale = m_pScaleRB;
         m_bScalerChanged = true;
     } else if (!bEnable && m_pScale != m_pScaleLinear) {
-        qDebug() << getGroup() << "scaler now linear";
         m_pScale = m_pScaleLinear;
         m_bScalerChanged = true;
     }
@@ -680,10 +678,6 @@ void EngineBuffer::process(const CSAMPLE*, CSAMPLE* pOutput, const int iBufferSi
         // keylock because keylock sounds terrible when not going at a constant
         // rate.
         // High seek speeds also disables keylock.
-        if (!strcmp(m_group, "[Channel2]")) {
-            qDebug() << "scratch? " << is_scratching << " keylock? " << keylock_enabled
-                    << " pitch? " << pitch << " speed " << speed;
-        }
         bool use_pitch_and_time_scaling = !is_scratching && (keylock_enabled || pitch != 0) &&
                                           fabs(speed) < 1.5;
         enablePitchAndTimeScaling(use_pitch_and_time_scaling);

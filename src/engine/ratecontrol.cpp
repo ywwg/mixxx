@@ -432,7 +432,6 @@ double RateControl::calculateRate(double baserate, bool paused,
         // If vinyl control is enabled and scratching then also set isScratching
         bool bVinylControlScratching = m_pVCScratching && m_pVCScratching->get() > 0.0;
         if (bVinylControlEnabled && bVinylControlScratching) {
-            qDebug() << "vinyl enables scratch";
             *isScratching = true;
         }
 
@@ -480,7 +479,6 @@ double RateControl::calculateRate(double baserate, bool paused,
         // If waveform scratch is enabled, override all other controls
         if (m_pScratchController->isEnabled()) {
             rate = m_pScratchController->getRate();
-            qDebug() << "scratch controller enables scratch";
             *isScratching = true;
         }
 
@@ -497,11 +495,7 @@ double RateControl::calculateRate(double baserate, bool paused,
             bool userTweakingSync = userTweak != 0.0;
             rate += userTweak;
 
-            // Don't try to fix alignment at high speeds.
-            if (fabs(rate - 1.0) < 0.2) {
-                qDebug() << "not trying to fix rate";
-                rate *= m_pBpmControl->getSyncAdjustment(userTweakingSync);
-            }
+            rate *= m_pBpmControl->getSyncAdjustment(userTweakingSync);
         }
         // If we are reversing (and not scratching,) flip the rate.  This is ok even when syncing.
         // Reverse with vinyl is only ok if absolute mode isn't on.
