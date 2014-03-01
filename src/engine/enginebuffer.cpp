@@ -347,9 +347,11 @@ void EngineBuffer::enablePitchAndTimeScaling(bool bEnable) {
     }
 
     if (bEnable && m_pScale != m_pScaleRB) {
+        qDebug() << getGroup() << "scaler now rubber band";
         m_pScale = m_pScaleRB;
         m_bScalerChanged = true;
     } else if (!bEnable && m_pScale != m_pScaleLinear) {
+        qDebug() << getGroup() << "scaler now linear";
         m_pScale = m_pScaleLinear;
         m_bScalerChanged = true;
     }
@@ -374,8 +376,8 @@ void EngineBuffer::setEngineMaster(EngineMaster* pEngineMaster) {
 
 void EngineBuffer::queueNewPlaypos(double newpos, enum SeekRequest seekType) {
     // All seeks need to be done in the Engine thread so queue it up.
-    // Write the position before the seek type, to reduce a possible race 
-    // condition effect 
+    // Write the position before the seek type, to reduce a possible race
+    // condition effect
     m_queuedPosition.setValue(newpos);
     m_iSeekQueued.fetchAndStoreRelease(seekType);
 }
@@ -678,6 +680,10 @@ void EngineBuffer::process(const CSAMPLE*, CSAMPLE* pOutput, const int iBufferSi
         // keylock because keylock sounds terrible when not going at a constant
         // rate.
         // High seek speeds also disables keylock.
+        if (!strcmp(m_group, "[Channel2]")) {
+            qDebug() << "scratch? " << is_scratching << " keylock? " << keylock_enabled
+                    << " pitch? " << pitch << " speed " << speed;
+        }
         bool use_pitch_and_time_scaling = !is_scratching && (keylock_enabled || pitch != 0) &&
                                           fabs(speed) < 1.5;
         enablePitchAndTimeScaling(use_pitch_and_time_scaling);
@@ -969,7 +975,7 @@ void EngineBuffer::processSlip(int iBufferSize) {
 void EngineBuffer::processSeek() {
     // We need to read position just after reading seekType, to ensure that we read
     // the matching poition to seek_typ or a position from a new seek just queued from an other thread
-    // the later case is ok, because we will pocess the new seek in the next call anyway. 
+    // the later case is ok, because we will pocess the new seek in the next call anyway.
     SeekRequest seekType =
             static_cast<SeekRequest>(m_iSeekQueued.fetchAndStoreRelease(NO_SEEK));
     double position = m_queuedPosition.getValue();

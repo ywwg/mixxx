@@ -58,8 +58,8 @@ void EngineBufferScaleLinear::setScaleParameters(int iSampleRate,
 
     // EBSL doesn't support pitch-independent tempo adjustment.
     if (!speed_affects_pitch) {
-        qWarning() << "WARNING: EngineBufferScaleLinear requested to adjust"
-                   << "tempo independent of pitch. Ignoring.";
+//        qWarning() << "WARNING: EngineBufferScaleLinear requested to adjust"
+//                   << "tempo independent of pitch. Ignoring.";
     }
 
     m_dOldRate = m_dRate;
@@ -69,6 +69,7 @@ void EngineBufferScaleLinear::setScaleParameters(int iSampleRate,
 
     // Determine playback direction
     m_bBackwards = m_dRate < 0.0;
+    qDebug() << "linear is backwards? " << m_bBackwards;
 }
 
 void EngineBufferScaleLinear::clear() {
