@@ -1084,6 +1084,10 @@ void WTrackTableView::keyPressEvent(QKeyEvent* event) {
         loadSelectionToGroup("[Channel1]");
     } else if (event->key() == Qt::Key_BracketRight) {
         loadSelectionToGroup("[Channel2]");
+    } else if (event->key() == Qt::Key_BraceLeft) {
+        loadSelectionToGroup("[Channel3]");
+    } else if (event->key() == Qt::Key_BraceRight) {
+        loadSelectionToGroup("[Channel4]");
     } else {
         QTableView::keyPressEvent(event);
     }

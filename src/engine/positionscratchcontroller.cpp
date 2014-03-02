@@ -272,7 +272,7 @@ void PositionScratchController::process(double currentSample, double releaseRate
 
 bool PositionScratchController::isEnabled() {
     // return true only if m_dRate is valid.
-    return m_bScratching || m_bEnableInertia;
+    return m_bScratching;
 }
 
 double PositionScratchController::getRate() {

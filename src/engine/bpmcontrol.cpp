@@ -326,8 +326,7 @@ double BpmControl::getSyncAdjustment(bool userTweakingSync) {
 
     if (m_pBeats == NULL) {
         // No beat information.
-        m_dSyncAdjustment = 1.0;
-        return m_dSyncAdjustment;
+        return 1.0;
     }
     if (m_pReverseButton->get()) {
         // If we are going backwards, we can't do the math correctly.
@@ -345,8 +344,7 @@ double BpmControl::getSyncAdjustment(bool userTweakingSync) {
     if (!BpmControl::getBeatContext(m_pBeats, dThisPosition,
                                     &dPrevBeat, &dNextBeat,
                                     &dBeatLength, &my_percentage, 0.01)) {
-        m_dSyncAdjustment = 1.0;
-        return m_dSyncAdjustment;
+        return 1.0;
     }
 
     // If we aren't quantized or we are in a <1 beat loop, don't worry about
