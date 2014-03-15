@@ -171,6 +171,8 @@ void BpmControl::slotControlBeatSyncPhase(double v) {
 
 void BpmControl::slotControlBeatSyncTempo(double v) {
     if (!v) return;
+    // TODO(owilliams): Replace this call with something that will toggle
+    // sync_enabled on and off, which produces the same result.
     syncTempo();
 }
 
@@ -179,11 +181,16 @@ void BpmControl::slotControlBeatSync(double v) {
 
     // If the player is playing, and adjusting its tempo succeeded, adjust its
     // phase so that it plays in sync.
+
+    // TODO(owilliams): Replace this call with something that will toggle
+    // sync_enabled on and off, and also quantize if necessary,
+    // which produces the same result.
     if (syncTempo() && m_pPlayButton->get() > 0) {
         syncPhase();
     }
 }
 
+// DEPRECATED
 bool BpmControl::syncTempo() {
     EngineBuffer* pOtherEngineBuffer = pickSyncTarget();
 

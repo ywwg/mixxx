@@ -48,6 +48,9 @@ class SyncControl : public EngineControl, public Syncable {
     void reportTrackPosition(double fractionalPlaypos);
     void reportPlayerSpeed(double speed, bool scratching);
 
+    // If BPMs are wildly different, a better sync may be found by multiplying
+    // by 2 or .5.  This function chooses one of those options.
+    static double getMultipliedSyncRate(double my_bpm, double their_bpm);
   public slots:
     virtual void trackLoaded(TrackPointer pTrack);
     virtual void trackUnloaded(TrackPointer pTrack);

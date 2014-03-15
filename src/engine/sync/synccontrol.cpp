@@ -156,12 +156,33 @@ void SyncControl::setBpm(double bpm) {
 
     double fileBpm = m_pFileBpm->get();
     if (fileBpm > 0.0) {
-        double newRate = (bpm / m_pFileBpm->get() - 1.0)
-                / m_pRateDirection->get() / m_pRateRange->get();
-        m_pRateSlider->set(newRate);
+        double factor = getMultipliedSyncRate(fileBpm, bpm);
+        double newRate = factor / m_pRateDirection->get() / m_pRateRange->get();
+
     } else {
         m_pRateSlider->set(0);
     }
+}
+
+// static
+double SyncControl::getMultipliedSyncRate(double my_bpm, double their_bpm) {
+    // We start with the slowest possible rate (0.5) and then multiply it
+    // twice to get 1.0 and then 2.0 -- all of the rates we want to test.
+    double base_ratio = their_bpm / (2.0 * my_bpm);
+    double best_ratio = base_ratio;
+
+    for (int i = 0; i < 3; ++i) {
+        if (fabs(base_ratio - 1.0) < fabs(best_ratio - 1.0)) {
+            best_ratio = base_ratio;
+        } else if (base_ratio == best_ratio && i == 1) {
+            // Special case:  if the adjustment between 0.5 and 1.0 are the
+            // same (but in different directions), prefer 1.0.
+            best_ratio = base_ratio;
+        }
+        base_ratio *= 2;
+    }
+
+    return best_ratio - 1.0;
 }
 
 void SyncControl::setInstantaneousBpm(double bpm) {

@@ -394,15 +394,15 @@ TEST_F(EngineSyncTest, RateChangeTest) {
     // Set the file bpm of channel 1 to 160bpm.
     QScopedPointer<ControlObjectThread> pFileBpm1(getControlObjectThread(
         ConfigKey(m_sGroup1, "file_bpm")));
-    pFileBpm1->set(160.0);
-    ASSERT_FLOAT_EQ(160.0, ControlObject::getControl(ConfigKey(m_sGroup1, "file_bpm"))->get());
-    ASSERT_FLOAT_EQ(160.0, ControlObject::getControl(ConfigKey(m_sInternalClockGroup, "bpm"))->get());
+    pFileBpm1->set(125.0);
+    ASSERT_FLOAT_EQ(125.0, ControlObject::getControl(ConfigKey(m_sGroup1, "file_bpm"))->get());
+    ASSERT_FLOAT_EQ(125.0, ControlObject::getControl(ConfigKey(m_sInternalClockGroup, "bpm"))->get());
 
     // Set the rate of channel 1 to 1.2.
     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))->set(getRateSliderValue(1.2));
     ASSERT_FLOAT_EQ(getRateSliderValue(1.2),
                     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))->get());
-    ASSERT_FLOAT_EQ(192.0, ControlObject::getControl(ConfigKey(m_sGroup1, "bpm"))->get());
+    ASSERT_FLOAT_EQ(150.0, ControlObject::getControl(ConfigKey(m_sGroup1, "bpm"))->get());
 
     // Set the file bpm of channel 2 to 120bpm.
     QScopedPointer<ControlObjectThread> pFileBpm2(getControlObjectThread(
@@ -410,13 +410,13 @@ TEST_F(EngineSyncTest, RateChangeTest) {
     pFileBpm2->set(120.0);
     ASSERT_FLOAT_EQ(120.0, ControlObject::getControl(ConfigKey(m_sGroup2, "file_bpm"))->get());
 
-    // rate slider for channel 2 should now be 1.6 = 160 * 1.2 / 120.
-    ASSERT_FLOAT_EQ(getRateSliderValue(1.6),
+    // rate slider for channel 2 should now be 1.25 = 125 * 1.2 / 120.
+    ASSERT_FLOAT_EQ(getRateSliderValue(1.25),
                     ControlObject::getControl(ConfigKey(m_sGroup2, "rate"))->get());
-    ASSERT_FLOAT_EQ(192.0, ControlObject::getControl(ConfigKey(m_sGroup2, "bpm"))->get());
+    ASSERT_FLOAT_EQ(150.0, ControlObject::getControl(ConfigKey(m_sGroup2, "bpm"))->get());
 
     // Internal master should also be 192.
-    ASSERT_FLOAT_EQ(192.0, ControlObject::getControl(ConfigKey(m_sInternalClockGroup, "bpm"))->get());
+    ASSERT_FLOAT_EQ(150.0, ControlObject::getControl(ConfigKey(m_sInternalClockGroup, "bpm"))->get());
 }
 
 TEST_F(EngineSyncTest, RateChangeTestWeirdOrder) {
@@ -431,8 +431,8 @@ TEST_F(EngineSyncTest, RateChangeTestWeirdOrder) {
     // Set the file bpm of channel 1 to 160bpm.
     QScopedPointer<ControlObjectThread> pFileBpm1(getControlObjectThread(
         ConfigKey(m_sGroup1, "file_bpm")));
-    pFileBpm1->set(160.0);
-    ASSERT_FLOAT_EQ(160.0, ControlObject::getControl(ConfigKey(m_sInternalClockGroup, "bpm"))->get());
+    pFileBpm1->set(125.0);
+    ASSERT_FLOAT_EQ(125.0, ControlObject::getControl(ConfigKey(m_sInternalClockGroup, "bpm"))->get());
 
     // Set the file bpm of channel 2 to 120bpm.
     QScopedPointer<ControlObjectThread> pFileBpm2(getControlObjectThread(
@@ -442,13 +442,13 @@ TEST_F(EngineSyncTest, RateChangeTestWeirdOrder) {
     // Set the rate slider of channel 1 to 1.2.
     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))->set(getRateSliderValue(1.2));
 
-    // Rate slider for channel 2 should now be 1.6 = (160 * 1.2 / 120) - 1.0.
-    ASSERT_FLOAT_EQ(getRateSliderValue(1.6),
+    // Rate slider for channel 2 should now be 1.25 = (125 * 1.2 / 120).
+    ASSERT_FLOAT_EQ(getRateSliderValue(1.25),
                     ControlObject::getControl(ConfigKey(m_sGroup2, "rate"))->get());
-    ASSERT_FLOAT_EQ(192.0, ControlObject::getControl(ConfigKey(m_sGroup2, "bpm"))->get());
+    ASSERT_FLOAT_EQ(150.0, ControlObject::getControl(ConfigKey(m_sGroup2, "bpm"))->get());
 
     // Internal Master BPM should read the same.
-    ASSERT_FLOAT_EQ(192.0, ControlObject::getControl(ConfigKey(m_sInternalClockGroup, "bpm"))->get());
+    ASSERT_FLOAT_EQ(150.0, ControlObject::getControl(ConfigKey(m_sInternalClockGroup, "bpm"))->get());
 }
 
 TEST_F(EngineSyncTest, RateChangeTestOrder3) {
@@ -495,7 +495,7 @@ TEST_F(EngineSyncTest, SlaveRateChange) {
     // Set the file bpm of channel 1 to 160bpm.
     QScopedPointer<ControlObjectThread> pFileBpm1(getControlObjectThread(
         ConfigKey(m_sGroup1, "file_bpm")));
-    pFileBpm1->set(160.0);
+    pFileBpm1->set(125.0);
 
     // Set the file bpm of channel 2 to 120bpm.
     QScopedPointer<ControlObjectThread> pFileBpm2(getControlObjectThread(
@@ -505,10 +505,10 @@ TEST_F(EngineSyncTest, SlaveRateChange) {
     // Set the rate slider of channel 1 to 1.2.
     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))->set(getRateSliderValue(1.2));
 
-    // Rate slider for channel 2 should now be 1.6 = (160 * 1.2 / 120).
-    ASSERT_FLOAT_EQ(getRateSliderValue(1.6),
+    // Rate slider for channel 2 should now be 1.25 = (125 * 1.2 / 120).
+    ASSERT_FLOAT_EQ(getRateSliderValue(1.25),
                     ControlObject::getControl(ConfigKey(m_sGroup2, "rate"))->get());
-    ASSERT_FLOAT_EQ(192.0, ControlObject::getControl(ConfigKey(m_sGroup2, "bpm"))->get());
+    ASSERT_FLOAT_EQ(150.0, ControlObject::getControl(ConfigKey(m_sGroup2, "bpm"))->get());
 
     // Try to twiddle the rate slider on channel 2.
     QScopedPointer<ControlObjectThread> pSlider2(getControlObjectThread(
@@ -519,7 +519,7 @@ TEST_F(EngineSyncTest, SlaveRateChange) {
     ASSERT_FLOAT_EQ(getRateSliderValue(0.8),
                     ControlObject::getControl(ConfigKey(m_sGroup2, "rate"))->get());
     ASSERT_FLOAT_EQ(96.0, ControlObject::getControl(ConfigKey(m_sGroup2, "bpm"))->get());
-    ASSERT_FLOAT_EQ(getRateSliderValue(0.6),
+    ASSERT_FLOAT_EQ(getRateSliderValue(0.768),
                     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))->get());
     ASSERT_FLOAT_EQ(96.0, ControlObject::getControl(ConfigKey(m_sGroup1, "bpm"))->get());
 }
@@ -539,11 +539,11 @@ TEST_F(EngineSyncTest, InternalRateChangeTest) {
     assertIsFollower(m_sGroup1);
     assertIsFollower(m_sGroup2);
 
-    // Set the file bpm of channel 1 to 160bpm.
+    // Set the file bpm of channel 1 to 125bpm.
     QScopedPointer<ControlObjectThread> pFileBpm1(getControlObjectThread(
         ConfigKey(m_sGroup1, "file_bpm")));
-    pFileBpm1->set(160.0);
-    ASSERT_FLOAT_EQ(160.0, ControlObject::getControl(ConfigKey(m_sGroup1, "file_bpm"))->get());
+    pFileBpm1->set(125.0);
+    ASSERT_FLOAT_EQ(125.0, ControlObject::getControl(ConfigKey(m_sGroup1, "file_bpm"))->get());
 
     // Set the file bpm of channel 2 to 120bpm.
     QScopedPointer<ControlObjectThread> pFileBpm2(getControlObjectThread(
@@ -551,11 +551,11 @@ TEST_F(EngineSyncTest, InternalRateChangeTest) {
     pFileBpm2->set(120.0);
     ASSERT_FLOAT_EQ(120.0, ControlObject::getControl(ConfigKey(m_sGroup2, "file_bpm"))->get());
 
-    // Set the internal rate to 150.
+    // Set the internal rate to 130.
     QScopedPointer<ControlObjectThread> pMasterSyncSlider(getControlObjectThread(
             ConfigKey(m_sInternalClockGroup, "bpm")));
-    pMasterSyncSlider->set(150.0);
-    ASSERT_FLOAT_EQ(150.0, ControlObject::getControl(ConfigKey(m_sInternalClockGroup, "bpm"))->get());
+    pMasterSyncSlider->set(130.0);
+    ASSERT_FLOAT_EQ(130.0, ControlObject::getControl(ConfigKey(m_sInternalClockGroup, "bpm"))->get());
     // Set decks playing, and process a buffer to update all the COs.
     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
     ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(1.0);
@@ -563,29 +563,29 @@ TEST_F(EngineSyncTest, InternalRateChangeTest) {
     ProcessBuffer();
 
     // Rate sliders for channels 1 and 2 should change appropriately.
-    ASSERT_FLOAT_EQ(getRateSliderValue(0.9375),
+    ASSERT_FLOAT_EQ(getRateSliderValue(130.0 / 125.0),
                     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))->get());
-    ASSERT_FLOAT_EQ(150.0, ControlObject::getControl(ConfigKey(m_sGroup1, "bpm"))->get());
-    ASSERT_FLOAT_EQ(getRateSliderValue(1.25),
+    ASSERT_FLOAT_EQ(130.0, ControlObject::getControl(ConfigKey(m_sGroup1, "bpm"))->get());
+    ASSERT_FLOAT_EQ(getRateSliderValue(130.0 / 120.0),
                     ControlObject::getControl(ConfigKey(m_sGroup2, "rate"))->get());
-    ASSERT_FLOAT_EQ(150.0, ControlObject::getControl(ConfigKey(m_sGroup2, "bpm"))->get());
+    ASSERT_FLOAT_EQ(130.0, ControlObject::getControl(ConfigKey(m_sGroup2, "bpm"))->get());
     // TODO(rryan): Re-enable with a true mock of SyncableFollower.
     //ASSERT_FLOAT_EQ(0.9375, ControlObject::getControl(ConfigKey(m_sGroup1, "rateEngine"))->get());
     //ASSERT_FLOAT_EQ(1.25, ControlObject::getControl(ConfigKey(m_sGroup2, "rateEngine"))->get());
 
-    // Set the internal rate to 80.
-    pMasterSyncSlider->set(80.0);
+    // Set the internal rate to 110.
+    pMasterSyncSlider->set(110.0);
 
     // Update COs again.
     ProcessBuffer();
 
     // Rate sliders for channels 1 and 2 should change appropriately.
-    ASSERT_FLOAT_EQ(getRateSliderValue(0.5),
+    ASSERT_FLOAT_EQ(getRateSliderValue(110.0 / 125.0),
                     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))->get());
-    ASSERT_FLOAT_EQ(80.0, ControlObject::getControl(ConfigKey(m_sGroup1, "bpm"))->get());
-    ASSERT_FLOAT_EQ(getRateSliderValue(0.6666667),
+    ASSERT_FLOAT_EQ(110.0, ControlObject::getControl(ConfigKey(m_sGroup1, "bpm"))->get());
+    ASSERT_FLOAT_EQ(getRateSliderValue(110.0 / 120.0),
                     ControlObject::getControl(ConfigKey(m_sGroup2, "rate"))->get());
-    ASSERT_FLOAT_EQ(80.0, ControlObject::getControl(ConfigKey(m_sGroup2, "bpm"))->get());
+    ASSERT_FLOAT_EQ(110.0, ControlObject::getControl(ConfigKey(m_sGroup2, "bpm"))->get());
     // TODO(rryan): Re-enable with a true mock of SyncableFollower.
     //ASSERT_FLOAT_EQ(0.5, ControlObject::getControl(ConfigKey(m_sGroup1, "rateEngine"))->get());
     //ASSERT_FLOAT_EQ(0.6666667, ControlObject::getControl(ConfigKey(m_sGroup2, "rateEngine"))->get());

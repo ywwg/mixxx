@@ -78,6 +78,8 @@ class BpmControl : public EngineControl {
         return syncModeFromDouble(m_pSyncMode->get());
     }
     double getBeatDistance(double dThisPosition) const;
+
+    // DEPRECATED, but still exists to support old controller mappings.
     bool syncTempo();
     bool syncPhase();
 
