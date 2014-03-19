@@ -194,74 +194,74 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>eject</key>
+                <key>XoneK2.encoderButton1</key>
                 <status>0x9F</status>
                 <midino>0x34</midino>
                 <options>
-                    <button/>
+                    <Script-Binding/>
                 </options>
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>eject</key>
+                <key>XoneK2.encoderButton1</key>
                 <status>0x8F</status>
                 <midino>0x34</midino>
                 <options>
-                    <button/>
+                    <Script-Binding/>
                 </options>
             </control>
             <control>
                 <group>[Channel2]</group>
-                <key>eject</key>
+                <key>XoneK2.encoderButton2</key>
                 <status>0x9F</status>
                 <midino>0x35</midino>
                 <options>
-                    <button/>
+                    <Script-Binding/>
                 </options>
             </control>
             <control>
                 <group>[Channel2]</group>
-                <key>eject</key>
+                <key>XoneK2.encoderButton2</key>
                 <status>0x8F</status>
                 <midino>0x35</midino>
                 <options>
-                    <button/>
+                    <Script-Binding/>
                 </options>
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>eject</key>
+                <key>XoneK2.encoderButton3</key>
                 <status>0x9F</status>
                 <midino>0x36</midino>
                 <options>
-                    <button/>
+                    <Script-Binding/>
                 </options>
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>eject</key>
+                <key>XoneK2.encoderButton3</key>
                 <status>0x8F</status>
                 <midino>0x36</midino>
                 <options>
-                    <button/>
+                    <Script-Binding/>
                 </options>
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>eject</key>
+                <key>XoneK2.encoderButton4</key>
                 <status>0x9F</status>
                 <midino>0x37</midino>
                 <options>
-                    <button/>
+                    <Script-Binding/>
                 </options>
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>eject</key>
+                <key>XoneK2.encoderButton4</key>
                 <status>0x8F</status>
                 <midino>0x37</midino>
                 <options>
-                    <button/>
+                    <Script-Binding/>
                 </options>
             </control>
 <!-- Upper Buttons -->
@@ -506,7 +506,7 @@
                 <status>0x9F</status>
                 <midino>0x20</midino>
                 <options>
-                    <normal/>
+                    <button/>
                 </options>
             </control>
             <control>
@@ -515,43 +515,43 @@
                 <status>0x8F</status>
                 <midino>0x20</midino>
                 <options>
+                    <button/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>cue_default</key>
+                <status>0x9F</status>
+                <midino>0x1c</midino>
+                <options>
+                    <button/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>cue_default</key>
+                <status>0x8F</status>
+                <midino>0x1c</midino>
+                <options>
+                    <button/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>play</key>
+                <status>0x9F</status>
+                <midino>0x18</midino>
+                <options>
                     <normal/>
                 </options>
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>XoneK2.Vinyl1</key>
-                <status>0x9F</status>
-                <midino>0x1c</midino>
-                <options>
-                    <Script-Binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>XoneK2.Vinyl1</key>
-                <status>0x8F</status>
-                <midino>0x1c</midino>
-                <options>
-                    <Script-Binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>XoneK2.Playbutton1</key>
-                <status>0x9F</status>
-                <midino>0x18</midino>
-                <options>
-                    <Script-Binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>XoneK2.Playbutton1</key>
+                <key>play</key>
                 <status>0x8F</status>
                 <midino>0x18</midino>
                 <options>
-                    <Script-Binding/>
+                    <normal/>
                 </options>
             </control>
             <control>
@@ -722,7 +722,7 @@
                 <status>0x9F</status>
                 <midino>0x21</midino>
                 <options>
-                    <normal/>
+                    <button/>
                 </options>
             </control>
             <control>
@@ -731,43 +731,43 @@
                 <status>0x8F</status>
                 <midino>0x21</midino>
                 <options>
+                    <button/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>cue_default</key>
+                <status>0x9F</status>
+                <midino>0x1d</midino>
+                <options>
+                    <button/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>cue_default</key>
+                <status>0x8F</status>
+                <midino>0x1d</midino>
+                <options>
+                    <button/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>play</key>
+                <status>0x9F</status>
+                <midino>0x19</midino>
+                <options>
                     <normal/>
                 </options>
             </control>
             <control>
                 <group>[Channel2]</group>
-                <key>XoneK2.Vinyl2</key>
-                <status>0x9F</status>
-                <midino>0x1d</midino>
-                <options>
-                    <Script-Binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>XoneK2.Vinyl2</key>
-                <status>0x8F</status>
-                <midino>0x1d</midino>
-                <options>
-                    <Script-Binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>XoneK2.Playbutton2</key>
-                <status>0x9F</status>
-                <midino>0x19</midino>
-                <options>
-                    <Script-Binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>XoneK2.Playbutton2</key>
+                <key>play</key>
                 <status>0x8F</status>
                 <midino>0x19</midino>
                 <options>
-                    <Script-Binding/>
+                    <normal/>
                 </options>
             </control>
             <control>
@@ -938,7 +938,7 @@
                 <status>0x9F</status>
                 <midino>0x22</midino>
                 <options>
-                    <normal/>
+                    <button/>
                 </options>
             </control>
             <control>
@@ -947,43 +947,43 @@
                 <status>0x8F</status>
                 <midino>0x22</midino>
                 <options>
+                    <button/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>cue_default</key>
+                <status>0x9F</status>
+                <midino>0x1e</midino>
+                <options>
+                    <button/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>cue_default</key>
+                <status>0x8F</status>
+                <midino>0x1e</midino>
+                <options>
+                    <button/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>play</key>
+                <status>0x9F</status>
+                <midino>0x1A</midino>
+                <options>
                     <normal/>
                 </options>
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>XoneK2.Vinyl3</key>
-                <status>0x9F</status>
-                <midino>0x1e</midino>
-                <options>
-                    <Script-Binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>XoneK2.Vinyl3</key>
-                <status>0x8F</status>
-                <midino>0x1e</midino>
-                <options>
-                    <Script-Binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>XoneK2.Playbutton3</key>
-                <status>0x9F</status>
-                <midino>0x1A</midino>
-                <options>
-                    <Script-Binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>XoneK2.Playbutton3</key>
+                <key>play</key>
                 <status>0x8F</status>
                 <midino>0x1A</midino>
                 <options>
-                    <Script-Binding/>
+                    <normal/>
                 </options>
             </control>
             <control>
@@ -1154,7 +1154,7 @@
                 <status>0x9F</status>
                 <midino>0x23</midino>
                 <options>
-                    <normal/>
+                    <button/>
                 </options>
             </control>
             <control>
@@ -1163,43 +1163,43 @@
                 <status>0x8F</status>
                 <midino>0x23</midino>
                 <options>
+                    <button/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>cue_default</key>
+                <status>0x9F</status>
+                <midino>0x1f</midino>
+                <options>
+                    <button/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>cue_default</key>
+                <status>0x8F</status>
+                <midino>0x1f</midino>
+                <options>
+                    <button/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>play</key>
+                <status>0x9F</status>
+                <midino>0x1b</midino>
+                <options>
                     <normal/>
                 </options>
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>XoneK2.Vinyl4</key>
-                <status>0x9F</status>
-                <midino>0x1f</midino>
-                <options>
-                    <Script-Binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>XoneK2.Vinyl4</key>
-                <status>0x8F</status>
-                <midino>0x1f</midino>
-                <options>
-                    <Script-Binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>XoneK2.Playbutton4</key>
-                <status>0x9F</status>
-                <midino>0x1b</midino>
-                <options>
-                    <Script-Binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>XoneK2.Playbutton4</key>
+                <key>play</key>
                 <status>0x8F</status>
                 <midino>0x1b</midino>
                 <options>
-                    <Script-Binding/>
+                    <normal/>
                 </options>
             </control>
             <control>
@@ -1505,7 +1505,7 @@
             </output>
             <output>
                 <group>[Channel1]</group>
-                <key>vinylcontrol_enabled</key>
+                <key>cue_default</key>
                 <status>0x9F</status>
                 <midino>0x1c</midino>
                 <minimum>0.5</minimum>
@@ -1589,7 +1589,7 @@
             </output>
             <output>
                 <group>[Channel2]</group>
-                <key>vinylcontrol_enabled</key>
+                <key>cue_default</key>
                 <status>0x9F</status>
                 <midino>0x1d</midino>
                 <minimum>0.5</minimum>
@@ -1673,7 +1673,7 @@
             </output>
             <output>
                 <group>[Channel3]</group>
-                <key>vinylcontrol_enabled</key>
+                <key>cue_default</key>
                 <status>0x9F</status>
                 <midino>0x1e</midino>
                 <minimum>0.5</minimum>
@@ -1757,7 +1757,7 @@
             </output>
             <output>
                 <group>[Channel4]</group>
-                <key>vinylcontrol_enabled</key>
+                <key>cue_default</key>
                 <status>0x9F</status>
                 <midino>0x1f</midino>
                 <minimum>0.5</minimum>

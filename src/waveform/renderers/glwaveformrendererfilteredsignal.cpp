@@ -129,14 +129,14 @@ void GLWaveformRendererFilteredSignal::draw(QPainter* painter, QPaintEvent* /*ev
         glEnable(GL_LINE_SMOOTH);
 
         glBegin(GL_LINES); {
-            for( int visualIndex = firstVisualIndex;
+            for (int visualIndex = firstVisualIndex;
                  visualIndex < lastVisualIndex;
                  visualIndex += 2) {
 
-                if( visualIndex < 0)
+                if (visualIndex < 0)
                     continue;
 
-                if( visualIndex > dataSize - 1)
+                if (visualIndex > dataSize - 1)
                     break;
 
                 maxLow[0] = (float)data[visualIndex].filtered.low;
@@ -166,7 +166,7 @@ void GLWaveformRendererFilteredSignal::draw(QPainter* painter, QPaintEvent* /*ev
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
-        if( m_alignment == Qt::AlignBottom)
+        if (m_alignment == Qt::AlignBottom)
             glOrtho(firstVisualIndex, lastVisualIndex, 0.0, 255.0, -10.0, 10.0);
         else
             glOrtho(firstVisualIndex, lastVisualIndex, 255.0, 0.0, -10.0, 10.0);
@@ -181,14 +181,14 @@ void GLWaveformRendererFilteredSignal::draw(QPainter* painter, QPaintEvent* /*ev
         glEnable(GL_LINE_SMOOTH);
 
         glBegin(GL_LINES); {
-            for( int visualIndex = firstVisualIndex;
+            for (int visualIndex = firstVisualIndex;
                  visualIndex < lastVisualIndex;
                  visualIndex += 2) {
 
-                if( visualIndex < 0)
+                if (visualIndex < 0)
                     continue;
 
-                if( visualIndex > dataSize - 1)
+                if (visualIndex > dataSize - 1)
                     break;
 
                 maxLow[0] = (float)data[visualIndex].filtered.low;

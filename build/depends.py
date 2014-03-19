@@ -627,6 +627,7 @@ class MixxxCore(Feature):
 
                    "main.cpp",
                    "mixxx.cpp",
+                   "mixxxapplication.cpp",
                    "errordialoghandler.cpp",
                    "upgrade.cpp",
 
@@ -859,6 +860,7 @@ class MixxxCore(Feature):
                    "util/time.cpp",
                    "util/timer.cpp",
                    "util/performancetimer.cpp",
+                   "util/threadcputimer.cpp",
                    "util/version.cpp",
                    "util/rlimit.cpp",
                    "util/valuetransformer.cpp",

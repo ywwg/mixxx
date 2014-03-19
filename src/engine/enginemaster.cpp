@@ -29,10 +29,10 @@
 #include "engine/enginebuffer.h"
 #include "engine/enginechannel.h"
 #include "engine/engineclipping.h"
-#include "engine/enginepfldelay.h"
 #include "engine/enginetalkoverducking.h"
 #include "engine/enginevumeter.h"
 #include "engine/enginexfader.h"
+#include "engine/enginedelay.h"
 #include "engine/sidechain/enginesidechain.h"
 #include "engine/sync/enginesync.h"
 #include "sampleutil.h"
@@ -40,10 +40,6 @@
 #include "util/trace.h"
 #include "playermanager.h"
 #include "engine/channelmixer.h"
-
-#ifdef __LADSPA__
-#include "engine/engineladspa.h"
-#endif
 
 EngineMaster::EngineMaster(ConfigObject<ConfigValue>* _config,
                            const char* group,
@@ -58,7 +54,7 @@ EngineMaster::EngineMaster(ConfigObject<ConfigValue>* _config,
     m_bBusOutputConnected[1] = false;
     m_bBusOutputConnected[2] = false;
     m_pWorkerScheduler = new EngineWorkerScheduler(this);
-    m_pWorkerScheduler->start();
+    m_pWorkerScheduler->start(QThread::HighPriority);
 
     // Master sample rate
     m_pMasterSampleRate = new ControlObject(ConfigKey(group, "samplerate"), true, true);
@@ -80,11 +76,6 @@ EngineMaster::EngineMaster(ConfigObject<ConfigValue>* _config,
                                                  "124.0").toDouble();
     ControlObject::getControl(ConfigKey("[InternalClock]","bpm"))->set(default_bpm);
 
-#ifdef __LADSPA__
-    // LADSPA
-    m_pLadspa = new EngineLADSPA();
-#endif
-
     // Crossfader
     m_pCrossfader = new ControlPotmeter(ConfigKey(group, "crossfader"), -1., 1.);
 
@@ -99,6 +90,9 @@ EngineMaster::EngineMaster(ConfigObject<ConfigValue>* _config,
 
     // VU meter:
     m_pVumeter = new EngineVuMeter(group);
+
+    m_pMasterDelay = new EngineDelay(group, ConfigKey(group, "delay"));
+    m_pHeadDelay = new EngineDelay(group, ConfigKey(group, "headDelay"));
 
     // Headphone volume
     m_pHeadVolume = new ControlLogpotmeter(ConfigKey(group, "headVolume"), 5.);
@@ -118,19 +112,16 @@ EngineMaster::EngineMaster(ConfigObject<ConfigValue>* _config,
 
     m_pTalkoverDucking = new EngineTalkoverDucking(_config, group);
 
-    // Headphone Delay
-    m_pHeadDelay = new EnginePflDelay();
-
     // Allocate buffers
     m_pHead = SampleUtil::alloc(MAX_BUFFER_LEN);
     m_pMaster = SampleUtil::alloc(MAX_BUFFER_LEN);
-    SampleUtil::applyGain(m_pHead, 0, MAX_BUFFER_LEN);
-    SampleUtil::applyGain(m_pMaster, 0, MAX_BUFFER_LEN);
+    SampleUtil::clear(m_pHead, MAX_BUFFER_LEN);
+    SampleUtil::clear(m_pMaster, MAX_BUFFER_LEN);
 
     // Setup the output buses
     for (int o = EngineChannel::LEFT; o <= EngineChannel::RIGHT; ++o) {
         m_pOutputBusBuffers[o] = SampleUtil::alloc(MAX_BUFFER_LEN);
-        SampleUtil::applyGain(m_pOutputBusBuffers[o], 0, MAX_BUFFER_LEN);
+        SampleUtil::clear(m_pOutputBusBuffers[o], MAX_BUFFER_LEN);
     }
 
     // Starts a thread for recording and shoutcast
@@ -160,6 +151,8 @@ EngineMaster::~EngineMaster() {
     delete m_pVumeter;
     delete m_pHeadClipping;
     delete m_pSideChain;
+    delete m_pMasterDelay;
+    delete m_pHeadDelay;
 
     delete m_pXFaderReverse;
     delete m_pXFaderCalibration;
@@ -188,6 +181,7 @@ EngineMaster::~EngineMaster() {
         SampleUtil::free(pChannelInfo->m_pBuffer);
         delete pChannelInfo->m_pChannel;
         delete pChannelInfo->m_pVolumeControl;
+        delete pChannelInfo->m_pMuteControl;
         delete pChannelInfo;
     }
 }
@@ -381,11 +375,6 @@ void EngineMaster::process(const int iBufferSize) {
                               m_pOutputBusBuffers[EngineChannel::RIGHT], 1.0,
                               iBufferSize);
 
-#ifdef __LADSPA__
-    // LADPSA master effects
-    m_pLadspa->process(m_pMaster, m_pMaster, iBufferSize);
-#endif
-
     // Clipping
     m_pClipping->process(m_pMaster, m_pMaster, iBufferSize);
 
@@ -444,7 +433,7 @@ void EngineMaster::process(const int iBufferSize) {
         }
     }
 
-    //delay the headphone sound by the appropriate amount
+    m_pMasterDelay->process(m_pMaster, m_pMaster, iBufferSize);
     m_pHeadDelay->process(m_pHead, m_pHead, iBufferSize);
 
     //Master/headphones interleaving is now done in
@@ -462,8 +451,11 @@ void EngineMaster::addChannel(EngineChannel* pChannel) {
             ConfigKey(pChannel->getGroup(), "volume"), 1.0);
     pChannelInfo->m_pVolumeControl->setDefaultValue(1.0);
     pChannelInfo->m_pVolumeControl->set(1.0);
+    pChannelInfo->m_pMuteControl = new ControlPushButton(
+        ConfigKey(pChannel->getGroup(), "mute"));
+    pChannelInfo->m_pMuteControl->setButtonMode(ControlPushButton::POWERWINDOW);
     pChannelInfo->m_pBuffer = SampleUtil::alloc(MAX_BUFFER_LEN);
-    SampleUtil::applyGain(pChannelInfo->m_pBuffer, 0, MAX_BUFFER_LEN);
+    SampleUtil::clear(pChannelInfo->m_pBuffer, MAX_BUFFER_LEN);
     m_channels.push_back(pChannelInfo);
     m_channelHeadphoneGainCache.push_back(0);
     for (int o = EngineChannel::LEFT; o <= EngineChannel::RIGHT; o++) {
@@ -486,10 +478,6 @@ EngineChannel* EngineMaster::getChannel(QString group) {
         }
     }
     return NULL;
-}
-
-int EngineMaster::numChannels() const {
-    return m_channels.size();
 }
 
 const CSAMPLE* EngineMaster::getDeckBuffer(unsigned int i) const {

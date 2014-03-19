@@ -21,6 +21,7 @@
 #include <QObject>
 
 #include "controlobject.h"
+#include "controlpushbutton.h"
 #include "engine/engineobject.h"
 #include "engine/enginechannel.h"
 #include "soundmanagerutil.h"
@@ -31,19 +32,16 @@ class EngineBuffer;
 class EngineChannel;
 class EngineClipping;
 class EngineFlanger;
-#ifdef __LADSPA__
-class EngineLADSPA;
-#endif
 class EngineVuMeter;
 class ControlPotmeter;
 class ControlPushButton;
 class EngineVinylSoundEmu;
 class EngineSideChain;
-class EnginePflDelay;
 class SyncWorker;
 class GuiTick;
 class EngineSync;
 class EngineTalkoverDucking;
+class EngineDelay;
 
 class EngineMaster : public QObject, public AudioSource {
     Q_OBJECT
@@ -56,7 +54,6 @@ class EngineMaster : public QObject, public AudioSource {
 
     // Get access to the sample buffers. None of these are thread safe. Only to
     // be called by SoundManager.
-    int numChannels() const;
     const CSAMPLE* buffer(AudioOutput output) const;
 
     // WARNING: These methods are called by the main thread. They should only
@@ -105,9 +102,16 @@ class EngineMaster : public QObject, public AudioSource {
     }
 
     struct ChannelInfo {
+        ChannelInfo()
+                : m_pChannel(NULL),
+                  m_pBuffer(NULL),
+                  m_pVolumeControl(NULL),
+                  m_pMuteControl(NULL) {
+        }
         EngineChannel* m_pChannel;
         CSAMPLE* m_pBuffer;
         ControlObject* m_pVolumeControl;
+        ControlPushButton* m_pMuteControl;
     };
 
     class GainCalculator {
@@ -136,6 +140,9 @@ class EngineMaster : public QObject, public AudioSource {
                   m_dTalkoverGain(1.0) { }
 
         inline double getGain(ChannelInfo* pChannelInfo) const {
+            if (pChannelInfo->m_pMuteControl->get() > 0.0) {
+                return 0.0;
+            }
             if (pChannelInfo->m_pChannel->isTalkover()) {
                 return m_dTalkoverGain;
             }
@@ -193,11 +200,9 @@ class EngineMaster : public QObject, public AudioSource {
     EngineClipping* m_pClipping;
     EngineClipping* m_pHeadClipping;
     EngineTalkoverDucking* m_pTalkoverDucking;
-    EnginePflDelay* m_pHeadDelay;
+    EngineDelay* m_pMasterDelay;
+    EngineDelay* m_pHeadDelay;
 
-#ifdef __LADSPA__
-    EngineLADSPA* m_pLadspa;
-#endif
     EngineVuMeter* m_pVumeter;
     EngineSideChain* m_pSideChain;
 

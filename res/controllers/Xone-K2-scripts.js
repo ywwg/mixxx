@@ -83,17 +83,49 @@ XoneK2.encoderJog = function (value, deck) {
         jogValue = 1;
     }
 
-    //faster seek with shift held
     if (XoneK2.shift_status) {
-        jogValue *= 5;
+        //// faster seek with shift held
+        //jogValue *= 5;
+        }
+        pregain = engine.getValue("[Channel" + deck + "]", "pregain");
+        engine.setValue("[Channel" + deck + "]", "pregain", pregain + (.05 * jogValue));
+    } else {
+        if (engine.getValue("[Channel" + deck + "]", "play") == 1 &&
+            engine.getValue("[Channel" + deck + "]", "reverse") == 1) {
+            jogValue= -(jogValue);
+        }
+        engine.setValue("[Channel"+deck+"]","jog",jogValue);
     }
-
-    if (engine.getValue("[Channel" + deck + "]", "play") == 1 &&
-        engine.getValue("[Channel" + deck + "]", "reverse") == 1) {
-        jogValue= -(jogValue);
-    }
-    engine.setValue("[Channel"+deck+"]","jog",jogValue);
 }
+
+XoneK2.encoderButton1 = function (channel, control, value, status) {
+    XoneK2.encoderButton(value, 1);
+}
+
+XoneK2.encoderButton2 = function (channel, control, value, status) {
+    XoneK2.encoderButton(value, 2);
+}
+
+XoneK2.encoderButton3 = function (channel, control, value, status) {
+    XoneK2.encoderButton(value, 3);
+}
+
+XoneK2.encoderButton4 = function (channel, control, value, status) {
+    XoneK2.encoderButton(value, 4);
+}
+
+XoneK2.encoderButton = function (value, deck) {
+    if (!value) return;
+
+    channel = "[Channel" + deck + "]"
+
+    if (XoneK2.shift_status) {
+
+    } else {
+        engine.setValue(channel, "rate", 0.0);
+    }
+}
+
 
 XoneK2.shift_on = function (channel, control, value, status) {
     if (XoneK2.shift_lock) {
@@ -120,12 +152,12 @@ XoneK2.shift_on = function (channel, control, value, status) {
 XoneK2.leftBottomKnob = function (channel, control, value, status) {
     if (XoneK2.shift_status)
     {
-/*        cur_vol = engine.getValue("[Master]", "headMix");
+        cur_vol = engine.getValue("[Master]", "headMix");
         if (value == 1)
             cur_vol += 0.02;
         else
             cur_vol -= 0.02;
-        engine.setValue("[Master]", "headMix", cur_vol);*/
+        engine.setValue("[Master]", "headMix", cur_vol);
     } else {
         cur_vol = engine.getValue("[InternalClock]", "bpm");
         if (value == 1)

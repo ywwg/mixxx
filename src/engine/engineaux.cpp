@@ -18,7 +18,7 @@ EngineAux::EngineAux(const char* pGroup)
           m_pConversionBuffer(SampleUtil::alloc(MAX_BUFFER_LEN)),
           // Need a +1 here because the CircularBuffer only allows its size-1
           // items to be held at once (it keeps a blank spot open persistently)
-          m_sampleBuffer(MAX_BUFFER_LEN+1),
+          m_sampleBuffer(MAX_BUFFER_LEN + 1),
           m_wasActive(false) {
     m_pPassing->setButtonMode(ControlPushButton::POWERWINDOW);
 
@@ -48,7 +48,7 @@ bool EngineAux::isActive() {
 }
 
 void EngineAux::onInputConfigured(AudioInput input) {
-    if (input.getType() != AudioPath::AUXILLIARY) {
+    if (input.getType() != AudioPath::AUXILIARY) {
         // This is an error!
         qDebug() << "WARNING: EngineAux connected to AudioInput for a non-passthrough type!";
         return;
@@ -58,7 +58,7 @@ void EngineAux::onInputConfigured(AudioInput input) {
 }
 
 void EngineAux::onInputUnconfigured(AudioInput input) {
-    if (input.getType() != AudioPath::AUXILLIARY) {
+    if (input.getType() != AudioPath::AUXILIARY) {
         // This is an error!
         qDebug() << "WARNING: EngineAux connected to AudioInput for a non-passthrough type!";
         return;
@@ -73,9 +73,9 @@ void EngineAux::receiveBuffer(AudioInput input, const CSAMPLE* pBuffer,
         return;
     }
 
-    if (input.getType() != AudioPath::AUXILLIARY) {
+    if (input.getType() != AudioPath::AUXILIARY) {
         // This is an error!
-        qDebug() << "WARNING: EngineAux received an AudioInput for a non-auxilliary type!";
+        qDebug() << "WARNING: EngineAux received an AudioInput for a non-auxiliary type!";
         return;
     }
 
@@ -131,7 +131,7 @@ void EngineAux::process(const CSAMPLE* pInput, CSAMPLE* pOut, const int iBufferS
         // shouldn't happen since PortAudio should feed us samples just as fast
         // as we consume them, right?
         qWarning() << "ERROR: Buffer underflow in EngineAux. Playing silence.";
-        SampleUtil::applyGain(pOut + samplesRead, 0.0, iBufferSize - samplesRead);
+        SampleUtil::clear(pOut + samplesRead, iBufferSize - samplesRead);
     }
     // Apply clipping
     m_clipping.process(pOut, pOut, iBufferSize);
