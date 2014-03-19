@@ -21,7 +21,8 @@ class SkinLoader {
                                PlayerManager* pPlayerManager,
                                ControllerManager* pControllerManager,
                                Library* pLibrary,
-                               VinylControlManager* pVCMan);
+                               VinylControlManager* pVCMan,
+                               EffectsManager* pEffectsManager);
 
 	QWidget* loadCustomSkin(QString custom_skinpath,
 							 QWidget* pParent,

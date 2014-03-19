@@ -79,8 +79,9 @@ QWidget* SkinLoader::loadCustomSkin(QString custom_skinpath,
                                        PlayerManager* pPlayerManager,
                                        ControllerManager* pControllerManager,
                                        Library* pLibrary,
-                                       VinylControlManager* pVCMan) {
-	LegacySkinParser legacy(m_pConfig, pKeyboard, pPlayerManager, pControllerManager, pLibrary, pVCMan);
+                                       VinylControlManager* pVCMan,
+                                       EffectsManager* pEffectsManager) {
+	LegacySkinParser legacy(m_pConfig, pKeyboard, pPlayerManager, pControllerManager, pLibrary, pVCMan, pEffectsManager);
     qDebug() << "Legacy can parse custom skin:" << legacy.canParse(custom_skinpath) << custom_skinpath;
     return legacy.parseSkin(custom_skinpath, pParent);
 }
