@@ -597,7 +597,7 @@
    </item>
    <item row="0" column="0">
     <layout class="QGridLayout" name="GridLayout1">
-     <item row="10" column="0">
+     <item row="9" column="0">
       <widget class="QLabel" name="textLabelAllowTrackLoadToPlayingDeck">
        <property name="text">
         <string>Track load behavior</string>
@@ -607,7 +607,7 @@
        </property>
       </widget>
      </item>
-     <item row="10" column="1" colspan="2">
+     <item row="9" column="1" colspan="2">
       <widget class="QComboBox" name="ComboBoxAllowTrackLoadToPlayingDeck"/>
      </item>
      <item row="2" column="0">
@@ -671,7 +671,7 @@
        </property>
       </widget>
      </item>
-     <item row="13" column="0">
+     <item row="12" column="0">
       <widget class="QCheckBox" name="autoDjIgnoreTimeCheckBox">
        <property name="toolTip">
         <string>Uncheck, to ignore all played tracks.</string>
@@ -681,7 +681,7 @@
        </property>
       </widget>
      </item>
-     <item row="13" column="1" colspan="2">
+     <item row="12" column="1" colspan="2">
       <widget class="QTimeEdit" name="autoDjIgnoreTimeEdit">
        <property name="toolTip">
         <string>Duration after which a track is eligible for selection by Auto DJ again</string>
@@ -694,7 +694,7 @@
        </property>
       </widget>
      </item>
-     <item row="14" column="0">
+     <item row="13" column="0">
       <widget class="QLabel" name="textLabelLocale">
        <property name="text">
         <string>Locale</string>
@@ -704,7 +704,7 @@
        </property>
       </widget>
      </item>
-     <item row="14" column="1" colspan="2">
+     <item row="13" column="1" colspan="2">
       <widget class="QComboBox" name="ComboBoxLocale"/>
      </item>
      <item row="4" column="0">
@@ -803,10 +803,10 @@
        </property>
       </widget>
      </item>
-     <item row="9" column="1" colspan="2">
+     <item row="8" column="1" colspan="2">
       <widget class="QComboBox" name="ComboBoxCueDefault">
        <property name="toolTip">
-        <string>Mixxx mode:
+        <string>Mixxx mode: 
 - Cue button while pause at cue point = preview
 - Cue button while pause not at cue point = set cue point
 - Cue button while playing = pause at cue point
@@ -822,7 +822,7 @@ Numark mode:
        </property>
       </widget>
      </item>
-     <item row="11" column="0">
+     <item row="10" column="0">
       <widget class="QLabel" name="textAutoDjRequeue">
        <property name="text">
         <string>Re-queue tracks in Auto DJ</string>
@@ -832,17 +832,17 @@ Numark mode:
        </property>
       </widget>
      </item>
-     <item row="11" column="1" colspan="2">
+     <item row="10" column="1" colspan="2">
       <widget class="QComboBox" name="ComboBoxAutoDjRequeue"/>
      </item>
-     <item row="12" column="0">
+     <item row="11" column="0">
       <widget class="QLabel" name="autoDjMinimumAvailableLabel">
        <property name="text">
         <string>Auto DJ: Minimum available tracks [%]</string>
        </property>
       </widget>
      </item>
-     <item row="12" column="1" colspan="2">
+     <item row="11" column="1" colspan="2">
       <widget class="QSpinBox" name="autoDjMinimumAvailableSpinBox">
        <property name="toolTip">
         <string>This percentage of tracks are always available for selecting, regardless of when they were last played.</string>
@@ -900,20 +900,7 @@ Numark mode:
        </property>
       </widget>
      </item>
--     <item row="7" column="1" colspan="2">
-      <widget class="QComboBox" name="ComboBoxDeckOrder"/>
-     </item>
      <item row="7" column="0">
-      <widget class="QLabel" name="textDeckOrder">
-       <property name="text">
-        <string>Deck track load order</string>
-       </property>
-       <property name="buddy">
-        <cstring>ComboBoxDeckOrder</cstring>
-       </property>
-      </widget>
-     </item>
-     <item row="8" column="0">
       <widget class="QLabel" name="textLabelCueRecall">
        <property name="text">
         <string>Auto Recall Cue</string>
@@ -923,10 +910,10 @@ Numark mode:
        </property>
       </widget>
      </item>
-     <item row="8" column="1" colspan="2">
+     <item row="7" column="1" colspan="2">
       <widget class="QComboBox" name="ComboBoxCueRecall"/>
      </item>
-     <item row="9" column="0">
+     <item row="8" column="0">
       <widget class="QLabel" name="labelCueMode">
        <property name="text">
         <string>Cue mode</string>
@@ -951,7 +938,6 @@ Numark mode:
   <tabstop>ComboBoxTooltips</tabstop>
   <tabstop>ComboBoxRateRange</tabstop>
   <tabstop>ComboBoxRateDir</tabstop>
-  <tabstop>ComboBoxDeckOrder</tabstop>
   <tabstop>ComboBoxCueRecall</tabstop>
   <tabstop>ComboBoxCueDefault</tabstop>
   <tabstop>ComboBoxAllowTrackLoadToPlayingDeck</tabstop>
