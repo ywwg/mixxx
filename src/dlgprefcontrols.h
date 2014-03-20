@@ -67,10 +67,10 @@ class DlgPrefControls : public DlgPreferencePage, public Ui::DlgPrefControlsDlg 
     void slotSetAutoDjMinimumAvailable(int);
     void slotSetAutoDjUseIgnoreTime(int);
     void slotSetAutoDjIgnoreTime(const QTime &a_rTime);
-    void slotSetDeckOrder(int);
     void slotSetRateRamp(bool);
     void slotSetRateRampSensitivity(int);
     void slotSetLocale(int);
+
 
     void slotSetFrameRate(int frameRate);
     void slotSetWaveformType(int index);
@@ -92,7 +92,6 @@ class DlgPrefControls : public DlgPreferencePage, public Ui::DlgPrefControlsDlg 
     void initWaveformControl();
     void notifyRebootNecessary();
     bool checkSkinResolution(QString skin);
-    void updateDeckOrderCombo(int deck_count);
 
     ConfigObject<ConfigValue>* m_pConfig;
     ControlObject* m_pControlPositionDisplay;
