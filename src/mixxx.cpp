@@ -1504,6 +1504,7 @@ void MixxxMainWindow::slotNumDecksChanged(double dNumDecks) {
     int num_decks =
             static_cast<int>(math_min(dNumDecks, kMaximumVinylControlInputs));
 
+#ifdef __VINYLCONTROL__
     // Only show menu items to activate vinyl inputs that exist.
     for (int i = m_iNumConfiguredDecks; i < num_decks; ++i) {
         m_pOptionsVinylControl[i]->setVisible(true);
@@ -1520,6 +1521,7 @@ void MixxxMainWindow::slotNumDecksChanged(double dNumDecks) {
     for (int i = num_decks; i < kMaximumVinylControlInputs; ++i) {
         m_pOptionsVinylControl[i]->setVisible(false);
     }
+#endif
     m_iNumConfiguredDecks = num_decks;
 }
 
