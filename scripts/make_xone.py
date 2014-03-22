@@ -165,8 +165,8 @@ if MASTER_SYNC_LAYOUT:
     button_mapping = {'spinknob':['XoneK2.encoderButton','<Script-Binding/>'],
            'knoblight1':['pfl','<button/>'], 'knoblight2':['quantize','<normal/>'], 'knoblight3':['filterLowKill','<normal/>'],
            'button1':{'red':['sync_master','<button/>'], 'orange':['beatloop_4','<button/>'],  'green':['hotcue_1_activate','<button/>']},
-           'button2':{'red':['sync_enabled','<button/>'],  'orange':['loop_double','<button/>'], 'green':['hotcue_2_activate','<button/>']},
-           'button3':{'red':['XoneK2.Vinyl','<Script-Binding/>'], 'orange':['loop_halve','<button/>'],  'green':['hotcue_3_activate','<button/>']},
+           'button2':{'red':['sync_enabled','<button/>'],  'orange':['XoneK2.LoopMinus','<Script-Binding/>'], 'green':['hotcue_2_activate','<button/>']},
+           'button3':{'red':['XoneK2.Vinyl','<Script-Binding/>'], 'orange':['XoneK2.LoopPlus','<Script-Binding/>'],  'green':['hotcue_3_activate','<button/>']},
            'button4':{'red':['XoneK2.PlayButton','<Script-Binding/>'],        'orange':['reloop_exit','<button/>'], 'green':['hotcue_4_activate','<button/>']}}
 
 
@@ -182,7 +182,7 @@ if MASTER_SYNC_LAYOUT:
            'knoblight1':'pfl', 'knoblight2':'quantize', 'knoblight3':'filterLowKill',
            'button1':{'red':'sync_master', 'orange':'beatloop_4',   'green':'hotcue_1_enabled'},
            'button2':{'red':'sync_enabled',  'orange':'loop_double',  'green':'hotcue_2_enabled'},
-           'button3':{'red':'cue_default', 'orange':'loop_halve',   'green':'hotcue_3_enabled'},
+           'button3':{'red':'vinylcontrol_enabled', 'orange':'loop_halve',   'green':'hotcue_3_enabled'},
            'button4':{'red':'play',        'orange':'loop_enabled', 'green':'hotcue_4_enabled'}}
 
 

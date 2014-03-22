@@ -86,7 +86,7 @@ XoneK2.encoderJog = function (channel, control, value, status) {
     }
 }
 
-XoneK2.encoderButton = function (channel, control, value, status) {
+XoneK2.encoderButton = function (midichannel, control, value, status) {
     deck = XoneK2.IndexToDeck(control - 52);
     if (!value) return;
 
@@ -163,7 +163,7 @@ XoneK2.rightBottomKnob = function (channel, control, value, status) {
     }
 }
 
-XoneK2.PlayButton = function (channel, control, value, status) {
+XoneK2.PlayButton = function (midichannel, control, value, status) {
     deck = XoneK2.IndexToDeck(control - 24);
     if (!value) return;
 
@@ -177,7 +177,7 @@ XoneK2.PlayButton = function (channel, control, value, status) {
     }
 }
 
-XoneK2.Vinyl = function (channel, control, value, status) {
+XoneK2.Vinyl = function (midichannel, control, value, status) {
     deck = XoneK2.IndexToDeck(control - 28);
     if (!value) return;
 
@@ -190,6 +190,34 @@ XoneK2.Vinyl = function (channel, control, value, status) {
     } else {
         curval = engine.getValue(channel, "vinylcontrol_enabled");
         engine.setValue(channel, "vinylcontrol_enabled", !curval);
+    }
+}
+
+XoneK2.LoopMinus = function (midichannel, control, value, status) {
+    if (!value) return;
+    print("control " + control);
+    deck = XoneK2.IndexToDeck(control - 68);
+    channel = "[Channel" + deck + "]";
+    if (XoneK2.shift_status) {
+        engine.setValue(channel, "loop_move_1_backward", 1.0);
+        engine.setValue(channel, "loop_move_1_backward", 0.0);
+    } else {
+        engine.setValue(channel, "loop_halve", 1.0);
+        engine.setValue(channel, "loop_halve", 0.0);
+    }
+}
+
+XoneK2.LoopPlus = function (midichannel, control, value, status) {
+    if (!value) return;
+    print("plus control " + control);
+    deck = XoneK2.IndexToDeck(control - 64);
+    channel = "[Channel" + deck + "]";
+    if (XoneK2.shift_status) {
+        engine.setValue(channel, "loop_move_1_forward", 1.0);
+        engine.setValue(channel, "loop_move_1_forward", 0.0);
+    } else {
+        engine.setValue(channel, "loop_double", 1.0);
+        engine.setValue(channel, "loop_double", 0.0);
     }
 }
 
