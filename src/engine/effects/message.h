@@ -8,6 +8,8 @@
 #include "util/fifo.h"
 #include "effects/effectchain.h"
 
+const bool kEffectDebugOutput = true;
+
 class EngineEffectRack;
 class EngineEffectChain;
 class EngineEffect;
@@ -30,7 +32,8 @@ struct EffectsRequest {
         DISABLE_EFFECT_CHAIN_FOR_GROUP,
 
         // Messages for EngineEffect
-        SET_EFFECT_PARAMETER,
+        SET_EFFECT_PARAMETERS,
+        SET_PARAMETER_PARAMETERS,
 
         // Must come last.
         NUM_REQUEST_TYPES
@@ -50,7 +53,8 @@ struct EffectsRequest {
         CLEAR_STRUCT(AddEffectToChain);
         CLEAR_STRUCT(RemoveEffectFromChain);
         CLEAR_STRUCT(SetEffectChainParameters);
-        CLEAR_STRUCT(SetEffectParameter);
+        CLEAR_STRUCT(SetEffectParameters);
+        CLEAR_STRUCT(SetParameterParameters);
 #undef CLEAR_STRUCT
     }
 
@@ -89,6 +93,7 @@ struct EffectsRequest {
         } AddChainToRack;
         struct {
             EngineEffectChain* pChain;
+            int iIndex;
         } RemoveChainFromRack;
         struct {
             EngineEffect* pEffect;
@@ -96,16 +101,19 @@ struct EffectsRequest {
         } AddEffectToChain;
         struct {
             EngineEffect* pEffect;
+            int iIndex;
         } RemoveEffectFromChain;
         struct {
             bool enabled;
             EffectChain::InsertionType insertion_type;
             double mix;
-            double parameter;
         } SetEffectChainParameters;
         struct {
+            bool enabled;
+        } SetEffectParameters;
+        struct {
             int iParameter;
-        } SetEffectParameter;
+        } SetParameterParameters;
     };
 
     ////////////////////////////////////////////////////////////////////////////

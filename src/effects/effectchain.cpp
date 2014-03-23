@@ -12,7 +12,7 @@ EffectChain::EffectChain(EffectsManager* pEffectsManager, const QString& id,
         : QObject(pEffectsManager),
           m_pEffectsManager(pEffectsManager),
           m_pPrototype(pPrototype),
-          m_bEnabled(false),
+          m_bEnabled(true),
           m_id(id),
           m_name(""),
           m_insertionType(EffectChain::INSERT),
@@ -45,12 +45,12 @@ void EffectChain::addToEngine(EngineEffectRack* pRack, int iIndex) {
     }
 }
 
-void EffectChain::removeFromEngine(EngineEffectRack* pRack) {
+void EffectChain::removeFromEngine(EngineEffectRack* pRack, int iIndex) {
     // Order doesn't matter when removing.
     for (int i = 0; i < m_effects.size(); ++i) {
         EffectPointer pEffect = m_effects[i];
         if (pEffect) {
-            pEffect->removeFromEngine(m_pEngineEffectChain);
+            pEffect->removeFromEngine(m_pEngineEffectChain, i);
         }
     }
 
@@ -58,6 +58,7 @@ void EffectChain::removeFromEngine(EngineEffectRack* pRack) {
     pRequest->type = EffectsRequest::REMOVE_CHAIN_FROM_RACK;
     pRequest->pTargetRack = pRack;
     pRequest->RemoveChainFromRack.pChain = m_pEngineEffectChain;
+    pRequest->RemoveChainFromRack.iIndex = iIndex;
     m_pEffectsManager->writeRequest(pRequest);
     m_bAddedToEngine = false;
 }
@@ -230,14 +231,14 @@ void EffectChain::addEffect(EffectPointer pEffect) {
 void EffectChain::replaceEffect(unsigned int iEffectNumber,
                                 EffectPointer pEffect) {
     qDebug() << debugString() << "replaceEffect" << iEffectNumber << pEffect;
-    while (iEffectNumber >= m_effects.size()) {
+    while (iEffectNumber >= static_cast<unsigned int>(m_effects.size())) {
         m_effects.append(EffectPointer());
     }
 
     EffectPointer pOldEffect = m_effects[iEffectNumber];
     if (pOldEffect) {
         if (m_bAddedToEngine) {
-            pOldEffect->removeFromEngine(m_pEngineEffectChain);
+            pOldEffect->removeFromEngine(m_pEngineEffectChain, iEffectNumber);
         }
     }
 
@@ -254,12 +255,13 @@ void EffectChain::replaceEffect(unsigned int iEffectNumber,
 }
 
 void EffectChain::removeEffect(EffectPointer pEffect) {
-    qDebug() << debugString() << "removeEffect";
-    if (m_effects.removeAll(pEffect) > 0) {
-        if (m_bAddedToEngine) {
-            pEffect->removeFromEngine(m_pEngineEffectChain);
+    qDebug() << debugString() << "removeEffect" << pEffect;
+    for (int i = 0; i < m_effects.size(); ++i) {
+        if (m_effects.at(i) == pEffect) {
+            pEffect->removeFromEngine(m_pEngineEffectChain, i);
+            m_effects.replace(i, EffectPointer());
+            emit(effectRemoved());
         }
-        emit(effectRemoved());
     }
 }
 
@@ -272,7 +274,7 @@ const QList<EffectPointer>& EffectChain::effects() const {
 }
 
 EffectPointer EffectChain::getEffect(unsigned int effectNumber) const {
-    if (effectNumber >= m_effects.size()) {
+    if (effectNumber >= static_cast<unsigned int>(m_effects.size())) {
         qDebug() << debugString() << "WARNING: list index out of bounds for getEffect";
     }
     return m_effects[effectNumber];
@@ -292,7 +294,6 @@ void EffectChain::sendParameterUpdate() {
     pRequest->SetEffectChainParameters.enabled = m_bEnabled;
     pRequest->SetEffectChainParameters.insertion_type = m_insertionType;
     pRequest->SetEffectChainParameters.mix = m_dMix;
-    pRequest->SetEffectChainParameters.parameter = m_dParameter;
     m_pEffectsManager->writeRequest(pRequest);
 }
 

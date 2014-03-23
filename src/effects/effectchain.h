@@ -25,15 +25,14 @@ class EffectChain : public QObject {
     virtual ~EffectChain();
 
     void addToEngine(EngineEffectRack* pRack, int iIndex);
-    void removeFromEngine(EngineEffectRack* pRack);
+    void removeFromEngine(EngineEffectRack* pRack, int iIndex);
     void updateEngineState();
 
     // The ID of an EffectChain is a unique ID given to it to help associate it
     // with the preset from which it was loaded.
     const QString& id() const;
 
-    // Whether the chain is enabled (loaded to a slot and eligible for
-    // processing).
+    // Whether the chain is enabled (eligible for processing).
     bool enabled() const;
     void setEnabled(bool enabled);
 

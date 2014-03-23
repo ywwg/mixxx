@@ -5,23 +5,35 @@
 // The maximum number of effect parameters we're going to support.
 const unsigned int kDefaultMaxParameters = 32;
 
-EffectSlot::EffectSlot(QObject* pParent, const unsigned int iRackNumber,
+EffectSlot::EffectSlot(const unsigned int iRackNumber,
                        const unsigned int iChainNumber,
                        const unsigned int iEffectnumber)
-        : QObject(),
-          m_iRackNumber(iRackNumber),
+        : m_iRackNumber(iRackNumber),
           m_iChainNumber(iChainNumber),
           m_iEffectNumber(iEffectnumber),
           // The control group names are 1-indexed while internally everything
           // is 0-indexed.
           m_group(formatGroupString(m_iRackNumber, m_iChainNumber,
                                     m_iEffectNumber)) {
-    m_pControlEnabled = new ControlObject(ConfigKey(m_group, "enabled"));
-    m_pControlEnabled->connectValueChangeRequest(
-        this, SLOT(slotEnabled(double)), Qt::AutoConnection);
+    m_pControlLoaded = new ControlObject(ConfigKey(m_group, "loaded"));
+    m_pControlLoaded->connectValueChangeRequest(
+        this, SLOT(slotLoaded(double)), Qt::AutoConnection);
+
     m_pControlNumParameters = new ControlObject(ConfigKey(m_group, "num_parameters"));
     m_pControlNumParameters->connectValueChangeRequest(
         this, SLOT(slotNumParameters(double)), Qt::AutoConnection);
+
+    m_pControlNumParameterSlots = new ControlObject(ConfigKey(m_group, "num_parameterslots"));
+    m_pControlNumParameterSlots->connectValueChangeRequest(
+        this, SLOT(slotNumParameterSlots(double)), Qt::AutoConnection);
+
+    m_pControlEnabled = new ControlPushButton(ConfigKey(m_group, "enabled"));
+    m_pControlEnabled->setButtonMode(ControlPushButton::POWERWINDOW);
+    // Default to enabled. The skin might not show these buttons.
+    m_pControlEnabled->setDefaultValue(true);
+    m_pControlEnabled->set(true);
+    connect(m_pControlEnabled, SIGNAL(valueChanged(double)),
+            this, SLOT(slotEnabled(double)));
 
     m_pControlNextEffect = new ControlPushButton(ConfigKey(m_group, "next_effect"));
     connect(m_pControlNextEffect, SIGNAL(valueChanged(double)),
@@ -30,6 +42,14 @@ EffectSlot::EffectSlot(QObject* pParent, const unsigned int iRackNumber,
     m_pControlPrevEffect = new ControlPushButton(ConfigKey(m_group, "prev_effect"));
     connect(m_pControlPrevEffect, SIGNAL(valueChanged(double)),
             this, SLOT(slotPrevEffect(double)));
+
+    m_pControlEffectSelector = new ControlObject(ConfigKey(m_group, "effect_selector"));
+    connect(m_pControlEffectSelector, SIGNAL(valueChanged(double)),
+            this, SLOT(slotEffectSelector(double)));
+
+    m_pControlClear = new ControlPushButton(ConfigKey(m_group, "clear"));
+    connect(m_pControlClear, SIGNAL(valueChanged(double)),
+            this, SLOT(slotClear(double)));
 
     for (unsigned int i = 0; i < kDefaultMaxParameters; ++i) {
         addEffectParameterSlot();
@@ -42,15 +62,23 @@ EffectSlot::~EffectSlot() {
     qDebug() << debugString() << "destroyed";
     clear();
 
-    delete m_pControlEnabled;
+    delete m_pControlLoaded;
     delete m_pControlNumParameters;
+    delete m_pControlNumParameterSlots;
+    delete m_pControlNextEffect;
+    delete m_pControlPrevEffect;
+    delete m_pControlEffectSelector;
+    delete m_pControlClear;
+    delete m_pControlEnabled;
 }
 
 EffectParameterSlotPointer EffectSlot::addEffectParameterSlot() {
     EffectParameterSlotPointer pParameter = EffectParameterSlotPointer(
-        new EffectParameterSlot(this, m_iRackNumber, m_iChainNumber, m_iEffectNumber,
+        new EffectParameterSlot(m_iRackNumber, m_iChainNumber, m_iEffectNumber,
                                 m_parameters.size()));
     m_parameters.append(pParameter);
+    m_pControlNumParameterSlots->setAndConfirm(
+            m_pControlNumParameterSlots->get() + 1);
     return pParameter;
 }
 
@@ -62,9 +90,9 @@ unsigned int EffectSlot::numParameterSlots() const {
     return m_parameters.size();
 }
 
-void EffectSlot::slotEnabled(double v) {
-    qDebug() << debugString() << "slotEnabled" << v;
-    qDebug() << "WARNING: enabled is a read-only control.";
+void EffectSlot::slotLoaded(double v) {
+    qDebug() << debugString() << "slotLoaded" << v;
+    qDebug() << "WARNING: loaded is a read-only control.";
 }
 
 void EffectSlot::slotNumParameters(double v) {
@@ -72,9 +100,25 @@ void EffectSlot::slotNumParameters(double v) {
     qDebug() << "WARNING: num_parameters is a read-only control.";
 }
 
+void EffectSlot::slotNumParameterSlots(double v) {
+    qDebug() << debugString() << "slotNumParameterSlots" << v;
+    qDebug() << "WARNING: num_parameterslots is a read-only control.";
+}
+
+void EffectSlot::slotEnabled(double v) {
+    qDebug() << debugString() << "slotEnabled" << v;
+    if (m_pEffect) {
+        m_pEffect->setEnabled(v > 0);
+    }
+}
+
+void EffectSlot::slotEffectEnabledChanged(bool enabled) {
+    m_pControlEnabled->set(enabled);
+}
+
 EffectParameterSlotPointer EffectSlot::getEffectParameterSlot(unsigned int slotNumber) {
     qDebug() << debugString() << "getEffectParameterSlot" << slotNumber;
-    if (slotNumber >= m_parameters.size()) {
+    if (slotNumber >= static_cast<unsigned int>(m_parameters.size())) {
         qDebug() << "WARNING: slotNumber out of range";
         return EffectParameterSlotPointer();
     }
@@ -86,10 +130,17 @@ void EffectSlot::loadEffect(EffectPointer pEffect) {
              << (pEffect ? pEffect->getManifest().name() : "(null)");
     if (pEffect) {
         m_pEffect = pEffect;
-        m_pControlEnabled->setAndConfirm(1.0);
+        m_pControlLoaded->setAndConfirm(1.0);
         m_pControlNumParameters->setAndConfirm(m_pEffect->numParameters());
 
-        while (m_parameters.size() < m_pEffect->numParameters()) {
+        // Enabled is a persistent property of the effect slot, not of the
+        // effect. Propagate the current setting to the effect.
+        m_pEffect->setEnabled(m_pControlEnabled->get() > 0.0);
+
+        connect(m_pEffect.data(), SIGNAL(enabledChanged(bool)),
+                this, SLOT(slotEffectEnabledChanged(bool)));
+
+        while (static_cast<unsigned int>(m_parameters.size()) < m_pEffect->numParameters()) {
             addEffectParameterSlot();
         }
 
@@ -107,8 +158,11 @@ void EffectSlot::loadEffect(EffectPointer pEffect) {
 }
 
 void EffectSlot::clear() {
-    m_pEffect.clear();
-    m_pControlEnabled->setAndConfirm(0.0);
+    if (m_pEffect) {
+        m_pEffect->disconnect(this);
+        m_pEffect.clear();
+    }
+    m_pControlLoaded->setAndConfirm(0.0);
     m_pControlNumParameters->setAndConfirm(0.0);
     foreach (EffectParameterSlotPointer pParameter, m_parameters) {
         pParameter->loadEffect(EffectPointer());
@@ -118,12 +172,26 @@ void EffectSlot::clear() {
 
 void EffectSlot::slotPrevEffect(double v) {
     if (v > 0) {
-        emit(prevEffect(m_iChainNumber, m_iEffectNumber, m_pEffect));
+        slotEffectSelector(-1);
     }
 }
 
 void EffectSlot::slotNextEffect(double v) {
     if (v > 0) {
+        slotEffectSelector(1);
+    }
+}
+
+void EffectSlot::slotEffectSelector(double v) {
+    if (v > 0) {
         emit(nextEffect(m_iChainNumber, m_iEffectNumber, m_pEffect));
+    } else if (v < 0) {
+        emit(prevEffect(m_iChainNumber, m_iEffectNumber, m_pEffect));
+    }
+}
+
+void EffectSlot::slotClear(double v) {
+    if (v > 0) {
+        emit(clearEffect(m_iChainNumber, m_iEffectNumber, m_pEffect));
     }
 }

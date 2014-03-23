@@ -7,6 +7,7 @@
 
 #include "util.h"
 #include "controlobject.h"
+#include "controlpushbutton.h"
 #include "effects/effect.h"
 #include "effects/effectparameterslot.h"
 
@@ -16,8 +17,7 @@ typedef QSharedPointer<EffectSlot> EffectSlotPointer;
 class EffectSlot : public QObject {
     Q_OBJECT
   public:
-    EffectSlot(QObject* pParent,
-               const unsigned int iRackNumber,
+    EffectSlot(const unsigned int iRackNumber,
                const unsigned int iChainNumber,
                const unsigned int iEffectNumber);
     virtual ~EffectSlot();
@@ -44,10 +44,15 @@ class EffectSlot : public QObject {
     // Request that this EffectSlot load the given Effect
     void loadEffect(EffectPointer pEffect);
 
-    void slotEnabled(double v);
+    void slotLoaded(double v);
     void slotNumParameters(double v);
+    void slotNumParameterSlots(double v);
+    void slotEnabled(double v);
     void slotNextEffect(double v);
     void slotPrevEffect(double v);
+    void slotClear(double v);
+    void slotEffectSelector(double v);
+    void slotEffectEnabledChanged(bool enabled);
 
   signals:
     // Indicates that the effect pEffect has been loaded into this
@@ -58,11 +63,18 @@ class EffectSlot : public QObject {
 
     // Signal that whoever is in charge of this EffectSlot should load the next
     // Effect into it.
-    void nextEffect(unsigned int iChainNumber, unsigned int iEffectNumber, EffectPointer pEffect);
+    void nextEffect(unsigned int iChainNumber, unsigned int iEffectNumber,
+                    EffectPointer pEffect);
 
-    // Signal that whoever is in charge of this EffectSlot should load the previous
-    // Effect into it.
-    void prevEffect(unsigned int iChainNumber, unsigned int iEffectNumber, EffectPointer pEffect);
+    // Signal that whoever is in charge of this EffectSlot should load the
+    // previous Effect into it.
+    void prevEffect(unsigned int iChainNumber, unsigned int iEffectNumber,
+                    EffectPointer pEffect);
+
+    // Signal that whoever is in charge of this EffectSlot should clear this
+    // EffectSlot (by deleting the effect from the underlying chain).
+    void clearEffect(unsigned int iChainNumber, unsigned int iEffectNumber,
+                     EffectPointer pEffect);
 
     void updated();
 
@@ -80,10 +92,14 @@ class EffectSlot : public QObject {
     const QString m_group;
     EffectPointer m_pEffect;
 
-    ControlObject* m_pControlEnabled;
+    ControlObject* m_pControlLoaded;
+    ControlPushButton* m_pControlEnabled;
     ControlObject* m_pControlNumParameters;
+    ControlObject* m_pControlNumParameterSlots;
     ControlObject* m_pControlNextEffect;
     ControlObject* m_pControlPrevEffect;
+    ControlObject* m_pControlEffectSelector;
+    ControlObject* m_pControlClear;
     QList<EffectParameterSlotPointer> m_parameters;
 
     DISALLOW_COPY_AND_ASSIGN(EffectSlot);

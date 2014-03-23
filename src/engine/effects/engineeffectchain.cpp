@@ -5,10 +5,9 @@
 
 EngineEffectChain::EngineEffectChain(const QString& id)
         : m_id(id),
-          m_bEnabled(false),
+          m_bEnabled(true),
           m_insertionType(EffectChain::INSERT),
           m_dMix(0),
-          m_dParameter(0),
           m_pBuffer(SampleUtil::alloc(MAX_BUFFER_LEN)) {
     // Try to prevent memory allocation.
     m_effects.reserve(256);
@@ -19,14 +18,18 @@ EngineEffectChain::~EngineEffectChain() {
 
 bool EngineEffectChain::addEffect(EngineEffect* pEffect, int iIndex) {
     if (iIndex < 0) {
-        qDebug() << debugString()
-                 << "WARNING: ADD_EFFECT_TO_CHAIN message with invalid index:"
-                 << iIndex;
+        if (kEffectDebugOutput) {
+            qDebug() << debugString()
+                     << "WARNING: ADD_EFFECT_TO_CHAIN message with invalid index:"
+                     << iIndex;
+        }
         return false;
     }
     if (m_effects.contains(pEffect)) {
-        qDebug() << debugString() << "WARNING: effect already added to EngineEffectChain:"
-                 << pEffect->name();
+        if (kEffectDebugOutput) {
+            qDebug() << debugString() << "WARNING: effect already added to EngineEffectChain:"
+                     << pEffect->name();
+        }
         return false;
     }
 
@@ -37,12 +40,25 @@ bool EngineEffectChain::addEffect(EngineEffect* pEffect, int iIndex) {
     return true;
 }
 
-bool EngineEffectChain::removeEffect(EngineEffect* pEffect) {
-    for (int i = 0; i < m_effects.size(); ++i) {
-        if (m_effects.at(i) == pEffect) {
-            m_effects.replace(i, NULL);
+bool EngineEffectChain::removeEffect(EngineEffect* pEffect, int iIndex) {
+    if (iIndex < 0) {
+        if (kEffectDebugOutput) {
+            qDebug() << debugString()
+                     << "WARNING: REMOVE_EFFECT_FROM_CHAIN message with invalid index:"
+                     << iIndex;
         }
+        return false;
     }
+    if (m_effects.at(iIndex) != pEffect) {
+        qDebug() << debugString()
+                 << "WARNING: REMOVE_EFFECT_FROM_CHAIN consistency error"
+                 << m_effects.at(iIndex) << "loaded but received request to remove"
+                 << pEffect;
+        return false;
+    }
+
+    m_effects.replace(iIndex, NULL);
+    return true;
 }
 
 bool EngineEffectChain::updateParameters(const EffectsRequest& message) {
@@ -51,7 +67,6 @@ bool EngineEffectChain::updateParameters(const EffectsRequest& message) {
     m_bEnabled = message.SetEffectChainParameters.enabled;
     m_insertionType = message.SetEffectChainParameters.insertion_type;
     m_dMix = message.SetEffectChainParameters.mix;
-    m_dParameter = message.SetEffectChainParameters.parameter;
 
     // If our enabled state changed then tell each group to ramp in or out.
     if (wasEnabled ^ m_bEnabled) {
@@ -76,33 +91,43 @@ bool EngineEffectChain::processEffectsRequest(const EffectsRequest& message,
     EffectsResponse response(message);
     switch (message.type) {
         case EffectsRequest::ADD_EFFECT_TO_CHAIN:
-            qDebug() << debugString() << "ADD_EFFECT_TO_CHAIN"
-                     << message.AddEffectToChain.pEffect
-                     << message.AddEffectToChain.iIndex;
+            if (kEffectDebugOutput) {
+                qDebug() << debugString() << "ADD_EFFECT_TO_CHAIN"
+                         << message.AddEffectToChain.pEffect
+                         << message.AddEffectToChain.iIndex;
+            }
             response.success = addEffect(message.AddEffectToChain.pEffect,
                                          message.AddEffectToChain.iIndex);
             break;
         case EffectsRequest::REMOVE_EFFECT_FROM_CHAIN:
-            qDebug() << debugString() << "REMOVE_EFFECT_FROM_CHAIN"
-                     << message.RemoveEffectFromChain.pEffect;
-            response.success = removeEffect(
-                message.RemoveEffectFromChain.pEffect);
+            if (kEffectDebugOutput) {
+                qDebug() << debugString() << "REMOVE_EFFECT_FROM_CHAIN"
+                         << message.RemoveEffectFromChain.pEffect
+                         << message.RemoveEffectFromChain.iIndex;
+            }
+            response.success = removeEffect(message.RemoveEffectFromChain.pEffect,
+                                            message.RemoveEffectFromChain.iIndex);
             break;
         case EffectsRequest::SET_EFFECT_CHAIN_PARAMETERS:
-            qDebug() << debugString() << "SET_EFFECT_CHAIN_PARAMETERS"
-                     << "enabled" << message.SetEffectChainParameters.enabled
-                     << "mix" << message.SetEffectChainParameters.mix
-                     << "parameter" << message.SetEffectChainParameters.parameter;
+            if (kEffectDebugOutput) {
+                qDebug() << debugString() << "SET_EFFECT_CHAIN_PARAMETERS"
+                         << "enabled" << message.SetEffectChainParameters.enabled
+                         << "mix" << message.SetEffectChainParameters.mix;
+            }
             response.success = updateParameters(message);
             break;
         case EffectsRequest::ENABLE_EFFECT_CHAIN_FOR_GROUP:
-            qDebug() << debugString() << "ENABLE_EFFECT_CHAIN_FOR_GROUP"
-                     << message.group;
+            if (kEffectDebugOutput) {
+                qDebug() << debugString() << "ENABLE_EFFECT_CHAIN_FOR_GROUP"
+                         << message.group;
+            }
             response.success = enableForGroup(message.group);
             break;
         case EffectsRequest::DISABLE_EFFECT_CHAIN_FOR_GROUP:
-            qDebug() << debugString() << "DISABLE_EFFECT_CHAIN_FOR_GROUP"
-                     << message.group;
+            if (kEffectDebugOutput) {
+                qDebug() << debugString() << "DISABLE_EFFECT_CHAIN_FOR_GROUP"
+                         << message.group;
+            }
             response.success = disableForGroup(message.group);
             break;
         default:
@@ -149,8 +174,10 @@ void EngineEffectChain::process(const QString& group,
         // result in two QMap lookups.
         if (pInput != pOutput) {
             SampleUtil::copyWithGain(pOutput, pInput, 1.0, numSamples);
-            qDebug() << "WARNING: EngineEffectChain took the slow path!"
-                     << "If you want to do this talk to rryan.";
+            if (kEffectDebugOutput) {
+                qDebug() << "WARNING: EngineEffectChain took the slow path!"
+                         << "If you want to do this talk to rryan.";
+            }
         }
         return;
     }
@@ -167,7 +194,7 @@ void EngineEffectChain::process(const QString& group,
             // Fully wet, no ramp, insert optimization. No temporary buffer needed.
             for (int i = 0; i < m_effects.size(); ++i) {
                 EngineEffect* pEffect = m_effects[i];
-                if (pEffect == NULL) {
+                if (pEffect == NULL || !pEffect->enabled()) {
                     continue;
                 }
                 const CSAMPLE* pIntermediateInput = (i == 0) ? pInput : pOutput;
@@ -179,16 +206,20 @@ void EngineEffectChain::process(const QString& group,
             // they are not the same.
             if (!anyProcessed && pInput != pOutput) {
                 SampleUtil::copyWithGain(pOutput, pInput, 1.0, numSamples);
-                qDebug() << "WARNING: EngineEffectChain took the slow path!"
-                         << "If you want to do this talk to rryan.";
+                if (kEffectDebugOutput) {
+                    qDebug() << "WARNING: EngineEffectChain took the slow path!"
+                             << "If you want to do this talk to rryan.";
+                }
             }
         } else if (wet_gain_old == 0.0 && wet_gain == 0.0) {
             // Fully dry, no ramp, insert optimization. No action is needed
             // unless we are not processing in-place.
             if (pInput != pOutput) {
                 SampleUtil::copyWithGain(pOutput, pInput, 1.0, numSamples);
-                qDebug() << "WARNING: EngineEffectChain took the slow path!"
-                         << "If you want to do this talk to rryan.";
+                if (kEffectDebugOutput) {
+                    qDebug() << "WARNING: EngineEffectChain took the slow path!"
+                             << "If you want to do this talk to rryan.";
+                }
             }
         } else {
             // Clear scratch buffer.
@@ -198,7 +229,7 @@ void EngineEffectChain::process(const QString& group,
             bool anyProcessed = false;
             for (int i = 0; i < m_effects.size(); ++i) {
                 EngineEffect* pEffect = m_effects[i];
-                if (pEffect == NULL) {
+                if (pEffect == NULL || !pEffect->enabled()) {
                     continue;
                 }
                 const CSAMPLE* pIntermediateInput = (i == 0) ? pInput : m_pBuffer;
@@ -218,8 +249,10 @@ void EngineEffectChain::process(const QString& group,
                 // If no effects processed then we have to copy input to output
                 // if they are not the same.
                 SampleUtil::copyWithGain(pOutput, pInput, 1.0, numSamples);
-                qDebug() << "WARNING: EngineEffectChain took the slow path!"
-                         << "If you want to do this talk to rryan.";
+                if (kEffectDebugOutput) {
+                    qDebug() << "WARNING: EngineEffectChain took the slow path!"
+                             << "If you want to do this talk to rryan.";
+                }
             }
         }
     } else { // SEND mode: output = input + effect(input) * wet
@@ -230,7 +263,7 @@ void EngineEffectChain::process(const QString& group,
         bool anyProcessed = false;
         for (int i = 0; i < m_effects.size(); ++i) {
             EngineEffect* pEffect = m_effects[i];
-            if (pEffect == NULL) {
+            if (pEffect == NULL || !pEffect->enabled()) {
                 continue;
             }
             const CSAMPLE* pIntermediateInput = (i == 0) ? pInput : m_pBuffer;
@@ -254,8 +287,10 @@ void EngineEffectChain::process(const QString& group,
             // If no effects processed then we have to copy input to output
             // if they are not the same.
             SampleUtil::copyWithGain(pOutput, pInput, 1.0, numSamples);
-            qDebug() << "WARNING: EngineEffectChain took the slow path!"
-                     << "If you want to do this talk to rryan.";
+            if (kEffectDebugOutput) {
+                qDebug() << "WARNING: EngineEffectChain took the slow path!"
+                         << "If you want to do this talk to rryan.";
+            }
         }
     }
 

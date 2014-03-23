@@ -18,8 +18,7 @@ typedef QSharedPointer<EffectParameterSlot> EffectParameterSlotPointer;
 class EffectParameterSlot : public QObject {
     Q_OBJECT
   public:
-    EffectParameterSlot(QObject* pParent,
-                        const unsigned int iRackNumber,
+    EffectParameterSlot(const unsigned int iRackNumber,
                         const unsigned int iChainNumber,
                         const unsigned int iSlotNumber,
                         const unsigned int iParameterNumber);
@@ -48,7 +47,7 @@ class EffectParameterSlot : public QObject {
 
   private slots:
     // Solely for handling control changes
-    void slotEnabled(double v);
+    void slotLoaded(double v);
     void slotLinkType(double v);
     void slotValue(double v);
     void slotValueNormalized(double v);
@@ -81,7 +80,7 @@ class EffectParameterSlot : public QObject {
     // Controls exposed to the rest of Mixxx
     ////////////////////////////////////////////////////////////////////////////////
 
-    ControlObject* m_pControlEnabled;
+    ControlObject* m_pControlLoaded;
     ControlPushButton* m_pControlLinkType;
     ControlObject* m_pControlValue;
     ControlObject* m_pControlValueNormalized;

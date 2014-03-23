@@ -16,7 +16,8 @@ Effect::Effect(QObject* pParent, EffectsManager* pEffectsManager,
           m_pEngineEffect(new EngineEffect(manifest,
                                            pEffectsManager->registeredGroups(),
                                            pInstantiator)),
-          m_bAddedToEngine(false) {
+          m_bAddedToEngine(false),
+          m_bEnabled(true) {
     foreach (const EffectManifestParameter& parameter, m_manifest.parameters()) {
         EffectParameter* pParameter = new EffectParameter(
             this, pEffectsManager, m_parameters.size(), parameter);
@@ -51,11 +52,12 @@ void Effect::addToEngine(EngineEffectChain* pChain, int iIndex) {
     }
 }
 
-void Effect::removeFromEngine(EngineEffectChain* pChain) {
+void Effect::removeFromEngine(EngineEffectChain* pChain, int iIndex) {
     EffectsRequest* request = new EffectsRequest();
     request->type = EffectsRequest::REMOVE_EFFECT_FROM_CHAIN;
     request->pTargetChain = pChain;
     request->RemoveEffectFromChain.pEffect = m_pEngineEffect;
+    request->RemoveEffectFromChain.iIndex = iIndex;
     m_pEffectsManager->writeRequest(request);
     m_bAddedToEngine = false;
     foreach (EffectParameter* pParameter, m_parameters) {
@@ -67,6 +69,7 @@ void Effect::updateEngineState() {
     if (!m_bAddedToEngine) {
         return;
     }
+    sendParameterUpdate();
     foreach (EffectParameter* pParameter, m_parameters) {
         pParameter->updateEngineState();
     }
@@ -78,6 +81,29 @@ EngineEffect* Effect::getEngineEffect() {
 
 const EffectManifest& Effect::getManifest() const {
     return m_manifest;
+}
+
+void Effect::setEnabled(bool enabled) {
+    if (enabled != m_bEnabled) {
+        m_bEnabled = enabled;
+        updateEngineState();
+        emit(enabledChanged(m_bEnabled));
+    }
+}
+
+bool Effect::enabled() const {
+    return m_bEnabled;
+}
+
+void Effect::sendParameterUpdate() {
+    if (!m_bAddedToEngine) {
+        return;
+    }
+    EffectsRequest* pRequest = new EffectsRequest();
+    pRequest->type = EffectsRequest::SET_EFFECT_PARAMETERS;
+    pRequest->pTargetEffect = m_pEngineEffect;
+    pRequest->SetEffectParameters.enabled = m_bEnabled;
+    m_pEffectsManager->writeRequest(pRequest);
 }
 
 unsigned int Effect::numParameters() const {

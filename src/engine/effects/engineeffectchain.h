@@ -42,7 +42,7 @@ class EngineEffectChain : public EffectsRequestHandler {
 
     bool updateParameters(const EffectsRequest& message);
     bool addEffect(EngineEffect* pEffect, int iIndex);
-    bool removeEffect(EngineEffect* pEffect);
+    bool removeEffect(EngineEffect* pEffect, int iIndex);
     bool enableForGroup(const QString& group);
     bool disableForGroup(const QString& group);
 
@@ -50,7 +50,6 @@ class EngineEffectChain : public EffectsRequestHandler {
     bool m_bEnabled;
     EffectChain::InsertionType m_insertionType;
     CSAMPLE m_dMix;
-    double m_dParameter;
     QList<EngineEffect*> m_effects;
     CSAMPLE* m_pBuffer;
     struct GroupStatus {
