@@ -27,6 +27,7 @@ class WLibrarySidebar : public QTreeView, public WBaseWidget {
     void keyPressEvent(QKeyEvent* event);
     void timerEvent(QTimerEvent* event);
     void setLibraryPrefix(QString prefix);
+    void toggleSelectedItem();
 
   public slots:
     void selectIndex(const QModelIndex&);
