@@ -239,7 +239,7 @@ void WPushButton::onConnectedControlChanged(double dParameter, double dValue) {
     if (m_iNoStates == 1) {
         m_bPressed = (dValue == 1.0);
     }
-    int idx = static_cast<int>(v) % m_iNoStates;
+    int idx = static_cast<int>(dValue) % m_iNoStates;
     if (idx < m_style.size()) {
         QString style = m_style.at(idx);
         if (!style.isEmpty()) {
