@@ -40,7 +40,7 @@ class WOverview : public WWidget {
     void setLibraryPrefix(QString sPrefix);
 
   public slots:
-    void onConnectedControlValueChanged(double);
+    void onConnectedControlChanged(double dParameter, double dValue);
     void slotLoadNewTrack(TrackPointer pTrack);
     void slotTrackLoaded(TrackPointer pTrack);
     void slotUnloadTrack(TrackPointer pTrack);
