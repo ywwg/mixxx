@@ -18,8 +18,8 @@ EffectManifest BitCrusherEffect::getManifest() {
     depth->setId("bit_depth");
     depth->setName(QObject::tr("Bit Depth"));
     depth->setDescription("TODO");
-    depth->setControlHint(EffectManifestParameter::CONTROL_KNOB_LINEAR);
-    depth->setValueHint(EffectManifestParameter::EffectManifestParameter::VALUE_INTEGRAL);
+    depth->setControlHint(EffectManifestParameter::CONTROL_KNOB_LOGARITHMIC);
+    depth->setValueHint(EffectManifestParameter::VALUE_FLOAT);
     depth->setSemanticHint(EffectManifestParameter::SEMANTIC_UNKNOWN);
     depth->setUnitsHint(EffectManifestParameter::UNITS_UNKNOWN);
     depth->setLinkHint(EffectManifestParameter::LINK_INVERSE);
@@ -31,14 +31,14 @@ EffectManifest BitCrusherEffect::getManifest() {
     frequency->setId("downsample");
     frequency->setName(QObject::tr("Downsampling"));
     frequency->setDescription("TODO");
-    frequency->setControlHint(EffectManifestParameter::CONTROL_KNOB_LINEAR);
+    frequency->setControlHint(EffectManifestParameter::CONTROL_KNOB_LOGARITHMIC);
     frequency->setValueHint(EffectManifestParameter::VALUE_FLOAT);
     frequency->setSemanticHint(EffectManifestParameter::SEMANTIC_UNKNOWN);
     frequency->setUnitsHint(EffectManifestParameter::UNITS_SAMPLERATE);
-    frequency->setLinkHint(EffectManifestParameter::LINK_LINKED);
-    frequency->setDefault(0.0);
+    frequency->setLinkHint(EffectManifestParameter::LINK_INVERSE);
+    frequency->setDefault(1.0);
     frequency->setMinimum(0.0);
-    frequency->setMaximum(0.9999);
+    frequency->setMaximum(1.0);
 
     return manifest;
 }
@@ -51,29 +51,30 @@ BitCrusherEffect::BitCrusherEffect(EngineEffect* pEffect,
 }
 
 BitCrusherEffect::~BitCrusherEffect() {
-    qDebug() << debugString() << "destroyed";
+    //qDebug() << debugString() << "destroyed";
 }
 
 void BitCrusherEffect::processGroup(const QString& group,
                                     BitCrusherGroupState* pState,
                                     const CSAMPLE* pInput, CSAMPLE* pOutput,
-                                    const unsigned int numSamples) {
+                                    const unsigned int numSamples,
+                                    const GroupFeatureState& groupFeatures) {
     Q_UNUSED(group);
+    Q_UNUSED(groupFeatures);
     // TODO(rryan) this is broken. it needs to take into account the sample
     // rate.
     const CSAMPLE downsample = m_pDownsampleParameter ?
             m_pDownsampleParameter->value().toDouble() : 0.0;
-    const CSAMPLE accumulate = 1.0 - downsample;
 
-    int bit_depth = m_pBitDepthParameter ?
-            m_pBitDepthParameter->value().toInt() : 1;
+    CSAMPLE bit_depth = m_pBitDepthParameter ?
+            m_pBitDepthParameter->value().toDouble() : 1.0;
     bit_depth = math_max(bit_depth, 1);
 
-    const CSAMPLE scale = 1 << (bit_depth-1);
+    const CSAMPLE scale = pow(2, bit_depth - 1);
 
     const int kChannels = 2;
     for (unsigned int i = 0; i < numSamples; i += kChannels) {
-        pState->accumulator += accumulate;
+        pState->accumulator += downsample;
 
         if (pState->accumulator >= 1.0) {
             pState->accumulator -= 1.0;

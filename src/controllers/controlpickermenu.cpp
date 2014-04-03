@@ -295,7 +295,8 @@ ControlPickerMenu::ControlPickerMenu(QWidget* pParent)
                              tr("Dry/Wet"), descriptionPrefix,
                              effectUnitMenu, true);
             addEffectControl(effectUnitGroup, "parameter",
-                             tr("Super Knob"), descriptionPrefix,
+                             tr("Super Knob (Control Linked Effect Parameters)"),
+                             descriptionPrefix,
                              effectUnitMenu, true);
             addEffectControl(effectUnitGroup, "insertion_type",
                              tr("Insert / Send Toggle"), descriptionPrefix,
@@ -310,7 +311,7 @@ ControlPickerMenu::ControlPickerMenu(QWidget* pParent)
                              tr("Next or previous chain preset"), descriptionPrefix,
                              effectUnitMenu);
 
-            QString enableOn = tr("Enable Effect Unit On");
+            QString enableOn = tr("Toggle Effect Unit");
             QMenu* effectUnitGroups = addSubmenu(enableOn,
                                                  effectUnitMenu);
 
@@ -416,8 +417,9 @@ ControlPickerMenu::ControlPickerMenu(QWidget* pParent)
                      ++iParameterSlotNumber) {
                     const QString parameterSlotGroup = EffectParameterSlot::formatGroupString(
                             iRackNumber - 1, iEffectUnitNumber - 1,
-                            iEffectSlotNumber - 1, iParameterSlotNumber - 1);
-
+                            iEffectSlotNumber - 1);
+                    const QString parameterSlotItemPrefix = EffectParameterSlot::formatItemPrefix(
+                            iParameterSlotNumber - 1);
                     QMenu* parameterSlotMenu = addSubmenu(
                         m_parameterStr.arg(iParameterSlotNumber),
                         effectSlotMenu);
@@ -426,11 +428,11 @@ ControlPickerMenu::ControlPickerMenu(QWidget* pParent)
                         m_parameterStr.arg(iParameterSlotNumber)));
 
                     // Likely to change soon.
-                    addEffectControl(parameterSlotGroup, "value_normalized",
+                    addEffectControl(parameterSlotGroup, parameterSlotItemPrefix,
                                      tr("Parameter value"), descriptionPrefix,
                                      parameterSlotMenu, true);
 
-                    addEffectControl(parameterSlotGroup, "link_type",
+                    addEffectControl(parameterSlotGroup, parameterSlotItemPrefix + "_link_type",
                                      tr("3-state Super Knob Link Toggle (unlinked, linear, inverse)"),
                                      descriptionPrefix, parameterSlotMenu);
 
@@ -514,7 +516,7 @@ void ControlPickerMenu::addControl(QString group, QString control, QString descr
     QAction* pAction = pMenu->addAction(description, &m_actionMapper,
                                         SLOT(map()));
     m_actionMapper.setMapping(pAction, m_controlsAvailable.size());
-    m_controlsAvailable.append(MixxxControl(group, control, description));
+    addAvailableControl(ConfigKey(group, control), description);
 
     if (addReset) {
         QString resetDescription = QString("%1 (%2)").arg(description,
@@ -523,8 +525,7 @@ void ControlPickerMenu::addControl(QString group, QString control, QString descr
         QAction* pResetAction = pMenu->addAction(resetDescription,
                                                  &m_actionMapper, SLOT(map()));
         m_actionMapper.setMapping(pResetAction, m_controlsAvailable.size());
-        m_controlsAvailable.append(MixxxControl(group, resetControl,
-                                                resetDescription));
+        addAvailableControl(ConfigKey(group, resetControl), resetDescription);
     }
 }
 
@@ -536,7 +537,7 @@ void ControlPickerMenu::addEffectControl(QString group, QString control,
 
     QString description = QString("%1: %2").arg(descriptionPrefix,
                                                 menuDescription);
-    m_controlsAvailable.append(MixxxControl(group, control, description));
+    addAvailableControl(ConfigKey(group, control), description);
 
     if (addReset) {
         QString resetMenuDescription = QString("%1 (%2)").arg(description, m_resetStr);
@@ -546,8 +547,7 @@ void ControlPickerMenu::addEffectControl(QString group, QString control,
         QString resetDescription = QString("%1: %2").arg(descriptionPrefix,
                                                          resetMenuDescription);
         m_actionMapper.setMapping(pResetAction, m_controlsAvailable.size());
-        m_controlsAvailable.append(MixxxControl(group, resetControl,
-                                                resetDescription));
+        addAvailableControl(ConfigKey(group, resetControl), resetDescription);
     }
 }
 
@@ -578,13 +578,13 @@ void ControlPickerMenu::addPlayerControl(QString control, QString controlDescrip
             m_deckStr.arg(QString::number(i)), controlDescription);
         QAction* pAction = controlMenu->addAction(m_deckStr.arg(i), &m_actionMapper, SLOT(map()));
         m_actionMapper.setMapping(pAction, m_controlsAvailable.size());
-        m_controlsAvailable.append(MixxxControl(group, control, description));
+        addAvailableControl(ConfigKey(group, control), description);
 
         if (resetControlMenu) {
             QString resetDescription = QString("%1 (%2)").arg(description, m_resetStr);
             QAction* pResetAction = resetControlMenu->addAction(m_deckStr.arg(i), &m_actionMapper, SLOT(map()));
             m_actionMapper.setMapping(pResetAction, m_controlsAvailable.size());
-            m_controlsAvailable.append(MixxxControl(group, resetControl, resetDescription));
+            addAvailableControl(ConfigKey(group, resetControl), resetDescription);
         }
     }
 
@@ -595,13 +595,13 @@ void ControlPickerMenu::addPlayerControl(QString control, QString controlDescrip
             m_previewdeckStr.arg(QString::number(i)), controlDescription);
         QAction* pAction = controlMenu->addAction(m_previewdeckStr.arg(i), &m_actionMapper, SLOT(map()));
         m_actionMapper.setMapping(pAction, m_controlsAvailable.size());
-        m_controlsAvailable.append(MixxxControl(group, control, description));
+        addAvailableControl(ConfigKey(group, control), description);
 
         if (resetControlMenu) {
             QString resetDescription = QString("%1 (%2)").arg(description, m_resetStr);
             QAction* pResetAction = resetControlMenu->addAction(m_previewdeckStr.arg(i), &m_actionMapper, SLOT(map()));
             m_actionMapper.setMapping(pResetAction, m_controlsAvailable.size());
-            m_controlsAvailable.append(MixxxControl(group, resetControl, resetDescription));
+            addAvailableControl(ConfigKey(group, resetControl), resetDescription);
         }
     }
 
@@ -612,13 +612,13 @@ void ControlPickerMenu::addPlayerControl(QString control, QString controlDescrip
             m_samplerStr.arg(QString::number(i)), controlDescription);
         QAction* pAction = controlMenu->addAction(m_samplerStr.arg(i), &m_actionMapper, SLOT(map()));
         m_actionMapper.setMapping(pAction, m_controlsAvailable.size());
-        m_controlsAvailable.append(MixxxControl(group, control, description));
+        addAvailableControl(ConfigKey(group, control), description);
 
         if (resetControlMenu) {
             QString resetDescription = QString("%1 (%2)").arg(description, m_resetStr);
             QAction* pResetAction = resetControlMenu->addAction(m_samplerStr.arg(i), &m_actionMapper, SLOT(map()));
             m_actionMapper.setMapping(pResetAction, m_controlsAvailable.size());
-            m_controlsAvailable.append(MixxxControl(group, resetControl, resetDescription));
+            addAvailableControl(ConfigKey(group, resetControl), resetDescription);
         }
     }
 }
@@ -652,14 +652,14 @@ void ControlPickerMenu::addMicrophoneAndAuxControl(QString control, QString cont
             QAction* pAction = controlMenu->addAction(m_microphoneStr.arg(i),
                                                       &m_actionMapper, SLOT(map()));
             m_actionMapper.setMapping(pAction, m_controlsAvailable.size());
-            m_controlsAvailable.append(MixxxControl(group, control, description));
+            addAvailableControl(ConfigKey(group, control), description);
 
             if (addReset) {
                 QString resetDescription = QString("%1 (%2)").arg(description, m_resetStr);
                 QAction* pResetAction = resetControlMenu->addAction(
                     m_microphoneStr.arg(i), &m_actionMapper, SLOT(map()));
                 m_actionMapper.setMapping(pResetAction, m_controlsAvailable.size());
-                m_controlsAvailable.append(MixxxControl(group, resetControl, resetDescription));
+                addAvailableControl(ConfigKey(group, resetControl), resetDescription);
             }
         }
     }
@@ -673,14 +673,14 @@ void ControlPickerMenu::addMicrophoneAndAuxControl(QString control, QString cont
             QAction* pAction = controlMenu->addAction(m_auxStr.arg(i),
                                                       &m_actionMapper, SLOT(map()));
             m_actionMapper.setMapping(pAction, m_controlsAvailable.size());
-            m_controlsAvailable.append(MixxxControl(group, control, description));
+            addAvailableControl(ConfigKey(group, control), description);
 
             if (addReset) {
                 QString resetDescription = QString("%1 (%2)").arg(description, m_resetStr);
                 QAction* pResetAction = resetControlMenu->addAction(
                     m_auxStr.arg(i), &m_actionMapper, SLOT(map()));
                 m_actionMapper.setMapping(pResetAction, m_controlsAvailable.size());
-                m_controlsAvailable.append(MixxxControl(group, resetControl, resetDescription));
+                addAvailableControl(ConfigKey(group, resetControl), resetDescription);
             }
         }
     }
@@ -737,4 +737,14 @@ void ControlPickerMenu::controlChosen(int controlIndex) {
         return;
     }
     emit(controlPicked(m_controlsAvailable[controlIndex]));
+}
+
+void ControlPickerMenu::addAvailableControl(ConfigKey key,
+                                            QString description) {
+    m_controlsAvailable.append(key);
+    m_descriptionsByKey.insert(key, description);
+}
+
+QString ControlPickerMenu::descriptionForConfigKey(ConfigKey key) const {
+    return m_descriptionsByKey.value(key, QString());
 }

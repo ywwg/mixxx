@@ -53,9 +53,9 @@ class EffectParameter : public QObject {
     QVariant getMaximum() const;
     void setMaximum(QVariant maximum);
 
-    void updateEngineState();
+    EffectManifestParameter::ControlHint getControlHint() const;
 
-    void onChainParameterChanged(double chainParameter);
+    void updateEngineState();
 
   signals:
     void valueChanged(QVariant value);

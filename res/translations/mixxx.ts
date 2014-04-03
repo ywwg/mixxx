@@ -530,6 +530,19 @@
     </message>
 </context>
 <context>
+    <name>ControlDelegate</name>
+    <message>
+        <location filename="../../src/controllers/delegates/controldelegate.cpp" line="44"/>
+        <source>No control chosen.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/delegates/controldelegate.cpp" line="48"/>
+        <source>Script: %1(%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ControlPickerMenu</name>
     <message>
         <location filename="../../src/controllers/controlpickermenu.cpp" line="17"/>
@@ -653,19 +666,19 @@
     </message>
     <message>
         <location filename="../../src/controllers/controlpickermenu.cpp" line="46"/>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="461"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="463"/>
         <source>Volume fader</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../src/controllers/controlpickermenu.cpp" line="47"/>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="463"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="465"/>
         <source>Set to full volume</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../src/controllers/controlpickermenu.cpp" line="48"/>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="465"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="467"/>
         <source>Set to zero volume</source>
         <translation type="unfinished"></translation>
     </message>
@@ -721,13 +734,13 @@
     </message>
     <message>
         <location filename="../../src/controllers/controlpickermenu.cpp" line="60"/>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="477"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="479"/>
         <source>Headphone listen button</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../src/controllers/controlpickermenu.cpp" line="61"/>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="467"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="469"/>
         <source>Mute button</source>
         <translation type="unfinished"></translation>
     </message>
@@ -743,25 +756,25 @@
     </message>
     <message>
         <location filename="../../src/controllers/controlpickermenu.cpp" line="64"/>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="469"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="471"/>
         <source>Mix orientation (e.g. left, right, center)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../src/controllers/controlpickermenu.cpp" line="65"/>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="471"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="473"/>
         <source>Set mix orientation to left</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../src/controllers/controlpickermenu.cpp" line="66"/>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="473"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="475"/>
         <source>Set mix orientation to center</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../src/controllers/controlpickermenu.cpp" line="67"/>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="475"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="477"/>
         <source>Set mix orientation to right</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1317,191 +1330,191 @@
     </message>
     <message>
         <location filename="../../src/controllers/controlpickermenu.cpp" line="298"/>
-        <source>Super Knob</source>
+        <source>Super Knob (Control Linked Effect Parameters)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="301"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="314"/>
+        <source>Toggle Effect Unit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="302"/>
         <source>Insert / Send Toggle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="304"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="305"/>
         <source>Next chain preset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="307"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="308"/>
         <source>Previous chain preset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="310"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="311"/>
         <source>Next or previous chain preset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="313"/>
-        <source>Enable Effect Unit On</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="398"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="399"/>
         <source>Clear effect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="401"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="402"/>
         <source>Toggle effect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="404"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="405"/>
         <source>Next effect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="407"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="408"/>
         <source>Previous effect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="410"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="411"/>
         <source>Next or previous effect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="430"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="432"/>
         <source>Parameter value</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="434"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="436"/>
         <source>3-state Super Knob Link Toggle (unlinked, linear, inverse)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="442"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="444"/>
         <source>Toggle flange effect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="443"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="445"/>
         <source>Flange effect: Wavelength/period</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="444"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="446"/>
         <source>Flange effect: Intensity</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="445"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="447"/>
         <source>Flange effect: Phase delay</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="446"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="448"/>
         <source>Toggle filter effect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="447"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="449"/>
         <source>Filter effect: Intensity</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="450"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="452"/>
         <source>Microphone / Auxiliary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="452"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="454"/>
         <source>Microphone on/off</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="455"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="457"/>
         <source>Microphone ducking strength</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="457"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="459"/>
         <source>Toggle microphone ducking mode (OFF, AUTO, MANUAL)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="459"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="461"/>
         <source>Auxiliary on/off</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="481"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="483"/>
         <source>Auto DJ</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="482"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="484"/>
         <source>Shuffle the content of the Auto DJ playlist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="483"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="485"/>
         <source>Skip the next track in the Auto DJ playlist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="484"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="486"/>
         <source>Trigger the transition to the next track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="485"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="487"/>
         <source>Toggle Auto DJ (ON/OFF)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="488"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="490"/>
         <source>User Interface</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="489"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="491"/>
         <source>Show/hide the sampler section</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="490"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="492"/>
         <source>Show/hide the microphone section</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="491"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="493"/>
         <source>Show/hide the vinyl control section</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="492"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="494"/>
         <source>Show/hide the preview deck</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="495"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="497"/>
         <source>Show/hide spinning vinyl widget</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="502"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="504"/>
         <source>Waveform zoom</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="503"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="505"/>
         <source>Zoom waveform in</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/controlpickermenu.cpp" line="504"/>
+        <location filename="../../src/controllers/controlpickermenu.cpp" line="506"/>
         <source>Zoom waveform out</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1545,62 +1558,83 @@
     </message>
 </context>
 <context>
-    <name>ControllerMappingDlg</name>
+    <name>ControllerInputMappingTableModel</name>
     <message>
-        <location filename="../../src/controllers/dlgprefmappablecontrollerdlg.ui" line="23"/>
-        <source>Dialog</source>
+        <location filename="../../src/controllers/controllerinputmappingtablemodel.cpp" line="37"/>
+        <source>Channel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefmappablecontrollerdlg.ui" line="62"/>
-        <source>Input</source>
+        <location filename="../../src/controllers/controllerinputmappingtablemodel.cpp" line="38"/>
+        <source>Opcode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefmappablecontrollerdlg.ui" line="75"/>
-        <source>The below box is under construction and will remain empty in this version of Mixxx.</source>
+        <location filename="../../src/controllers/controllerinputmappingtablemodel.cpp" line="39"/>
+        <source>Control</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefmappablecontrollerdlg.ui" line="88"/>
-        <source>Controls</source>
+        <location filename="../../src/controllers/controllerinputmappingtablemodel.cpp" line="40"/>
+        <source>Options</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefmappablecontrollerdlg.ui" line="100"/>
-        <location filename="../../src/controllers/dlgprefmappablecontrollerdlg.ui" line="199"/>
-        <source>Add</source>
+        <location filename="../../src/controllers/controllerinputmappingtablemodel.cpp" line="41"/>
+        <source>Action</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefmappablecontrollerdlg.ui" line="113"/>
-        <location filename="../../src/controllers/dlgprefmappablecontrollerdlg.ui" line="209"/>
-        <source>Remove</source>
+        <location filename="../../src/controllers/controllerinputmappingtablemodel.cpp" line="42"/>
+        <source>Comment</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ControllerOutputMappingTableModel</name>
+    <message>
+        <location filename="../../src/controllers/controlleroutputmappingtablemodel.cpp" line="36"/>
+        <source>Channel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefmappablecontrollerdlg.ui" line="123"/>
-        <source>Learning Wizard</source>
+        <location filename="../../src/controllers/controlleroutputmappingtablemodel.cpp" line="37"/>
+        <source>Opcode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefmappablecontrollerdlg.ui" line="155"/>
-        <source>Clear all</source>
+        <location filename="../../src/controllers/controlleroutputmappingtablemodel.cpp" line="38"/>
+        <source>Control</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefmappablecontrollerdlg.ui" line="174"/>
-        <source>Output</source>
+        <location filename="../../src/controllers/controlleroutputmappingtablemodel.cpp" line="39"/>
+        <source>On Value</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefmappablecontrollerdlg.ui" line="190"/>
-        <source>Outputs</source>
+        <location filename="../../src/controllers/controlleroutputmappingtablemodel.cpp" line="40"/>
+        <source>Off Value</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefmappablecontrollerdlg.ui" line="232"/>
-        <source>Clear All</source>
+        <location filename="../../src/controllers/controlleroutputmappingtablemodel.cpp" line="41"/>
+        <source>Action</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/controlleroutputmappingtablemodel.cpp" line="42"/>
+        <source>On Range Min</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/controlleroutputmappingtablemodel.cpp" line="43"/>
+        <source>On Range Max</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/controlleroutputmappingtablemodel.cpp" line="44"/>
+        <source>Comment</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2124,17 +2158,17 @@ Often results in higher quality beatgrids, but will not do well on tracks that h
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgcontrollerlearning.cpp" line="104"/>
+        <location filename="../../src/controllers/dlgcontrollerlearning.cpp" line="114"/>
         <source>Unable to detect a mapping -- please try again. Be sure to only touch one control at once.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgcontrollerlearning.cpp" line="259"/>
+        <location filename="../../src/controllers/dlgcontrollerlearning.cpp" line="276"/>
         <source>Ready to map: %1. Now move a control on your controller.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgcontrollerlearning.cpp" line="145"/>
+        <location filename="../../src/controllers/dlgcontrollerlearning.cpp" line="155"/>
         <source>Successfully mapped to:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2213,24 +2247,55 @@ Often results in higher quality beatgrids, but will not do well on tracks that h
 <context>
     <name>DlgPrefController</name>
     <message>
-        <location filename="../../src/controllers/dlgprefcontroller.cpp" line="74"/>
+        <location filename="../../src/controllers/dlgprefcontroller.cpp" line="110"/>
+        <source>Apply device settings?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/dlgprefcontroller.cpp" line="111"/>
+        <source>Your settings must be applied before starting the learning wizard.
+Apply settings and continue?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/dlgprefcontroller.cpp" line="158"/>
         <source>None</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefcontroller.cpp" line="79"/>
+        <location filename="../../src/controllers/dlgprefcontroller.cpp" line="163"/>
         <source>%1 by %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefcontroller.cpp" line="91"/>
+        <location filename="../../src/controllers/dlgprefcontroller.cpp" line="175"/>
         <source>No Description</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefcontroller.cpp" line="230"/>
+        <location filename="../../src/controllers/dlgprefcontroller.cpp" line="361"/>
         <source>No support available.</source>
         <extracomment>Shown when a MIDI controller has no links to support pages (e.g. Mixxx wiki or forums).</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/dlgprefcontroller.cpp" line="466"/>
+        <source>Clear Input Mappings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/dlgprefcontroller.cpp" line="467"/>
+        <source>Are you sure you want to clear all input mappings?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/dlgprefcontroller.cpp" line="498"/>
+        <source>Clear Output Mappings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/dlgprefcontroller.cpp" line="499"/>
+        <source>Are you sure you want to clear all output mappings?</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2242,53 +2307,91 @@ Often results in higher quality beatgrids, but will not do well on tracks that h
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="62"/>
+        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="67"/>
+        <source>(device category goes here)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="84"/>
         <source>Controller Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="69"/>
+        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="91"/>
         <source>Enabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="39"/>
+        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="98"/>
         <source>&lt;a href=&quot;http://mixxx.org/wiki/doku.php/midi_scripting&quot;&gt;Troubleshooting&lt;/a&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="85"/>
-        <source>TextLabel</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="150"/>
+        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="199"/>
         <source>Description:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="188"/>
+        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="123"/>
         <source>Load Preset:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="207"/>
+        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="262"/>
         <source>Loaded Preset:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="261"/>
+        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="183"/>
         <source>Support:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="289"/>
+        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="136"/>
+        <source>Apply</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="168"/>
+        <source>Preset Info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="325"/>
+        <source>Input Mappings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="349"/>
+        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="445"/>
+        <source>Add</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="359"/>
+        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="452"/>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="366"/>
         <source>Click to start the Controller Learning wizard.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="292"/>
+        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="372"/>
         <source>Learning Wizard (MIDI Only)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="404"/>
+        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="472"/>
+        <source>Clear All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/dlgprefcontrollerdlg.ui" line="423"/>
+        <source>Output Mappings</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2819,11 +2922,6 @@ Numark mode:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/dlgprefeqdlg.ui" line="66"/>
-        <source>textLabel1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../../src/dlgprefeqdlg.ui" line="107"/>
         <location filename="../../src/dlgprefeqdlg.ui" line="234"/>
         <source>16 Hz</source>
@@ -2844,11 +2942,6 @@ Numark mode:
     <message>
         <location filename="../../src/dlgprefeqdlg.ui" line="172"/>
         <source>Low Shelf EQ</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/dlgprefeqdlg.ui" line="191"/>
-        <source>textLabel2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3250,40 +3343,6 @@ and allows you to pitch adjust them for harmonic mixing.</source>
     </message>
 </context>
 <context>
-    <name>DlgPrefMappableController</name>
-    <message>
-        <location filename="../../src/controllers/dlgprefmappablecontroller.cpp" line="73"/>
-        <source>Apply device settings?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/controllers/dlgprefmappablecontroller.cpp" line="74"/>
-        <source>Your settings must be applied before starting the learning wizard.
-Apply settings and continue?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/controllers/dlgprefmappablecontroller.cpp" line="119"/>
-        <source>Clear Input Bindings</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/controllers/dlgprefmappablecontroller.cpp" line="120"/>
-        <source>Are you sure you want to clear all bindings?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/controllers/dlgprefmappablecontroller.cpp" line="127"/>
-        <source>Clear Output Bindings</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/controllers/dlgprefmappablecontroller.cpp" line="128"/>
-        <source>Are you sure you want to clear all output bindings?</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>DlgPrefModplug</name>
     <message>
         <location filename="../../src/dlgprefmodplugdlg.ui" line="14"/>
@@ -3473,7 +3532,7 @@ Apply settings and continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/dlgprefnovinyldlg.ui" line="474"/>
+        <location filename="../../src/dlgprefnovinyldlg.ui" line="467"/>
         <source>&lt;a href=&quot;http://www.mixxx.org/wiki/doku.php/vinyl_control#troubleshooting&quot;&gt;Troubleshooting&lt;/a&gt;</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3544,37 +3603,32 @@ Apply settings and continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/dlgprefnovinyldlg.ui" line="359"/>
-        <source>Enable Needle Skip Prevention</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/dlgprefnovinyldlg.ui" line="385"/>
+        <location filename="../../src/dlgprefnovinyldlg.ui" line="378"/>
         <source>Signal Quality</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/dlgprefnovinyldlg.ui" line="429"/>
+        <location filename="../../src/dlgprefnovinyldlg.ui" line="422"/>
         <source>http://www.xwax.co.uk</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/dlgprefnovinyldlg.ui" line="432"/>
+        <location filename="../../src/dlgprefnovinyldlg.ui" line="425"/>
         <source>Powered by xwax</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/dlgprefnovinyldlg.ui" line="458"/>
+        <location filename="../../src/dlgprefnovinyldlg.ui" line="451"/>
         <source>Hints</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/dlgprefnovinyldlg.ui" line="464"/>
+        <location filename="../../src/dlgprefnovinyldlg.ui" line="457"/>
         <source>Select sound devices for Vinyl Control in the Sound Hardware pane.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/dlgprefnovinyldlg.ui" line="416"/>
+        <location filename="../../src/dlgprefnovinyldlg.ui" line="409"/>
         <source>&lt;b&gt;This version of Mixxx does not support vinyl control.&lt;/b&gt; &lt;br&gt; Please visit &lt;a href=&quot;http://mixxx.org&quot;&gt;Mixxx.org&lt;/a&gt; for more information.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4774,7 +4828,7 @@ milliseconds</extracomment>
 <context>
     <name>EffectParameterSlot</name>
     <message>
-        <location filename="../../src/effects/effectparameterslot.cpp" line="96"/>
+        <location filename="../../src/effects/effectparameterslot.cpp" line="68"/>
         <source>No effect loaded.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4787,22 +4841,22 @@ milliseconds</extracomment>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/effects/effectsmanager.cpp" line="165"/>
+        <location filename="../../src/effects/effectsmanager.cpp" line="164"/>
         <source>BitCrusher</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/effects/effectsmanager.cpp" line="173"/>
+        <location filename="../../src/effects/effectsmanager.cpp" line="171"/>
         <source>Filter</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/effects/effectsmanager.cpp" line="181"/>
+        <location filename="../../src/effects/effectsmanager.cpp" line="178"/>
         <source>Reverb</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/effects/effectsmanager.cpp" line="189"/>
+        <location filename="../../src/effects/effectsmanager.cpp" line="185"/>
         <source>Echo</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5141,7 +5195,7 @@ milliseconds</extracomment>
 <context>
     <name>LegacySkinParser</name>
     <message>
-        <location filename="../../src/skin/legacyskinparser.cpp" line="906"/>
+        <location filename="../../src/skin/legacyskinparser.cpp" line="883"/>
         <source>No OpenGL
 support.</source>
         <extracomment>Shown when Spinny can not be displayd. Please keep 
@@ -5149,57 +5203,57 @@ support.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/skin/legacyskinparser.cpp" line="1664"/>
+        <location filename="../../src/skin/legacyskinparser.cpp" line="1641"/>
         <source>activate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/skin/legacyskinparser.cpp" line="1669"/>
+        <location filename="../../src/skin/legacyskinparser.cpp" line="1646"/>
         <source>toggle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/skin/legacyskinparser.cpp" line="1679"/>
+        <location filename="../../src/skin/legacyskinparser.cpp" line="1656"/>
         <source>right</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/skin/legacyskinparser.cpp" line="1684"/>
+        <location filename="../../src/skin/legacyskinparser.cpp" line="1661"/>
         <source>left</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/skin/legacyskinparser.cpp" line="1689"/>
+        <location filename="../../src/skin/legacyskinparser.cpp" line="1666"/>
         <source>right small</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/skin/legacyskinparser.cpp" line="1694"/>
+        <location filename="../../src/skin/legacyskinparser.cpp" line="1671"/>
         <source>left small</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/skin/legacyskinparser.cpp" line="1699"/>
+        <location filename="../../src/skin/legacyskinparser.cpp" line="1676"/>
         <source>up</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/skin/legacyskinparser.cpp" line="1704"/>
+        <location filename="../../src/skin/legacyskinparser.cpp" line="1681"/>
         <source>down</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/skin/legacyskinparser.cpp" line="1709"/>
+        <location filename="../../src/skin/legacyskinparser.cpp" line="1686"/>
         <source>up small</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/skin/legacyskinparser.cpp" line="1714"/>
+        <location filename="../../src/skin/legacyskinparser.cpp" line="1691"/>
         <source>down small</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/skin/legacyskinparser.cpp" line="1747"/>
+        <location filename="../../src/skin/legacyskinparser.cpp" line="1724"/>
         <source>Shortcut</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5243,28 +5297,28 @@ support.</source>
 <context>
     <name>MidiController</name>
     <message>
-        <location filename="../../src/controllers/midi/midicontroller.cpp" line="140"/>
+        <location filename="../../src/controllers/midi/midicontroller.cpp" line="132"/>
         <source>MixxxControl(s) not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/midi/midicontroller.cpp" line="141"/>
+        <location filename="../../src/controllers/midi/midicontroller.cpp" line="133"/>
         <source>One or more MixxxControls specified in the outputs section of the loaded preset were invalid.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/midi/midicontroller.cpp" line="143"/>
+        <location filename="../../src/controllers/midi/midicontroller.cpp" line="135"/>
         <source>Some LEDs or other feedback may not work correctly.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/midi/midicontroller.cpp" line="144"/>
+        <location filename="../../src/controllers/midi/midicontroller.cpp" line="136"/>
         <source>* Check to see that the MixxxControl names are spelled correctly in the mapping file (.xml)
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/controllers/midi/midicontroller.cpp" line="147"/>
+        <location filename="../../src/controllers/midi/midicontroller.cpp" line="139"/>
         <source>* Make sure the MixxxControls in question actually exist. Visit this wiki page for a complete list: </source>
         <translation type="unfinished"></translation>
     </message>
@@ -5986,8 +6040,100 @@ Please select an input device in the sound hardware preferences first.</source>
 <context>
     <name>QObject</name>
     <message>
+        <location filename="../../src/controllers/midi/midiutils.cpp" line="6"/>
         <location filename="../../src/soundmanagerutil.cpp" line="180"/>
         <source>Invalid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/midi/midiutils.cpp" line="10"/>
+        <source>Note On</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/midi/midiutils.cpp" line="12"/>
+        <source>Note Off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/midi/midiutils.cpp" line="14"/>
+        <source>CC</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/midi/midiutils.cpp" line="16"/>
+        <source>Pitch Bend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/midi/midiutils.cpp" line="18"/>
+        <location filename="../../src/controllers/midi/midiutils.cpp" line="60"/>
+        <source>Unknown (0x%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/midi/midiutils.cpp" line="34"/>
+        <source>Normal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/midi/midiutils.cpp" line="36"/>
+        <source>Invert</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/midi/midiutils.cpp" line="38"/>
+        <source>Rot64</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/midi/midiutils.cpp" line="40"/>
+        <source>Rot64Inv</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/midi/midiutils.cpp" line="42"/>
+        <source>Rot64Fast</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/midi/midiutils.cpp" line="44"/>
+        <source>Diff</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/midi/midiutils.cpp" line="46"/>
+        <source>Button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/midi/midiutils.cpp" line="48"/>
+        <source>Switch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/midi/midiutils.cpp" line="50"/>
+        <source>Spread64</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/midi/midiutils.cpp" line="52"/>
+        <source>HercJog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/midi/midiutils.cpp" line="54"/>
+        <source>SelectKnob</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/midi/midiutils.cpp" line="56"/>
+        <source>SoftTakeover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/controllers/midi/midiutils.cpp" line="58"/>
+        <source>Script</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6103,11 +6249,6 @@ To abort this action, press Cancel on the file dialog.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/effects/native/echoeffect.cpp" line="23"/>
-        <source>Simple Echo.  Applies decay and runs a simple low-pass filter to reduce high frequencies</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../../src/effects/native/echoeffect.cpp" line="29"/>
         <location filename="../../src/effects/native/flangereffect.cpp" line="39"/>
         <source>Delay</source>
@@ -6119,8 +6260,13 @@ To abort this action, press Cancel on the file dialog.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../../src/effects/native/echoeffect.cpp" line="23"/>
+        <source>Simple Echo.  Applies feedback and runs a simple low-pass filter to reduce high frequencies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../../src/effects/native/echoeffect.cpp" line="42"/>
-        <source>Decay</source>
+        <source>Feedback</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

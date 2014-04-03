@@ -11,6 +11,7 @@
 
 class ControlObject;
 class ControlPushButton;
+class ControlEffectKnob;
 
 class EffectParameterSlot;
 typedef QSharedPointer<EffectParameterSlot> EffectParameterSlotPointer;
@@ -26,13 +27,15 @@ class EffectParameterSlot : public QObject {
 
     static QString formatGroupString(const unsigned int iRackNumber,
                                      const unsigned int iChainNumber,
-                                     const unsigned int iSlotNumber,
-                                     const unsigned int iParameterNumber) {
-        return QString("[EffectRack%1_EffectUnit%2_Effect%3_Parameter%4]")
+                                     const unsigned int iSlotNumber) {
+        return QString("[EffectRack%1_EffectUnit%2_Effect%3]")
                 .arg(QString::number(iRackNumber+1),
                      QString::number(iChainNumber+1),
-                     QString::number(iSlotNumber+1),
-                     QString::number(iParameterNumber+1));
+                     QString::number(iSlotNumber+1));
+    }
+
+    static QString formatItemPrefix(const unsigned int iParameterNumber) {
+        return QString("parameter%1").arg(iParameterNumber + 1);
     }
 
     // Load the parameter of the given effect into this EffectParameterSlot
@@ -40,6 +43,8 @@ class EffectParameterSlot : public QObject {
 
     QString name() const;
     QString description() const;
+
+    void onChainParameterChanged(double parameter);
 
   signals:
     // Signal that indicates that the EffectParameterSlot has been updated.
@@ -49,14 +54,8 @@ class EffectParameterSlot : public QObject {
     // Solely for handling control changes
     void slotLoaded(double v);
     void slotLinkType(double v);
-    void slotValue(double v);
-    void slotValueNormalized(double v);
+    void slotValueChanged(double v);
     void slotValueType(double v);
-    void slotValueDefault(double v);
-    void slotValueMaximum(double v);
-    void slotValueMaximumLimit(double v);
-    void slotValueMinimum(double v);
-    void slotValueMinimumLimit(double v);
 
     void slotParameterValueChanged(QVariant value);
 
@@ -82,14 +81,9 @@ class EffectParameterSlot : public QObject {
 
     ControlObject* m_pControlLoaded;
     ControlPushButton* m_pControlLinkType;
-    ControlObject* m_pControlValue;
-    ControlObject* m_pControlValueNormalized;
-    ControlObject* m_pControlValueType;
-    ControlObject* m_pControlValueDefault;
-    ControlObject* m_pControlValueMaximum;
-    ControlObject* m_pControlValueMaximumLimit;
-    ControlObject* m_pControlValueMinimum;
-    ControlObject* m_pControlValueMinimumLimit;
+    ControlEffectKnob* m_pControlValue;
+    ControlObject* m_pControlType;
+    double m_dChainParameter;
 
     DISALLOW_COPY_AND_ASSIGN(EffectParameterSlot);
 };

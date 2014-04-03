@@ -466,12 +466,10 @@ QList<QWidget*> LegacySkinParser::parseNode(QDomElement node) {
 }
 
 QWidget* LegacySkinParser::parseSplitter(QDomElement node) {
-    WSplitter* pSplitter = new WSplitter(m_pParent);
+    WSplitter* pSplitter = new WSplitter(m_pParent, m_pConfig);
     setupConnections(node, pSplitter);
     setupBaseWidget(node, pSplitter);
     setupWidget(node, pSplitter);
-    pSplitter->setup(node, *m_pContext);
-    pSplitter->Init();
 
     QDomNode childrenNode = m_pContext->selectNode(node, "Children");
     QWidget* pOldParent = m_pParent;
@@ -494,29 +492,8 @@ QWidget* LegacySkinParser::parseSplitter(QDomElement node) {
             }
         }
     }
-
-    if (m_pContext->hasNode(node, "SplitSizes")) {
-        QString sizesJoined = m_pContext->selectString(node, "SplitSizes");
-        QStringList sizesSplit = sizesJoined.split(",");
-        QList<int> sizes;
-        bool ok = false;
-        foreach (const QString& sizeStr, sizesSplit) {
-            sizes.push_back(sizeStr.toInt(&ok));
-            if (!ok) {
-                break;
-            }
-        }
-        if (sizes.length() != pSplitter->count()) {
-            qDebug() << "<SplitSizes> for <Splitter> (" << sizesJoined
-                     << ") does not match the number of children nodes:"
-                     << pSplitter->count();
-            ok = false;
-        }
-        if (ok) {
-            pSplitter->setSizes(sizes);
-        }
-
-    }
+    pSplitter->setup(node, *m_pContext);
+    pSplitter->Init();
 
     m_pParent = pOldParent;
     return pSplitter;
@@ -1531,7 +1508,7 @@ void LegacySkinParser::setupConnections(QDomNode node, WBaseWidget* pWidget) {
 
         if (m_pContext->hasNode(con, "BindProperty")) {
             QString property = m_pContext->selectString(con, "BindProperty");
-            qDebug() << "Making property connection for" << property;
+            //qDebug() << "Making property connection for" << property;
 
             ControlObjectSlave* pControlWidget =
                     new ControlObjectSlave(control->getKey(),
