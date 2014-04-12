@@ -15,6 +15,7 @@
 #include "widget/wspinny.h"
 #include "vinylcontrol/vinylcontrolmanager.h"
 #include "vinylcontrol/vinylcontrol.h"
+#include "util/dnd.h"
 
 WSpinny::WSpinny(QWidget* parent, VinylControlManager* pVCMan)
         : QGLWidget(parent, SharedGLContext::getWidget()),
@@ -37,14 +38,22 @@ WSpinny::WSpinny(QWidget* parent, VinylControlManager* pVCMan)
           m_bVinylActive(false),
           m_bSignalActive(true),
           m_iVinylScopeSize(0),
+          m_fAngle(0.0f),
+          m_dAngleCurrentPlaypos(-1),
+          m_dAngleLastPlaypos(-1),
           m_fGhostAngle(0.0f),
+          m_dGhostAngleCurrentPlaypos(-1),
           m_dGhostAngleLastPlaypos(-1),
           m_iStartMouseX(-1),
           m_iStartMouseY(-1),
           m_iFullRotations(0),
           m_dPrevTheta(0.),
           m_track_samples(0),
-          m_track_samplerate(0) {
+          m_track_samplerate(0),
+          m_bClampFailedWarning(false),
+          m_bGhostPlayback(false),
+          m_bWasGhostPlayback(false),
+          m_bWidgetDirty(false) {
 #ifdef __VINYLCONTROL__
     m_pVCManager = pVCMan;
 #endif
@@ -110,6 +119,7 @@ void WSpinny::onVinylSignalQualityUpdate(const VinylSignalQualityReport& report)
             line++;
         }
     }
+    m_bWidgetDirty = true;
 #endif
 }
 
@@ -143,7 +153,6 @@ void WSpinny::setup(QDomNode node, const SkinContext& context, QString group) {
     m_pPlayPos = new ControlObjectThread(
             group, "playposition");
     m_pVisualPlayPos = VisualPlayPosition::getVisualPlayPosition(group);
-
     m_pTrackSamples = new ControlObjectThread(
             group, "track_samples");
     connect(m_pTrackSamples, SIGNAL(valueChanged(double)),
@@ -196,8 +205,22 @@ void WSpinny::setup(QDomNode node, const SkinContext& context, QString group) {
 #endif
 }
 
+void WSpinny::maybeUpdate() {
+    m_pVisualPlayPos->getPlaySlipAt(0,
+                                    &m_dAngleCurrentPlaypos,
+                                    &m_dGhostAngleCurrentPlaypos);
+    bool m_bGhostPlayback = m_pSlipEnabled->get();
+    if (m_dAngleCurrentPlaypos != m_dAngleLastPlaypos ||
+            m_dGhostAngleCurrentPlaypos != m_dGhostAngleLastPlaypos ||
+            m_bGhostPlayback != m_bWasGhostPlayback ||
+            m_bWidgetDirty) {
+        repaint();
+    }
+}
+
 void WSpinny::paintEvent(QPaintEvent *e) {
     Q_UNUSED(e); //ditch unused param warning
+    m_bWidgetDirty = false;
 
     QPainter p(this);
     p.setRenderHint(QPainter::SmoothPixmapTransform);
@@ -220,15 +243,28 @@ void WSpinny::paintEvent(QPaintEvent *e) {
     // and draw the image at the corner.
     p.translate(width() / 2, height() / 2);
 
-    bool bGhostPlayback = m_pSlipEnabled->get();
 
-    if (bGhostPlayback) {
+
+    if (m_bGhostPlayback) {
         p.save();
     }
 
     double playPosition = -1;
     double slipPosition = -1;
     m_pVisualPlayPos->getPlaySlipAt(0, &playPosition, &slipPosition);
+    if (m_dAngleCurrentPlaypos != m_dAngleLastPlaypos) {
+        m_fAngle = VisualPlayPosition::calculateAngle(
+                    m_track_samples, m_track_samplerate, m_dRotationsPerSecond, playPosition);
+        m_dAngleLastPlaypos = m_dAngleCurrentPlaypos;
+    }
+
+    if (m_dGhostAngleCurrentPlaypos != m_dGhostAngleLastPlaypos) {
+        m_fGhostAngle = VisualPlayPosition::calculateAngle(
+                    m_track_samples, m_track_samplerate, m_dRotationsPerSecond, slipPosition);
+        m_dGhostAngleLastPlaypos = m_dGhostAngleCurrentPlaypos;
+    }
+
+    m_bWasGhostPlayback = m_bGhostPlayback;
 
     if (m_pFgImage && !m_pFgImage->isNull()) {
         // Now rotate the image and draw it on the screen.
@@ -237,12 +273,7 @@ void WSpinny::paintEvent(QPaintEvent *e) {
                 -(m_pFgImage->height() / 2), *m_pFgImage);
     }
 
-    if (bGhostPlayback && m_pGhostImage && !m_pGhostImage->isNull()) {
-        if (slipPosition != m_dGhostAngleLastPlaypos) {
-            m_fGhostAngle = VisualPlayPosition::calculateAngle(
-                    m_track_samples, m_track_samplerate, m_dRotationsPerSecond, slipPosition);
-            m_dGhostAngleLastPlaypos = slipPosition;
-        }
+    if (m_bGhostPlayback && m_pGhostImage && !m_pGhostImage->isNull()) {
         p.restore();
         p.save();
         p.rotate(m_fGhostAngle);
@@ -310,6 +341,10 @@ void WSpinny::updateVinylControlSpeed(double rpm) {
 }
 
 void WSpinny::updateVinylControlSignalEnabled(double enabled) {
+#ifdef __VINYLCONTROL__
+    if (m_pVCManager == NULL) {
+        return;
+    }
     m_bSignalActive = enabled;
 
     if (enabled && m_iVinylInput != -1) {
@@ -319,10 +354,13 @@ void WSpinny::updateVinylControlSignalEnabled(double enabled) {
         // fill with transparent black
         m_qImage.fill(qRgba(0,0,0,0));
     }
+    m_bWidgetDirty = true;
+#endif
 }
 
 void WSpinny::updateVinylControlEnabled(double enabled) {
     m_bVinylActive = enabled;
+    m_bWidgetDirty = true;
 }
 
 void WSpinny::mouseMoveEvent(QMouseEvent * e) {
@@ -419,19 +457,23 @@ void WSpinny::mouseReleaseEvent(QMouseEvent * e)
 
 void WSpinny::showEvent(QShowEvent* event) {
     Q_UNUSED(event);
+#ifdef __VINYLCONTROL__
     // If we want to draw the VC signal on this widget then register for
     // updates.
     if (m_bSignalActive && m_iVinylInput != -1 && m_pVCManager) {
         m_pVCManager->addSignalQualityListener(this);
     }
+#endif
 }
 
 void WSpinny::hideEvent(QHideEvent* event) {
     Q_UNUSED(event);
+#ifdef __VINYLCONTROL__
     // When we are hidden we do not want signal quality updates.
     if (m_pVCManager) {
         m_pVCManager->removeSignalQualityListener(this);
     }
+#endif
     // fill with transparent black
     m_qImage.fill(qRgba(0,0,0,0));
 }
@@ -457,19 +499,15 @@ void WSpinny::dragEnterEvent(QDragEnterEvent * event)
     }
 }
 
-void WSpinny::dropEvent(QDropEvent * event)
-{
+void WSpinny::dropEvent(QDropEvent * event) {
     if (event->mimeData()->hasUrls()) {
-        QList<QUrl> urls(event->mimeData()->urls());
-        QUrl url = urls.first();
-        QString name = url.toLocalFile();
-        //If the file is on a network share, try just converting the URL to a string...
-        if (name == "")
-            name = url.toString();
-
-        event->accept();
-        emit(trackDropped(name, m_group));
-    } else {
-        event->ignore();
+        QList<QFileInfo> files = DragAndDropHelper::supportedTracksFromUrls(
+                event->mimeData()->urls(), true, false);
+        if (!files.isEmpty()) {
+            event->accept();
+            emit(trackDropped(files.at(0).canonicalFilePath(), m_group));
+            return;
+        }
     }
+    event->ignore();
 }

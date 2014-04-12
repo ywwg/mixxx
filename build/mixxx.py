@@ -52,7 +52,8 @@ class MixxxBuild(object):
                                    'kfreebsd-amd64', 'kfreebsd-i386',
                                    'i486', 'i386', 'ppc', 'ppc64', 'powerpc',
                                    'powerpc64', 'powerpcspe', 's390x',
-                                   'amd64', 'amd64', 'em64t', 'intel64']:
+                                   'amd64', 'em64t', 'intel64', 'arm64',
+                                   'ppc64el']:
             raise Exception("invalid machine type")
 
         if toolchain not in ['gnu', 'msvs']:
@@ -200,6 +201,8 @@ class MixxxBuild(object):
             elif flags_force64:
                 self.env.Append(CCFLAGS='-m64')
 
+        self.setup_sysroot()
+
         if self.platform_is_osx:
             if self.architecture_is_powerpc:
                 self.env.Append(CCFLAGS='-arch ppc')
@@ -243,6 +246,64 @@ class MixxxBuild(object):
     def detect_machine(self):
         return platform.machine()
 
+    def setup_sysroot(self):
+        sysroot = Script.ARGUMENTS.get('sysroot', '')
+        if sysroot:
+            env.Append(CCFLAGS=['-isysroot', sysroot])
+
+        # If no sysroot was specified, pick one automatically. The only platform
+        # we pick one automatically on is OS X.
+        if self.platform_is_osx:
+            if '-isysroot' in self.env['CXXFLAGS'] or '-isysroot' in self.env['CFLAGS']:
+                print 'Skipping OS X automatic sysroot selection because -isysroot is in your CCFLAGS.'
+                return
+
+            print 'Automatically detecting Mac OS X SDK.'
+
+            # SDK versions in order of precedence.
+            sdk_versions = ( '10.9', '10.8', '10.7', '10.6', '10.5', )
+            clang_sdk_versions = ( '10.9', '10.8', '10.7', )
+            valid_cpp_lib_versions = ( 'libstdc++', 'libc++', )
+
+            # By default use old gcc C++ library version
+            osx_stdlib = Script.ARGUMENTS.get('stdlib', 'libstdc++')
+            if osx_stdlib not in valid_cpp_lib_versions:
+                raise Exception('Unsupported C++ stdlib version')
+
+            if osx_stdlib == 'libc++':
+                sdk_version_default = '10.9'
+            else:
+                sdk_version_default = '10.5'
+
+            min_sdk_version = Script.ARGUMENTS.get('osx_sdk_version_min', sdk_version_default)
+            if min_sdk_version not in sdk_versions:
+                raise Exception('Unsupported osx_sdk_version_min value')
+
+            if osx_stdlib == 'libc++' and min_sdk_version not in clang_sdk_versions:
+                raise Exception('stdlib=libc++ requires osx_sdk_version_min >= 10.7')
+
+            print "XCode developer directory:", os.popen('xcode-select -p').readline().strip()
+            for sdk in sdk_versions:
+                sdk_path = os.popen(
+                    'xcodebuild -version -sdk macosx%s Path' % sdk).readline().strip()
+                if sdk_path:
+                    print "Automatically selected OS X SDK:", sdk_path
+
+                    common_flags = ['-isysroot', sdk_path,
+                                    '-mmacosx-version-min=%s' % min_sdk_version]
+                    link_flags = [
+                        '-Wl,-syslibroot,' + sdk_path,
+                        '-stdlib=%s' % osx_stdlib
+                    ]
+                    self.env.Append(CCFLAGS=common_flags)
+                    self.env.Append(LINKFLAGS=common_flags + link_flags)
+                    return
+
+            print 'Could not find a supported Mac OS X SDK.'
+            print ('Make sure that XCode is installed, you have installed '
+                   'the command line tools, and have selected an SDK path with '
+                   'xcode-select.')
+
     def read_environment_variables(self):
         # Import environment variables from the terminal. Note that some
         # variables correspond to variables inside the SCons env with different
@@ -257,6 +318,16 @@ class MixxxBuild(object):
             self.env['CXXFLAGS'] += SCons.Util.CLVar(os.environ['CXXFLAGS'])
         if 'LDFLAGS' in os.environ:
             self.env['LINKFLAGS'] += SCons.Util.CLVar(os.environ['LDFLAGS'])
+
+        # Allow installation directories to be specified.
+        prefix = Script.ARGUMENTS.get('prefix', '/usr/local')
+        if os.environ.has_key('LIBDIR'):
+            self.env['LIBDIR'] = os.path.relpath(os.environ['LIBDIR'], prefix)
+        if os.environ.has_key('BINDIR'):
+            self.env['BINDIR'] = os.path.relpath(os.environ['BINDIR'], prefix)
+        if os.environ.has_key('SHAREDIR'):
+            self.env['SHAREDIR'] = \
+                os.path.relpath(os.environ['SHAREDIR'], prefix)
 
         # Initialize this as a list, fixes a bug where first CPPDEFINE would get
         # mangled
@@ -301,6 +372,7 @@ class MixxxBuild(object):
                  'Set the path to the root of a cross-compile sandbox.', '')
         vars.Add('force32', 'Force a 32-bit compile', 0)
         vars.Add('force64', 'Force a 64-bit compile', 0)
+        vars.Add('sysroot', 'Specify a custom sysroot', '')
 
         for feature_class in self.available_features:
             # Instantiate the feature
