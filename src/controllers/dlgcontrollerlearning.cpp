@@ -249,7 +249,8 @@ void DlgControllerLearning::slotMessageReceived(unsigned char status,
     // Unless this is a MIDI_CC and the progress bar is full, restart the
     // timer.  That way the user won't just push buttons forever and wonder
     // why the wizard never advances.
-    if ((status & 0xF0) != MIDI_CC || progressBarWiggleFeedback->value() != 10) {
+    unsigned char opCode = MidiUtils::opCodeFromStatus(status);
+    if (opCode != MIDI_CC || progressBarWiggleFeedback->value() != 10) {
         m_lastMessageTimer.start();
     }
 }
@@ -276,16 +277,7 @@ void DlgControllerLearning::slotTimerExpired() {
     // It's been a timer interval since we last got a message. Let's try to
     // detect mappings.
     MidiInputMappings mappings =
-            LearningUtils::guessMidiInputMappings(m_messages);
-
-    // Add control and description info to each learned input mapping.
-    for (MidiInputMappings::iterator it = mappings.begin();
-         it != mappings.end(); ++it) {
-        MidiInputMapping& mapping = *it;
-        mapping.control = m_currentControl;
-        mapping.description = QString("MIDI Learned from %1 messages.")
-                .arg(m_messages.size());
-    }
+            LearningUtils::guessMidiInputMappings(m_currentControl, m_messages);
 
     if (mappings.isEmpty()) {
         labelErrorText->setText(tr("Unable to detect a mapping -- please try again. Be sure to only touch one control at once."));
