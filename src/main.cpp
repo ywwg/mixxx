@@ -111,32 +111,29 @@ void MessageHandler(QtMsgType type,
     if (!Logfile.isOpen()) {
         // This Must be done in the Message Handler itself, to guarantee that the
         // QApplication is initialized
-        QString logFileName = CmdlineArgs::Instance().getSettingsPath() + "/mixxx.log";
+        QString logLocation = CmdlineArgs::Instance().getSettingsPath();
+        QString logFileName;
 
-        //backup old logfiles
-        //FIXME: cout << doesn't get printed until after mixxx quits (???)
-        for (int i=9; i>0; i--)
-        {
-            QString oldlogname = QString("%1.%2").arg(logFileName).arg(i);
-            QFileInfo logbackup(oldlogname);
-            if (logbackup.exists())
-            {
-                QString olderlogname = QString("%1.%2").arg(logFileName).arg(i+1);
-                // this should only happen with number 10
-                if (QFileInfo(olderlogname).exists())
-                    QFile::remove(olderlogname);
-                if (!QFile::rename(oldlogname, olderlogname))
-                    std::cout << "Error backing up old logfile\n" << oldlogname.toStdString();
+        // Rotate old logfiles
+        //FIXME: cerr << doesn't get printed until after mixxx quits (???)
+        for (int i = 9; i >= 0; --i) {
+            if (i == 0) {
+                logFileName = QString("%1/mixxx.log").arg(logLocation);
+            } else {
+                logFileName = QString("%1/mixxx.log.%2").arg(logLocation).arg(i);
             }
-        }
-        QFileInfo log(logFileName);
-        if (log.exists())
-        {
-            QString olderlogname = QString("%1.1").arg(logFileName);
-            if(QFileInfo(olderlogname).exists())
-                QFile::remove(olderlogname);
-            if (!QFile::rename(logFileName, olderlogname))
-                std::cout << "Error backing up logfile\n" << logFileName.toStdString();
+            QFileInfo logbackup(logFileName);
+            if (logbackup.exists()) {
+                QString olderlogname =
+                        QString("%1/mixxx.log.%2").arg(logLocation).arg(i + 1);
+                // This should only happen with number 10
+                if (QFileInfo(olderlogname).exists()) {
+                    QFile::remove(olderlogname);
+                }
+                if (!QFile::rename(logFileName, olderlogname)) {
+                    std::cerr << "Error rolling over logfile " << logFileName.toStdString();
+                }
+            }
         }
         // XXX will there ever be a case that we can't write to our current
         // working directory?
@@ -242,6 +239,10 @@ int main(int argc, char * argv[])
 \n\
     --developer             Enables developer-mode. Includes extra log info,\n\
                             stats on performance, and a Developer tools menu.\n\
+\n\
+    --safeMode              Enables safe-mode. Disables OpenGL waveforms,\n\
+                            and spinning vinyl widgets. Try this option if\n\
+                            Mixxx is crashing on startup.\n\
 \n\
     --locale LOCALE         Use a custom locale for loading translations\n\
                             (e.g 'fr')\n\
