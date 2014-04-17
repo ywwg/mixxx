@@ -49,7 +49,7 @@ DlgPrefBeats::DlgPrefBeats(QWidget *parent, ConfigObject<ConfigValue> *_config)
     connect(txtMaxBpm, SIGNAL(valueChanged(int)),
             this, SLOT(maxBpmRangeChanged(int)));
     connect(txtMaxLen, SIGNAL(valueChanged(int)),
-            this, SLOT(maxBpmRangeChanged(int)));
+            this, SLOT(maxLenChanged(int)));
 
     connect(bReanalyse,SIGNAL(stateChanged(int)),
             this, SLOT(slotReanalyzeChanged(int)));

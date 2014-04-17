@@ -64,6 +64,7 @@ bool AnalyserBeats::initialise(TrackPointer tio, int sampleRate, int totalSample
         m_iMinBpm = m_pConfig->getValueString(ConfigKey(BPM_CONFIG_KEY, BPM_RANGE_START)).toInt();
         m_iMaxBpm = m_pConfig->getValueString(ConfigKey(BPM_CONFIG_KEY, BPM_RANGE_END)).toInt();
     }
+    m_iMaxLen = m_pConfig->getValueString(ConfigKey(BPM_CONFIG_KEY, BPM_MAX_LENGTH)).toInt();
 
     m_bPreferencesFixedTempo = static_cast<bool>(
         m_pConfig->getValueString(
@@ -129,9 +130,9 @@ bool AnalyserBeats::initialise(TrackPointer tio, int sampleRate, int totalSample
     }
 
     // If the track is too long, don't analyze
-    if (((float)m_iTotalSamples / m_iSampleRate) / 60 > m_iMaxLen)
-    {
-        qDebug() << "Track is longer than " << m_iMaxLen << " minutes as per preferences, not analyzing";
+    if (((float)m_iTotalSamples / m_iSampleRate) / 60 > m_iMaxLen) {
+        qDebug() << "Track is longer than " << m_iMaxLen
+                 << " minutes as per preferences, not analyzing";
         bShouldAnalyze = false;
     }
 
@@ -159,6 +160,7 @@ bool AnalyserBeats::initialise(TrackPointer tio, int sampleRate, int totalSample
 bool AnalyserBeats::loadStored(TrackPointer tio) const {
     int iMinBpm;
     int iMaxBpm;
+    int iMaxLen;
 
     bool allow_above = static_cast<bool>(m_pConfig->getValueString(
         ConfigKey(BPM_CONFIG_KEY, BPM_ABOVE_RANGE_ENABLED)).toInt());
@@ -169,6 +171,7 @@ bool AnalyserBeats::loadStored(TrackPointer tio) const {
         iMinBpm = m_pConfig->getValueString(ConfigKey(BPM_CONFIG_KEY, BPM_RANGE_START)).toInt();
         iMaxBpm = m_pConfig->getValueString(ConfigKey(BPM_CONFIG_KEY, BPM_RANGE_END)).toInt();
     }
+    iMaxLen = m_pConfig->getValueString(ConfigKey(BPM_CONFIG_KEY, BPM_MAX_LENGTH)).toInt();
 
     bool bPreferencesFixedTempo = static_cast<bool>(
         m_pConfig->getValueString(
@@ -186,6 +189,13 @@ bool AnalyserBeats::loadStored(TrackPointer tio) const {
     bool bpmLock = tio->hasBpmLock();
     if (bpmLock) {
         qDebug() << "Track is BpmLocked: Beat calculation will not start";
+        return true;
+    }
+
+    // If the track is too long, don't analyze
+    if (tio->getDuration() * 60 > iMaxLen) {
+        qDebug() << "Track is longer than " << m_iMaxLen
+                 << " minutes as per preferences, not analyzing";
         return true;
     }
 
