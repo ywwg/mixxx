@@ -105,9 +105,11 @@ class MidiController : public Controller {
     QList<MidiOutputHandler*> m_outputs;
     MidiControllerPreset m_preset;
     SoftTakeover m_st;
+    QList<QPair<MidiInputMapping, unsigned char> > m_fourteen_bit_queued_mappings;
 
     // So it can access sendShortMsg()
     friend class MidiOutputHandler;
+    friend class MidiControllerTest;
 };
 
 #endif

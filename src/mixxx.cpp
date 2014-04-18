@@ -33,6 +33,7 @@
 #include "defs_urls.h"
 #include "dlgabout.h"
 #include "dlgpreferences.h"
+#include "dlgdevelopertools.h"
 #include "engine/enginemaster.h"
 #include "engine/enginemicrophone.h"
 #include "effects/effectsmanager.h"
@@ -87,6 +88,7 @@ const int MixxxMainWindow::kAuxiliaryCount = 4;
 
 MixxxMainWindow::MixxxMainWindow(QApplication* pApp, const CmdlineArgs& args)
         : m_pWidgetParent(NULL),
+          m_pDeveloperToolsDlg(NULL),
           m_runtime_timer("MixxxMainWindow::runtime"),
           m_cmdLineArgs(args),
           m_iNumConfiguredDecks(0) {
@@ -126,8 +128,6 @@ MixxxMainWindow::MixxxMainWindow(QApplication* pApp, const CmdlineArgs& args)
 
     // Store the path in the config database
     m_pConfig->set(ConfigKey("[Config]", "Path"), ConfigValue(resourcePath));
-
-    initializeKeyboard();
 
     setAttribute(Qt::WA_AcceptTouchEvents);
     m_pTouchShift = new ControlPushButton(ConfigKey("[Controls]", "touch_shift"));
@@ -182,6 +182,14 @@ MixxxMainWindow::MixxxMainWindow(QApplication* pApp, const CmdlineArgs& args)
     ControlObject* pNumAuxiliaries = new ControlObject(ConfigKey("[Master]", "num_auxiliaries"));
     pNumAuxiliaries->setParent(this);
 
+    m_PassthroughMapper = new QSignalMapper(this);
+    connect(m_PassthroughMapper, SIGNAL(mapped(int)),
+            this, SLOT(slotControlPassthrough(int)));
+
+    m_AuxiliaryMapper = new QSignalMapper(this);
+    connect(m_AuxiliaryMapper, SIGNAL(mapped(int)),
+            this, SLOT(slotControlAuxiliary(int)));
+
     for (int i = 0; i < kAuxiliaryCount; ++i) {
         QString group = QString("[Auxiliary%1]").arg(i + 1);
         EngineAux* pAux = new EngineAux(strdup(group.toStdString().c_str()),
@@ -191,6 +199,17 @@ MixxxMainWindow::MixxxMainWindow(QApplication* pApp, const CmdlineArgs& args)
         m_pEngine->addChannel(pAux);
         m_pSoundManager->registerInput(auxInput, pAux);
         pNumAuxiliaries->set(pNumAuxiliaries->get() + 1);
+
+        m_pAuxiliaryPassthrough.push_back(
+                new ControlObjectSlave(group, "passthrough"));
+        ControlObjectSlave* auxiliary_passthrough =
+                m_pAuxiliaryPassthrough.back();
+
+        // These non-vinyl passthrough COs have their index offset by the max
+        // number of vinyl inputs.
+        m_AuxiliaryMapper->setMapping(auxiliary_passthrough, i);
+        auxiliary_passthrough->connectValueChanged(m_AuxiliaryMapper,
+                                                   SLOT(map()));
     }
 
     // Do not write meta data back to ID3 when meta data has changed
@@ -324,6 +343,8 @@ MixxxMainWindow::MixxxMainWindow(QApplication* pApp, const CmdlineArgs& args)
     m_pPrefDlg->setWindowIcon(QIcon(":/images/ic_mixxx_window.png"));
     m_pPrefDlg->setHidden(true);
 
+    initializeKeyboard();
+
     // Try open player device If that fails, the preference panel is opened.
     int setupDevices = m_pSoundManager->setupDevices();
     unsigned int numDevices = m_pSoundManager->getConfig().getOutputs().count();
@@ -399,9 +420,12 @@ MixxxMainWindow::MixxxMainWindow(QApplication* pApp, const CmdlineArgs& args)
     pApp->installEventFilter(this); // The eventfilter is located in this
                                     // Mixxx class as a callback.
 
-    // If we were told to start in fullscreen mode on the command-line,
+    // If we were told to start in fullscreen mode on the command-line
+    // or if user chose always starts in fullscreen mode,
     // then turn on fullscreen mode.
-    if (args.getStartInFullscreen()) {
+    bool fullscreenPref = m_pConfig->getValueString(
+                ConfigKey("[Config]", "StartInFullscreen"), "0").toInt();
+    if (args.getStartInFullscreen() || fullscreenPref) {
         slotViewFullScreen(true);
     }
     emit(newSkinLoaded());
@@ -486,6 +510,8 @@ MixxxMainWindow::~MixxxMainWindow() {
     delete m_VCControlMapper;
     delete m_VCCheckboxMapper;
 #endif
+    delete m_PassthroughMapper;
+    delete m_AuxiliaryMapper;
     delete m_TalkoverMapper;
     // PlayerManager depends on Engine, SoundManager, VinylControlManager, and Config
     qDebug() << "delete playerManager " << qTime.elapsed();
@@ -659,6 +685,11 @@ void MixxxMainWindow::initializeTranslations(QApplication* pApp) {
     // Attempt to load user locale from config
     if (userLocale == "") {
         userLocale = m_pConfig->getValueString(ConfigKey("[Config]","Locale"));
+    }
+
+    // source language
+    if (userLocale == "en_US") {
+        return;
     }
 
     // Load Qt translations for this locale from the system translation
@@ -1250,6 +1281,19 @@ void MixxxMainWindow::initActions()
     connect(m_pDeveloperReloadSkin, SIGNAL(toggled(bool)),
             this, SLOT(slotDeveloperReloadSkin(bool)));
 
+    QString developerToolsTitle = tr("Developer Tools");
+    QString developerToolsText = tr("Opens the developer tools dialog");
+    m_pDeveloperTools = new QAction(developerToolsTitle, this);
+    m_pDeveloperTools->setShortcut(
+        QKeySequence(m_pKbdConfig->getValueString(ConfigKey("[KeyboardShortcuts]",
+                                                  "OptionsMenu_DeveloperTools"),
+                                                  tr("Ctrl+Shift+D"))));
+    m_pDeveloperTools->setShortcutContext(Qt::ApplicationShortcut);
+    m_pDeveloperTools->setStatusTip(developerToolsText);
+    m_pDeveloperTools->setWhatsThis(buildWhatsThis(developerToolsTitle, developerToolsText));
+    connect(m_pDeveloperTools, SIGNAL(triggered()),
+            this, SLOT(slotDeveloperTools()));
+
     // TODO: This code should live in a separate class.
     m_TalkoverMapper = new QSignalMapper(this);
     connect(m_TalkoverMapper, SIGNAL(mapped(int)),
@@ -1323,6 +1367,7 @@ void MixxxMainWindow::initMenuBar()
 
     // Developer Menu
     m_pDeveloperMenu->addAction(m_pDeveloperReloadSkin);
+    m_pDeveloperMenu->addAction(m_pDeveloperTools);
 
     // menuBar entry helpMenu
     m_pHelpMenu->addAction(m_pHelpSupport);
@@ -1419,6 +1464,20 @@ void MixxxMainWindow::slotDeveloperReloadSkin(bool toggle) {
     rebootMixxxView();
 }
 
+void MixxxMainWindow::slotDeveloperTools() {
+    if (m_pDeveloperToolsDlg == NULL) {
+        m_pDeveloperToolsDlg = new DlgDeveloperTools(this, m_pConfig);
+        connect(m_pDeveloperToolsDlg, SIGNAL(destroyed()),
+                this, SLOT(slotDeveloperToolsClosed()));
+    }
+    m_pDeveloperToolsDlg->show();
+    m_pDeveloperToolsDlg->activateWindow();
+}
+
+void MixxxMainWindow::slotDeveloperToolsClosed() {
+    m_pDeveloperToolsDlg = NULL;
+}
+
 void MixxxMainWindow::slotViewFullScreen(bool toggle)
 {
     if (m_pViewFullScreen)
@@ -1508,6 +1567,61 @@ void MixxxMainWindow::slotControlVinylControl(int deck) {
 #endif
 }
 
+void MixxxMainWindow::slotControlPassthrough(int index) {
+    if (index >= kMaximumVinylControlInputs || index >= m_iNumConfiguredDecks) {
+        qWarning() << "Tried to activate passthrough on a deck that we "
+                      "haven't configured -- ignoring request.";
+        m_pPassthroughEnabled[index]->set(0.0);
+        return;
+    }
+    bool toggle = static_cast<bool>(m_pPassthroughEnabled[index]->get());
+    if (toggle) {
+        if (m_pPlayerManager->hasVinylInput(index)) {
+            return;
+        }
+        // Else...
+        m_pOptionsVinylControl[index]->setChecked(false);
+        m_pPassthroughEnabled[index]->set(0.0);
+
+        QMessageBox::warning(
+                this,
+                tr("Mixxx"),
+                tr("There is no input device selected for this passthrough control.\n"
+                   "Please select an input device in the sound hardware preferences first."),
+                QMessageBox::Ok, QMessageBox::Ok);
+        m_pPrefDlg->show();
+        m_pPrefDlg->showSoundHardwarePage();
+    }
+}
+
+void MixxxMainWindow::slotControlAuxiliary(int index) {
+    if (index >= kAuxiliaryCount || index >= m_iNumConfiguredDecks) {
+        qWarning() << "Tried to activate auxiliary input that we "
+                      "haven't configured -- ignoring request.";
+        m_pAuxiliaryPassthrough[index]->set(0.0);
+        return;
+    }
+    bool passthrough = static_cast<bool>(m_pAuxiliaryPassthrough[index]->get());
+    if (passthrough) {
+        if (ControlObject::getControl(
+                m_pAuxiliaryPassthrough[index]->getKey().group,
+                "enabled")->get()) {
+            return;
+        }
+        // Else...
+        m_pAuxiliaryPassthrough[index]->set(0.0);
+
+        QMessageBox::warning(
+                this,
+                tr("Mixxx"),
+                tr("There is no input device selected for this auxiliary input.\n"
+                   "Please select an input device in the sound hardware preferences first."),
+                QMessageBox::Ok, QMessageBox::Ok);
+        m_pPrefDlg->show();
+        m_pPrefDlg->showSoundHardwarePage();
+    }
+}
+
 void MixxxMainWindow::slotCheckboxVinylControl(int deck) {
 #ifdef __VINYLCONTROL__
     if (deck >= m_iNumConfiguredDecks) {
@@ -1531,14 +1645,19 @@ void MixxxMainWindow::slotNumDecksChanged(double dNumDecks) {
     for (int i = m_iNumConfiguredDecks; i < num_decks; ++i) {
         m_pOptionsVinylControl[i]->setVisible(true);
         m_pVinylControlEnabled.push_back(
-                new ControlObjectThread(PlayerManager::groupForDeck(i),
+                new ControlObjectSlave(PlayerManager::groupForDeck(i),
                                         "vinylcontrol_enabled"));
-
-        ControlObjectThread* vc_enabled = m_pVinylControlEnabled.back();
+        ControlObjectSlave* vc_enabled = m_pVinylControlEnabled.back();
         m_VCControlMapper->setMapping(vc_enabled, i);
-        connect(vc_enabled, SIGNAL(valueChanged(double)),
-                m_VCControlMapper, SLOT(map()));
+        vc_enabled->connectValueChanged(m_VCControlMapper, SLOT(map()));
 
+        m_pPassthroughEnabled.push_back(
+                new ControlObjectSlave(PlayerManager::groupForDeck(i),
+                                        "passthrough"));
+        ControlObjectSlave* passthrough_enabled = m_pPassthroughEnabled.back();
+        m_PassthroughMapper->setMapping(passthrough_enabled, i);
+        passthrough_enabled->connectValueChanged(m_PassthroughMapper,
+                                                 SLOT(map()));
     }
     for (int i = num_decks; i < kMaximumVinylControlInputs; ++i) {
         m_pOptionsVinylControl[i]->setVisible(false);
@@ -1569,7 +1688,7 @@ void MixxxMainWindow::slotTalkoverChanged(int mic_num) {
                    "Please select an input device in the sound hardware preferences first."),
                 QMessageBox::Ok, QMessageBox::Ok);
     m_pPrefDlg->show();
-            m_pPrefDlg->showSoundHardwarePage();
+    m_pPrefDlg->showSoundHardwarePage();
 }
 
 void MixxxMainWindow::slotHelpAbout() {

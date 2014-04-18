@@ -43,6 +43,7 @@ class GuiTick;
 class DlgPreferences;
 class SoundManager;
 class ControlPushButton;
+class DlgDeveloperTools;
 
 #include "configobject.h"
 #include "util/cmdlineargs.h"
@@ -88,6 +89,8 @@ class MixxxMainWindow : public QMainWindow {
     // toggle vinyl control - Don't #ifdef this because MOC is dumb
     void slotControlVinylControl(int);
     void slotCheckboxVinylControl(int);
+    void slotControlPassthrough(int);
+    void slotControlAuxiliary(int);
     // toogle keyboard on-off
     void slotOptionsKeyboard(bool toggle);
     // Preference dialog
@@ -117,6 +120,9 @@ class MixxxMainWindow : public QMainWindow {
     void slotViewFullScreen(bool toggle);
     // Reload the skin.
     void slotDeveloperReloadSkin(bool toggle);
+    // Open the developer tools dialog.
+    void slotDeveloperTools();
+    void slotDeveloperToolsClosed();
 
     void slotToCenterOfPrimaryScreen();
 
@@ -229,6 +235,8 @@ class MixxxMainWindow : public QMainWindow {
     QAction* m_pHelpManual;
 
     QAction* m_pDeveloperReloadSkin;
+    QAction* m_pDeveloperTools;
+    DlgDeveloperTools* m_pDeveloperToolsDlg;
 
     int m_iNoPlaylists;
 
@@ -251,12 +259,16 @@ class MixxxMainWindow : public QMainWindow {
     const CmdlineArgs& m_cmdLineArgs;
 
     ControlPushButton* m_pTouchShift;
-    QList<ControlObjectThread*> m_pVinylControlEnabled;
+    QList<ControlObjectSlave*> m_pVinylControlEnabled;
+    QList<ControlObjectSlave*> m_pPassthroughEnabled;
+    QList<ControlObjectSlave*> m_pAuxiliaryPassthrough;
     ControlObjectThread* m_pNumDecks;
     int m_iNumConfiguredDecks;
     QList<ControlObjectSlave*> m_micTalkoverControls;
     QSignalMapper* m_VCControlMapper;
     QSignalMapper* m_VCCheckboxMapper;
+    QSignalMapper* m_PassthroughMapper;
+    QSignalMapper* m_AuxiliaryMapper;
     QSignalMapper* m_TalkoverMapper;
 
     static const int kMicrophoneCount;
