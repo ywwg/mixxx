@@ -5,6 +5,10 @@ uniform vec4 lowColor;
 uniform vec4 midColor;
 uniform vec4 highColor;
 
+uniform float lowGain;
+uniform float midGain;
+uniform float highGain;
+
 uniform int textureSize;
 uniform sampler2D signalTexture;
 
@@ -23,24 +27,39 @@ void main(void)
     float ourDistance = abs((uv.y - 0.5) * 2.0);
     vec4 signalDistance = rawFiltredSignal - ourDistance;
 
+    // Fade waveforms based on gain, but never fade all the way out.
+    float lowFade = lowGain * .8 + .2;
+    float midFade = midGain * .8 + .2;
+    float highFade = highGain * .8 + .2;
+
+    if (lowFade > 1.0) {
+      lowFade = 1.0;
+    }
+    if (midFade > 1.0) {
+      midFade = 1.0;
+    }
+    if (highFade > 1.0) {
+      highFade = 1.0;
+    }
+
     if (signalDistance.x > 0.0) {
-      outputColor.x += lowColor.x;
-      outputColor.y += lowColor.y;
-      outputColor.z += lowColor.z;
+      outputColor.x += lowColor.x * lowFade;
+      outputColor.y += lowColor.y * lowFade;
+      outputColor.z += lowColor.z * lowFade;
       outputColor.w = 0.8;
     }
 
     if (signalDistance.y > 0.0) {
-      outputColor.x += midColor.x;
-      outputColor.y += midColor.y;
-      outputColor.z += midColor.z;
+      outputColor.x += midColor.x * midFade;
+      outputColor.y += midColor.y * midFade;
+      outputColor.z += midColor.z * midFade;
       outputColor.w = 0.8;
     }
 
     if (signalDistance.z > 0.0) {
-      outputColor.x += highColor.x;
-      outputColor.y += highColor.y;
-      outputColor.z += highColor.z;
+      outputColor.x += highColor.x * highFade;
+      outputColor.y += highColor.y * highFade;
+      outputColor.z += highColor.z * highFade;
       outputColor.w = 0.8;
     }
 

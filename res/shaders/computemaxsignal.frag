@@ -42,10 +42,17 @@ void main(void)
 
     vec4 new_currentData = getWaveformData(new_currentIndex);
 
-    new_currentData *= allGain;
+    // Rescale data so it's at least 0.04 -- this draws a line down the
+    // center even when there's no signal.
+    new_currentData *= allGain * .96;
+    new_currentData += .04;
+
+    /*
+    // Scale waveform based on gain values.
     new_currentData.x *= lowGain;
     new_currentData.y *= midGain;
     new_currentData.z *= highGain;
+    */
 
     gl_FragColor = new_currentData;
     return;
