@@ -42,17 +42,22 @@ void main(void)
 
     vec4 new_currentData = getWaveformData(new_currentIndex);
 
+    // Scale waveform based on gain values, but only if larger. (We use
+    // opacity when the gain is lower).
+    if (lowGain > 1) {
+        new_currentData.x *= lowGain;
+    }
+    if (midGain > 1) {
+        new_currentData.y *= midGain;
+    }
+    if (highGain > 1) {
+        new_currentData.z *= highGain;
+    }
+
     // Rescale data so it's at least 0.04 -- this draws a line down the
     // center even when there's no signal.
     new_currentData *= allGain * .96;
     new_currentData += .04;
-
-    /*
-    // Scale waveform based on gain values.
-    new_currentData.x *= lowGain;
-    new_currentData.y *= midGain;
-    new_currentData.z *= highGain;
-    */
 
     gl_FragColor = new_currentData;
     return;
