@@ -108,6 +108,11 @@ class EngineBuffer : public EngineObject {
         SEEK_PHASE
     };
 
+    enum KeylockEngines {
+        SOUNDTOUCH,
+        RUBBERBAND
+    };
+
     EngineBuffer(const char* _group, ConfigObject<ConfigValue>* _config,
                  EngineChannel* pChannel, EngineMaster* pMixingEngine);
     virtual ~EngineBuffer();
@@ -152,6 +157,17 @@ class EngineBuffer : public EngineObject {
     // For dependency injection of fake tracks.
     TrackPointer loadFakeTrack();
 
+    static QString getKeylockEngineName(int index) {
+        switch (index) {
+        case SOUNDTOUCH:
+            return tr("Soundtouch (faster)");
+        case RUBBERBAND:
+            return tr("Rubberband (better)");
+        default:
+            return tr("Unknown (bad value)");
+        }
+    }
+
   public slots:
     void slotControlPlaySync(double);
     void slotControlPlayRequest(double);
@@ -164,6 +180,7 @@ class EngineBuffer : public EngineObject {
     void slotControlSeekAbs(double);
     void slotControlSeekExact(double);
     void slotControlSlip(double);
+    void slotKeylockEngineChanged(double);
 
     // Request that the EngineBuffer load a track. Since the process is
     // asynchronous, EngineBuffer will emit a trackLoaded signal when the load
@@ -300,6 +317,7 @@ class EngineBuffer : public EngineObject {
     ControlObject* m_pMasterRate;
     ControlPotmeter* m_playposSlider;
     ControlObjectSlave* m_pSampleRate;
+    ControlObjectSlave* m_pKeylockEngine;
     ControlPushButton* m_pKeylock;
     QScopedPointer<ControlObjectSlave> m_pPassthroughEnabled;
 
@@ -323,6 +341,7 @@ class EngineBuffer : public EngineObject {
     // Object used for pitch-indep time stretch (key lock) scaling of the audio
     EngineBufferScaleST* m_pScaleST;
     EngineBufferScaleRubberBand* m_pScaleRB;
+    EngineBufferScale* m_pScaleKeylock;
     EngineBufferScaleDummy* m_pScaleDummy;
     // Indicates whether the scaler has changed since the last process()
     bool m_bScalerChanged;
