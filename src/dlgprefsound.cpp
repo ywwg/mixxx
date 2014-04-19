@@ -117,6 +117,9 @@ DlgPrefSound::DlgPrefSound(QWidget* pParent, SoundManager* pSoundManager,
     m_pMasterDelay =
             new ControlObjectSlave("[Master]", "delay", this);
 
+    headDelaySpinBox->setValue(m_pHeadDelay->get());
+    masterDelaySpinBox->setValue(m_pMasterDelay->get());
+
     m_pKeylockEngine =
             new ControlObjectSlave("[Master]", "keylock_engine", this);
 
