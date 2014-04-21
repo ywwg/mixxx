@@ -108,9 +108,10 @@ class EngineBuffer : public EngineObject {
         SEEK_PHASE
     };
 
-    enum KeylockEngines {
+    enum KeylockEngine {
         SOUNDTOUCH,
-        RUBBERBAND
+        RUBBERBAND,
+        KEYLOCK_ENGINE_COUNT,
     };
 
     EngineBuffer(const char* _group, ConfigObject<ConfigValue>* _config,
@@ -157,8 +158,8 @@ class EngineBuffer : public EngineObject {
     // For dependency injection of fake tracks.
     TrackPointer loadFakeTrack();
 
-    static QString getKeylockEngineName(int index) {
-        switch (index) {
+    static QString getKeylockEngineName(KeylockEngine engine) {
+        switch (engine) {
         case SOUNDTOUCH:
             return tr("Soundtouch (faster)");
         case RUBBERBAND:
@@ -341,7 +342,9 @@ class EngineBuffer : public EngineObject {
     // Object used for pitch-indep time stretch (key lock) scaling of the audio
     EngineBufferScaleST* m_pScaleST;
     EngineBufferScaleRubberBand* m_pScaleRB;
-    EngineBufferScale* m_pScaleKeylock;
+    // The keylock engine is configurable, so it could flip flop between
+    // ScaleST and ScaleRB during a single callback.
+    EngineBufferScale* volatile m_pScaleKeylock;
     EngineBufferScaleDummy* m_pScaleDummy;
     // Indicates whether the scaler has changed since the last process()
     bool m_bScalerChanged;
