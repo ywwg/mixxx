@@ -160,7 +160,6 @@ void EngineFilterBlock::process(CSAMPLE* pInOut, const int iBufferSize) {
     }
 
     float fLow=0.f, fMid=0.f, fHigh=0.f;
-
     if (filterKillLow->get()==0.)
         fLow = filterpotLow->get(); //*0.7;
     if (filterKillMid->get()==0.)

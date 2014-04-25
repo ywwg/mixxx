@@ -170,7 +170,6 @@ class EngineBuffer : public EngineObject {
     }
 
   public slots:
-    void slotControlPlaySync(double);
     void slotControlPlayRequest(double);
     void slotControlPlayFromStart(double);
     void slotControlJumpToStartAndStop(double);
@@ -301,7 +300,6 @@ class EngineBuffer : public EngineObject {
     ControlObject* m_pTrackSamples;
     ControlObject* m_pTrackSampleRate;
 
-    ControlPushButton* m_playSyncButton;
     ControlPushButton* m_playButton;
     ControlPushButton* m_playStartButton;
     ControlPushButton* m_stopStartButton;

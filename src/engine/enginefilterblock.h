@@ -19,7 +19,6 @@
 #define ENGINEFILTERBLOCK_H
 
 #include "engine/engineobject.h"
-#include "controlobject.h"
 
 class ControlObjectSlave;
 class ControlLogpotmeter;

@@ -134,13 +134,6 @@ EngineBuffer::EngineBuffer(const char* _group, ConfigObject<ConfigValue>* _confi
             this, SLOT(slotControlPlayRequest(double)),
             Qt::DirectConnection);
 
-    // Play and Sync
-    m_playSyncButton = new ControlPushButton(ConfigKey(m_group, "play_sync"));
-    m_playSyncButton->set(0);
-    connect(m_playSyncButton, SIGNAL(valueChanged(double)),
-            this, SLOT(slotControlPlaySync(double)),
-            Qt::DirectConnection);
-
     //Play from Start Button (for sampler)
     m_playStartButton = new ControlPushButton(ConfigKey(m_group, "start_play"));
     connect(m_playStartButton, SIGNAL(valueChanged(double)),
@@ -316,7 +309,6 @@ EngineBuffer::~EngineBuffer()
     delete m_pReadAheadManager;
     delete m_pReader;
 
-    delete m_playSyncButton;
     delete m_playButton;
     delete m_playStartButton;
     delete m_stopStartButton;
@@ -632,14 +624,6 @@ void EngineBuffer::slotControlPlayRequest(double v) {
     double verifiedPlay = updateIndicatorsAndModifyPlay(v);
     // set and confirm must be called here in any case to update the widget toggle state
     m_playButton->setAndConfirm(verifiedPlay);
-}
-
-void EngineBuffer::slotControlPlaySync(double v)
-{
-    if (v == 0.0) {
-        m_playButton->set(1);
-    }
-    m_pBpmControl->slotControlBeatSync(1);
 }
 
 void EngineBuffer::slotControlStart(double v)
