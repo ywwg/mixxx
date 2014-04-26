@@ -440,9 +440,9 @@ int CachingReader::read(int sample, int num_samples, CSAMPLE* buffer) {
     }
     samples_remaining = 0;
 
-    if (samples_remaining != 0) {
-        qDebug() << "CachingReader::read() did read all requested samples.";
-    }
+    // if (samples_remaining != 0) {
+    //     qDebug() << "CachingReader::read() did read all requested samples.";
+    // }
     return zerosWritten + num_samples - samples_remaining;
 }
 
