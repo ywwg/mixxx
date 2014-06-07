@@ -12,7 +12,7 @@
     <Layout>vertical</Layout>
     <SizePolicy>me,f</SizePolicy>
     <MinimumSize>300,60</MinimumSize>
-    <MaximumSize>350,-1</MaximumSize>
+    <MaximumSize>380,-1</MaximumSize>
     <Children>
       <WidgetGroup>
         <ObjectName>EffectUnitNameRow</ObjectName>
@@ -181,6 +181,10 @@
                         <SetVariable name="group_name">Head</SetVariable>
                         <SetVariable name="group_group">[Headphone]</SetVariable>
                       </Template>
+                      <Template src="skin:effect_unit_group_control_button.xml">
+                        <SetVariable name="group_name">AUX1</SetVariable>
+                        <SetVariable name="group_group">[Auxiliary1]</SetVariable>
+                      </Template>
                     </Children>
                   </WidgetGroup>
                   <WidgetGroup>
@@ -196,6 +200,10 @@
                         <SetVariable name="group_name">CH2</SetVariable>
                         <SetVariable name="group_group">[Channel2]</SetVariable>
                       </Template>
+                      <Template src="skin:effect_unit_group_control_button.xml">
+                        <SetVariable name="group_name">AUX2</SetVariable>
+                        <SetVariable name="group_group">[Auxiliary2]</SetVariable>
+                      </Template>
                     </Children>
                   </WidgetGroup>
                   <WidgetGroup>
@@ -210,6 +218,10 @@
                       <Template src="skin:effect_unit_group_control_button.xml">
                         <SetVariable name="group_name">CH4</SetVariable>
                         <SetVariable name="group_group">[Channel4]</SetVariable>
+                      </Template>
+                      <Template src="skin:effect_unit_group_control_button.xml">
+                        <SetVariable name="group_name">AUX3</SetVariable>
+                        <SetVariable name="group_group">[Auxiliary3]</SetVariable>
                       </Template>
                     </Children>
                   </WidgetGroup>
