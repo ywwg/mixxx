@@ -129,6 +129,11 @@
 #MasterControls {
 }
 
+#AuxContainer {
+  qproperty-layoutAlignment: 'AlignLeft | AlignBottom';
+  padding-bottom: 6px;
+}
+
 #MixerContainer {
   qproperty-layoutAlignment: 'AlignLeft | AlignBottom';
   background-color: #1e1e1e;
@@ -455,6 +460,12 @@ qproperty-layoutAlignment: 'AlignCenter';
   border: 1px solid #585858;
   padding: 5px;
   margin: 5px;
+}
+
+#AuxBorder {
+  qproperty-layoutAlignment: 'AlignHCenter | AlignBottom';
+  padding-left: 1px;
+  padding-right: 1px;
 }
 
 #SamplerDecksContainer {

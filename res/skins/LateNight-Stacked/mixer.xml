@@ -6,14 +6,6 @@
 		<MaximumSize>1000,</MaximumSize>
 		<Layout>horizontal</Layout>
 		<Children>
-		    <WidgetGroup>
-                <ObjectName>MicContainer</ObjectName>
-                <Layout>vertical</Layout>
-                <SizePolicy>max,min</SizePolicy>
-                <Children>
-                    <Template src="skin:microphone.xml"/>
-                </Children>
-            </WidgetGroup>
 			<WidgetGroup>
 			    <ObjectName>PrimaryMixer</ObjectName>
 				<Layout>vertical</Layout>
@@ -109,8 +101,27 @@
 									<WidgetGroup>
 									    <SizePolicy>max,min</SizePolicy>
 										<Layout>horizontal</Layout>
-                                        <MaximumSize>400,400</MaximumSize>
+                                        <MaximumSize>500,400</MaximumSize>
 										<Children>
+                                           <WidgetGroup>
+                                               <ObjectName>AuxContainer</ObjectName>
+                                               <Layout>horizontal</Layout>
+                                               <SizePolicy>max,min</SizePolicy>
+                                               <Children>
+                                                   <Template src="skin:aux.xml">
+                                                       <SetVariable name="channum">1</SetVariable>
+                                                   </Template>
+                                                   <Template src="skin:aux.xml">
+                                                       <SetVariable name="channum">2</SetVariable>
+                                                   </Template>
+                                                   <Template src="skin:aux.xml">
+                                                       <SetVariable name="channum">3</SetVariable>
+                                                   </Template>
+                                                   <Template src="skin:aux.xml">
+                                                       <SetVariable name="channum">4</SetVariable>
+                                                   </Template>
+                                               </Children>
+                                           </WidgetGroup>
 										   <WidgetGroup>
 										        <SizePolicy>max,min</SizePolicy>
 									            <Layout>horizontal</Layout>
