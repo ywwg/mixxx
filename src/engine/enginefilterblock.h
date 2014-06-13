@@ -47,7 +47,7 @@ class EngineFilterBlock : public EngineObject {
   private:
     void setFilters(bool forceSetting = false);
 
-    CSAMPLE *m_pLowBuf, *m_pBandBuf, *m_pHighBuf;
+    CSAMPLE *m_pTemp1, *m_pTemp2, *m_pTemp3;
     EngineObjectConstIn *low, *band, *high;
     ControlLogpotmeter *filterpotLow, *filterpotMid, *filterpotHigh;
     ControlPushButton *filterKillLow, *filterKillMid, *filterKillHigh;
@@ -58,7 +58,7 @@ class EngineFilterBlock : public EngineObject {
     static ControlPushButton *s_EnableEq;
 
     int m_iOldSampleRate;
-    double old_low, old_mid, old_high, old_dry;
+    double old_low, old_mid, old_high;
 
     int ilowFreq, ihighFreq;
     bool blofi;
