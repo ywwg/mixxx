@@ -162,7 +162,7 @@ button_mapping = {'spinknob':['beatsync','<button/>'],
            'button4':{'red':['play','<normal/>'],        'orange':['reloop_exit','<button/>'], 'green':['hotcue_4_activate','<button/>']}}
 
 if MASTER_SYNC_LAYOUT:
-    button_mapping = {'spinknob':['XoneK2.encoderButton','<Script-Binding/>'],
+    button_mapping = {'spinknob':['eject','<normal/>'],
            'knoblight1':['pfl','<button/>'], 'knoblight2':['quantize','<normal/>'], 'knoblight3':['filterLowKill','<normal/>'],
            'button1':{'red':['sync_master','<button/>'], 'orange':['beatloop_4','<button/>'],  'green':['hotcue_1_activate','<button/>']},
            'button2':{'red':['sync_enabled','<button/>'],  'orange':['XoneK2.LoopMinus','<Script-Binding/>'], 'green':['hotcue_2_activate','<button/>']},
