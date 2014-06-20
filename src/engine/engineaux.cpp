@@ -18,7 +18,7 @@ EngineAux::EngineAux(const char* pGroup, EffectsManager* pEffectsManager)
           m_vuMeter(pGroup),
           m_pEnabled(new ControlObject(ConfigKey(pGroup, "enabled"))),
           m_pPassing(new ControlPushButton(ConfigKey(pGroup, "passthrough"))),
-          m_pPregain(new ControlLogpotmeter(ConfigKey(pGroup, "pregain"), 4)),
+          m_pPregain(new ControlLogpotmeter(ConfigKey(pGroup, "pregain"), 8.)),
           m_sampleBuffer(NULL),
           m_wasActive(false) {
     if (pEffectsManager != NULL) {
