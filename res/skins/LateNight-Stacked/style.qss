@@ -132,6 +132,7 @@
 #AuxContainer {
   qproperty-layoutAlignment: 'AlignLeft | AlignBottom';
   padding-bottom: 6px;
+  padding-right: 3px;
 }
 
 #MixerContainer {
@@ -466,6 +467,10 @@ qproperty-layoutAlignment: 'AlignCenter';
   qproperty-layoutAlignment: 'AlignHCenter | AlignBottom';
   padding-left: 1px;
   padding-right: 1px;
+}
+
+#AuxPflSpace {
+  padding-top: 2px;
 }
 
 #SamplerDecksContainer {

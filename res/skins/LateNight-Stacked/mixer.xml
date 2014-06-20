@@ -101,7 +101,7 @@
 									<WidgetGroup>
 									    <SizePolicy>max,min</SizePolicy>
 										<Layout>horizontal</Layout>
-                                        <MaximumSize>500,400</MaximumSize>
+                                        <MaximumSize>520,400</MaximumSize>
 										<Children>
                                            <WidgetGroup>
                                                <ObjectName>AuxContainer</ObjectName>
