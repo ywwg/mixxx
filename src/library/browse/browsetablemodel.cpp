@@ -261,6 +261,8 @@ void BrowseTableModel::slotInsert(const QList< QList<QStandardItem*> >& rows,
         for (int i = 0; i < rows.size(); ++i) {
             appendRow(rows.at(i));
         }
+        // OWEN HACK HACK: sort on first column
+        sort(0, defaultSortOrder());
     }
 }
 
