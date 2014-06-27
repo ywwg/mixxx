@@ -111,7 +111,8 @@ void EffectParameterSlot::loadEffect(EffectPointer pEffect) {
 
         // Update the newly loaded parameter to match the current chain
         // superknob if it is linked.
-        onChainParameterChanged(m_dChainParameter);
+        // OWEN HACK: no, don't.  Let defaults be defaults.
+        //onChainParameterChanged(m_dChainParameter);
     }
     emit(updated());
 }
