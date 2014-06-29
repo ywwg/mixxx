@@ -415,18 +415,23 @@ void EngineBuffer::requestSyncPhase() {
     }
 }
 
-void EngineBuffer::clearScale() {
+void EngineBuffer::clearScale(bool crossfade) {
     // This is called when seeking, after scaler change and direction change
     // Read extra buffer with the original scale for crossfading with new one
-    CSAMPLE* fadeout = m_pScale->getScaled(m_iLastBufferSize);
-    m_iCrossFadeSamples = m_iLastBufferSize;
-    SampleUtil::copyWithGain(m_pCrossFadeBuffer, fadeout, 1.0, m_iLastBufferSize);
+    if (crossfade) {
+        CSAMPLE* fadeout = m_pScale->getScaled(m_iLastBufferSize);
+        m_iCrossFadeSamples = m_iLastBufferSize;
+        SampleUtil::copyWithGain(m_pCrossFadeBuffer, fadeout, 1.0, m_iLastBufferSize);
+    }
 
     if (m_pScale) {
         m_pScale->clear();
     }
-    // restore the original position that was lost due to getScaled() above
-    m_pReadAheadManager->notifySeek(m_filepos_play);
+
+    if (crossfade) {
+        // restore the original position that was lost due to getScaled() above
+        m_pReadAheadManager->notifySeek(m_filepos_play);
+    }
 }
 
 
@@ -437,8 +442,9 @@ void EngineBuffer::setNewPlaypos(double newpos) {
 
     m_filepos_play = newpos;
 
-    // Before seeking, read extra buffer for crossfading
-    clearScale();
+    // Before seeking, read extra buffer for crossfading, but only if
+    // we are playing.
+    clearScale(m_playButton->get() > 0.0);
 
     // Ensures that the playpos slider gets updated in next process call
     m_iSamplesCalculated = 1000000;
@@ -513,7 +519,7 @@ void EngineBuffer::slotTrackLoaded(TrackPointer pTrack,
 void EngineBuffer::slotTrackLoadFailed(TrackPointer pTrack,
                                        QString reason) {
     m_iTrackLoading = 0;
-    m_playButton->set(0.0);
+    slotControlStop(1);
     ejectTrack();
     emit(trackLoadFailed(pTrack, reason));
 }
@@ -537,7 +543,7 @@ void EngineBuffer::ejectTrack() {
     m_pCurrentTrack.clear();
     m_file_srate_old = 0;
     m_file_length_old = 0;
-    m_playButton->set(0.0);
+    slotControlStop(1);
     m_visualBpm->set(0.0);
     m_visualKey->set(0.0);
     doSeek(0., SEEK_EXACT);
@@ -604,7 +610,7 @@ double EngineBuffer::updateIndicatorsAndModifyPlay(double v) {
     // asynchrony.
     bool playPossible = true;
     if ((!m_pCurrentTrack && deref(m_iTrackLoading) == 0) ||
-            (m_pCurrentTrack && m_filepos_play >= m_file_length_old )) {
+            (m_pCurrentTrack && m_filepos_play >= m_file_length_old && !m_iSeekQueued)) {
         // play not possible
         playPossible = false;
     }
@@ -652,7 +658,7 @@ void EngineBuffer::slotControlJumpToStartAndStop(double v)
 {
     if (v > 0.0) {
         doSeek(0., SEEK_EXACT);
-        m_playButton->set(0);
+        slotControlStop(1);
     }
 }
 
@@ -660,6 +666,7 @@ void EngineBuffer::slotControlStop(double v)
 {
     if (v > 0.0) {
         m_playButton->set(0);
+        m_playStartButton->set(0);
     }
 }
 
@@ -748,13 +755,13 @@ void EngineBuffer::process(CSAMPLE* pOutput, const int iBufferSize)
             // crossfades between the old scaler and new scaler to prevent
             // clicks.
             if (m_bScalerChanged) {
-                clearScale();
+                clearScale(true);
             } else if (m_pScale != m_pScaleLinear) { // linear scaler does this part for us now
                 //XXX: Trying to force RAMAN to read from correct
                 //     playpos when rate changes direction - Albert
                 if ((m_speed_old <= 0 && speed > 0) ||
                     (m_speed_old >= 0 && speed < 0)) {
-                    clearScale();
+                    clearScale(true);
                 }
             }
 
@@ -908,7 +915,7 @@ void EngineBuffer::process(CSAMPLE* pOutput, const int iBufferSize)
                 double seekPosition = at_start ? m_file_length_old : 0;
                 doSeek(seekPosition, SEEK_STANDARD);
             } else {
-                m_playButton->set(0.);
+                slotControlStop(1);
             }
         }
 
