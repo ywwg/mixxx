@@ -136,6 +136,7 @@ EngineBuffer::EngineBuffer(const char* _group, ConfigObject<ConfigValue>* _confi
 
     //Play from Start Button (for sampler)
     m_playStartButton = new ControlPushButton(ConfigKey(m_group, "start_play"));
+    m_playButton->setButtonMode(ControlPushButton::TOGGLE);
     connect(m_playStartButton, SIGNAL(valueChanged(double)),
             this, SLOT(slotControlPlayFromStart(double)),
             Qt::DirectConnection);
@@ -651,6 +652,9 @@ void EngineBuffer::slotControlPlayFromStart(double v)
     if (v > 0.0) {
         doSeek(0., SEEK_EXACT);
         m_playButton->set(1);
+    } else {
+        // OWEN HACK: So start_play is a toggle button.
+        slotControlStop(1);
     }
 }
 
