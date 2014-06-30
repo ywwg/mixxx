@@ -643,11 +643,13 @@ void EngineBuffer::slotControlEnd(double v)
 void EngineBuffer::slotControlPlayFromStart(double v)
 {
     if (v > 0.0) {
-        doSeek(0., SEEK_EXACT);
-        m_playButton->set(1);
-    } else {
         // OWEN HACK: So start_play is a toggle button.
-        slotControlStop(1);
+        if (m_playButton->get()) {
+            slotControlStop(1);
+        } else {
+            doSeek(0., SEEK_EXACT);
+            m_playButton->set(1);
+        }
     }
 }
 
