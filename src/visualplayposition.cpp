@@ -3,7 +3,7 @@
 #include "visualplayposition.h"
 #include "controlobjectslave.h"
 #include "controlobject.h"
-#include "mathstuff.h"
+#include "util/math.h"
 #include "waveform/vsyncthread.h"
 
 //static
@@ -12,10 +12,10 @@ PaStreamCallbackTimeInfo VisualPlayPosition::m_timeInfo = { 0.0, 0.0, 0.0 };
 PerformanceTimer VisualPlayPosition::m_timeInfoTime;
 bool VisualPlayPosition::m_bClampFailedWarning = false;
 
-VisualPlayPosition::VisualPlayPosition(const QString& group)
+VisualPlayPosition::VisualPlayPosition(const QString& key)
         : m_valid(false),
-          m_key(group) {
-    m_pAudioBufferSize = new ControlObjectSlave("[Master]", "audio_buffer_size");
+          m_key(key) {
+    m_audioBufferSize = new ControlObjectSlave("[Master]", "audio_buffer_size");
     m_pTrackSamples = new ControlObjectSlave(group, "track_samples");
     m_pTrackSamples->connectValueChanged(this, SLOT(slotTrackSamplesChanged(double)));
     m_track_samples = m_pTrackSamples->get();
@@ -38,11 +38,14 @@ VisualPlayPosition::VisualPlayPosition(const QString& group)
 
 void VisualPlayPosition::updateVinylControlSpeed(double rpm) {
     m_dRotationsPerSecond = rpm/60.;
+    m_audioBufferSize->connectValueChanged(
+            this, SLOT(slotAudioBufferSizeChanged(double)));
+    m_dAudioBufferSize = m_audioBufferSize->get();
 }
 
 VisualPlayPosition::~VisualPlayPosition() {
     m_listVisualPlayPosition.remove(m_key);
-    delete m_pAudioBufferSize;
+    delete m_audioBufferSize;
     delete m_pTrackSamples;
     delete m_pTrackSampleRate;
     delete m_pSpinnyAngle;
@@ -84,7 +87,7 @@ double VisualPlayPosition::getAtNextVSync(VSyncThread* vsyncThread) {
         double playPos = data.m_enginePlayPos;  // load playPos for the first sample in Buffer
         // add the offset for the position of the sample that will be transfered to the DAC
         // When the next display frame is displayed
-        playPos += data.m_positionStep * offset * data.m_rate / m_pAudioBufferSize->get() / 1000;
+        playPos += data.m_positionStep * offset * data.m_rate / m_dAudioBufferSize / 1000;
         //qDebug() << "delta Pos" << playPos - m_playPosOld << offset;
         //m_playPosOld = playPos;
         m_pSpinnyAngle->set(calculateAngle(
@@ -105,7 +108,7 @@ void VisualPlayPosition::getPlaySlipAt(int usFromNow, double* playPosition, doub
         int dacFromNow = usElapsed - data.m_callbackEntrytoDac;
         int offset = dacFromNow - usFromNow;
         double playPos = data.m_enginePlayPos;  // load playPos for the first sample in Buffer
-        playPos += data.m_positionStep * offset * data.m_rate / m_pAudioBufferSize->get() / 1000;
+        playPos += data.m_positionStep * offset * data.m_rate / m_dAudioBufferSize / 1000;
         *playPosition = playPos;
         *slipPosition = data.m_pSlipPosition;
     }
@@ -119,6 +122,9 @@ double VisualPlayPosition::getEnginePlayPos() {
         return -1;
     }
 }
+
+void VisualPlayPosition::slotAudioBufferSizeChanged(double size) {
+    m_dAudioBufferSize = size;
 
 /* Convert between a normalized playback position (0.0 - 1.0) and an angle
    in our polar coordinate system.

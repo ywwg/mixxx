@@ -153,7 +153,6 @@ class OggVorbis(Dependence):
     def sources(self, build):
         return ['soundsourceoggvorbis.cpp']
 
-
 class SndFile(Dependence):
 
     def configure(self, build, conf):
@@ -527,6 +526,7 @@ class MixxxCore(Feature):
                    "configobject.cpp",
                    "control/control.cpp",
                    "control/controlbehavior.cpp",
+                   "control/controlmodel.cpp",
                    "controlobjectslave.cpp",
                    "controlobjectthread.cpp",
                    "controllogpotmeter.cpp",
@@ -547,6 +547,8 @@ class MixxxCore(Feature):
                    "controllers/dlgprefcontrollers.cpp",
                    "dlgpreflibrary.cpp",
                    "dlgprefcontrols.cpp",
+                   "dlgprefwaveform.cpp",
+                   "dlgprefautodj.cpp",
                    "dlgprefkey.cpp",
                    "dlgprefreplaygain.cpp",
                    "dlgprefnovinyl.cpp",
@@ -559,6 +561,7 @@ class MixxxCore(Feature):
                    "dlgautodj.cpp",
                    "dlghidden.cpp",
                    "dlgmissing.cpp",
+                   "dlgdevelopertools.cpp",
 
                    "effects/effectmanifest.cpp",
                    "effects/effectmanifestparameter.cpp",
@@ -570,7 +573,9 @@ class MixxxCore(Feature):
                    "effects/effectrack.cpp",
                    "effects/effectchainslot.cpp",
                    "effects/effectslot.cpp",
+                   "effects/effectparameterslotbase.cpp",
                    "effects/effectparameterslot.cpp",
+                   "effects/effectbuttonparameterslot.cpp",
 
                    "effects/effectsmanager.cpp",
                    "effects/effectchainmanager.cpp",
@@ -578,6 +583,7 @@ class MixxxCore(Feature):
 
                    "effects/native/nativebackend.cpp",
                    "effects/native/bitcrushereffect.cpp",
+                   "effects/native/butterworth8eqeffect.cpp",
                    "effects/native/flangereffect.cpp",
                    "effects/native/filtereffect.cpp",
                    "effects/native/reverbeffect.cpp",
@@ -600,9 +606,10 @@ class MixxxCore(Feature):
                    "engine/enginebufferscale.cpp",
                    "engine/enginebufferscaledummy.cpp",
                    "engine/enginebufferscalelinear.cpp",
-                   "engine/engineclipping.cpp",
                    "engine/enginefilterblock.cpp",
-                   "engine/enginefilteriir.cpp",
+                   "engine/enginefilterbessel4.cpp",
+                   "engine/enginefilterbutterworth4.cpp",
+                   "engine/enginefilterbutterworth8.cpp",
                    "engine/enginefilter.cpp",
                    "engine/engineobject.cpp",
                    "engine/enginepregain.cpp",
@@ -613,7 +620,6 @@ class MixxxCore(Feature):
                    "engine/enginevinylsoundemu.cpp",
                    "engine/enginesidechaincompressor.cpp",
                    "engine/sidechain/enginesidechain.cpp",
-                   "engine/enginefilterbutterworth8.cpp",
                    "engine/enginexfader.cpp",
                    "engine/enginemicrophone.cpp",
                    "engine/enginedeck.cpp",
@@ -656,6 +662,7 @@ class MixxxCore(Feature):
                    "controllers/delegates/midibytedelegate.cpp",
                    "controllers/delegates/midioptionsdelegate.cpp",
                    "controllers/learningutils.cpp",
+                   "controllers/midi/midimessage.cpp",
                    "controllers/midi/midiutils.cpp",
                    "controllers/midi/midicontroller.cpp",
                    "controllers/midi/midicontrollerpresetfilehandler.cpp",
@@ -682,6 +689,7 @@ class MixxxCore(Feature):
                    "widget/wlabel.cpp",
                    "widget/wtracktext.cpp",
                    "widget/wnumber.cpp",
+                   "widget/wnumberdb.cpp",
                    "widget/wnumberpos.cpp",
                    "widget/wnumberrate.cpp",
                    "widget/wknob.cpp",
@@ -694,6 +702,7 @@ class MixxxCore(Feature):
                    "widget/woverview.cpp",
                    "widget/woverviewlmh.cpp",
                    "widget/woverviewhsv.cpp",
+                   "widget/woverviewrgb.cpp",
                    "widget/wspinny.cpp",
                    "widget/wskincolor.cpp",
                    "widget/wsearchlineedit.cpp",
@@ -704,12 +713,12 @@ class MixxxCore(Feature):
                    "widget/weffectchain.cpp",
                    "widget/weffect.cpp",
                    "widget/weffectparameter.cpp",
+                   "widget/weffectbuttonparameter.cpp",
+                   "widget/weffectparameterbase.cpp",
                    "widget/wtime.cpp",
                    "widget/wkey.cpp",
                    "widget/wcombobox.cpp",
                    "widget/wsplitter.cpp",
-
-                   "mathstuff.cpp",
 
                    "network.cpp",
                    "musicbrainz/tagfetcher.cpp",
@@ -829,12 +838,14 @@ class MixxxCore(Feature):
 
                    "waveform/renderers/waveformrendererfilteredsignal.cpp",
                    "waveform/renderers/waveformrendererhsv.cpp",
+                   "waveform/renderers/waveformrendererrgb.cpp",
                    "waveform/renderers/qtwaveformrendererfilteredsignal.cpp",
                    "waveform/renderers/qtwaveformrenderersimplesignal.cpp",
                    "waveform/renderers/glwaveformrendererfilteredsignal.cpp",
                    "waveform/renderers/glwaveformrenderersimplesignal.cpp",
                    "waveform/renderers/glslwaveformrenderersignal.cpp",
                    "waveform/renderers/glvsynctestrenderer.cpp",
+                   "waveform/renderers/glwaveformrendererrgb.cpp",
 
                    "waveform/renderers/waveformsignalcolors.cpp",
 
@@ -847,6 +858,7 @@ class MixxxCore(Feature):
                    "waveform/widgets/emptywaveformwidget.cpp",
                    "waveform/widgets/softwarewaveformwidget.cpp",
                    "waveform/widgets/hsvwaveformwidget.cpp",
+                   "waveform/widgets/rgbwaveformwidget.cpp",
                    "waveform/widgets/qtwaveformwidget.cpp",
                    "waveform/widgets/qtsimplewaveformwidget.cpp",
                    "waveform/widgets/glwaveformwidget.cpp",
@@ -854,6 +866,8 @@ class MixxxCore(Feature):
                    "waveform/widgets/glvsynctestwidget.cpp",
 
                    "waveform/widgets/glslwaveformwidget.cpp",
+
+                   "waveform/widgets/glrgbwaveformwidget.cpp",
 
                    "skin/imginvert.cpp",
                    "skin/imgloader.cpp",
@@ -899,6 +913,7 @@ class MixxxCore(Feature):
                    "util/sleepableqthread.cpp",
                    "util/statsmanager.cpp",
                    "util/stat.cpp",
+                   "util/statmodel.cpp",
                    "util/time.cpp",
                    "util/timer.cpp",
                    "util/performancetimer.cpp",
@@ -934,10 +949,13 @@ class MixxxCore(Feature):
             'dlgaboutdlg.ui',
             'dlganalysis.ui',
             'dlgautodj.ui',
+            'dlgdevelopertoolsdlg.ui',
             'dlghidden.ui',
             'dlgmissing.ui',
             'dlgprefbeatsdlg.ui',
             'dlgprefcontrolsdlg.ui',
+            'dlgprefwaveformdlg.ui',
+            'dlgprefautodjdlg.ui',
             'dlgprefcrossfaderdlg.ui',
             'dlgprefkeydlg.ui',
             'dlgprefeqdlg.ui',
@@ -1017,6 +1035,9 @@ class MixxxCore(Feature):
             build.env.Append(
                 CPPDEFINES='_ATL_MIN_CRT')  # Helps prevent duplicate symbols
             # Need this on Windows until we have UTF16 support in Mixxx
+	    # use stl min max defines
+	    # http://connect.microsoft.com/VisualStudio/feedback/details/553420/std-cpp-max-and-std-cpp-min-not-available-in-visual-c-2010
+            build.env.Append(CPPDEFINES='NOMINMAX')
             build.env.Append(CPPDEFINES='UNICODE')
             build.env.Append(
                 CPPDEFINES='WIN%s' % build.bitwidth)  # WIN32 or WIN64

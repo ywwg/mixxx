@@ -39,11 +39,12 @@ class VisualPlayPositionData {
     double m_pSlipPosition;
 };
 
+
 class VisualPlayPosition : public QObject {
     Q_OBJECT
   public:
     VisualPlayPosition(const QString& m_key);
-    ~VisualPlayPosition();
+    virtual ~VisualPlayPosition();
 
     // WARNING: Not thread safe. This function must be called only from the
     // engine thread.
@@ -61,14 +62,6 @@ class VisualPlayPosition : public QObject {
 
     void setInvalid() { m_valid = false; };
 
-    static double calculateAngle(
-            double tracksamples, double trackSampleRate, double rotations_per_sec, double playpos);
-
-  public slots:
-    void slotTrackSamplesChanged(double);
-    void slotTrackSampleRateChanged(double);
-    void updateVinylControlSpeed(double rpm);
-
   private:
     ControlValueAtomic<VisualPlayPositionData> m_data;
     ControlObjectSlave* m_pAudioBufferSize;
@@ -76,6 +69,7 @@ class VisualPlayPosition : public QObject {
     ControlObjectSlave* m_pTrackSampleRate;
     ControlObjectSlave* m_pVinylControlSpeedType;
     ControlObject* m_pSpinnyAngle;
+    double m_dAudioBufferSize;
     bool m_valid;
     QString m_key;
     double m_track_samples;

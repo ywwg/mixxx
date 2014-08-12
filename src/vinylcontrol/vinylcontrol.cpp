@@ -6,7 +6,7 @@ VinylControl::VinylControl(ConfigObject<ConfigValue> * pConfig, QString group)
         : m_pConfig(pConfig),
           m_group(group),
           m_iLeadInTime(m_pConfig->getValueString(
-              ConfigKey(VINYL_PREF_KEY,"lead_in_time")).toInt()),
+              ConfigKey(group, "vinylcontrol_lead_in_time")).toInt()),
           m_dVinylPosition(0.0),
           m_fTimecodeQuality(0.0f) {
     // Get Control objects
@@ -21,7 +21,7 @@ VinylControl::VinylControl(ConfigObject<ConfigValue> * pConfig, QString group)
     trackSamples        = new ControlObjectThread(group, "track_samples");
     trackSampleRate     = new ControlObjectThread(group, "track_samplerate");
     vinylSeek           = new ControlObjectThread(group, "vinylcontrol_seek");
-    controlScratch      = new ControlObjectThread(group, "scratch2");
+    controlScratch      = new ControlObjectThread(group, "vinylcontrol_rate");
     rateSlider          = new ControlObjectThread(group, "rate");    //Range -1.0 to 1.0
     playButton          = new ControlObjectThread(group, "play");
     duration            = new ControlObjectThread(group, "duration");

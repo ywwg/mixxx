@@ -21,10 +21,10 @@
 #include <QStylePainter>
 #include <QStyleOption>
 
-#include "defs.h"
 #include "widget/wpixmapstore.h"
 #include "widget/controlwidgetconnection.h"
 #include "util/debug.h"
+#include "util/math.h"
 
 WSliderComposed::WSliderComposed(QWidget * parent)
     : WWidget(parent),
@@ -50,11 +50,11 @@ void WSliderComposed::setup(QDomNode node, const SkinContext& context) {
     unsetPixmaps();
 
     if (context.hasNode(node, "Slider")) {
-        QString pathSlider = context.getSkinPath(context.selectString(node, "Slider"));
+        QString pathSlider = context.getPixmapPath(context.selectNode(node, "Slider"));
         setSliderPixmap(pathSlider);
     }
 
-    QString pathHandle = context.getSkinPath(context.selectString(node, "Handle"));
+    QString pathHandle = context.getPixmapPath(context.selectNode(node, "Handle"));
     bool h = context.selectBool(node, "Horizontal", false);
     setHandlePixmap(h, pathHandle);
 
@@ -156,7 +156,7 @@ void WSliderComposed::wheelEvent(QWheelEvent *e) {
     double newValue = m_dOldValue + wheelDirection;
 
     // Clamp to [0.0, 1.0]
-    newValue = math_max(0.0, math_min(1.0, newValue));
+    newValue = math_clamp(newValue, 0.0, 1.0);
 
     setControlParameter(newValue);
     // Value is unused in WSliderComposed.

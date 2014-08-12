@@ -7,6 +7,11 @@
 
 #include "configobject.h"
 
+// The second value of each OpCode will be the channel number the message
+// corresponds to.  So 0xB0 is a CC on the first channel, and 0xB1 is a CC
+// on the second channel.  When working with incoming midi data, first call
+// MidiUtils::opCodeFromStatus to translate from raw status values to opcodes,
+// then compare to these enums.
 typedef enum {
     MIDI_NOTE_OFF       = 0x80,
     MIDI_NOTE_ON        = 0x90,
@@ -50,8 +55,10 @@ typedef enum {
     MIDI_OPTION_SELECTKNOB    = 0x0200,
     MIDI_OPTION_SOFT_TAKEOVER = 0x0400,
     MIDI_OPTION_SCRIPT        = 0x0800,
+    MIDI_OPTION_14BIT_MSB     = 0x1000,
+    MIDI_OPTION_14BIT_LSB     = 0x2000,
     // Should mask all bits used.
-    MIDI_OPTION_MASK          = 0x0FFF,
+    MIDI_OPTION_MASK          = 0xFFFF,
 } MidiOption;
 
 struct MidiOptions {
@@ -76,11 +83,16 @@ struct MidiOptions {
             bool button        : 1;    // Button Down (!=00) and Button Up (00) events happen together
             bool sw            : 1;    // button down (!=00) and button up (00) events happen seperately
             bool spread64      : 1;    // accelerated difference from 64
-            bool herc_jog      : 1;    // generic Hercules wierd range correction
+            bool herc_jog      : 1;    // generic Hercules range correction 0x01 -> +1; 0x7f -> -1
             bool selectknob    : 1;    // relative knob which can be turned forever and outputs a signed value
             bool soft_takeover : 1;    // prevents sudden changes when hardware position differs from software value
             bool script        : 1;    // maps a MIDI control to a custom MixxxScript function
-            // 20 more available for future expansion
+            // the message supplies the MSB of a 14-bit message
+            bool fourteen_bit_msb : 1;
+            // the message supplies the LSB of a 14-bit message
+            bool fourteen_bit_lsb : 1;
+            bool herc_jog_fast    : 1;  // generic Hercules range correction 0x01 -> +5; 0x7f -> -5
+            // 19 more available for future expansion
         };
     };
 };
@@ -115,15 +127,8 @@ struct MidiOutput {
 };
 
 struct MidiKey {
-    MidiKey()
-            : status(0),
-              control(0) {
-    }
-
-    MidiKey(unsigned char status, unsigned char control)
-            : status(status),
-              control(control) {
-    }
+    MidiKey();
+    MidiKey(unsigned char status, unsigned char control);
 
     bool operator==(const MidiKey& other) const {
         return key == other.key;
@@ -149,9 +154,17 @@ struct MidiInputMapping {
               options(options) {
     }
 
+    MidiInputMapping(MidiKey key, MidiOptions options, const ConfigKey& control)
+            : key(key),
+              options(options),
+              control(control) {
+    }
+
+    // Don't use descriptions in operator== since we only use equality testing
+    // for unit tests.
     bool operator==(const MidiInputMapping& other) const {
         return key == other.key && options == other.options &&
-                control == other.control && description == other.description;
+                control == other.control;
     }
 
     MidiKey key;

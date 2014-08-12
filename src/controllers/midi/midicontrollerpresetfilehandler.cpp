@@ -15,13 +15,12 @@
 #define DEFAULT_OUTPUT_OFF  0x00
 
 ControllerPresetPointer MidiControllerPresetFileHandler::load(const QDomElement root,
-                                                              const QString deviceName,
-                                                              const bool forceLoad) {
+                                                              const QString deviceName) {
     if (root.isNull()) {
         return ControllerPresetPointer();
     }
 
-    QDomElement controller = getControllerNode(root, deviceName, forceLoad);
+    QDomElement controller = getControllerNode(root, deviceName);
     if (controller.isNull()) {
         return ControllerPresetPointer();
     }
@@ -77,10 +76,13 @@ ControllerPresetPointer MidiControllerPresetFileHandler::load(const QDomElement 
             if (strMidiOption == "button")   options.button = true;
             if (strMidiOption == "switch")   options.sw = true;
             if (strMidiOption == "hercjog")  options.herc_jog = true;
+            if (strMidiOption == "hercjogfast")  options.herc_jog_fast = true;
             if (strMidiOption == "spread64") options.spread64 = true;
             if (strMidiOption == "selectknob")options.selectknob = true;
             if (strMidiOption == "soft-takeover") options.soft_takeover = true;
             if (strMidiOption == "script-binding") options.script = true;
+            if (strMidiOption == "fourteen-bit-msb") options.fourteen_bit_msb = true;
+            if (strMidiOption == "fourteen-bit-lsb") options.fourteen_bit_lsb = true;
 
             optionsNode = optionsNode.nextSiblingElement();
         }
@@ -90,7 +92,7 @@ ControllerPresetPointer MidiControllerPresetFileHandler::load(const QDomElement 
         mapping.control = ConfigKey(controlGroup, controlKey);
         mapping.description = controlDescription;
         mapping.options = options;
-        mapping.key = MidiUtils::makeMidiKey(midiStatusByte, midiControl);
+        mapping.key = MidiKey(midiStatusByte, midiControl);
 
         // qDebug() << "New mapping:" << QString::number(mapping.key.key, 16).toUpper()
         //          << QString::number(mapping.key.status, 16).toUpper()
@@ -304,6 +306,10 @@ QDomElement MidiControllerPresetFileHandler::inputMappingToXML(
             QDomElement singleOption = doc->createElement("hercjog");
             optionsNode.appendChild(singleOption);
         }
+        if (mapping.options.herc_jog_fast) {
+            QDomElement singleOption = doc->createElement("hercjogfast");
+            optionsNode.appendChild(singleOption);
+        }
         if (mapping.options.spread64) {
             QDomElement singleOption = doc->createElement("spread64");
             optionsNode.appendChild(singleOption);
@@ -318,6 +324,14 @@ QDomElement MidiControllerPresetFileHandler::inputMappingToXML(
         }
         if (mapping.options.script) {
             QDomElement singleOption = doc->createElement("script-binding");
+            optionsNode.appendChild(singleOption);
+        }
+        if (mapping.options.fourteen_bit_msb) {
+            QDomElement singleOption = doc->createElement("fourteen-bit-msb");
+            optionsNode.appendChild(singleOption);
+        }
+        if (mapping.options.fourteen_bit_lsb) {
+            QDomElement singleOption = doc->createElement("fourteen-bit-lsb");
             optionsNode.appendChild(singleOption);
         }
     }
