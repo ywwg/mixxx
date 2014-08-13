@@ -71,10 +71,6 @@ class SyncControl : public EngineControl, public Syncable {
     // Fired by changes in file_bpm.
     void slotFileBpmChanged();
 
-    // Fired by changed to beat_distance (typically only from BpmControl during
-    // BpmControl::process()).
-    void slotBeatDistanceChanged(double beatDistance);
-
     // Change request handlers for sync properties.
     void slotSyncModeChangeRequest(double state);
     void slotSyncEnabledChangeRequest(double enabled);

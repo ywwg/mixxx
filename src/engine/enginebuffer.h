@@ -135,10 +135,13 @@ class EngineBuffer : public EngineObject {
 
     void queueNewPlaypos(double newpos, enum SeekRequest seekType);
     void requestSyncPhase();
+    void requestEnableSync(bool enabled);
+    void requestSyncMode(int mode);
 
     // The process methods all run in the audio callback.
     void process(CSAMPLE* pOut, const int iBufferSize);
     void processSlip(int iBufferSize);
+    void postProcess();
 
     const char* getGroup();
     bool isTrackLoaded();
@@ -221,6 +224,7 @@ class EngineBuffer : public EngineObject {
     // Reset buffer playpos and set file playpos.
     void setNewPlaypos(double playpos);
 
+    void processSyncRequests();
     void processSeek();
 
     double updateIndicatorsAndModifyPlay(double v);
@@ -350,6 +354,8 @@ class EngineBuffer : public EngineObject {
     bool m_bScalerOverride;
 
     QAtomicInt m_iSeekQueued;
+    QAtomicInt m_iEnableSyncQueued;
+    QAtomicInt m_iSyncModeQueued;
     ControlValueAtomic<double> m_queuedPosition;
 
     // Holds the last sample value of the previous buffer. This is used when ramping to

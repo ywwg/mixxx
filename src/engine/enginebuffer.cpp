@@ -91,6 +91,8 @@ EngineBuffer::EngineBuffer(const char* _group, ConfigObject<ConfigValue>* _confi
           m_bScalerChanged(false),
           m_bScalerOverride(false),
           m_iSeekQueued(NO_SEEK),
+          m_iEnableSyncQueued(0),
+          m_iSyncModeQueued(0),
           m_bLastBufferPaused(true),
           m_iTrackLoading(0),
           m_bPlayAfterLoading(false),
@@ -234,8 +236,9 @@ EngineBuffer::EngineBuffer(const char* _group, ConfigObject<ConfigValue>* _confi
     m_pLoopingControl = new LoopingControl(_group, _config);
     addControl(m_pLoopingControl);
 
-    m_pSyncControl = new SyncControl(_group, _config, pChannel,
-                                     pMixingEngine->getEngineSync());
+    m_pEngineSync = pMixingEngine->getEngineSync();
+
+    m_pSyncControl = new SyncControl(_group, _config, pChannel, m_pEngineSync);
     addControl(m_pSyncControl);
 
 #ifdef __VINYLCONTROL__
@@ -414,6 +417,14 @@ void EngineBuffer::requestSyncPhase() {
         // Only honor phase syncing if quantize is on and playing.
         m_iSeekQueued = SEEK_PHASE;
     }
+}
+
+void EngineBuffer::requestEnableSync(bool enabled) {
+    m_iEnableSyncQueued = static_cast<int>(enabled) + 1;
+}
+
+void EngineBuffer::requestSyncMode(int mode) {
+    m_iSyncModeQueued = mode + 1;
 }
 
 void EngineBuffer::clearScale() {
@@ -742,6 +753,7 @@ void EngineBuffer::process(CSAMPLE* pOutput, const int iBufferSize)
                                           fabs(speed) <= 1.9;
         enablePitchAndTimeScaling(use_pitch_and_time_scaling);
 
+        processSyncRequests();
         processSeek();
 
         // If the baserate, speed, or pitch has changed, we need to update the
@@ -1026,6 +1038,21 @@ void EngineBuffer::processSlip(int iBufferSize) {
     }
 }
 
+void EngineBuffer::processSyncRequests() {
+    int enable_request = m_iEnableSyncQueued;
+    int mode_request = m_iSyncModeQueued;
+    if (enable_request) {
+        m_iEnableSyncQueued = 0;
+        bool enabled = static_cast<bool>(enable_request - 1);
+        m_pEngineSync->requestEnableSync(m_pSyncControl, enabled);
+    }
+    if (mode_request) {
+        m_iSyncModeQueued = 0;
+        m_pEngineSync->requestSyncMode(m_pSyncControl,
+                                       static_cast<SyncMode>(mode_request - 1));
+    }
+}
+
 void EngineBuffer::processSeek() {
     // We need to read position just after reading seekType, to ensure that we read
     // the matching poition to seek_typ or a position from a new seek just queued from an other thread
@@ -1069,6 +1096,10 @@ void EngineBuffer::processSeek() {
             qWarning() << "Unhandled seek request type: " << seekType;
             return;
     }
+}
+
+void EngineBuffer::postProcess() {
+    m_pBpmControl->updateBeatDistance();
 }
 
 void EngineBuffer::updateIndicators(double speed, int iBufferSize) {
