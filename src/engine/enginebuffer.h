@@ -24,6 +24,7 @@
 
 #include "util/types.h"
 #include "engine/engineobject.h"
+#include "engine/sync/syncable.h"
 #include "trackinfoobject.h"
 #include "configobject.h"
 #include "rotary.h"
@@ -100,6 +101,12 @@ const int ENGINE_RAMP_UP = 1;
 
 class EngineBuffer : public EngineObject {
      Q_OBJECT
+  private:
+    enum SyncRequestQueued {
+        SYNC_REQUEST_NONE,
+        SYNC_REQUEST_ENABLE,
+        SYNC_REQUEST_DISABLE
+    };
   public:
     enum SeekRequest {
         NO_SEEK,
@@ -136,12 +143,12 @@ class EngineBuffer : public EngineObject {
     void queueNewPlaypos(double newpos, enum SeekRequest seekType);
     void requestSyncPhase();
     void requestEnableSync(bool enabled);
-    void requestSyncMode(int mode);
+    void requestSyncMode(SyncMode mode);
 
     // The process methods all run in the audio callback.
     void process(CSAMPLE* pOut, const int iBufferSize);
     void processSlip(int iBufferSize);
-    void postProcess();
+    void postProcess(const int iBufferSize);
 
     const char* getGroup();
     bool isTrackLoaded();
@@ -267,6 +274,9 @@ class EngineBuffer : public EngineObject {
     // The previous callback's speed. Used to check if the scaler parameters
     // need updating.
     double m_speed_old;
+
+    // True if the previous callback was scratching.
+    bool m_scratching_old;
 
     // The previous callback's pitch. Used to check if the scaler parameters
     // need updating.
