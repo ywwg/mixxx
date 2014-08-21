@@ -105,7 +105,8 @@ class EngineBuffer : public EngineObject {
     enum SyncRequestQueued {
         SYNC_REQUEST_NONE,
         SYNC_REQUEST_ENABLE,
-        SYNC_REQUEST_DISABLE
+        SYNC_REQUEST_DISABLE,
+        SYNC_REQUEST_ENABLEDISABLE,
     };
   public:
     enum SeekRequest {
