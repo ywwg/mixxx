@@ -228,7 +228,7 @@ void EngineMaster::processChannels(unsigned int* busChannelConnectionFlags,
     // Clear talkover compressor for the next round of gain calculation.
     m_pTalkoverDucking->clearKeys();
 
-    QSet<EngineChannel*> processed_channels;
+    QList<EngineChannel*> processed_channels;
     it = m_channels.begin();
     for (unsigned int channel_number = 0;
          it != m_channels.end(); ++it, ++channel_number) {
@@ -255,7 +255,7 @@ void EngineMaster::processChannels(unsigned int* busChannelConnectionFlags,
 
         // Process the buffer if necessary
         if (needsProcessing) {
-            processed_channels.insert(pChannel);
+            processed_channels.append(pChannel);
             pChannel->process(pChannelInfo->m_pBuffer, iBufferSize);
 
             if (m_pTalkoverDucking->getMode() != EngineTalkoverDucking::OFF &&
