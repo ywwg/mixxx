@@ -84,6 +84,7 @@ EngineBuffer::EngineBuffer(const char* _group, ConfigObject<ConfigValue>* _confi
           m_dSlipRate(1.0),
           m_bSlipEnabled(false),
           m_bSlipToggled(false),
+          m_bWasKeylocked(false),
           m_pRepeat(NULL),
           m_startButton(NULL),
           m_endButton(NULL),
@@ -268,6 +269,7 @@ EngineBuffer::EngineBuffer(const char* _group, ConfigObject<ConfigValue>* _confi
 
     m_pKeyControl = new KeyControl(_group, _config);
     addControl(m_pKeyControl);
+    m_pPitchControl = new ControlObjectSlave(m_group, "pitch", this);
 
     // Create the clock controller
     m_pClockControl = new ClockControl(_group, _config);
@@ -541,6 +543,8 @@ void EngineBuffer::slotTrackLoaded(TrackPointer pTrack,
     m_file_length_old = iTrackNumSamples;
     m_pTrackSamples->set(iTrackNumSamples);
     m_pTrackSampleRate->set(iTrackSampleRate);
+    // Reset the pitch value for the new track.
+    m_pPitchControl->set(0.0);
     //fix the duration
     pTrack->setDuration(iTrackNumSamples / (2 * iTrackSampleRate));
     m_pause.unlock();
@@ -765,6 +769,11 @@ void EngineBuffer::process(CSAMPLE* pOutput, const int iBufferSize)
         bool is_scratching = false;
         bool keylock_enabled = m_pKeylock->get() > 0;
 
+        // If keylock was on, and the user disabled it, also reset the pitch.
+        if (m_bWasKeylocked && !keylock_enabled) {
+            m_pPitchControl->set(0.0);
+        }
+
         // speed is the percentage change in player speed. Depending on whether
         // keylock is enabled, this is applied to either the rate or the tempo.
         double speed = m_pRateControl->calculateRate(
@@ -837,6 +846,7 @@ void EngineBuffer::process(CSAMPLE* pOutput, const int iBufferSize)
             m_baserate_old = baserate;
             m_speed_old = speed;
             m_pitch_old = pitch;
+            m_bWasKeylocked = keylock_enabled;
 
             // The way we treat rate inside of EngineBuffer is actually a
             // description of "sample consumption rate" or percentage of samples
