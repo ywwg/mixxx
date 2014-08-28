@@ -702,6 +702,7 @@ void EngineBuffer::slotControlPlayFromStart(double v)
 void EngineBuffer::slotControlJumpToStartAndStop(double v)
 {
     if (v > 0.0) {
+        qDebug() << "Jump to start and stop!";
         doSeek(0., SEEK_EXACT);
         m_playButton->set(0);
     }
