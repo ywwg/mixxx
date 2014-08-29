@@ -574,7 +574,7 @@
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>XoneK2.LoopMinus</key>
+                <key>XoneK2.LoopPlus</key>
                 <status>0x9F</status>
                 <midino>0x44</midino>
                 <options>
@@ -583,7 +583,7 @@
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>XoneK2.LoopMinus</key>
+                <key>XoneK2.LoopPlus</key>
                 <status>0x8F</status>
                 <midino>0x44</midino>
                 <options>
@@ -592,7 +592,7 @@
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>XoneK2.LoopPlus</key>
+                <key>XoneK2.LoopMinus</key>
                 <status>0x9F</status>
                 <midino>0x40</midino>
                 <options>
@@ -601,7 +601,7 @@
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>XoneK2.LoopPlus</key>
+                <key>XoneK2.LoopMinus</key>
                 <status>0x8F</status>
                 <midino>0x40</midino>
                 <options>
@@ -790,7 +790,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>XoneK2.LoopMinus</key>
+                <key>XoneK2.LoopPlus</key>
                 <status>0x9F</status>
                 <midino>0x45</midino>
                 <options>
@@ -799,7 +799,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>XoneK2.LoopMinus</key>
+                <key>XoneK2.LoopPlus</key>
                 <status>0x8F</status>
                 <midino>0x45</midino>
                 <options>
@@ -808,7 +808,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>XoneK2.LoopPlus</key>
+                <key>XoneK2.LoopMinus</key>
                 <status>0x9F</status>
                 <midino>0x41</midino>
                 <options>
@@ -817,7 +817,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>XoneK2.LoopPlus</key>
+                <key>XoneK2.LoopMinus</key>
                 <status>0x8F</status>
                 <midino>0x41</midino>
                 <options>
@@ -1006,7 +1006,7 @@
             </control>
             <control>
                 <group>[Channel2]</group>
-                <key>XoneK2.LoopMinus</key>
+                <key>XoneK2.LoopPlus</key>
                 <status>0x9F</status>
                 <midino>0x46</midino>
                 <options>
@@ -1015,7 +1015,7 @@
             </control>
             <control>
                 <group>[Channel2]</group>
-                <key>XoneK2.LoopMinus</key>
+                <key>XoneK2.LoopPlus</key>
                 <status>0x8F</status>
                 <midino>0x46</midino>
                 <options>
@@ -1024,7 +1024,7 @@
             </control>
             <control>
                 <group>[Channel2]</group>
-                <key>XoneK2.LoopPlus</key>
+                <key>XoneK2.LoopMinus</key>
                 <status>0x9F</status>
                 <midino>0x42</midino>
                 <options>
@@ -1033,7 +1033,7 @@
             </control>
             <control>
                 <group>[Channel2]</group>
-                <key>XoneK2.LoopPlus</key>
+                <key>XoneK2.LoopMinus</key>
                 <status>0x8F</status>
                 <midino>0x42</midino>
                 <options>
@@ -1222,7 +1222,7 @@
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>XoneK2.LoopMinus</key>
+                <key>XoneK2.LoopPlus</key>
                 <status>0x9F</status>
                 <midino>0x47</midino>
                 <options>
@@ -1231,7 +1231,7 @@
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>XoneK2.LoopMinus</key>
+                <key>XoneK2.LoopPlus</key>
                 <status>0x8F</status>
                 <midino>0x47</midino>
                 <options>
@@ -1240,7 +1240,7 @@
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>XoneK2.LoopPlus</key>
+                <key>XoneK2.LoopMinus</key>
                 <status>0x9F</status>
                 <midino>0x43</midino>
                 <options>
@@ -1249,7 +1249,7 @@
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>XoneK2.LoopPlus</key>
+                <key>XoneK2.LoopMinus</key>
                 <status>0x8F</status>
                 <midino>0x43</midino>
                 <options>
