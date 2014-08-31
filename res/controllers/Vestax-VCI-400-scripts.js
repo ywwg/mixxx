@@ -10,7 +10,9 @@
 Owen todo:
 fx :(
 vinyl button?
-wheel touch?
+param knob -> key
+
+make COs for loop size knob an
 
 
 add no-handler versions of play / pause / etc so we can put out the lights.
@@ -135,7 +137,6 @@ VestaxVCI400.Deck = function (deckNumber, group, active) {
    this.isActive = active; //if this deck is currently controlled by the VCI-400
    this.Buttons = []; //the buttons
    this.deckNumber = group.substring(8,9);// [Channel1]
-   this.buttonMode = VestaxVCI400.ModeEnum.HOTCUE;
 }
 /*
  * Each deck has a disjunct set of buttons
@@ -381,6 +382,8 @@ VestaxVCI400.Deck.prototype.init = function() {
      */
      this.Buttons.VINYL.illuminate(true);
 
+     this.setButtonMode(VestaxVCI400.ModeEnum.ROLL);
+
      //Connect controls
      engine.connectControl(this.group,"VuMeter", "VestaxVCI400.Decks."+this.deckIdentifier+".onVuMeterChanged");
      this.onVuMeterChanged(0, this.group, 0);
@@ -389,10 +392,10 @@ VestaxVCI400.Deck.prototype.init = function() {
      engine.connectControl(this.group,"hotcue_2_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue2Changed");
      engine.connectControl(this.group,"hotcue_3_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue3Changed");
      engine.connectControl(this.group,"hotcue_4_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue4Changed");
-     engine.connectControl(this.group,"hotcue_5_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue5Changed");
-     engine.connectControl(this.group,"hotcue_6_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue6Changed");
-     engine.connectControl(this.group,"hotcue_7_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue7Changed");
-     engine.connectControl(this.group,"hotcue_8_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue8Changed");
+//     engine.connectControl(this.group,"hotcue_5_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue5Changed");
+//     engine.connectControl(this.group,"hotcue_6_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue6Changed");
+//     engine.connectControl(this.group,"hotcue_7_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue7Changed");
+//     engine.connectControl(this.group,"hotcue_8_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue8Changed");
 
 //     engine.connectControl("[Sampler1]","duration", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue1Changed");
 //     engine.connectControl(this.group,"hotcue_2_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue2Changed");
@@ -685,6 +688,33 @@ VestaxVCI400.loopKnob = function (channel, control, value, status, group) {
    }
 }
 
+
+VestaxVCI400.pitchKnob = function (channel, control, value, status, group) {
+	try{
+        var deck = VestaxVCI400.GetDeck(group);
+        var jogValue = value - 0x40; // -64 to +63, - = CCW, + = CW
+
+        if (VestaxVCI400.shiftActive) {
+            var playPosition = engine.getValue(deck.group, "playposition")
+            if (jogValue > 0 ) {
+                playPosition -= 0.0125;
+            } else {
+                playPosition += 0.0125;
+            }
+            engine.setValue(deck.group, "playposition", playPosition);
+        } else {
+        	if(jogValue > 0) {
+      		    engine.setValue(deck.group, "pitch_down_small", 1);
+        	} else {
+      		    engine.setValue(deck.group, "pitch_up_small", 1);
+            }
+        }
+    }
+    catch(ex) {
+    	VestaxVCI400.printError(ex);
+   }
+}
+
 VestaxVCI400.printError = function(exception){
 	print("Error Msg: "+exception.toString());
 };
@@ -736,10 +766,19 @@ VestaxVCI400.Deck.prototype.lightButton = function(index, on, dim) {
 
 }
 
+VestaxVCI400.Deck.prototype.setButtonMode = function(value) {
+    this.buttonMode = value;
+    this.Buttons.MODE_HOTCUE.illuminate(this.buttonMode == VestaxVCI400.ModeEnum.HOTCUE);
+    this.Buttons.MODE_LOOP.illuminate(this.buttonMode == VestaxVCI400.ModeEnum.LOOP);
+    this.Buttons.MODE_ROLL.illuminate(this.buttonMode == VestaxVCI400.ModeEnum.ROLL);
+    this.Buttons.MODE_SAMPLER.illuminate(this.buttonMode == VestaxVCI400.ModeEnum.SAMPLER);
+}
+
 VestaxVCI400.Deck.prototype.onModeHotcue = function(value) {
     if(value == VestaxVCI400.ButtonState.pressed) {
-        this.buttonMode = VestaxVCI400.ModeEnum.HOTCUE;
-        this.Buttons.MODE_HOTCUE.illuminate(true);
+        print ("hotcue?");
+        this.setButtonMode(VestaxVCI400.ModeEnum.HOTCUE);
+        print ("yup");
 
         this.onHotCueChanged(this.Buttons.BUTTON5, engine.getValue(this.group, "hotcue_1_enabled"));
         this.onHotCueChanged(this.Buttons.BUTTON6, engine.getValue(this.group, "hotcue_2_enabled"));
@@ -749,15 +788,12 @@ VestaxVCI400.Deck.prototype.onModeHotcue = function(value) {
 //        this.onHotCueChanged(this.Buttons.BUTTON6, engine.getValue(this.group, "hotcue_6_enabled"));
 //        this.onHotCueChanged(this.Buttons.BUTTON7, engine.getValue(this.group, "hotcue_7_enabled"));
 //        this.onHotCueChanged(this.Buttons.BUTTON8, engine.getValue(this.group, "hotcue_8_enabled"));
-    } else {
-        this.Buttons.MODE_HOTCUE.illuminate(false);
     }
 }
 
 VestaxVCI400.Deck.prototype.onModeLoop = function(value) {
     if(value == VestaxVCI400.ButtonState.pressed) {
-        this.buttonMode = VestaxVCI400.ModeEnum.LOOP;
-        this.Buttons.MODE_LOOP.illuminate(true);
+        this.setButtonMode(VestaxVCI400.ModeEnum.LOOP);
 
         this.Buttons.BUTTON5.illuminate(true);
         this.Buttons.BUTTON6.illuminate(true);
@@ -767,15 +803,12 @@ VestaxVCI400.Deck.prototype.onModeLoop = function(value) {
 //        this.Buttons.BUTTON6.illuminate(true);
 //        this.Buttons.BUTTON7.illuminate(true);
 //        this.Buttons.BUTTON8.illuminate(true);
-    } else {
-        this.Buttons.MODE_LOOP.illuminate(false);
     }
 }
 
 VestaxVCI400.Deck.prototype.onModeRoll = function(value) {
     if(value == VestaxVCI400.ButtonState.pressed) {
-        this.buttonMode = VestaxVCI400.ModeEnum.ROLL;
-        this.Buttons.MODE_ROLL.illuminate(true);
+        this.setButtonMode(VestaxVCI400.ModeEnum.ROLL);
         this.Buttons.BUTTON5.illuminate(true);
         this.Buttons.BUTTON6.illuminate(true);
         this.Buttons.BUTTON7.illuminate(true);
@@ -784,15 +817,12 @@ VestaxVCI400.Deck.prototype.onModeRoll = function(value) {
 //        this.Buttons.BUTTON6.illuminate(true);
 //        this.Buttons.BUTTON7.illuminate(true);
 //        this.Buttons.BUTTON8.illuminate(true);
-    } else {
-        this.Buttons.MODE_ROLL.illuminate(false);
     }
 }
 
 VestaxVCI400.Deck.prototype.onModeSampler = function(value) {
     if(value == VestaxVCI400.ButtonState.pressed) {
-        this.buttonMode = VestaxVCI400.ModeEnum.SAMPLER;
-        this.Buttons.MODE_SAMPLER.illuminate(true);
+        this.setButtonMode(VestaxVCI400.ModeEnum.SAMPLER);
         this.Buttons.BUTTON5.illuminate(false);
         this.Buttons.BUTTON6.illuminate(false);
         this.Buttons.BUTTON7.illuminate(false);
@@ -801,7 +831,5 @@ VestaxVCI400.Deck.prototype.onModeSampler = function(value) {
 //        this.Buttons.BUTTON6.illuminate(false);
 //        this.Buttons.BUTTON7.illuminate(false);
 //        this.Buttons.BUTTON8.illuminate(false);
-   } else {
-        this.Buttons.MODE_SAMPLER.illuminate(false);
-    }
+   }
 }
