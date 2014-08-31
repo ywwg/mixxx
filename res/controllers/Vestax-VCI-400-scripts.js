@@ -7,6 +7,16 @@
 
 
 /*
+Owen todo:
+fx :(
+vinyl button?
+wheel touch?
+
+
+add no-handler versions of play / pause / etc so we can put out the lights.
+*/
+
+/*
  * The VCI-400 class definition
  * All attributes of this class represent
  * buttons and controls affecting the MASTER output
@@ -75,7 +85,6 @@ VestaxVCI400.addButton = function(buttonName, button, eventHandler) {
  */
 
 VestaxVCI400.ButtonState = {"released":0x00, "pressed":0x7F};
-VestaxVCI400.ScratchTimeOut = 20; //time in ms, see finishScratch()
 /*
  * The button object
  */
@@ -124,12 +133,9 @@ VestaxVCI400.Deck = function (deckNumber, group, active) {
    this.deckIdentifier = deckNumber;
    this.group = group;
    this.vinylMode = true;
-   this.isScratching = false; //becomes true if wheel is touched for scratching
    this.isActive = active; //if this deck is currently controlled by the VCI-400
    this.Buttons = []; //the buttons
    this.deckNumber = group.substring(8,9);// [Channel1]
-   this.scratchTimer = -1;
-   this.lastScratchTick = -1;
    this.buttonMode = VestaxVCI400.ModeEnum.HOTCUE;
 }
 /*
@@ -164,40 +170,7 @@ VestaxVCI400.GetDeck = function(group) {
 VestaxVCI400.Deck.prototype.onVinyl = function(value) {
     this.vinylMode = (value == 127)? true: false;
 };
-// Turn scratch mode on or off depending on wheel touch
-VestaxVCI400.Deck.prototype.onWheelTouch = function(value) {
 
-   if(this.vinylMode == false)
-       return;
-
-   if(value == VestaxVCI400.ButtonState.pressed){
-       engine.scratchEnable(this.deckNumber, 4096, 33.3333, 0.125, 0.125/32);
-       this.isScratching = true;
-    }
-    else{
-        /*
-         * Note: When releasing the wheel you might have done a backspin scratch
-         * Hence, we must not call 'scratchDisable()' here.
-         * Let's set up a timer which check post delayed if the wheel has moved
-         */
-         if(this.scratchTimer == -1)
-            this.scratchTimer = engine.beginTimer(VestaxVCI400.ScratchTimeOut, "VestaxVCI400.Decks."+this.deckIdentifier + ".finishScratch()");
-    }
-};
-
-VestaxVCI400.Deck.prototype.finishScratch = function(){
-    var currentTime = new Date().getTime();
-    //print("finishScratch() called");
-    if(currentTime - this.lastScratchTick >= VestaxVCI400.ScratchTimeOut)
-    {
-        engine.stopTimer(this.scratchTimer);
-        this.scratchTimer = -1;
-        engine.scratchDisable(this.deckNumber);
-        this.isScratching = false;
-        //print("Disable Scratch");
-    }
-
-};
 //=========Pad Buttons=========================
 VestaxVCI400.Deck.prototype.onButton1Activate = function(value){
     this.onButtonPressed(this.Buttons.BUTTON1, 1, value);
@@ -239,21 +212,28 @@ VestaxVCI400.Deck.prototype.onButtonPressed = function(button, buttonNumber, val
     		engine.setValue(this.group, hotCueAction, 0);
     	}
     	break;
+    case VestaxVCI400.ModeEnum.LOOP:
+        var loop_size = Math.pow(2, buttonNumber - 3);
+        if(value == VestaxVCI400.ButtonState.pressed) {
+            engine.setValue(this.group, "beatloop_" + loop_size.toString() + "_activate", 1);
+        }
+        break;
+    case VestaxVCI400.ModeEnum.ROLL:
+        var loop_size = Math.pow(2, buttonNumber - 5);
+        if(value == VestaxVCI400.ButtonState.pressed) {
+            engine.setValue(this.group, "beatlooproll_" + loop_size.toString() + "_activate", 1);
+        } else {
+            engine.setValue(this.group, "beatlooproll_" + loop_size.toString() + "_activate", 0);
+        }
+        break;
+    case VestaxVCI400.ModeEnum.SAMPLER:
+        if(value == VestaxVCI400.ButtonState.pressed) {
+            engine.setValue("[Sampler" + buttonNumber + "]", "start_play", 1);
+        } else {
+            engine.setValue("[Sampler" + buttonNumber + "]", "stop", 1);
+        }
+        break;
     }
-};
-
-VestaxVCI400.Deck.prototype.onWheelMove = function(value) {
-     var jogValue = value - 0x40; // -64 to +63, - = CCW, + = CW
-
-     //wheel os touched and scratch mode is active
-     if(this.isScratching){
-        engine.scratchTick(this.deckNumber, jogValue);
-        this.lastScratchTick = new Date().getTime();
-     }
-     else{
-        //pitch bend via jog wheel, jogValue has been adjusted to be more soft
-        engine.setValue(this.group,"jog",jogValue/50);
-     }
 };
 
 /*
@@ -273,7 +253,6 @@ VestaxVCI400.Deck.prototype.onVuMeterChanged = function(value, group, key) {
   */
 VestaxVCI400.Deck.prototype.onHotCue1Changed = function(value, group, key) {
 	try {
-	    print("hotcue 1 changed!!!!!!!!!!");
         var deck = VestaxVCI400.GetDeck(group);
         deck.onHotCueChanged(deck.Buttons.BUTTON1, value);
 	}
@@ -408,6 +387,8 @@ VestaxVCI400.Deck.prototype.init = function() {
 
      //Connect controls
      engine.connectControl(this.group,"VuMeter", "VestaxVCI400.Decks."+this.deckIdentifier+".onVuMeterChanged");
+     this.onVuMeterChanged(0, this.group, 0);
+
      engine.connectControl(this.group,"hotcue_1_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue1Changed");
      engine.connectControl(this.group,"hotcue_2_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue2Changed");
      engine.connectControl(this.group,"hotcue_3_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue3Changed");
@@ -682,17 +663,27 @@ VestaxVCI400.button8Activate = function (channel, control, value, status, group)
   }
 };
 
-VestaxVCI400.beatLengthWheel = function (channel, control, value, status, group) {
+VestaxVCI400.loopKnob = function (channel, control, value, status, group) {
 	try{
         var deck = VestaxVCI400.GetDeck(group);
         var isLoopActive = engine.getValue(deck.group, "loop_enabled");
         var jogValue = value - 0x40; // -64 to +63, - = CCW, + = CW
 
         if(isLoopActive){
-        	if(jogValue > 0)
-        		engine.setValue(deck.group, "loop_halve", 1)
-        	else
-        		engine.setValue(deck.group, "loop_double", 1)
+            if (VestaxVCI400.shiftActive) {
+            	if(jogValue > 0)
+            		engine.setValue(deck.group, "loop_move", -1)
+            	else
+            		engine.setValue(deck.group, "loop_move", 1)
+            } else {
+            	if(jogValue > 0) {
+            		engine.setValue(deck.group, "loop_halve", 1)
+            		engine.setValue(deck.group, "loop_halve", 0)
+            	} else {
+            		engine.setValue(deck.group, "loop_double", 1)
+            		engine.setValue(deck.group, "loop_double", 0)
+                }
+            }
         }
     }
     catch(ex) {
@@ -777,14 +768,14 @@ VestaxVCI400.Deck.prototype.onModeLoop = function(value) {
         this.buttonMode = VestaxVCI400.ModeEnum.LOOP;
         this.Buttons.MODE_LOOP.illuminate(true);
 
-        this.Buttons.BUTTON1.illuminate(false);
-        this.Buttons.BUTTON2.illuminate(false);
-        this.Buttons.BUTTON3.illuminate(false);
-        this.Buttons.BUTTON4.illuminate(false);
-        this.Buttons.BUTTON5.illuminate(false);
-        this.Buttons.BUTTON6.illuminate(false);
-        this.Buttons.BUTTON7.illuminate(false);
-        this.Buttons.BUTTON8.illuminate(false);
+        this.Buttons.BUTTON1.illuminate(true);
+        this.Buttons.BUTTON2.illuminate(true);
+        this.Buttons.BUTTON3.illuminate(true);
+        this.Buttons.BUTTON4.illuminate(true);
+        this.Buttons.BUTTON5.illuminate(true);
+        this.Buttons.BUTTON6.illuminate(true);
+        this.Buttons.BUTTON7.illuminate(true);
+        this.Buttons.BUTTON8.illuminate(true);
     } else {
         this.Buttons.MODE_LOOP.illuminate(false);
     }
@@ -795,14 +786,14 @@ VestaxVCI400.Deck.prototype.onModeRoll = function(value) {
         print("ROLL MODE");
         this.buttonMode = VestaxVCI400.ModeEnum.ROLL;
         this.Buttons.MODE_ROLL.illuminate(true);
-        this.Buttons.BUTTON1.illuminate(false);
-        this.Buttons.BUTTON2.illuminate(false);
-        this.Buttons.BUTTON3.illuminate(false);
-        this.Buttons.BUTTON4.illuminate(false);
-        this.Buttons.BUTTON5.illuminate(false);
-        this.Buttons.BUTTON6.illuminate(false);
-        this.Buttons.BUTTON7.illuminate(false);
-        this.Buttons.BUTTON8.illuminate(false);
+        this.Buttons.BUTTON1.illuminate(true);
+        this.Buttons.BUTTON2.illuminate(true);
+        this.Buttons.BUTTON3.illuminate(true);
+        this.Buttons.BUTTON4.illuminate(true);
+        this.Buttons.BUTTON5.illuminate(true);
+        this.Buttons.BUTTON6.illuminate(true);
+        this.Buttons.BUTTON7.illuminate(true);
+        this.Buttons.BUTTON8.illuminate(true);
     } else {
         this.Buttons.MODE_ROLL.illuminate(false);
     }
