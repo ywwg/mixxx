@@ -45,13 +45,13 @@ VestaxVCI400.shiftActivate = function (channel, control, value, status, group) {
  */
 VestaxVCI400.onMasterVuMeterLChanged = function(value){
     var normalizedVal = parseInt(value*127);
-    print("master vu " + normalizedVal);
     midi.sendShortMsg("0xbe", 43, normalizedVal);
+    midi.sendShortMsg("0xbe", 43, 64);
 }
 VestaxVCI400.onMasterVuMeterRChanged = function(value){
     var normailizedVal = parseInt(value*127);
+    midi.sendShortMsg("0xbe", 43, 64);
     midi.sendShortMsg("0xbe", 44, normailizedVal);
-
 }
 
 VestaxVCI400.ButtonLedState = {"on": 0x7F, "off": 0x00};
@@ -239,12 +239,12 @@ VestaxVCI400.Deck.prototype.onDynamicButtonPressed = function(button, buttonNumb
  * The deck VU meters
  */
 VestaxVCI400.Deck.prototype.onVuMeterChanged = function(value, group, key) {
-     var normalizedVal = parseInt(value*127);
-     var deckNumber = parseInt(group.substring(8,9));
-     var midiNo = deckNumber + 1;
-     var statusByte = "0xb".concat(midiNo.toString());
-     midi.sendShortMsg(statusByte, 17, normalizedVal);
- };
+    var normalizedVal = parseInt(value*127);
+    var deckNumber = parseInt(group.substring(8,9));
+    var midiNo = deckNumber + 1;
+    var statusByte = "0xb".concat(midiNo.toString());
+    midi.sendShortMsg(statusByte, 17, normalizedVal);
+};
 
  /*
   * This is called when Mixxx notifies us that a button state has changed
@@ -495,12 +495,13 @@ VestaxVCI400.init = function (id) {
    VestaxVCI400.Decks.D.init();
 
    //Connect vu meters
-   engine.connectControl("[Master]","VuMeterL", "VestaxVCI400.onMasterVuMeterLChanged");
-   engine.connectControl("[Master]","VuMeterR", "VestaxVCI400.onMasterVuMeterRChanged");
+   // No need if using the sound card
+//   engine.connectControl("[Master]","VuMeterL", "VestaxVCI400.onMasterVuMeterLChanged");
+//   engine.connectControl("[Master]","VuMeterR", "VestaxVCI400.onMasterVuMeterRChanged");
 
    //Reset VU meters
-   midi.sendShortMsg("0xbe", 43, 0);
-   midi.sendShortMsg("0xbe", 44, 0);
+   //midi.sendShortMsg("0xbe", 43, 0);
+   //midi.sendShortMsg("0xbe", 44, 0);
 };
 
 /*
@@ -514,8 +515,8 @@ VestaxVCI400.shutdown = function () {
 	VestaxVCI400.Decks.D.init();
 
 	//Reset VU meters
-	midi.sendShortMsg("0xbe", 43, 0);
-	midi.sendShortMsg("0xbe", 44, 0);
+	//midi.sendShortMsg("0xbe", 43, 0);
+	//midi.sendShortMsg("0xbe", 44, 0);
 };
 
 VestaxVCI400.vinyl = function (channel, control, value, status, group) {
