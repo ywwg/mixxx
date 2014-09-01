@@ -647,6 +647,8 @@ VestaxVCI400.loopKnob = function (channel, control, value, status, group) {
                     engine.setValue(deck.group, "loop_move", 1)
             } else {
                 if(jogValue > 0) {
+                    // Because loop_halve is supposed to be a pushbutton, we have to
+                    // fake the button-off event to clear out the "pressed" status.
                     engine.setValue(deck.group, "loop_halve", 1)
                     engine.setValue(deck.group, "loop_halve", 0)
                 } else {
