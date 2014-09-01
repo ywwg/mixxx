@@ -8,13 +8,6 @@
 
 /*
 Owen todo:
-fx :(
-vinyl button?
-param knob -> key
-
-make COs for loop size knob an
-
-
 add no-handler versions of play / pause / etc so we can put out the lights.
 */
 
@@ -30,33 +23,76 @@ VestaxVCI400 = new function() {
 }
 
 VestaxVCI400.shiftActive = false;
+VestaxVCI400.enableMasterVu = false;
 
 VestaxVCI400.ModeEnum = {
+    NONE : -1,
     HOTCUE : 0,
     LOOP : 1,
     ROLL : 2,
     SAMPLER : 3,
 }
 
+/*
+ * Called when the MIDI device is opened for set up
+ */
+VestaxVCI400.init = function (id) {
+   engine.setValue("[Master]", "num_decks", 4);
+   //Initialize controls and their default values here
+   VestaxVCI400.Decks.A.init();
+   VestaxVCI400.Decks.B.init();
+   VestaxVCI400.Decks.C.init();
+   VestaxVCI400.Decks.D.init();
+
+   //Connect vu meters
+   // No need if using the sound card
+   engine.connectControl("[Master]","VuMeterL", "VestaxVCI400.onMasterVuMeterLChanged");
+   engine.connectControl("[Master]","VuMeterR", "VestaxVCI400.onMasterVuMeterRChanged");
+
+   //Reset VU meters
+   if (VestaxVCI400.enableMasterVu) {
+       midi.sendShortMsg("0xbe", 43, 0);
+       midi.sendShortMsg("0xbe", 44, 0);
+   }
+};
+
+/*
+ * Called when the MIDI device is closed
+ */
+VestaxVCI400.shutdown = function () {
+    //Initialize controls and their default values here
+    VestaxVCI400.Decks.A.init();
+    VestaxVCI400.Decks.B.init();
+    VestaxVCI400.Decks.C.init();
+    VestaxVCI400.Decks.D.init();
+
+    VestaxVCI400.Decks.A.setButtonMode(VestaxVCI400.ModeEnum.NONE);
+    VestaxVCI400.Decks.B.setButtonMode(VestaxVCI400.ModeEnum.NONE);
+    VestaxVCI400.Decks.C.setButtonMode(VestaxVCI400.ModeEnum.NONE);
+    VestaxVCI400.Decks.D.setButtonMode(VestaxVCI400.ModeEnum.NONE);
+
+    //Reset VU meters
+    if (VestaxVCI400.enableMasterVu) {
+        midi.sendShortMsg("0xbe", 43, 0);
+        midi.sendShortMsg("0xbe", 44, 0);
+    }
+};
+
 VestaxVCI400.shiftActivate = function (channel, control, value, status, group) {
     VestaxVCI400.shiftActive = (value != 0);
 }
 
-/*
- * VU meters controls
- */
 VestaxVCI400.onMasterVuMeterLChanged = function(value){
+    if (!VestaxVCI400.enableMasterVu) { return; }
     var normalizedVal = parseInt(value*127);
     midi.sendShortMsg("0xbe", 43, normalizedVal);
-    midi.sendShortMsg("0xbe", 43, 64);
 }
 VestaxVCI400.onMasterVuMeterRChanged = function(value){
+    if (!VestaxVCI400.enableMasterVu) { return; }
     var normailizedVal = parseInt(value*127);
-    midi.sendShortMsg("0xbe", 43, 64);
     midi.sendShortMsg("0xbe", 44, normailizedVal);
 }
 
-VestaxVCI400.ButtonLedState = {"on": 0x7F, "off": 0x00};
 /*
  * Adds a button to the VCI-400 class object
  * The button must affect the MASTER.
@@ -85,12 +121,12 @@ VestaxVCI400.addButton = function(buttonName, button, eventHandler) {
  *
  * =======================================================
  */
-
 VestaxVCI400.ButtonState = {"released":0x00, "pressed":0x7F};
+VestaxVCI400.ButtonLedState = {"on": 0x7F, "off": 0x00};
+
 /*
  * The button object
  */
-
 VestaxVCI400.Button = function (statusByte, midiNo) {
    this.statusByte = statusByte;
    this.midiNo = midiNo;
@@ -99,6 +135,7 @@ VestaxVCI400.Button = function (statusByte, midiNo) {
    this.group; //this will be set when by the addButton method
 
 };
+
 /*
  * Button objects have a 'handleEvent' method
  * ,that is, the action to be performed if pressed.
@@ -106,6 +143,7 @@ VestaxVCI400.Button = function (statusByte, midiNo) {
 VestaxVCI400.Button.prototype.handleEvent = function(value) {
    this.handler(value);
 };
+
 //Calling this method will illuminate the button depening on if value is true or false
 VestaxVCI400.Button.prototype.illuminate = function(value) {
    if(value ==true){
@@ -127,15 +165,11 @@ VestaxVCI400.Button.prototype.illuminate = function(value) {
  *
  *
  */
-
-
-
 VestaxVCI400.Deck = function (deckNumber, group, active) {
    this.deckIdentifier = deckNumber;
    this.group = group;
-   this.vinylMode = true;
-   this.isActive = active; //if this deck is currently controlled by the VCI-400
-   this.Buttons = []; //the buttons
+   this.isActive = active; // If this deck is currently controlled by the VCI-400 (A/C B/D switches)
+   this.Buttons = [];
    this.deckNumber = group.substring(8,9);// [Channel1]
 }
 /*
@@ -143,7 +177,6 @@ VestaxVCI400.Deck = function (deckNumber, group, active) {
  * This method adds a assigns a button to a deck
  */
 VestaxVCI400.Deck.prototype.addButton = VestaxVCI400.addButton;
-
 
 // ===========CREATING LEFT AND RIGHT DECKS OBJECTS
 VestaxVCI400.Decks = {
@@ -166,11 +199,8 @@ VestaxVCI400.GetDeck = function(group) {
       return null;
    }
 }
-// Vinyl button
-VestaxVCI400.Deck.prototype.onVinyl = function(value) {
-    this.vinylMode = (value == 127)? true: false;
-};
 
+// Currently we reserve the top row of buttons for toggle buttons like keylock and quantize.
 //=========Pad Buttons=========================
 //VestaxVCI400.Deck.prototype.onButton1Activate = function(value){
 //    this.onDynamicButtonPressed(this.Buttons.BUTTON1, 1, value);
@@ -184,6 +214,8 @@ VestaxVCI400.Deck.prototype.onVinyl = function(value) {
 //VestaxVCI400.Deck.prototype.onButton4Activate = function(value){
 //    this.onDynamicButtonPressed(this.Buttons.BUTTON4, 4, value);
 //};
+
+// Button 5 maps to button number "1" so that it gets hotcue 1.
 VestaxVCI400.Deck.prototype.onButton5Activate = function(value){
     this.onDynamicButtonPressed(this.Buttons.BUTTON5, 1, value);
 };
@@ -196,6 +228,8 @@ VestaxVCI400.Deck.prototype.onButton7Activate = function(value){
 VestaxVCI400.Deck.prototype.onButton8Activate = function(value){
     this.onDynamicButtonPressed(this.Buttons.BUTTON8, 4, value);
 };
+
+// Depending on what mode has been selected, the bottom row of buttons perform different functions.
 VestaxVCI400.Deck.prototype.onDynamicButtonPressed = function(button, buttonNumber, value){
     switch(this.buttonMode) {
     case VestaxVCI400.ModeEnum.HOTCUE:
@@ -205,13 +239,13 @@ VestaxVCI400.Deck.prototype.onDynamicButtonPressed = function(button, buttonNumb
         } else {
             hotCueAction = hotCueAction.concat("_activate");
         }
-    	if(value == VestaxVCI400.ButtonState.pressed){
-    		engine.setValue(this.group, hotCueAction, 1);
-    	}
-    	else{
-    		engine.setValue(this.group, hotCueAction, 0);
-    	}
-    	break;
+        if(value == VestaxVCI400.ButtonState.pressed){
+            engine.setValue(this.group, hotCueAction, 1);
+        }
+        else{
+            engine.setValue(this.group, hotCueAction, 0);
+        }
+        break;
     case VestaxVCI400.ModeEnum.LOOP:
         var loop_size = Math.pow(2, buttonNumber);
         if(value == VestaxVCI400.ButtonState.pressed) {
@@ -233,6 +267,7 @@ VestaxVCI400.Deck.prototype.onDynamicButtonPressed = function(button, buttonNumb
             engine.setValue("[Sampler" + buttonNumber + "]", "stop", 1);
         }
         break;
+    default:
     }
 };
 
@@ -247,92 +282,93 @@ VestaxVCI400.Deck.prototype.onVuMeterChanged = function(value, group, key) {
     midi.sendShortMsg(statusByte, 17, normalizedVal);
 };
 
- /*
-  * This is called when Mixxx notifies us that a button state has changed
-  * via engine.connect.
-  */
-VestaxVCI400.Deck.prototype.onHotCue1Changed = function(value, group, key) {
-	try {
-        var deck = VestaxVCI400.GetDeck(group);
-        deck.onHotCueChanged(deck.Buttons.BUTTON5, value);
-	}
-    catch(ex) {
-    	VestaxVCI400.printError(ex);
-    }
-};
-VestaxVCI400.Deck.prototype.onHotCue2Changed = function(value, group, key) {
-	try {
-        var deck = VestaxVCI400.GetDeck(group);
-        deck.onHotCueChanged(deck.Buttons.BUTTON6, value);
-	}
-    catch(ex) {
-    	VestaxVCI400.printError(ex);
-    }
-};
-VestaxVCI400.Deck.prototype.onHotCue3Changed = function(value, group, key) {
-	try {
-        var deck = VestaxVCI400.GetDeck(group);
-        deck.onHotCueChanged(deck.Buttons.BUTTON7, value);
-	}
-    catch(ex) {
-    	VestaxVCI400.printError(ex);
-    }
-};
-VestaxVCI400.Deck.prototype.onHotCue4Changed = function(value, group, key) {
-	try {
-        var deck = VestaxVCI400.GetDeck(group);
-        deck.onHotCueChanged(deck.Buttons.BUTTON8, value);
-	}
-    catch(ex) {
-    	VestaxVCI400.printError(ex);
-    }
-};
-//VestaxVCI400.Deck.prototype.onHotCue5Changed = function(value, group, key) {
-//	try {
-//        var deck = VestaxVCI400.GetDeck(group);
-//        deck.onHotCueChanged(deck.Buttons.BUTTON5, value);
-//	}
-//    catch(ex) {
-//    	VestaxVCI400.printError(ex);
-//    }
-//};
-//VestaxVCI400.Deck.prototype.onHotCue6Changed = function(value, group, key) {
-//	try {
-//        var deck = VestaxVCI400.GetDeck(group);
-//        deck.onHotCueChanged(deck.Buttons.BUTTON6, value);
-//	}
-//    catch(ex) {
-//    	VestaxVCI400.printError(ex);
-//    }
-//};
-//VestaxVCI400.Deck.prototype.onHotCue7Changed = function(value, group, key) {
-//	try {
-//        var deck = VestaxVCI400.GetDeck(group);
-//        deck.onHotCueChanged(deck.Buttons.BUTTON7, value);
-//	}
-//    catch(ex) {
-//    	VestaxVCI400.printError(ex);
-//    }
-//};
-//VestaxVCI400.Deck.prototype.onHotCue8Changed = function(value, group, key) {
-//	try {
-//        var deck = VestaxVCI400.GetDeck(group);
-//        deck.onHotCueChanged(deck.Buttons.BUTTON4, value);
-//	}
-//    catch(ex) {
-//    	VestaxVCI400.printError(ex);
-//    }
-//};
 /*
  * This is called when Mixxx notifies us that a button state has changed
  * via engine.connect.
  */
+// Note that we've mapped hotcue1 to button5.
+VestaxVCI400.Deck.prototype.onHotCue1Changed = function(value, group, key) {
+    try {
+        var deck = VestaxVCI400.GetDeck(group);
+        deck.onHotCueChanged(deck.Buttons.BUTTON5, value);
+    }
+    catch(ex) {
+        VestaxVCI400.printError(ex);
+    }
+};
+VestaxVCI400.Deck.prototype.onHotCue2Changed = function(value, group, key) {
+    try {
+        var deck = VestaxVCI400.GetDeck(group);
+        deck.onHotCueChanged(deck.Buttons.BUTTON6, value);
+    }
+    catch(ex) {
+        VestaxVCI400.printError(ex);
+    }
+};
+VestaxVCI400.Deck.prototype.onHotCue3Changed = function(value, group, key) {
+    try {
+        var deck = VestaxVCI400.GetDeck(group);
+        deck.onHotCueChanged(deck.Buttons.BUTTON7, value);
+    }
+    catch(ex) {
+        VestaxVCI400.printError(ex);
+    }
+};
+VestaxVCI400.Deck.prototype.onHotCue4Changed = function(value, group, key) {
+    try {
+        var deck = VestaxVCI400.GetDeck(group);
+        deck.onHotCueChanged(deck.Buttons.BUTTON8, value);
+    }
+    catch(ex) {
+        VestaxVCI400.printError(ex);
+    }
+};
+//VestaxVCI400.Deck.prototype.onHotCue5Changed = function(value, group, key) {
+//    try {
+//        var deck = VestaxVCI400.GetDeck(group);
+//        deck.onHotCueChanged(deck.Buttons.BUTTON5, value);
+//    }
+//    catch(ex) {
+//        VestaxVCI400.printError(ex);
+//    }
+//};
+//VestaxVCI400.Deck.prototype.onHotCue6Changed = function(value, group, key) {
+//    try {
+//        var deck = VestaxVCI400.GetDeck(group);
+//        deck.onHotCueChanged(deck.Buttons.BUTTON6, value);
+//    }
+//    catch(ex) {
+//        VestaxVCI400.printError(ex);
+//    }
+//};
+//VestaxVCI400.Deck.prototype.onHotCue7Changed = function(value, group, key) {
+//    try {
+//        var deck = VestaxVCI400.GetDeck(group);
+//        deck.onHotCueChanged(deck.Buttons.BUTTON7, value);
+//    }
+//    catch(ex) {
+//        VestaxVCI400.printError(ex);
+//    }
+//};
+//VestaxVCI400.Deck.prototype.onHotCue8Changed = function(value, group, key) {
+//    try {
+//        var deck = VestaxVCI400.GetDeck(group);
+//        deck.onHotCueChanged(deck.Buttons.BUTTON4, value);
+//    }
+//    catch(ex) {
+//        VestaxVCI400.printError(ex);
+//    }
+//};
 
+/*
+ * This is called when Mixxx notifies us that a button state has changed
+ * via engine.connect.
+ */
 VestaxVCI400.Deck.prototype.onHotCueChanged = function(button, value) {
     try {
         if (this.buttonMode == VestaxVCI400.ModeEnum.HOTCUE) {
             if(value == 0) {
-                button.illuminate(false); //turn off LEDs
+                button.illuminate(false); //turn off LED
             }
             else {
                 button.illuminate(true); //turn LED on
@@ -344,78 +380,37 @@ VestaxVCI400.Deck.prototype.onHotCueChanged = function(button, value) {
     }
 };
 
-  /*
-   * This is called when Mixxx notifies us that a button state has changed
-   * via engine.connect.
-   */
-VestaxVCI400.Deck.prototype.onLoopStatusChanged = function(value, group, key) {
-		try {
-	        var deck = VestaxVCI400.GetDeck(group);
-	        //if loop has been enabled, illuminate LEDs
-	        if(value == 1){
-	        	deck.Buttons.LOOP_IN.illuminate(true);
-	        	deck.Buttons.LOOP_OUT.illuminate(true);
-	        }
-	        else{
-	        	deck.Buttons.LOOP_IN.illuminate(false);
-	        	deck.Buttons.LOOP_OUT.illuminate(false);
-	        }
-		}
-	    catch(ex) {
-	    	VestaxVCI400.printError(ex);
-	    }
-	};
 /*
  * Method to set the initial state of a deck
  */
 VestaxVCI400.Deck.prototype.init = function() {
    // Make sure all buttons are not illuminated
-   for(b in this.Buttons){
+    for(b in this.Buttons){
         this.Buttons[b].illuminate(false);
     }
-    /*
-     * Make sure vinyl LED is on as it is the default when switching on the VCI-400
-     * Unfortunately, the VINYL buton has no LED receive slot, so we can't
-     * enforce the button to be illuminated from a programming point of view.
-     * This, however, is not a real limitation. The button is illuminated
-     * after the device has been booted.
-     */
-     this.Buttons.VINYL.illuminate(true);
 
-     this.setButtonMode(VestaxVCI400.ModeEnum.ROLL);
+    this.setButtonMode(VestaxVCI400.ModeEnum.ROLL);
 
-     //Connect controls
-     engine.connectControl(this.group,"VuMeter", "VestaxVCI400.Decks."+this.deckIdentifier+".onVuMeterChanged");
-     this.onVuMeterChanged(0, this.group, 0);
+    //Connect controls
+    engine.connectControl(this.group,"VuMeter", "VestaxVCI400.Decks."+this.deckIdentifier+".onVuMeterChanged");
+    this.onVuMeterChanged(0, this.group, 0);
 
-     engine.connectControl(this.group,"hotcue_1_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue1Changed");
-     engine.connectControl(this.group,"hotcue_2_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue2Changed");
-     engine.connectControl(this.group,"hotcue_3_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue3Changed");
-     engine.connectControl(this.group,"hotcue_4_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue4Changed");
-//     engine.connectControl(this.group,"hotcue_5_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue5Changed");
-//     engine.connectControl(this.group,"hotcue_6_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue6Changed");
-//     engine.connectControl(this.group,"hotcue_7_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue7Changed");
-//     engine.connectControl(this.group,"hotcue_8_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue8Changed");
+    engine.connectControl(this.group,"hotcue_1_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue1Changed");
+    engine.connectControl(this.group,"hotcue_2_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue2Changed");
+    engine.connectControl(this.group,"hotcue_3_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue3Changed");
+    engine.connectControl(this.group,"hotcue_4_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue4Changed");
+//    engine.connectControl(this.group,"hotcue_5_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue5Changed");
+//    engine.connectControl(this.group,"hotcue_6_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue6Changed");
+//    engine.connectControl(this.group,"hotcue_7_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue7Changed");
+//    engine.connectControl(this.group,"hotcue_8_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue8Changed");
 
-//     engine.connectControl("[Sampler1]","duration", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue1Changed");
-//     engine.connectControl(this.group,"hotcue_2_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue2Changed");
-//     engine.connectControl(this.group,"hotcue_3_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue3Changed");
-//     engine.connectControl(this.group,"hotcue_4_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue4Changed");
-//     engine.connectControl(this.group,"hotcue_5_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue5Changed");
-//     engine.connectControl(this.group,"hotcue_6_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue6Changed");
-//     engine.connectControl(this.group,"hotcue_7_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue7Changed");
-//     engine.connectControl(this.group,"hotcue_8_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue8Changed");
-
-     engine.connectControl(this.group,"hotcue_1_enabled", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue1Changed");
-
+////    TODO: Come up with a way to light up buttons if the samplers have tracks loaded
+//    engine.connectControl("[Sampler1]","duration", "VestaxVCI400.Decks."+this.deckIdentifier+".onHotCue1Changed");
 };
-//Creating buttons referring to left deck
 
-VestaxVCI400.Decks.A.addButton("VINYL", new VestaxVCI400.Button(0xB2,0x06), "onVinyl");
-VestaxVCI400.Decks.B.addButton("VINYL", new VestaxVCI400.Button(0xB3,0x06), "onVinyl");
-VestaxVCI400.Decks.C.addButton("VINYL", new VestaxVCI400.Button(0xB4,0x06), "onVinyl");
-VestaxVCI400.Decks.D.addButton("VINYL", new VestaxVCI400.Button(0xB5,0x06), "onVinyl");
-
+// Add buttons to individual decks.  The handlers here are not connected to the Mixxx engine.
+// Another function that takes a standard channel/control/value/status/group argument needs to be
+// created and then hand off to these handlers.
 VestaxVCI400.Decks.A.addButton("WHEEL", new VestaxVCI400.Button(0xB2,0x27), "onWheelTouch");
 VestaxVCI400.Decks.B.addButton("WHEEL", new VestaxVCI400.Button(0xB3,0x27), "onWheelTouch");
 VestaxVCI400.Decks.C.addButton("WHEEL", new VestaxVCI400.Button(0xB4,0x27), "onWheelTouch");
@@ -440,7 +435,6 @@ VestaxVCI400.Decks.A.addButton("MODE_SAMPLER", new VestaxVCI400.Button(0x92,0x18
 VestaxVCI400.Decks.B.addButton("MODE_SAMPLER", new VestaxVCI400.Button(0x93,0x18), "onModeSampler");
 VestaxVCI400.Decks.C.addButton("MODE_SAMPLER", new VestaxVCI400.Button(0x94,0x18), "onModeSampler");
 VestaxVCI400.Decks.D.addButton("MODE_SAMPLER", new VestaxVCI400.Button(0x95,0x18), "onModeSampler");
-
 
 VestaxVCI400.Decks.A.addButton("BUTTON1", new VestaxVCI400.Button(0x92,0x07), "onButton1Activate");
 VestaxVCI400.Decks.A.addButton("BUTTON2", new VestaxVCI400.Button(0x92,0x08), "onButton2Activate");
@@ -479,93 +473,52 @@ VestaxVCI400.Decks.D.addButton("BUTTON7", new VestaxVCI400.Button(0x95,0x0D), "o
 VestaxVCI400.Decks.D.addButton("BUTTON8", new VestaxVCI400.Button(0x95,0x0E), "onButton8Activate");
 
 
-/* ================MAPPING FUNCTIONS ==========================
+/* ================ MAPPING FUNCTIONS ==========================
  *
  * Having defined the some objects and class definitions
  * we can now easily build the mapping
  */
-
-
-/*
- * Called when the MIDI device is opened for set up
- */
-VestaxVCI400.init = function (id) {
-   engine.setValue("[Master]", "num_decks", 4);
-   //Initialize controls and their default values here
-   VestaxVCI400.Decks.A.init();
-   VestaxVCI400.Decks.B.init();
-   VestaxVCI400.Decks.C.init();
-   VestaxVCI400.Decks.D.init();
-
-   //Connect vu meters
-   // No need if using the sound card
-//   engine.connectControl("[Master]","VuMeterL", "VestaxVCI400.onMasterVuMeterLChanged");
-//   engine.connectControl("[Master]","VuMeterR", "VestaxVCI400.onMasterVuMeterRChanged");
-
-   //Reset VU meters
-   //midi.sendShortMsg("0xbe", 43, 0);
-   //midi.sendShortMsg("0xbe", 44, 0);
-};
-
-/*
- * Called when the MIDI device is closed
- */
-VestaxVCI400.shutdown = function () {
-	//Initialize controls and their default values here
-	VestaxVCI400.Decks.A.init();
-	VestaxVCI400.Decks.B.init();
-	VestaxVCI400.Decks.C.init();
-	VestaxVCI400.Decks.D.init();
-
-	//Reset VU meters
-	//midi.sendShortMsg("0xbe", 43, 0);
-	//midi.sendShortMsg("0xbe", 44, 0);
-};
-
-VestaxVCI400.vinyl = function (channel, control, value, status, group) {
+VestaxVCI400.otherSoundcard = function (channel, control, value, status, group) {
     try{
-        var deck = VestaxVCI400.GetDeck(group);
-        deck.Buttons.VINYL.handleEvent(value);
+        if (value == 0) {
+            return;
+        }
+        // I think there is a bug in the VCI400 that causes the master vu meters to always be
+        // linked to the 400's sound card, so if we try to drive the meters ourselves we get strobing.
+        // Therefore we can't drive the VU Meters with Mixxx in a way that looks good.
+        // See: http://help.vestax.co.jp/en/detail.php?id=459&id_page_url=396
+        //VestaxVCI400.enableMasterVu = !VestaxVCI400.enableMasterVu;
     }
     catch(ex) {
-    	VestaxVCI400.printError(ex);
+        VestaxVCI400.printError(ex);
    }
 };
-/*
- * Mapping deck selection switch
- */
+
 VestaxVCI400.deckSwitch = function (channel, control, value, status, group) {
     var deck = VestaxVCI400.GetDeck(group);
     deck.isActive = (value == 127)? true: false;
     print("Deck "+deck.deckIdentifier+ " is controlled by VCI-400: "+deck.isActive);
 };
-/*
- * Mapping wheel touch
- */
+
 VestaxVCI400.wheelTouch = function (channel, control, value, status, group) {
     try{
         var deck = VestaxVCI400.GetDeck(group);
         deck.Buttons.WHEEL.handleEvent(value);
     }
     catch(ex) {
-    	VestaxVCI400.printError(ex);
+        VestaxVCI400.printError(ex);
    }
 };
 VestaxVCI400.Deck.prototype.onWheelTouch = function(value) {
-//    if(this.vinylMode == false)
-//        return;
-
     if(value == VestaxVCI400.ButtonState.pressed) {
         engine.scratchEnable(this.deckNumber, 4096, 33.3333, 0.125, 0.125/32, true);
     } else {
-        // ramp goes directly to zero so we don't want that.
+        // Ramp goes directly to zero so we don't want that.
         engine.scratchDisable(this.deckNumber, false);
     }
 };
 
-/*
- * Mapping wheel motion
- */
+// Jog wheels
 VestaxVCI400.wheelMove = function (channel, control, value, status, group) {
     try{
         var deck = VestaxVCI400.GetDeck(group);
@@ -573,15 +526,35 @@ VestaxVCI400.wheelMove = function (channel, control, value, status, group) {
 
     }
     catch(ex) {
-    	VestaxVCI400.printError(ex);
+        VestaxVCI400.printError(ex);
    }
 };
+
 VestaxVCI400.Deck.prototype.onWheelMove = function(value) {
     var jogValue = value - 0x40; // -64 to +63, - = CCW, + = CW
-    engine.setValue(this.group, "jog", jogValue / 10);
+    // Note that we always set the jog value even if scratching is active.  This seems
+    // to create a better handoff between scratching and not-scratching.
+    if (engine.getValue(this.group, "play")) {
+        engine.setValue(this.group, "jog", jogValue / 30);
+    } else {
+        engine.setValue(this.group, "jog", jogValue / 10);
+    }
     if(engine.getValue(this.group, "scratch2_enable")){
         engine.scratchTick(this.deckNumber, jogValue);
     }
+};
+
+VestaxVCI400.brake = function (channel, control, value, status, group) {
+    try{
+        if (value == 0) {
+            return;
+        }
+        var deck = VestaxVCI400.GetDeck(group).deckNumber;
+        engine.brake(deck, true, .1, .9);
+    }
+    catch(ex) {
+        VestaxVCI400.printError(ex);
+   }
 };
 
 /*
@@ -661,36 +634,35 @@ VestaxVCI400.button8Activate = function (channel, control, value, status, group)
 };
 
 VestaxVCI400.loopKnob = function (channel, control, value, status, group) {
-	try{
+    try{
         var deck = VestaxVCI400.GetDeck(group);
         var isLoopActive = engine.getValue(deck.group, "loop_enabled");
         var jogValue = value - 0x40; // -64 to +63, - = CCW, + = CW
 
         if(isLoopActive){
             if (VestaxVCI400.shiftActive) {
-            	if(jogValue > 0)
-            		engine.setValue(deck.group, "loop_move", -1)
-            	else
-            		engine.setValue(deck.group, "loop_move", 1)
+                if(jogValue > 0)
+                    engine.setValue(deck.group, "loop_move", -1)
+                else
+                    engine.setValue(deck.group, "loop_move", 1)
             } else {
-            	if(jogValue > 0) {
-            		engine.setValue(deck.group, "loop_halve", 1)
-            		engine.setValue(deck.group, "loop_halve", 0)
-            	} else {
-            		engine.setValue(deck.group, "loop_double", 1)
-            		engine.setValue(deck.group, "loop_double", 0)
+                if(jogValue > 0) {
+                    engine.setValue(deck.group, "loop_halve", 1)
+                    engine.setValue(deck.group, "loop_halve", 0)
+                } else {
+                    engine.setValue(deck.group, "loop_double", 1)
+                    engine.setValue(deck.group, "loop_double", 0)
                 }
             }
         }
     }
     catch(ex) {
-    	VestaxVCI400.printError(ex);
+        VestaxVCI400.printError(ex);
    }
 }
 
-
 VestaxVCI400.pitchKnob = function (channel, control, value, status, group) {
-	try{
+    try{
         var deck = VestaxVCI400.GetDeck(group);
         var jogValue = value - 0x40; // -64 to +63, - = CCW, + = CW
 
@@ -703,24 +675,17 @@ VestaxVCI400.pitchKnob = function (channel, control, value, status, group) {
             }
             engine.setValue(deck.group, "playposition", playPosition);
         } else {
-        	if(jogValue > 0) {
-      		    engine.setValue(deck.group, "pitch_down_small", 1);
-        	} else {
-      		    engine.setValue(deck.group, "pitch_up_small", 1);
+            if(jogValue > 0) {
+                  engine.setValue(deck.group, "pitch_down_small", 1);
+            } else {
+                  engine.setValue(deck.group, "pitch_up_small", 1);
             }
         }
     }
     catch(ex) {
-    	VestaxVCI400.printError(ex);
+        VestaxVCI400.printError(ex);
    }
 }
-
-VestaxVCI400.printError = function(exception){
-	print("Error Msg: "+exception.toString());
-};
-
-
-/*** Owen's shit ***/
 
 VestaxVCI400.modeHotcue = function (channel, control, value, status, group) {
     try {
@@ -728,7 +693,7 @@ VestaxVCI400.modeHotcue = function (channel, control, value, status, group) {
         deck.Buttons.MODE_HOTCUE.handleEvent(value);
     }
     catch(ex) {
-    	VestaxVCI400.printError(ex);
+        VestaxVCI400.printError(ex);
    }
 };
 
@@ -738,7 +703,7 @@ VestaxVCI400.modeLoop = function (channel, control, value, status, group) {
         deck.Buttons.MODE_LOOP.handleEvent(value);
     }
     catch(ex) {
-    	VestaxVCI400.printError(ex);
+        VestaxVCI400.printError(ex);
    }
 };
 
@@ -748,7 +713,7 @@ VestaxVCI400.modeRoll = function (channel, control, value, status, group) {
         deck.Buttons.MODE_ROLL.handleEvent(value);
     }
     catch(ex) {
-    	VestaxVCI400.printError(ex);
+        VestaxVCI400.printError(ex);
    }
 };
 
@@ -758,7 +723,7 @@ VestaxVCI400.modeSampler = function (channel, control, value, status, group) {
         deck.Buttons.MODE_SAMPLER.handleEvent(value);
     }
     catch(ex) {
-    	VestaxVCI400.printError(ex);
+        VestaxVCI400.printError(ex);
    }
 };
 
@@ -776,9 +741,7 @@ VestaxVCI400.Deck.prototype.setButtonMode = function(value) {
 
 VestaxVCI400.Deck.prototype.onModeHotcue = function(value) {
     if(value == VestaxVCI400.ButtonState.pressed) {
-        print ("hotcue?");
         this.setButtonMode(VestaxVCI400.ModeEnum.HOTCUE);
-        print ("yup");
 
         this.onHotCueChanged(this.Buttons.BUTTON5, engine.getValue(this.group, "hotcue_1_enabled"));
         this.onHotCueChanged(this.Buttons.BUTTON6, engine.getValue(this.group, "hotcue_2_enabled"));
@@ -833,3 +796,7 @@ VestaxVCI400.Deck.prototype.onModeSampler = function(value) {
 //        this.Buttons.BUTTON8.illuminate(false);
    }
 }
+
+VestaxVCI400.printError = function(exception){
+    print("Error Msg: "+exception.toString());
+};

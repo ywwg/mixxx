@@ -241,6 +241,7 @@ void LoopingControl::slotLoopScale(double scale) {
 }
 
 void LoopingControl::slotLoopHalve(double v) {
+    qDebug() << "LOOP HALVE " << v;
     if (m_iLoopStartSample == kNoTrigger || m_iLoopEndSample == kNoTrigger) {
         return;
     }
