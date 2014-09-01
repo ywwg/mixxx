@@ -143,6 +143,7 @@ EffectRackPointer EffectsManager::getEffectRack(int i) {
 void EffectsManager::setupDefaults() {
     //m_pEffectChainManager->loadEffectChains();
 
+    // Visible effect racks
     EffectRackPointer pRack = addEffectRack();
     pRack->addEffectChainSlot();
     pRack->addEffectChainSlot();
@@ -188,6 +189,26 @@ void EffectsManager::setupDefaults() {
     pEffect = instantiateEffect("org.mixxx.effects.echo");
     pChain->addEffect(pEffect);
     m_pEffectChainManager->addEffectChain(pChain);
+
+    // Invisible filter-only racks.
+    pRack = addEffectRack();
+    pRack->addEffectChainSlot();
+    pRack->addEffectChainSlot();
+    pRack->addEffectChainSlot();
+    pRack->addEffectChainSlot();
+
+    for (int i = 0; i < 4; ++i) {
+        EffectChainSlotPointer pChainSlot = pRack->getEffectChainSlot(i);
+        pChain = pChainSlot->getEffectChain();
+
+        // We have to make a new effect every time or else they will all share
+        // the same effect.
+        EffectPointer pFilter = instantiateEffect("org.mixxx.effects.filter");
+        pChain->replaceEffect(0, pFilter);
+        pChain->setName("QuickFilter");
+        pChain->setEnabled(true);
+        pChain->enableForGroup(QString("[Channel%1]").arg(i + 1));
+    }
 }
 
 bool EffectsManager::writeRequest(EffectsRequest* request) {
