@@ -33,8 +33,8 @@ EffectChainSlot::EffectChainSlot(EffectRack* pRack, unsigned int iRackNumber,
     m_pControlChainEnabled = new ControlPushButton(ConfigKey(m_group, "enabled"));
     m_pControlChainEnabled->setButtonMode(ControlPushButton::POWERWINDOW);
     // Default to enabled. The skin might not show these buttons.
-    m_pControlChainEnabled->setDefaultValue(false);
-    m_pControlChainEnabled->set(false);
+    m_pControlChainEnabled->setDefaultValue(true);
+    m_pControlChainEnabled->set(true);
     connect(m_pControlChainEnabled, SIGNAL(valueChanged(double)),
             this, SLOT(slotControlChainEnabled(double)));
 
