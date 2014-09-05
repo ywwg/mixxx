@@ -234,6 +234,10 @@
   qproperty-layoutAlignment: 'AlignRight | AlignBottom';
 }
 
+#RateSlider {
+  padding-bottom:4px;
+}
+
 #RateButtons, #RatePermButtons, #RateTempButtons {
   qproperty-layoutAlignment: 'AlignLeft | AlignBottom';
 }
