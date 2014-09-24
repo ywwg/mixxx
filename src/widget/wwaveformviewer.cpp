@@ -164,7 +164,7 @@ void WWaveformViewer::dragEnterEvent(QDragEnterEvent * event) {
         if ((!ControlObject::get(ConfigKey(m_pGroup, "play")) ||
                 m_pConfig->getValueString(ConfigKey("[Controls]","AllowTrackLoadToPlayingDeck")).toInt())) {
             QList<QFileInfo> files = DragAndDropHelper::supportedTracksFromUrls(
-                event->mimeData()->urls(), true, false);
+                event->mimeData()->urls(), true, false, m_sPrefix);
             if (!files.isEmpty()) {
                 event->acceptProposedAction();
                 return;

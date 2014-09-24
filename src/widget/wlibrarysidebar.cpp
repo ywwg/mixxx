@@ -50,7 +50,7 @@ void WLibrarySidebar::dragEnterEvent(QDragEnterEvent * event) {
     qDebug() << "WLibrarySidebar::dragEnterEvent" << event->mimeData()->formats();
     if (event->mimeData()->hasUrls()) {
         QList<QFileInfo> files = DragAndDropHelper::supportedTracksFromUrls(
-                event->mimeData()->urls(), true, false);
+                event->mimeData()->urls(), true, false, m_sLibraryPrefix);
         if (!files.isEmpty()) {
             event->acceptProposedAction();
             return;

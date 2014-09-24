@@ -149,7 +149,7 @@ bool AnalyserBeats::loadStored(TrackPointer tio) const {
     }
 
     // If the track is too long, don't analyze
-    if (tio->getDuration() * 60 > iMaxLen) {
+    if (static_cast<double>(tio->getDuration()) / 60.0 > iMaxLen) {
         qDebug() << "Track is longer than " << m_iMaxLen
                  << " minutes as per preferences, not analyzing";
         return true;
