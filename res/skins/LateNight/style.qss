@@ -577,7 +577,7 @@ qproperty-layoutAlignment: 'AlignCenter';
 }
 
 #TextColor3, #TextColor4 {
-  color: #09B2AE;
+  color: #ED5732;
 }
 
 #TitleGutter WLabel, #EffectUnitNameContainer WLabel {

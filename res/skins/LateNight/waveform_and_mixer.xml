@@ -14,7 +14,7 @@
 					</Template>
 					<Template src="skin:waveform.xml">
 						<SetVariable name="channum">3</SetVariable>
-                        <SetVariable name="deck_color">#09B2AE</SetVariable>
+                        <SetVariable name="deck_color">#ED5732</SetVariable>
 					</Template>
 				</Children>
 				<Connection>
@@ -60,7 +60,7 @@
 					</Template>
 					<Template src="skin:waveform.xml">
 						<SetVariable name="channum">4</SetVariable>
-                        <SetVariable name="deck_color">#09B2AE</SetVariable>
+                        <SetVariable name="deck_color">#ED5732</SetVariable>
 					</Template>
 				</Children>
 				<Connection>
@@ -84,7 +84,7 @@
                     <ConfigKey>[Master],show_mixer</ConfigKey>
                     <BindProperty>visible</BindProperty>
                 </Connection>
-            </WidgetGroup> 
+            </WidgetGroup>
 		</Children>
 	</WidgetGroup>
 </Template>
