@@ -189,6 +189,7 @@ TreeItemModel* CrateFeature::getChildModel() {
 void CrateFeature::activate() {
     emit(switchToView("CRATEHOME"));
     emit(restoreSearch(QString())); //disable search on crate home
+    emit(enableCoverArtDisplay(true));
 }
 
 void CrateFeature::activateChild(const QModelIndex& index) {
@@ -202,6 +203,7 @@ void CrateFeature::activateChild(const QModelIndex& index) {
     QString prefix = m_pConfig->getValueString(ConfigKey("[Playlist]", "Directory"));
     m_crateTableModel.setLibraryPrefix(prefix);
     emit(showTrackModel(&m_crateTableModel));
+    emit(enableCoverArtDisplay(true));
 }
 
 void CrateFeature::onRightClick(const QPoint& globalPos) {
