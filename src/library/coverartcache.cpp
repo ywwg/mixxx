@@ -104,6 +104,9 @@ CoverArtCache::FutureResult CoverArtCache::loadCover(
     res.pRequestor = pRequestor;
     res.requestReference = requestReference;
     res.cover.info = info;
+    if (info.trackLocation.length() && info.trackLocation[0] != '/') {
+        res.cover.info.trackLocation = m_sPrefix + '/' + info.trackLocation;
+    }
     res.desiredWidth = desiredWidth;
     res.signalWhenDone = signalWhenDone;
     res.cover.image = CoverArtUtils::loadCover(res.cover.info);
@@ -175,4 +178,10 @@ void CoverArtCache::guessCovers(QList<TrackPointer> tracks) {
     foreach (TrackPointer pTrack, tracks) {
         guessCover(pTrack);
     }
+}
+
+void CoverArtCache::setLibraryPrefix(QString sPrefix) {
+    m_sPrefix = sPrefix;
+    if (sPrefix[sPrefix.length()-1] == '/' || sPrefix[sPrefix.length()-1] == '\\')
+        m_sPrefix.chop(1);
 }

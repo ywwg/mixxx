@@ -53,6 +53,8 @@ class CoverArtCache : public QObject, public Singleton<CoverArtCache> {
         bool signalWhenDone;
     };
 
+    void setLibraryPrefix(QString sPrefix);
+
   public slots:
     // Called when loadCover is complete in the main thread.
     void coverLoaded();
@@ -80,6 +82,7 @@ class CoverArtCache : public QObject, public Singleton<CoverArtCache> {
 
   private:
     QSet<QPair<const QObject*, int> > m_runningRequests;
+    QString m_sPrefix;
 };
 
 #endif // COVERARTCACHE_H

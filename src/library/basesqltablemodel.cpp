@@ -887,6 +887,9 @@ void BaseSqlTableModel::setLibraryPrefix(QString sPrefix)
     m_sPrefix = sPrefix;
     if (sPrefix[sPrefix.length()-1] == '/' || sPrefix[sPrefix.length()-1] == '\\')
         m_sPrefix.chop(1);
+    if (m_pCoverDelegate != NULL) {
+        m_pCoverDelegate->setLibraryPrefix(m_sPrefix);
+    }
 }
 
 QAbstractItemDelegate* BaseSqlTableModel::delegateForColumn(const int i, QObject* pParent) {
@@ -897,10 +900,11 @@ QAbstractItemDelegate* BaseSqlTableModel::delegateForColumn(const int i, QObject
     } else if (PlayerManager::numPreviewDecks() > 0 && i == fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_PREVIEW)) {
         return new PreviewButtonDelegate(pParent, i);
     } else if (i == fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_COVERART)) {
-        CoverArtDelegate* pCoverDelegate = new CoverArtDelegate(pParent);
-        connect(pCoverDelegate, SIGNAL(coverReadyForCell(int, int)),
+        m_pCoverDelegate = new CoverArtDelegate(pParent);
+        m_pCoverDelegate->setLibraryPrefix(m_sPrefix);
+        connect(m_pCoverDelegate, SIGNAL(coverReadyForCell(int, int)),
                 this, SLOT(refreshCell(int, int)));
-        return pCoverDelegate;
+        return m_pCoverDelegate;
     }
     return NULL;
 }

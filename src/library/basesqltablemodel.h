@@ -12,6 +12,8 @@
 #include "library/columncache.h"
 #include "util.h"
 
+class CoverArtDelegate;
+
 // BaseSqlTableModel is a custom-written SQL-backed table which aggressively
 // caches the contents of the table and supports lightweight updates.
 class BaseSqlTableModel : public QAbstractTableModel, public TrackModel {
@@ -141,6 +143,7 @@ class BaseSqlTableModel : public QAbstractTableModel, public TrackModel {
     QString m_currentSearch;
     QString m_currentSearchFilter;
     QVector<QHash<int, QVariant> > m_headerInfo;
+    CoverArtDelegate* m_pCoverDelegate;
     QString m_sPrefix;
 
     DISALLOW_COPY_AND_ASSIGN(BaseSqlTableModel);

@@ -19,6 +19,8 @@ class CoverArtDelegate : public QStyledItemDelegate {
                const QStyleOptionViewItem &option,
                const QModelIndex &index) const;
 
+    void setLibraryPrefix(QString sPrefix);
+
   signals:
     void coverReadyForCell(int row, int column);
 
@@ -49,6 +51,7 @@ class CoverArtDelegate : public QStyledItemDelegate {
     int m_iCoverHashColumn;
     int m_iTrackLocationColumn;
     int m_iIdColumn;
+    QString m_sPrefix;
 
     // We need to record rows in paint() (which is const) so these are marked
     // mutable.

@@ -114,6 +114,9 @@ void CoverArtDelegate::paint(QPainter *painter,
     info.coverLocation = index.sibling(index.row(), m_iCoverLocationColumn).data().toString();
     info.hash = index.sibling(index.row(), m_iCoverHashColumn).data().toUInt();
     info.trackLocation = index.sibling(index.row(), m_iTrackLocationColumn).data().toString();
+    if (info.trackLocation.length() && info.trackLocation[0] != '/' ) {
+        info.trackLocation = m_sPrefix + '/' + info.trackLocation;
+    }
 
     // We listen for updates via slotCoverFound above and signal to
     // BaseSqlTableModel when a row's cover is ready.
@@ -137,3 +140,16 @@ void CoverArtDelegate::paint(QPainter *painter,
         m_cacheMissRows.append(index.row());
     }
 }
+
+void CoverArtDelegate::setLibraryPrefix(QString sPrefix) {
+    if (sPrefix.length() <= 0) {
+        return;
+    }
+    m_sPrefix = sPrefix;
+    if (sPrefix[sPrefix.length()-1] == '/' || sPrefix[sPrefix.length()-1] == '\\') {
+        m_sPrefix.chop(1);
+    }
+    CoverArtCache* pCache = CoverArtCache::instance();
+    pCache->setLibraryPrefix(m_sPrefix);
+}
+
