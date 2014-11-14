@@ -74,6 +74,7 @@
 #include "playerinfo.h"
 #include "waveform/guitick.h"
 #include "util/math.h"
+#include "util/experiment.h"
 
 #ifdef __VINYLCONTROL__
 #include "vinylcontrol/defs_vinylcontrol.h"
@@ -173,11 +174,8 @@ MixxxMainWindow::MixxxMainWindow(QApplication* pApp, const CmdlineArgs& args)
         if (i > 0) {
             group = QString("[Microphone%1]").arg(i + 1);
         }
-        // We don't know if something downstream expects the string to persist,
-        // so dupe it (probably leaking it).
         EngineMicrophone* pMicrophone =
-                new EngineMicrophone(strdup(group.toStdString().c_str()),
-                                     m_pEffectsManager);
+                new EngineMicrophone(group, m_pEffectsManager);
         // What should channelbase be?
         AudioInput micInput = AudioInput(AudioPath::MICROPHONE, 0, 0, i);
         m_pEngine->addChannel(pMicrophone);
@@ -461,7 +459,7 @@ MixxxMainWindow::MixxxMainWindow(QApplication* pApp, const CmdlineArgs& args)
     connect(m_pLibraryScanner, SIGNAL(scanFinished()),
             this, SLOT(slotEnableRescanLibraryAction()));
 
-    //Refresh the library models when the library (re)scan is finished.
+    // Refresh the library models when the library (re)scan is finished.
     connect(m_pLibraryScanner, SIGNAL(scanFinished()),
             m_pLibrary, SLOT(slotRefreshLibraryModels()));
 
@@ -545,10 +543,11 @@ MixxxMainWindow::~MixxxMainWindow() {
     qDeleteAll(m_pPassthroughEnabled);
     qDeleteAll(m_micTalkoverControls);
 
-    // EngineMaster depends on Config
+    // EngineMaster depends on Config and m_pEffectsManager.
     qDebug() << "delete m_pEngine " << qTime.elapsed();
     delete m_pEngine;
 
+    // Must delete after EngineMaster.
     qDebug() << "deleting effects manager, " << qTime.elapsed();
     delete m_pEffectsManager;
 
@@ -1340,6 +1339,40 @@ void MixxxMainWindow::initActions()
     connect(m_pDeveloperTools, SIGNAL(triggered()),
             this, SLOT(slotDeveloperTools()));
 
+    QString enableExperimentTitle = tr("Stats: Experiment Bucket");
+    QString enableExperimentToolsText = tr(
+        "Enables experiment mode. Collects stats in the EXPERIMENT tracking bucket.");
+    m_pDeveloperStatsExperiment = new QAction(enableExperimentTitle, this);
+    m_pDeveloperStatsExperiment->setShortcut(
+        QKeySequence(m_pKbdConfig->getValueString(ConfigKey("[KeyboardShortcuts]",
+                                                            "OptionsMenu_DeveloperStatsExperiment"),
+                                                  tr("Ctrl+Shift+E"))));
+    m_pDeveloperStatsExperiment->setShortcutContext(Qt::ApplicationShortcut);
+    m_pDeveloperStatsExperiment->setStatusTip(enableExperimentToolsText);
+    m_pDeveloperStatsExperiment->setWhatsThis(buildWhatsThis(
+        enableExperimentTitle, enableExperimentToolsText));
+    m_pDeveloperStatsExperiment->setCheckable(true);
+    m_pDeveloperStatsExperiment->setChecked(Experiment::isExperiment());
+    connect(m_pDeveloperStatsExperiment, SIGNAL(triggered()),
+            this, SLOT(slotDeveloperStatsExperiment()));
+
+    QString enableBaseTitle = tr("Stats: Base Bucket");
+    QString enableBaseToolsText = tr(
+        "Enables base mode. Collects stats in the BASE tracking bucket.");
+    m_pDeveloperStatsBase = new QAction(enableBaseTitle, this);
+    m_pDeveloperStatsBase->setShortcut(
+        QKeySequence(m_pKbdConfig->getValueString(ConfigKey("[KeyboardShortcuts]",
+                                                            "OptionsMenu_DeveloperStatsBase"),
+                                                  tr("Ctrl+Shift+B"))));
+    m_pDeveloperStatsBase->setShortcutContext(Qt::ApplicationShortcut);
+    m_pDeveloperStatsBase->setStatusTip(enableBaseToolsText);
+    m_pDeveloperStatsBase->setWhatsThis(buildWhatsThis(
+        enableBaseTitle, enableBaseToolsText));
+    m_pDeveloperStatsBase->setCheckable(true);
+    m_pDeveloperStatsBase->setChecked(Experiment::isBase());
+    connect(m_pDeveloperStatsBase, SIGNAL(triggered()),
+            this, SLOT(slotDeveloperStatsBase()));
+
     // TODO: This code should live in a separate class.
     m_TalkoverMapper = new QSignalMapper(this);
     connect(m_TalkoverMapper, SIGNAL(mapped(int)),
@@ -1416,6 +1449,8 @@ void MixxxMainWindow::initMenuBar()
     // Developer Menu
     m_pDeveloperMenu->addAction(m_pDeveloperReloadSkin);
     m_pDeveloperMenu->addAction(m_pDeveloperTools);
+    m_pDeveloperMenu->addAction(m_pDeveloperStatsExperiment);
+    m_pDeveloperMenu->addAction(m_pDeveloperStatsBase);
 
     // menuBar entry helpMenu
     m_pHelpMenu->addAction(m_pHelpSupport);
@@ -1552,6 +1587,24 @@ void MixxxMainWindow::slotDeveloperTools() {
 
 void MixxxMainWindow::slotDeveloperToolsClosed() {
     m_pDeveloperToolsDlg = NULL;
+}
+
+void MixxxMainWindow::slotDeveloperStatsExperiment() {
+    if (m_pDeveloperStatsExperiment->isChecked()) {
+        m_pDeveloperStatsBase->setChecked(false);
+        Experiment::setExperiment();
+    } else {
+        Experiment::disable();
+    }
+}
+
+void MixxxMainWindow::slotDeveloperStatsBase() {
+    if (m_pDeveloperStatsBase->isChecked()) {
+        m_pDeveloperStatsExperiment->setChecked(false);
+        Experiment::setBase();
+    } else {
+        Experiment::disable();
+    }
 }
 
 void MixxxMainWindow::slotViewFullScreen(bool toggle)
