@@ -76,10 +76,6 @@ public:
     void slotControlFastBack(double);
     virtual void trackLoaded(TrackPointer pTrack);
     virtual void trackUnloaded(TrackPointer pTrack);
-    void slotWheelSensitivity(double);
-
-  protected:
-    static double m_dWheelSensitivity;
 
   private:
     double getJogFactor() const;
@@ -111,7 +107,6 @@ public:
     ControlPushButton* m_pReverseRollButton;
     ControlObject* m_pBackButton;
     ControlObject* m_pForwardButton;
-    ControlObject* m_pWheelSensitivity;
 
     ControlTTRotary* m_pWheel;
     ControlObject* m_pScratch2;
