@@ -203,7 +203,7 @@ EngineBuffer::EngineBuffer(QString group, ConfigObject<ConfigValue>* _config,
 
 #ifdef __VINYLCONTROL__
     //a midi knob to tweak the vinyl pitch for decks with crappy sliders
-    m_pVinylPitchTweakKnob = new ControlPotmeter(ConfigKey(_group, "vinylpitchtweak"), -0.005, 0.005);
+    m_pVinylPitchTweakKnob = new ControlPotmeter(ConfigKey(m_group, "vinylpitchtweak"), -0.005, 0.005);
     /*m_pVinylStatus = new ControlObject(ConfigKey(group,"vinylcontrol_status"));
     m_pVinylSeek = new ControlObject(ConfigKey(group,"vinylcontrol_seek"));
     connect(m_pVinylSeek, SIGNAL(valueChanged(double)),
