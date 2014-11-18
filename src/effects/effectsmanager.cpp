@@ -344,14 +344,13 @@ void EffectsManager::setupDefaults() {
         pChain->enableForGroup(QString("[Channel%1]").arg(i + 1));
     }
 
-/*
+
     // Add a new EffectRack for Equalizers
     addEffectRack();
 
     // These controls are used inside EQ Effects
     m_pLoEqFreq = new ControlPotmeter(ConfigKey("[Mixer Profile]", "LoEQFrequency"), 0., 22040);
     m_pHiEqFreq = new ControlPotmeter(ConfigKey("[Mixer Profile]", "HiEQFrequency"), 0., 22040);
-*/
 }
 
 bool EffectsManager::writeRequest(EffectsRequest* request) {
