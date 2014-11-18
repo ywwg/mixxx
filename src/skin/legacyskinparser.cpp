@@ -338,7 +338,7 @@ QWidget* LegacySkinParser::parseSkin(QString skinPath, QWidget* pParent) {
     // created parent so MixxxMainWindow can use it for nefarious purposes (
     // fullscreen mostly) --bkgood
     m_pParent = pParent;
-    m_pContext = new SkinContext();
+    m_pContext = new SkinContext(m_pConfig, skinPath + "/skin.xml");
     m_pContext->setSkinBasePath(skinPath.append("/"));
     QList<QWidget*> widgets = parseNode(skinDocument);
 
@@ -1036,6 +1036,16 @@ QWidget* LegacySkinParser::parseSpinny(QDomElement node) {
     connect(spinny, SIGNAL(trackDropped(QString, QString)),
             m_pPlayerManager, SLOT(slotLoadToPlayer(QString, QString)));
 
+    BaseTrackPlayer* pPlayer = m_pPlayerManager->getPlayer(channelStr);
+    if (pPlayer != NULL) {
+        connect(pPlayer, SIGNAL(newTrackLoaded(TrackPointer)),
+                spinny, SLOT(slotLoadTrack(TrackPointer)));
+        connect(pPlayer, SIGNAL(unloadingTrack(TrackPointer)),
+                spinny, SLOT(slotReset()));
+        // just in case a track is already loaded
+        spinny->slotLoadTrack(pPlayer->getLoadedTrack());
+    }
+
     spinny->setup(node, *m_pContext, pSafeChannelStr);
     spinny->installEventFilter(m_pKeyboard);
     spinny->installEventFilter(m_pControllerManager->getControllerLearningEventFilter());
@@ -1355,7 +1365,8 @@ QList<QWidget*> LegacySkinParser::parseTemplate(QDomElement node) {
     // Take any <SetVariable> elements from this node and update the context
     // with them.
     m_pContext->updateVariables(node);
-
+    m_pContext->setXmlPath(path);
+    
     QList<QWidget*> widgets;
 
     QDomNode child = templateNode.firstChild();
