@@ -7,7 +7,8 @@
 SvgParser::SvgParser(const SkinContext& parent)
         : m_context(parent) {
     m_context.importScriptExtension("console");
-    m_context.importScriptExtension("svg");
+    // OWEN EDIT: disable until the performance issue is fixed
+    //m_context.importScriptExtension("svg");
 }
 
 SvgParser::~SvgParser() {
