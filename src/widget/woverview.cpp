@@ -139,7 +139,7 @@ void WOverview::onConnectedControlChanged(double dParameter, double dValue) {
     if (!m_bDrag) {
         // Calculate handle position. Clamp the value within 0-1 because that's
         // all we represent with this widget.
-        dParameter = math_clamp(dParameter, 0.0, 1.0);
+        dParameter = math_clamp_unsafe(dParameter, 0.0, 1.0);
 
         int iPos = valueToPosition(dParameter);
         if (iPos != m_iPos) {
@@ -313,7 +313,7 @@ void WOverview::paintEvent(QPaintEvent *) {
                 diffGain = 255.0 - 255.0 / visualGain;
             }
 
-            if (m_diffGain != diffGain || m_waveformImageScaled.isNull() ) {
+            if (m_diffGain != diffGain || m_waveformImageScaled.isNull()) {
                 QRect sourceRect(0, diffGain, m_pWaveformSourceImage->width(),
                     m_pWaveformSourceImage->height() - 2 * diffGain);
                 m_waveformImageScaled = m_pWaveformSourceImage->copy(
@@ -351,7 +351,7 @@ void WOverview::paintEvent(QPaintEvent *) {
         const float gain = (float)(width()-2) / trackSamples;
 
         // Draw range (loop)
-        for( unsigned int i = 0; i < m_markRanges.size(); i++) {
+        for (unsigned int i = 0; i < m_markRanges.size(); ++i) {
             WaveformMarkRange& currentMarkRange = m_markRanges[i];
 
             // If the mark range is not active we should not draw it.
@@ -398,7 +398,7 @@ void WOverview::paintEvent(QPaintEvent *) {
 
         painter.setOpacity(0.9);
 
-        for( int i = 0; i < m_marks.size(); i++) {
+        for (int i = 0; i < m_marks.size(); ++i) {
             WaveformMark& currentMark = m_marks[i];
             if (currentMark.m_pointControl && currentMark.m_pointControl->get() >= 0.0) {
                 //const float markPosition = 1.0 +
@@ -416,7 +416,7 @@ void WOverview::paintEvent(QPaintEvent *) {
                     QPointF textPoint;
                     textPoint.setX(markPosition+0.5f);
 
-                    if( currentMark.m_align == Qt::AlignTop) {
+                    if (currentMark.m_align == Qt::AlignTop) {
                         QFontMetricsF metric(markerFont);
                         textPoint.setY(metric.tightBoundingRect(currentMark.m_text).height()+0.5f);
                     } else {

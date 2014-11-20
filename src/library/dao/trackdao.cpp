@@ -1336,7 +1336,7 @@ void TrackDAO::markUnverifiedTracksAsDeleted() {
     if (!query.exec()) {
         LOG_FAILED_QUERY(query) << "Couldn't find unverified tracks";
     }
-    while (query.next()){
+    while (query.next()) {
         trackIds.insert(query.value(query.record().indexOf("id")).toInt());
     }
     emit(tracksRemoved(trackIds));
@@ -1529,7 +1529,7 @@ void TrackDAO::markTracksAsMixxxDeleted(const QString& dir) {
     }
 }
 
-void TrackDAO::writeAudioMetaData(TrackInfoObject* pTrack){
+void TrackDAO::writeAudioMetaData(TrackInfoObject* pTrack) {
     if (m_pConfig && m_pConfig->getValueString(ConfigKey("[Library]","WriteAudioTags")).toInt() == 1) {
         AudioTagger tagger(pTrack->getLocation(), pTrack->getSecurityToken());
 

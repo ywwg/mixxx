@@ -19,7 +19,7 @@
 class SkinContext {
   public:
     SkinContext();
-    SkinContext(ConfigObject<ConfigValue>* pConfig, QString xmlPath);
+    SkinContext(ConfigObject<ConfigValue>* pConfig, const QString& xmlPath);
     SkinContext(const SkinContext& parent);
     virtual ~SkinContext();
 
@@ -41,7 +41,7 @@ class SkinContext {
         return m_variables;
     }
     void setVariable(const QString& name, const QString& value);
-    void setXmlPath(const QString xmlPath);
+    void setXmlPath(const QString& xmlPath);
 
     // Updates the SkinContext with all the <SetVariable> children of node.
     void updateVariables(const QDomNode& node);
@@ -73,17 +73,17 @@ class SkinContext {
                                 int lineNumber=1);
     QScriptValue importScriptExtension(const QString& extensionName);
     const QScriptEngine& getScriptEngine() const;
+    void enableScriptDebugger();
 
   private:
     QString variableNodeToText(const QDomElement& element) const;
-    
+
     mutable QScriptEngine m_scriptEngine;
     QScriptEngineDebugger m_debugger;
     QHash<QString, QString> m_variables;
     QString m_skinBasePath;
     ConfigObject<ConfigValue>* m_pConfig;
     QString m_xmlPath;
-    
 };
 
 #endif /* SKINCONTEXT_H */
