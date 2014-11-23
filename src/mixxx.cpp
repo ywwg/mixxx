@@ -391,10 +391,6 @@ MixxxMainWindow::MixxxMainWindow(QApplication* pApp, const CmdlineArgs& args)
     pContextWidget->hide();
     SharedGLContext::setWidget(pContextWidget);
 
-    // Create Control aliases before loading the default skin and
-    // initializing controllers
-    createCOAliases();
-
     // Load skin to a QWidget that we set as the central widget. Assignment
     // intentional in next line.
     if (!(m_pWidgetParent = m_pSkinLoader->loadDefaultSkin(this, m_pKeyboard,
@@ -456,7 +452,7 @@ MixxxMainWindow::MixxxMainWindow(QApplication* pApp, const CmdlineArgs& args)
 
     // Scan the library directory. Initialize this after the skinloader has
     // loaded a skin, see Bug #1047435
-    m_pLibraryScanner = new LibraryScanner(m_pLibrary->getTrackCollection());
+    m_pLibraryScanner = new LibraryScanner(this, m_pLibrary->getTrackCollection());
     connect(m_pLibraryScanner, SIGNAL(scanFinished()),
             this, SLOT(slotEnableRescanLibraryAction()));
 
@@ -465,7 +461,7 @@ MixxxMainWindow::MixxxMainWindow(QApplication* pApp, const CmdlineArgs& args)
             m_pLibrary, SLOT(slotRefreshLibraryModels()));
 
     if (rescan || hasChanged_MusicDir || upgrader.rescanLibrary()) {
-        m_pLibraryScanner->scan(this);
+        m_pLibraryScanner->scan();
     }
     slotNumDecksChanged(m_pNumDecks->get());
 
@@ -548,11 +544,12 @@ MixxxMainWindow::~MixxxMainWindow() {
     qDebug() << "delete m_pEngine " << qTime.elapsed();
     delete m_pEngine;
 
-    // Must delete after EngineMaster.
+    qDebug() << "deleting preferences, " << qTime.elapsed();
+    delete m_pPrefDlg;
+
+    // Must delete after EngineMaster and DlgPrefEq.
     qDebug() << "deleting effects manager, " << qTime.elapsed();
     delete m_pEffectsManager;
-
-    delete m_pPrefDlg;
 
     delete m_pTouchShift;
 
@@ -634,15 +631,6 @@ bool MixxxMainWindow::loadTranslations(const QLocale& systemLocale, QString user
 #endif  // QT_VERSION
     }
     return pTranslator->load(translation + prefix + userLocale, translationPath);
-}
-
-void MixxxMainWindow::createCOAliases() {
-    // Add aliases using
-    // ControlDoublePrivate::insertAlias(aliasConfigKey, originalConfigKey)
-
-    // Example:
-    // ControlDoublePrivate::insertAlias(ConfigKey("[Microphone]", "volume"),
-    //                                   ConfigKey("[Microphone1]", "volume"));
 }
 
 void MixxxMainWindow::logBuildDetails() {
@@ -2019,7 +2007,7 @@ void MixxxMainWindow::closeEvent(QCloseEvent *event) {
 void MixxxMainWindow::slotScanLibrary() {
     emit(libraryScanStarted());
     m_pLibraryRescan->setEnabled(false);
-    m_pLibraryScanner->scan(this);
+    m_pLibraryScanner->scan();
 }
 
 void MixxxMainWindow::slotEnableRescanLibraryAction() {

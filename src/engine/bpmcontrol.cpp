@@ -150,8 +150,7 @@ void BpmControl::slotFileBpmChanged(double bpm) {
     if (getSyncMode() == SYNC_NONE) {
         slotAdjustRateSlider();
     }
-    m_dUserOffset = 0.0;
-    m_resetSyncAdjustment = true;
+    resetSyncAdjustment();
 }
 
 void BpmControl::slotAdjustBeatsFaster(double v) {
@@ -702,8 +701,7 @@ void BpmControl::trackLoaded(TrackPointer pTrack) {
     }
 
     // reset for new track
-    m_dUserOffset = 0.0;
-    m_resetSyncAdjustment = true;
+    resetSyncAdjustment();
 
     if (pTrack) {
         m_pTrack = pTrack;
@@ -728,8 +726,7 @@ void BpmControl::trackUnloaded(TrackPointer pTrack) {
 void BpmControl::slotUpdatedTrackBeats()
 {
     if (m_pTrack) {
-        m_dUserOffset = 0.0;
-        m_resetSyncAdjustment = true;
+        resetSyncAdjustment();
         m_pBeats = m_pTrack->getBeats();
     }
 }
@@ -788,6 +785,11 @@ void BpmControl::setTargetBeatDistance(double beatDistance) {
 
 void BpmControl::setInstantaneousBpm(double instantaneousBpm) {
     m_dSyncInstantaneousBpm = instantaneousBpm;
+}
+
+void BpmControl::resetSyncAdjustment() {
+    m_dUserOffset = 0.0;
+    m_resetSyncAdjustment = true;
 }
 
 void BpmControl::collectFeatures(GroupFeatureState* pGroupFeatures) const {

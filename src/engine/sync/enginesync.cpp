@@ -195,6 +195,7 @@ void EngineSync::notifyPlaying(Syncable* pSyncable, bool playing) {
             if (playing_nonsync_decks == 1) {
                 m_pInternalClock->setMasterBeatDistance(uniqueSyncDisabled->getBeatDistance());
             } else {
+                uniqueSyncEnabled->???
                 m_pInternalClock->setMasterBeatDistance(uniqueSyncEnabled->getBeatDistance());
             }
         }

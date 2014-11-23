@@ -50,6 +50,7 @@ class SyncControl : public EngineControl, public Syncable {
     // SyncableListener::notifyInstantaneousBpmChanged or signal loops could
     // occur.
     void setInstantaneousBpm(double bpm);
+    void resetSyncAdjustment();
 
     void setEngineControls(RateControl* pRateControl, BpmControl* pBpmControl);
 

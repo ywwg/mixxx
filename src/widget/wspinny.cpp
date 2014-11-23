@@ -32,7 +32,6 @@ WSpinny::WSpinny(QWidget* parent, VinylControlManager* pVCMan)
           m_pVinylControlEnabled(NULL),
           m_pSignalEnabled(NULL),
           m_pSlipEnabled(NULL),
-          m_pSlipPosition(NULL),
           m_bShowCover(true),
           m_dInitialPos(0.),
           m_iVinylInput(-1),
@@ -89,7 +88,6 @@ WSpinny::~WSpinny() {
         delete m_pScratchToggle;
         delete m_pScratchPos;
         delete m_pSlipEnabled;
-        delete m_pSlipPosition;
     #ifdef __VINYLCONTROL__
         delete m_pVinylControlSpeedType;
         delete m_pVinylControlEnabled;
@@ -132,7 +130,7 @@ void WSpinny::onVinylSignalQualityUpdate(const VinylSignalQualityReport& report)
 
 void WSpinny::setup(QDomNode node, const SkinContext& context, QString group) {
     m_group = group;
-    
+
     // Set images
     m_pBgImage = WImageStore::getImage(context.getPixmapSource(
                         context.selectNode(node, "PathBackground")));
@@ -140,6 +138,7 @@ void WSpinny::setup(QDomNode node, const SkinContext& context, QString group) {
                         context.selectNode(node,"PathForeground")));
     m_pGhostImage = WImageStore::getImage(context.getPixmapSource(
                         context.selectNode(node,"PathGhost")));
+
     if (m_pBgImage && !m_pBgImage->isNull()) {
         setFixedSize(m_pBgImage->size());
     }
@@ -176,8 +175,6 @@ void WSpinny::setup(QDomNode node, const SkinContext& context, QString group) {
             group, "slip_enabled");
     connect(m_pSlipEnabled, SIGNAL(valueChanged(double)),
             this, SLOT(updateSlipEnabled(double)));
-    m_pSlipPosition = new ControlObjectThread(
-            group, "slip_playposition");
 
 #ifdef __VINYLCONTROL__
     m_pVinylControlSpeedType = new ControlObjectThread(
@@ -212,9 +209,11 @@ void WSpinny::setup(QDomNode node, const SkinContext& context, QString group) {
 }
 
 void WSpinny::maybeUpdate() {
-    m_pVisualPlayPos->getPlaySlipAt(0,
-                                    &m_dAngleCurrentPlaypos,
-                                    &m_dGhostAngleCurrentPlaypos);
+    if (!m_pVisualPlayPos.isNull()) {
+        m_pVisualPlayPos->getPlaySlipAt(0,
+                                        &m_dAngleCurrentPlaypos,
+                                        &m_dGhostAngleCurrentPlaypos);
+    }
     if (m_dAngleCurrentPlaypos != m_dAngleLastPlaypos ||
             m_dGhostAngleCurrentPlaypos != m_dGhostAngleLastPlaypos ||
             m_bWidgetDirty) {

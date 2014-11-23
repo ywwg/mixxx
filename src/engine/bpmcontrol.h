@@ -45,6 +45,7 @@ class BpmControl : public EngineControl {
                    const int iBufferSize);
     void setTargetBeatDistance(double beatDistance);
     void setInstantaneousBpm(double instantaneousBpm);
+    void resetSyncAdjustment();
     double updateBeatDistance();
 
     void collectFeatures(GroupFeatureState* pGroupFeatures) const;

@@ -278,6 +278,10 @@ void SyncControl::setInstantaneousBpm(double bpm) {
     m_pBpmControl->setInstantaneousBpm(bpm * m_masterBpmAdjustFactor);
 }
 
+void SyncControl::resetSyncAdjustment() {
+    m_pBpmControl->resetSyncAdjustment();
+}
+
 void SyncControl::reportTrackPosition(double fractionalPlaypos) {
     // If we're close to the end, and master, disable master so we don't stop
     // the party.
