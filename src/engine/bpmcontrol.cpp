@@ -444,7 +444,8 @@ double BpmControl::calcSyncAdjustment(double my_percentage, bool userTweakingSyn
     /*qDebug() << m_sGroup << m_dUserOffset;
     qDebug() << "master beat distance:" << master_percentage;
     qDebug() << "my     beat distance:" << my_percentage;
-    qDebug() << "error               :" << (shortest_distance - m_dUserOffset);*/
+    qDebug() << "error               :" << (shortest_distance - m_dUserOffset);
+    qDebug() << "user offset         :" << m_dUserOffset;*/
 
     double adjustment = 1.0;
 
@@ -788,6 +789,9 @@ void BpmControl::setInstantaneousBpm(double instantaneousBpm) {
 }
 
 void BpmControl::resetSyncAdjustment() {
+    // Immediately edit the beat distance to reflect the new reality.
+    double new_distance = m_pThisBeatDistance->get() + m_dUserOffset;
+    m_pThisBeatDistance->set(new_distance);
     m_dUserOffset = 0.0;
     m_resetSyncAdjustment = true;
 }
