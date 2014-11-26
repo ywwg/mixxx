@@ -410,6 +410,7 @@ class TrackInfoObject : public QObject {
     CoverArt m_coverArt;
 
     friend class TrackDAO;
+    friend class AutoDJProcessorTest;
 };
 
 #endif
