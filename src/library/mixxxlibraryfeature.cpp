@@ -5,6 +5,7 @@
 
 #include "library/mixxxlibraryfeature.h"
 
+#include "library/parser.h"
 #include "library/basetrackcache.h"
 #include "library/librarytablemodel.h"
 #include "library/missingtablemodel.h"
@@ -184,7 +185,8 @@ bool MixxxLibraryFeature::dropAccept(QList<QUrl> urls, QObject* pSource) {
 
 bool MixxxLibraryFeature::dragMoveAccept(QUrl url) {
     QFileInfo file(url.toLocalFile());
-    return SoundSourceProxy::isFilenameSupported(file.fileName());
+    return SoundSourceProxy::isFilenameSupported(file.fileName()) ||
+            Parser::isPlaylistFilenameSupported(file.fileName());
 }
 
 void MixxxLibraryFeature::setLibraryPrefix(QString sPrefix)
