@@ -109,23 +109,26 @@ class DragAndDropHelper {
     static bool dragEnterAccept(const QMimeData& mimeData,
                                 const QString& sourceIdentifier,
                                 bool firstOnly,
-                                bool acceptPlaylists) {
+                                bool acceptPlaylists,
+                                QString library_prefix = "") {
         QList<QFileInfo> files = dropEventFiles(mimeData, sourceIdentifier,
-                                                firstOnly, acceptPlaylists);
+                                                firstOnly, acceptPlaylists,
+                                                library_prefix);
         return !files.isEmpty();
     }
 
     static QList<QFileInfo> dropEventFiles(const QMimeData& mimeData,
                                            const QString& sourceIdentifier,
                                            bool firstOnly,
-                                           bool acceptPlaylists) {
+                                           bool acceptPlaylists,
+                                           QString library_prefix = "") {
         if (!mimeData.hasUrls() ||
                 (mimeData.hasText() && mimeData.text() == sourceIdentifier)) {
             return QList<QFileInfo>();
         }
 
         QList<QFileInfo> files = DragAndDropHelper::supportedTracksFromUrls(
-                mimeData.urls(), firstOnly, acceptPlaylists);
+                mimeData.urls(), firstOnly, acceptPlaylists, library_prefix);
         return files;
     }
 

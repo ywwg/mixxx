@@ -507,7 +507,7 @@ void WOverview::dragEnterEvent(QDragEnterEvent* event) {
                                              m_playControl->get() > 0.0,
                                              m_pConfig) &&
             DragAndDropHelper::dragEnterAccept(*event->mimeData(), m_group,
-                                               true, false), m_sPrefix) {
+                                               true, false, m_sPrefix)) {
         event->acceptProposedAction();
     } else {
         event->ignore();

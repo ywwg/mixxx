@@ -157,7 +157,7 @@ void WWaveformViewer::wheelEvent(QWheelEvent *event) {
 void WWaveformViewer::dragEnterEvent(QDragEnterEvent* event) {
     if (DragAndDropHelper::allowLoadToPlayer(m_pGroup, m_pConfig) &&
             DragAndDropHelper::dragEnterAccept(*event->mimeData(), m_pGroup,
-                                               true, false), m_sPrefix) {
+                                               true, false, m_sPrefix)) {
         event->acceptProposedAction();
     } else {
         event->ignore();
