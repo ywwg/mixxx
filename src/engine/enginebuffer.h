@@ -125,7 +125,6 @@ class EngineBuffer : public EngineObject {
     EngineBuffer(QString _group, ConfigObject<ConfigValue>* _config,
                  EngineChannel* pChannel, EngineMaster* pMixingEngine);
     virtual ~EngineBuffer();
-    bool getPitchIndpTimeStretch(void);
 
     void bindWorkers(EngineWorkerScheduler* pWorkerScheduler);
 
@@ -215,7 +214,7 @@ class EngineBuffer : public EngineObject {
     void slotPassthroughChanged(double v);
 
   private:
-    void enablePitchAndTimeScaling(bool bEnable);
+    void enableIndependentPitchTempoScaling(bool bEnable);
 
     void updateIndicators(double rate, int iBufferSize);
 
