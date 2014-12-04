@@ -37,6 +37,7 @@ class SyncControl : public EngineControl, public Syncable {
     double getBeatDistance() const;
     void setBeatDistance(double beatDistance);
     double getBaseBpm() const;
+    void setLocalBpm(double local_bpm);
 
     // Must never result in a call to
     // SyncableListener::notifyBeatDistanceChanged or signal loops could occur.
@@ -115,6 +116,7 @@ class SyncControl : public EngineControl, public Syncable {
     // multiplier changes and we need to recalculate the target distance.
     double m_unmultipliedTargetBeatDistance;
     double m_beatDistance;
+    double m_prevLocalBpm;
 
     QScopedPointer<ControlPushButton> m_pSyncMode;
     QScopedPointer<ControlPushButton> m_pSyncMasterEnabled;
@@ -123,6 +125,7 @@ class SyncControl : public EngineControl, public Syncable {
 
     QScopedPointer<ControlObjectSlave> m_pPlayButton;
     QScopedPointer<ControlObjectSlave> m_pBpm;
+    QScopedPointer<ControlObjectSlave> m_pLocalBpm;
     QScopedPointer<ControlObjectSlave> m_pFileBpm;
     QScopedPointer<ControlObjectSlave> m_pRateSlider;
     QScopedPointer<ControlObjectSlave> m_pRateDirection;
