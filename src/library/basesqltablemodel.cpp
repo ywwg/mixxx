@@ -32,6 +32,7 @@ BaseSqlTableModel::BaseSqlTableModel(QObject* pParent,
           m_previewDeckGroup(PlayerManager::groupForPreviewDeck(0)),
           m_iPreviewDeckTrackId(-1),
           m_currentSearch("") {
+    m_pCoverDelegate = NULL;
     m_bInitialized = false;
     m_iSortColumn = 0;
     m_eSortOrder = Qt::AscendingOrder;
