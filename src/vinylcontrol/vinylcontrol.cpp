@@ -36,6 +36,7 @@ VinylControl::VinylControl(ConfigObject<ConfigValue> * pConfig, QString group)
     m_pVinylPitchTweakKnob = new ControlObjectThread(group,  "vinylpitchtweak");
     loopEnabled         = new ControlObjectThread(group, "loop_enabled");
     signalenabled       = new ControlObjectThread(group, "vinylcontrol_signal_enabled");
+    reverseButton       = new ControlObjectThread(group, "reverse");
 
     //Enabled or not -- load from saved value in case vinyl control is restarting
     m_bIsEnabled = wantenabled->get() > 0.0;
@@ -74,6 +75,7 @@ VinylControl::~VinylControl() {
         wantenabled->slotSet(true);
     }
 
+    delete reverseButton;
     delete m_pVinylControlInputGain;
     delete playPos;
     delete trackSamples;

@@ -47,6 +47,7 @@ class VinylControl : public QObject {
     ControlObjectThread *m_pVinylPitchTweakKnob;
     ControlObjectThread *loopEnabled; //looping enabled?
     ControlObjectThread *signalenabled; //show the signal in the skin?
+    ControlObjectThread *reverseButton; // When the user has pressed the "reverse" button.
 
     // The lead-in time...
     int m_iLeadInTime;
