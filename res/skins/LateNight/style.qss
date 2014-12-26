@@ -141,12 +141,25 @@
   qproperty-layoutAlignment: 'AlignLeft | AlignBottom';
   padding: 0px;
   margin: 0px;
+  border: 1px solid #585858;
+  border-left: 0px;
+  border-bottom: 0px;
+  border-top: 0px;
+}
+
+#MixerChannelControls {
+  border: 1px solid #585858;
+  border-left: 0px;
+  border-right: 0px;
+  border-top: 0px;
+  padding-bottom: 2px;
 }
 
 #MasterControls {
   qproperty-layoutAlignment: 'AlignRight | AlignTop';
   padding-right: 2px;
   padding-top: 10px;
+  padding-left: 5px;
 }
 
 #AuxContainer {
@@ -163,11 +176,14 @@
 
 #MixerChannel {
   qproperty-layoutAlignment: 'AlignLeft | AlignBottom';
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
 #MixerChannelReversed {
   qproperty-layoutAlignment: 'AlignLeft | AlignBottom';
-  padding-left: 3px;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
 #MixerChannelHoriz {
@@ -304,10 +320,6 @@
 #DeckButtons {
   qproperty-layoutAlignment: 'AlignBottom';
   padding: 3px;
-  border: 1px solid #585858;
-  border-top: 0px;
-  border-left: 0px;
-  border-right: 0px;
 }
 
 #ColumnTwo {
@@ -333,7 +345,7 @@
   text-align: center;
   qproperty-alignment: 'AlignCenter | AlignBottom';
   padding-bottom: 2px;
-  padding-top: -2px;
+  padding-top: -4px;
 }
 
 #SyncControls {
@@ -436,6 +448,7 @@
 #CrossFadeContainer {
  qproperty-layoutAlignment: 'AlignCenter';
  background-color: #1e1e1e;
+ padding-top: 5px;
 }
 
 #GuiToggleContainer {
@@ -450,7 +463,7 @@
 
 #Crossfader {
   qproperty-layoutAlignment: 'AlignCenter';
-  background-color:#1e1e1e;
+  /*background-color:#1e1e1e;*/
 }
 
 #PreviewDeck {
