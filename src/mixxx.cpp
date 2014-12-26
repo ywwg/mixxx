@@ -97,8 +97,7 @@ MixxxMainWindow::MixxxMainWindow(QApplication* pApp, const CmdlineArgs& args)
           m_pDeveloperToolsDlg(NULL),
           m_runtime_timer("MixxxMainWindow::runtime"),
           m_cmdLineArgs(args),
-          m_iNumConfiguredDecks(0),
-          m_bInhibitOutputDeviceWarning(false) {
+          m_iNumConfiguredDecks(0) {
     // We use QSet<int> in signals in the library.
     qRegisterMetaType<QSet<int> >("QSet<int>");
 
@@ -241,8 +240,6 @@ MixxxMainWindow::MixxxMainWindow(QApplication* pApp, const CmdlineArgs& args)
     qRegisterMetaType<TrackPointer>("TrackPointer");
 
     m_pGuiTick = new GuiTick();
-    m_pGuiTickCO = new ControlObjectSlave("[Master]", "guiTick50ms");
-    m_pGuiTickCO->connectValueChanged(this, SLOT(slotGuiTick(double)));
 
 #ifdef __VINYLCONTROL__
     m_pVCManager = new VinylControlManager(this, m_pConfig, m_pSoundManager);
@@ -562,7 +559,6 @@ MixxxMainWindow::~MixxxMainWindow() {
     WaveformWidgetFactory::destroy();
 
     delete m_pGuiTick;
-    delete m_pGuiTickCO;
 
     // Check for leaked ControlObjects and give warnings.
     QList<QSharedPointer<ControlDoublePrivate> > leakedControls;
@@ -886,8 +882,6 @@ int MixxxMainWindow::noSoundDlg(void)
             "</li>"
         "</ul></html>"
     );
-
-    m_bInhibitOutputDeviceWarning = true;
 
     QPushButton *retryButton = msgBox.addButton(tr("Retry"),
         QMessageBox::ActionRole);
@@ -1543,33 +1537,6 @@ void MixxxMainWindow::slotFileLoadTracklist()
     }
 }
 
-void MixxxMainWindow::slotGuiTick(double ticktime) {
-    checkOutputTickTime(ticktime);
-}
-
-void MixxxMainWindow::checkOutputTickTime(double ticktime) {
-    // Wait 10 seconds before declaring defeat.
-    const double kMaxAllowableNoTick = 10.0;
-
-    if (ticktime - m_pSoundManager->lastOutputCallbackTick() > kMaxAllowableNoTick) {
-        if (m_bInhibitOutputDeviceWarning) {
-            return;
-        }
-        m_bInhibitOutputDeviceWarning = true;
-        QMessageBox::warning(
-                this,
-                tr("Mixxx"),
-                tr("It's been a while since Mixxx sent audio to your sound hardware.\n"
-                   "You may need to reset your hardware setup."),
-                QMessageBox::Ok, QMessageBox::Ok);
-        m_pPrefDlg->show();
-        m_pPrefDlg->showSoundHardwarePage();
-    } else {
-        // We received a valid tick, it's ok to show the error again at some
-        // point.
-        m_bInhibitOutputDeviceWarning = false;
-    }
-}
 
 void MixxxMainWindow::slotFileLoadSongPlayer(int deck) {
     QString group = m_pPlayerManager->groupForDeck(deck-1);
@@ -2063,8 +2030,6 @@ void MixxxMainWindow::closeEvent(QCloseEvent *event) {
 }
 
 void MixxxMainWindow::slotScanLibrary() {
-    // Don't display the device warning while we're scanning the library.
-    m_bInhibitOutputDeviceWarning = true;
     emit(libraryScanStarted());
     m_pLibraryRescan->setEnabled(false);
     m_pLibraryScanner->scan();
@@ -2073,8 +2038,6 @@ void MixxxMainWindow::slotScanLibrary() {
 void MixxxMainWindow::slotEnableRescanLibraryAction() {
     m_pLibraryRescan->setEnabled(true);
     emit(libraryScanFinished());
-    // It's ok to show the device warning again.
-    m_bInhibitOutputDeviceWarning = false;
 }
 
 void MixxxMainWindow::slotOptionsMenuShow() {
