@@ -16,10 +16,11 @@
 #include "widget/wspinny.h"
 #include "wimagestore.h"
 
+// The SampleBuffers format enables antialiasing.
 WSpinny::WSpinny(QWidget* parent, const QString& group,
                  ConfigObject<ConfigValue>* pConfig,
                  VinylControlManager* pVCMan)
-        : QGLWidget(parent, SharedGLContext::getWidget()),
+        : QGLWidget(QGLFormat(QGL::SampleBuffers), parent, SharedGLContext::getWidget()),
           WBaseWidget(this),
           m_group(group),
           m_pConfig(pConfig),
@@ -63,9 +64,6 @@ WSpinny::WSpinny(QWidget* parent, const QString& group,
     qDebug() << "WSpinny(): Created QGLWidget, Context"
              << "Valid:" << context()->isValid()
              << "Sharing:" << context()->isSharing();
-
-    // Enable antialiasing
-    QGLWidget::setFormat(QGLFormat(QGL::SampleBuffers));
 
     CoverArtCache* pCache = CoverArtCache::instance();
     if (pCache != NULL) {
@@ -140,9 +138,13 @@ PaintablePointer WSpinny::getPixmap(PixmapSource source,
 void WSpinny::setup(QDomNode node, const SkinContext& context) {
     // Set images
     QDomElement backPathElement = context.selectElement(node, "PathBackground");
-    m_pPixmapBack = getPixmap(context.getPixmapSource(backPathElement),
-                              context.selectScaleMode(backPathElement,
-                                                      Paintable::STRETCH));
+    Paintable::DrawMode bgmode = context.selectScaleMode(backPathElement,
+                                                         Paintable::FIXED);
+    m_pPixmapBack = getPixmap(context.getPixmapSource(backPathElement), bgmode);
+    if (m_pPixmapBack && bgmode == Paintable::FIXED) {
+        // Set size of widget equal to pixmap size
+        setFixedSize(m_pPixmapBack->size());
+    }
     QDomElement maskElement = context.selectElement(node, "PathMask");
     m_pPixmapMask = getPixmap(context.getPixmapSource(maskElement),
                               context.selectScaleMode(maskElement,
@@ -156,7 +158,7 @@ void WSpinny::setup(QDomNode node, const SkinContext& context) {
                                context.selectScaleMode(ghostElement,
                                                        Paintable::STRETCH));
 
-    m_bShowCover = context.selectBool(node, "ShowCover", true);
+    m_bShowCover = context.selectBool(node, "ShowCover", false);
 
 #ifdef __VINYLCONTROL__
     // Find the vinyl input we should listen to reports about.
