@@ -139,7 +139,7 @@ void CoverArtDelegate::paint(QPainter *painter,
 }
 
 void CoverArtDelegate::setLibraryPrefix(QString sPrefix) {
-    if (sPrefix.length() <= 0) {
+    if (sPrefix.length() <= 0 || sPrefix.isNull()) {
         return;
     }
     m_sPrefix = sPrefix;
