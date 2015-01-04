@@ -29,6 +29,9 @@
 				<BgColor>#0e0e0e</BgColor>
 				<!--<BgPixmap>style/style_bg_waveform1.png</BgPixmap>-->
 				<SignalColor><Variable name="deck_color"/></SignalColor>
+                <SignalRGBLowColor><Variable name="SignalRGBLowColor"/></SignalRGBLowColor>
+                <SignalRGBMidColor><Variable name="SignalRGBMidColor"/></SignalRGBMidColor>
+                <SignalRGBHighColor><Variable name="SignalRGBHighColor"/></SignalRGBHighColor>
 				<BeatColor>#ffffff</BeatColor>
 				<BeatHighlightColor></BeatHighlightColor>
 				<PlayPosColor>#00FF00</PlayPosColor>
