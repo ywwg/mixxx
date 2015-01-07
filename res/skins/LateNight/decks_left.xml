@@ -23,7 +23,7 @@
                             <Template src="skin:deck.xml">
                                 <SetVariable name="channum">3</SetVariable>
                                 <SetVariable name="deck_color">#ED5732</SetVariable>
-                                <SetVariable name="SignalBgColor">#2f290a</SetVariable>
+                                <SetVariable name="SignalBgColor">#2e110a</SetVariable>
                                 <SetVariable name="SignalRGBLowColor">#ff5f00</SetVariable>
                                 <SetVariable name="SignalRGBMidColor">#72ec00</SetVariable>
                                 <SetVariable name="SignalRGBHightColor">#725f8d</SetVariable>
