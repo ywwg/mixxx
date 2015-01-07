@@ -136,6 +136,7 @@
 					<Template src="skin:waveform.xml">
 						<SetVariable name="channum">3</SetVariable>
                         <SetVariable name="deck_color">#ED5732</SetVariable>
+                        <SetVariable name="SignalBgColor">#012322</SetVariable>
                         <SetVariable name="SignalRGBLowColor">#ff1f00</SetVariable>
                         <SetVariable name="SignalRGBMidColor">#9f7f00</SetVariable>
                         <SetVariable name="SignalRGBHightColor">#9f1f60</SetVariable>
@@ -157,9 +158,10 @@
 					<Template src="skin:waveform.xml">
 						<SetVariable name="channum">1</SetVariable>
                         <SetVariable name="deck_color">#EECE33</SetVariable>
-                        <SetVariable name="SignalRGBLowColor">#ff5f00</SetVariable>
-                        <SetVariable name="SignalRGBMidColor">#72ec00</SetVariable>
-                        <SetVariable name="SignalRGBHightColor">#725f8d</SetVariable>
+                        <SetVariable name="SignalBgColor">#2f290a</SetVariable>
+                        <SetVariable name="SignalRGBLowColor">#ff2a00</SetVariable>
+                        <SetVariable name="SignalRGBMidColor">#33f600</SetVariable>
+                        <SetVariable name="SignalRGBHighColor">#332acc</SetVariable>
 					</Template>
 				</Children>
 			</WidgetGroup>
@@ -174,9 +176,10 @@
 					<Template src="skin:waveform.xml">
 						<SetVariable name="channum">2</SetVariable>
                         <SetVariable name="deck_color">#EECE33</SetVariable>
-                        <SetVariable name="SignalRGBLowColor">#ff5f00</SetVariable>
-                        <SetVariable name="SignalRGBMidColor">#72ec00</SetVariable>
-                        <SetVariable name="SignalRGBHightColor">#725f8d</SetVariable>
+                        <SetVariable name="SignalBgColor">#2f290a</SetVariable>
+                        <SetVariable name="SignalRGBLowColor">#ff2a00</SetVariable>
+                        <SetVariable name="SignalRGBMidColor">#33f600</SetVariable>
+                        <SetVariable name="SignalRGBHighColor">#332acc</SetVariable>
 					</Template>
 				</Children>
 			</WidgetGroup>
@@ -191,6 +194,7 @@
 					<Template src="skin:waveform.xml">
 						<SetVariable name="channum">4</SetVariable>
                         <SetVariable name="deck_color">#ED5732</SetVariable>
+                        <SetVariable name="SignalBgColor">#012322</SetVariable>
                         <SetVariable name="SignalRGBLowColor">#ff1f00</SetVariable>
                         <SetVariable name="SignalRGBMidColor">#9f7f00</SetVariable>
                         <SetVariable name="SignalRGBHightColor">#9f1f60</SetVariable>
