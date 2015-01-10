@@ -9,6 +9,7 @@
 #include <QVector>
 #include <QLinkedList>
 #include <QHash>
+#include <QVarLengthArray>
 
 #include "util/types.h"
 #include "configobject.h"
@@ -33,6 +34,8 @@ typedef struct Hint {
     // priority >10.
     int priority;
 } Hint;
+
+typedef QVarLengthArray<Hint, 512> HintVector;
 
 // CachingReader provides a layer on top of a SoundSource for reading samples
 // from a file. A cache is provided so that repeated reads to a certain section
@@ -60,7 +63,7 @@ class CachingReader : public QObject {
     // that is not in the cache. If any hints do request a chunk not in cache,
     // then wake the reader so that it can process them. Must only be called
     // from the engine callback.
-    virtual void hintAndMaybeWake(const QVector<Hint>& hintList);
+    virtual void hintAndMaybeWake(const HintVector& hintList);
 
     // Request that the CachingReader load a new track. These requests are
     // processed in the work thread, so the reader must be woken up via wake()
@@ -97,9 +100,17 @@ class CachingReader : public QObject {
     FIFO<ChunkReadRequest> m_chunkReadRequestFIFO;
     FIFO<ReaderStatusUpdate> m_readerStatusFIFO;
 
-     // Looks for the provided chunk number in the index of in-memory chunks and
+    // Looks for the provided chunk number in the index of in-memory chunks and
+    // returns it if it is present. If not, returns NULL. If it is present then
+    // freshenChunk is called on the chunk to make it the MRU chunk.
+    Chunk* lookupChunkAndFreshen(int chunk_number);
+
+    // Looks for the provided chunk number in the index of in-memory chunks and
     // returns it if it is present. If not, returns NULL.
     Chunk* lookupChunk(int chunk_number);
+
+    // Moves the provided chunk to the MRU position.
+    void freshenChunk(Chunk* pChunk);
 
     // Returns a Chunk to the free list
     void freeChunk(Chunk* pChunk);
@@ -108,19 +119,19 @@ class CachingReader : public QObject {
     void freeAllChunks();
 
     // Gets a chunk from the free list. Returns NULL if none available.
-    Chunk* allocateChunk();
+    Chunk* allocateChunk(int chunk);
 
     // Gets a chunk from the free list, frees the LRU Chunk if none available.
-    Chunk* allocateChunkExpireLRU();
+    Chunk* allocateChunkExpireLRU(int chunk);
 
     ReaderStatus m_readerStatus;
 
-    // Keeps track of free Chunks we've allocated
+    // Keeps track of all Chunks we've allocated.
     QVector<Chunk*> m_chunks;
-    // List of free chunks available for use.
-    QList<Chunk*> m_freeChunks;
-    // List of reserved chunks with reads in progress
-    QHash<int, Chunk*> m_chunksBeingRead;
+
+    // List of free chunks. Linked list so that we have constant time insertions
+    // and deletions. Iteration is not necessary.
+    QLinkedList<Chunk*> m_freeChunks;
 
     // Keeps track of what Chunks we've allocated and indexes them based on what
     // chunk number they are allocated to.

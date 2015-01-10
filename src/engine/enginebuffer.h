@@ -29,6 +29,7 @@
 #include "configobject.h"
 #include "rotary.h"
 #include "control/controlvalue.h"
+#include "cachingreader.h"
 
 #ifdef __VINYLCONTROL__
 #include "engine/vinylcontrolcontrol.h"
@@ -69,8 +70,6 @@ class EngineSync;
 class EngineWorkerScheduler;
 class VisualPlayPosition;
 class EngineMaster;
-
-struct Hint;
 
 /**
   *@author Tue and Ken Haste Andersen
@@ -270,7 +269,7 @@ class EngineBuffer : public EngineObject {
     CachingReader* m_pReader;
 
     // List of hints to provide to the CachingReader
-    QVector<Hint> m_hintList;
+    HintVector m_hintList;
 
     // The current sample to play in the file.
     double m_filepos_play;
