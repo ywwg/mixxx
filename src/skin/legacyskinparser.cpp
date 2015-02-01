@@ -1095,7 +1095,7 @@ QWidget* LegacySkinParser::parseCoverArt(QDomElement node) {
 
 void LegacySkinParser::parseSingletonDefinition(QDomElement node) {
     QString objectName = m_pContext->selectString(node, "ObjectName");
-    if (!objectName.isEmpty()) {
+    if (objectName.isEmpty()) {
         SKIN_WARNING(node, *m_pContext)
                 << "SingletonDefinition requires an ObjectName";
     }
@@ -1118,7 +1118,7 @@ void LegacySkinParser::parseSingletonDefinition(QDomElement node) {
 
     if (child_node.isNull()) {
         SKIN_WARNING(node, *m_pContext)
-                << "SingletonDefinition child node is NULL";
+                << "SingletonDefinition Children node is empty";
         return;
     }
 
