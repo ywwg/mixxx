@@ -10,6 +10,7 @@
 #include "cachingreader.h"
 #include "engine/quantizecontrol.h"
 #include "engine/enginecontrol.h"
+#include "util/assert.h"
 
 QuantizeControl::QuantizeControl(QString group,
                                  ConfigObject<ConfigValue>* pConfig)
@@ -42,6 +43,9 @@ void QuantizeControl::trackLoaded(TrackPointer pTrack) {
         m_pBeats = m_pTrack->getBeats();
         connect(m_pTrack.data(), SIGNAL(beatsUpdated()),
                 this, SLOT(slotBeatsUpdated()));
+        // Initialize prev and next beat as if current position was zero.
+        // If there is a cue point, the value will be updated.
+        setCurrentSample(0, 0);
     }
 }
 
@@ -61,52 +65,55 @@ void QuantizeControl::trackUnloaded(TrackPointer pTrack) {
 void QuantizeControl::slotBeatsUpdated() {
     if (m_pTrack) {
         m_pBeats = m_pTrack->getBeats();
+        setCurrentSample(0, 0);
     }
 }
 
-double QuantizeControl::process(const double dRate,
-                                const double currentSample,
-                                const double totalSamples,
-                                const int iBufferSize) {
-    Q_UNUSED(dRate);
-    Q_UNUSED(totalSamples);
-    Q_UNUSED(iBufferSize);
-
-    if (!m_pBeats) {
-        return kNoTrigger;
+void QuantizeControl::setCurrentSample(const double dCurrentSample,
+                                       const double dTotalSamples) {
+    if (dCurrentSample == getCurrentSample()) {
+        // No need to recalculate.
+        return;
     }
 
-    int iCurrentSample = currentSample;
-    if (!even(iCurrentSample)) {
+    EngineControl::setCurrentSample(dCurrentSample, dTotalSamples);
+
+    if (!m_pBeats) {
+        return;
+    }
+
+    int iCurrentSample = dCurrentSample;
+    DEBUG_ASSERT_AND_HANDLE(even(iCurrentSample)) {
         iCurrentSample--;
     }
 
     double prevBeat = m_pCOPrevBeat->get();
     double nextBeat = m_pCONextBeat->get();
     double closestBeat = m_pCOClosestBeat->get();
-    double currentClosestBeat = floor(m_pBeats->findClosestBeat(iCurrentSample));
+
+    // We only need to update the prev or next if the current sample is
+    // out of range of the existing beat positions.  This bypasses the epsilon
+    // calculation, but is there a way that could actually cause a problem?
+    if (dCurrentSample < prevBeat || dCurrentSample > nextBeat) {
+        // Calculate this by hand since we may also want the beat locations themselves
+        // and duplicating the work would double the number of mutex locks.
+        QPair<double, double> beat_pair = m_pBeats->findPrevNextBeats(iCurrentSample);
+        prevBeat = beat_pair.first;
+        nextBeat = beat_pair.second;
+        m_pCOPrevBeat->set(prevBeat);
+        m_pCONextBeat->set(nextBeat);
+    }
+    double currentClosestBeat =
+            (nextBeat - iCurrentSample > iCurrentSample - prevBeat) ?
+                    prevBeat : nextBeat;
 
     if (closestBeat != currentClosestBeat) {
-        if (!even(static_cast<int>(currentClosestBeat))) {
-            currentClosestBeat--;
+        // findXBeats claims to guarantee evenness, except in the case of -1.
+        if (currentClosestBeat != -1) {
+            DEBUG_ASSERT_AND_HANDLE(even(static_cast<int>(currentClosestBeat))) {
+                currentClosestBeat--;
+            }
         }
         m_pCOClosestBeat->set(currentClosestBeat);
     }
-
-    if (prevBeat == -1 || nextBeat == -1 ||
-        currentSample >= nextBeat || currentSample <= prevBeat) {
-        // TODO(XXX) are the floor and even checks necessary?
-        nextBeat = floor(m_pBeats->findNextBeat(iCurrentSample));
-        prevBeat = floor(m_pBeats->findPrevBeat(iCurrentSample));
-
-        if (!even(static_cast<int>(nextBeat)))
-            nextBeat--;
-        if (!even(static_cast<int>(prevBeat)))
-            prevBeat--;
-
-        m_pCONextBeat->set(nextBeat);
-        m_pCOPrevBeat->set(prevBeat);
-    }
-
-    return kNoTrigger;
 }

@@ -19,10 +19,8 @@ class QuantizeControl : public EngineControl {
     QuantizeControl(QString group, ConfigObject<ConfigValue>* pConfig);
     virtual ~QuantizeControl();
 
-    double process(const double dRate,
-                   const double currentSample,
-                   const double totalSamples,
-                   const int iBufferSize);
+    virtual void setCurrentSample(const double dCurrentSample,
+                                  const double dTotalSamples);
 
   public slots:
     virtual void trackLoaded(TrackPointer pTrack);

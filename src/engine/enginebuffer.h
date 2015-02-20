@@ -48,6 +48,7 @@ class KeyControl;
 class RateControl;
 class SyncControl;
 class VinylControlControl;
+class QuantizeControl;
 class LoopingControl;
 class ClockControl;
 class CueControl;
@@ -244,6 +245,7 @@ class EngineBuffer : public EngineObject {
     QString m_group;
     ConfigObject<ConfigValue>* m_pConfig;
 
+    QuantizeControl* m_pQuantizeControl;
     LoopingControl* m_pLoopingControl;
     FRIEND_TEST(LoopingControlTest, LoopHalveButton_HalvesLoop);
     FRIEND_TEST(LoopingControlTest, LoopMoveTest);
