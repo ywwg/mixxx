@@ -8,7 +8,3 @@ BasePlayer::BasePlayer(QObject* pParent, QString group)
 BasePlayer::~BasePlayer() {
 
 }
-
-const QString BasePlayer::getGroup() const {
-    return m_group;
-}
