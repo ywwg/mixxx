@@ -82,11 +82,6 @@ void QuantizeControl::setCurrentSample(const double dCurrentSample,
         return;
     }
 
-    int iCurrentSample = dCurrentSample;
-    DEBUG_ASSERT_AND_HANDLE(even(iCurrentSample)) {
-        iCurrentSample--;
-    }
-
     double prevBeat = m_pCOPrevBeat->get();
     double nextBeat = m_pCONextBeat->get();
     double closestBeat = m_pCOClosestBeat->get();
@@ -95,25 +90,30 @@ void QuantizeControl::setCurrentSample(const double dCurrentSample,
     // out of range of the existing beat positions.  This bypasses the epsilon
     // calculation, but is there a way that could actually cause a problem?
     if (dCurrentSample < prevBeat || dCurrentSample > nextBeat) {
-        // Calculate this by hand since we may also want the beat locations themselves
-        // and duplicating the work would double the number of mutex locks.
-        QPair<double, double> beat_pair = m_pBeats->findPrevNextBeats(iCurrentSample);
-        prevBeat = beat_pair.first;
-        nextBeat = beat_pair.second;
+        m_pBeats->findPrevNextBeats(dCurrentSample, &prevBeat, &nextBeat);
         m_pCOPrevBeat->set(prevBeat);
         m_pCONextBeat->set(nextBeat);
     }
-    double currentClosestBeat =
-            (nextBeat - iCurrentSample > iCurrentSample - prevBeat) ?
-                    prevBeat : nextBeat;
+    // Calculate closest beat by hand since we want the beat locations themselves
+    // and duplicating the work would double the number of mutex locks.
+    if (prevBeat == -1) {
+        if (nextBeat != -1) {
+            m_pCOClosestBeat->set(nextBeat);
+        } else {
+            // Likely no beat information -- can't set closest beat value.
+        }
+    } else if (nextBeat == -1) {
+        m_pCOClosestBeat->set(prevBeat);
+    } else {
+        double currentClosestBeat =
+                (nextBeat - dCurrentSample > dCurrentSample - prevBeat) ?
+                        prevBeat : nextBeat;
 
-    if (closestBeat != currentClosestBeat) {
-        // findXBeats claims to guarantee evenness, except in the case of -1.
-        if (currentClosestBeat != -1) {
+        if (closestBeat != currentClosestBeat) {
             DEBUG_ASSERT_AND_HANDLE(even(static_cast<int>(currentClosestBeat))) {
                 currentClosestBeat--;
             }
+            m_pCOClosestBeat->set(currentClosestBeat);
         }
-        m_pCOClosestBeat->set(currentClosestBeat);
     }
 }
