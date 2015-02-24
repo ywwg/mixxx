@@ -38,7 +38,7 @@ class EngineChannel : public EngineObject {
         RIGHT,
     };
 
-    EngineChannel(const ChannelHandleAndGroup& group,
+    EngineChannel(const ChannelHandleAndGroup& handle_group,
                   ChannelOrientation defaultOrientation = CENTER);
     virtual ~EngineChannel();
 
@@ -53,12 +53,12 @@ class EngineChannel : public EngineObject {
     }
 
     virtual bool isActive() = 0;
-    void setPFL(bool enabled);
-    virtual bool isPFL() const;
+    void setPfl(bool enabled);
+    virtual bool isPflEnabled() const;
     void setMaster(bool enabled);
-    virtual bool isMaster() const;
+    virtual bool isMasterEnabled() const;
     void setTalkover(bool enabled);
-    virtual bool isTalkover() const;
+    virtual bool isTalkoverEnabled() const;
 
     virtual void process(CSAMPLE* pOut, const int iBufferSize) = 0;
     virtual void postProcess(const int iBuffersize) = 0;
