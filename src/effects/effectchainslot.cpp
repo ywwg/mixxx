@@ -265,22 +265,6 @@ EffectSlotPointer EffectChainSlot::addEffectSlot(const QString& group) {
     return pSlot;
 }
 
-<<<<<<< HEAD
-void EffectChainSlot::registerChannel(const ChannelHandleAndGroup& group) {
-    if (m_channelInfoByName.contains(group.name())) {
-        qWarning() << debugString()
-                   << "WARNING: registerChannel already has channel registered:"
-                   << group.name();
-        return;
-    }
-    ControlPushButton* pEnableControl = new ControlPushButton(
-            ConfigKey(m_group, QString("group_%1_enable").arg(group.name())));
-    pEnableControl->setButtonMode(ControlPushButton::POWERWINDOW);
-
-    ChannelInfo* pInfo = new ChannelInfo(group, pEnableControl);
-    m_channelInfoByName[group.name()] = pInfo;
-    m_channelStatusMapper.setMapping(pEnableControl, group.name());
-=======
 void EffectChainSlot::registerChannel(const ChannelHandleAndGroup& handle_group) {
     if (m_channelInfoByName.contains(handle_group.name())) {
         qWarning() << debugString()
@@ -295,7 +279,6 @@ void EffectChainSlot::registerChannel(const ChannelHandleAndGroup& handle_group)
     ChannelInfo* pInfo = new ChannelInfo(handle_group, pEnableControl);
     m_channelInfoByName[handle_group.name()] = pInfo;
     m_channelStatusMapper.setMapping(pEnableControl, handle_group.name());
->>>>>>> d4a0fed16754d38ba5205e4e4e06015fab0cc322
     connect(pEnableControl, SIGNAL(valueChanged(double)),
             &m_channelStatusMapper, SLOT(map()));
 }
@@ -421,15 +404,9 @@ void EffectChainSlot::slotChannelStatusChanged(const QString& group) {
         if (pChannelInfo != NULL && pChannelInfo->pEnabled != NULL) {
             bool bEnable = pChannelInfo->pEnabled->toBool();
             if (bEnable) {
-<<<<<<< HEAD
-                m_pEffectChain->enableForChannel(pChannelInfo->group);
-            } else {
-                m_pEffectChain->disableForChannel(pChannelInfo->group);
-=======
                 m_pEffectChain->enableForChannel(pChannelInfo->handle_group);
             } else {
                 m_pEffectChain->disableForChannel(pChannelInfo->handle_group);
->>>>>>> d4a0fed16754d38ba5205e4e4e06015fab0cc322
             }
         }
     }
