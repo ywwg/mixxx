@@ -64,8 +64,7 @@ const double kLinearScalerElipsis = 1.00058; // 2^(0.01/12): changes < 1 cent al
 
 EngineBuffer::EngineBuffer(QString group, ConfigObject<ConfigValue>* _config,
                            EngineChannel* pChannel, EngineMaster* pMixingEngine)
-        : m_engineLock(QMutex::Recursive),
-          m_group(group),
+        : m_group(group),
           m_pConfig(_config),
           m_pLoopingControl(NULL),
           m_pSyncControl(NULL),
@@ -407,11 +406,9 @@ double EngineBuffer::getLocalBpm() {
 }
 
 void EngineBuffer::setEngineMaster(EngineMaster* pEngineMaster) {
-    m_engineLock.lock();
     foreach (EngineControl* pControl, m_engineControls) {
         pControl->setEngineMaster(pEngineMaster);
     }
-    m_engineLock.unlock();
 }
 
 void EngineBuffer::queueNewPlaypos(double newpos, enum SeekRequest seekType) {
@@ -489,7 +486,6 @@ void EngineBuffer::setNewPlaypos(double newpos) {
     m_iSamplesCalculated = 1000000;
 
     // Must hold the engineLock while using m_engineControls
-    m_engineLock.lock();
     for (QList<EngineControl*>::iterator it = m_engineControls.begin();
          it != m_engineControls.end(); ++it) {
         EngineControl *pControl = *it;
@@ -497,8 +493,6 @@ void EngineBuffer::setNewPlaypos(double newpos) {
     }
 
     verifyPlay(); // verify or update play button and indicator
-
-    m_engineLock.unlock();
 }
 
 QString EngineBuffer::getGroup()
@@ -1004,14 +998,12 @@ void EngineBuffer::process(CSAMPLE* pOutput, const int iBufferSize) {
             m_iCrossFadeSamples = 0;
         }
 
-        m_engineLock.lock();
         QListIterator<EngineControl*> it(m_engineControls);
         while (it.hasNext()) {
             EngineControl* pControl = it.next();
             pControl->setCurrentSample(m_filepos_play, m_file_length_old);
             pControl->process(rate, m_filepos_play, m_file_length_old, iBufferSize);
         }
-        m_engineLock.unlock();
 
         m_scratching_old = is_scratching;
 
@@ -1289,8 +1281,6 @@ void EngineBuffer::updateIndicators(double speed, int iBufferSize) {
 }
 
 void EngineBuffer::hintReader(const double dRate) {
-    m_engineLock.lock();
-
     m_hintList.clear();
     m_pReadAheadManager->hintReader(dRate, &m_hintList);
 
@@ -1309,8 +1299,6 @@ void EngineBuffer::hintReader(const double dRate) {
         pControl->hintReader(&m_hintList);
     }
     m_pReader->hintAndMaybeWake(m_hintList);
-
-    m_engineLock.unlock();
 }
 
 // WARNING: This method runs in the GUI thread
@@ -1323,9 +1311,7 @@ void EngineBuffer::slotLoadTrack(TrackPointer pTrack, bool play) {
 
 void EngineBuffer::addControl(EngineControl* pControl) {
     // Connect to signals from EngineControl here...
-    m_engineLock.lock();
     m_engineControls.push_back(pControl);
-    m_engineLock.unlock();
     pControl->setEngineBuffer(this);
     connect(this, SIGNAL(trackLoaded(TrackPointer)),
             pControl, SLOT(trackLoaded(TrackPointer)),
