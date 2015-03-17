@@ -5,6 +5,8 @@
 
 #define kConfigKey "[ReplayGain]"
 
+static const int kReplayGainReferenceLUFS = -18; 
+
 
 DlgPrefReplayGain::DlgPrefReplayGain(QWidget * parent, ConfigObject<ConfigValue> * _config)
         : DlgPreferencePage(parent),
@@ -108,7 +110,8 @@ void DlgPrefReplayGain::slotUpdateReplayGainBoost() {
 
 void DlgPrefReplayGain::setLabelCurrentReplayGainBoost(int value) {
     LabelCurrentReplayGainBoost->setText(
-            QString(tr("Adjust by %1 dB")).arg(QString().sprintf("%+d", value)));
+            QString(tr("%1 LUFS (adjust by %2 dB)")).arg(
+                  QString::number(value + kReplayGainReferenceLUFS), QString().sprintf("%+d", value)));
 }
 
 void DlgPrefReplayGain::slotUpdateDefaultBoost() {
@@ -116,7 +119,7 @@ void DlgPrefReplayGain::slotUpdateDefaultBoost() {
     config->set(ConfigKey(kConfigKey, "InitialDefaultBoost"),
                 ConfigValue(value));
     LabelCurrentDefaultBoost->setText(
-            QString("Adjust by %1 dB").arg(value));
+            QString("%1 dB").arg(value));
     slotApply();
 }
 

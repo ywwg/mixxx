@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>433</width>
+    <width>509</width>
     <height>609</height>
    </rect>
   </property>
@@ -36,7 +36,7 @@
          <string>Calculate ReplayGain normalization for tracks which are missing ReplayGain metadata.</string>
         </property>
         <property name="text">
-         <string>Enable ReplayGain Analysis</string>
+         <string>Enable ReplayGain 1.0 Analysis</string>
         </property>
        </widget>
       </item>
@@ -69,7 +69,7 @@
         <item>
          <widget class="QLabel" name="label_3">
           <property name="text">
-           <string>-12 dB</string>
+           <string>-30 LUFS</string>
           </property>
          </widget>
         </item>
@@ -109,7 +109,7 @@
         <item>
          <widget class="QLabel" name="label_4">
           <property name="text">
-           <string>+12 dB</string>
+           <string>-6 LUFS</string>
           </property>
          </widget>
         </item>
@@ -152,17 +152,17 @@
          <string>When ReplayGain is enabled, adjust tracks lacking ReplayGain information by this amount.</string>
         </property>
         <property name="text">
-         <string>Unanalyzed Track Volume Compensation</string>
+         <string>Initial boost without ReplayGain data</string>
         </property>
        </widget>
       </item>
       <item row="1" column="0">
        <widget class="QLabel" name="label_boost">
         <property name="toolTip">
-         <string>When ReplayGain is enabled, adjust tracks with ReplayGain information by this amount.  A value of +6db will typically restore tracks to full volume without clipping.</string>
+         <string>&quot;For tracks with ReplayGain, adjust the target loudness to this LUFS value (Loudness Units relative to Full Scale).&quot;</string>
         </property>
         <property name="text">
-         <string>ReplayGain Volume Compensation</string>
+         <string>Target loudness</string>
         </property>
         <property name="buddy">
          <cstring>SliderReplayGainBoost</cstring>
@@ -251,23 +251,25 @@
       <string>Hints</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_6">
-      <item row="4" column="0">
-       <widget class="QLabel" name="label_26">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_8">
         <property name="text">
-         <string>If an unanalyzed track is playing, to avoid an abrupt volume change Mixxx won't apply a newly calculated ReplayGain value.</string>
+         <string>ReplayGain targets a reference loudness of -18 LUFS (Loudness Units relative to Full Scale). You may increase it if you find Mixxx is too quiet or reduce it if you find that your tracks are clipping. You may also want to decrease the volume of unanalyzed tracks if you find they are often louder than ReplayGained tracks. For podcasting a loudness of -16 LUFS is recommended.
+
+The loudness target is approximate and assumes track pregain and master output level are unchanged.</string>
+        </property>
+        <property name="scaledContents">
+         <bool>true</bool>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
         </property>
        </widget>
       </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_8">
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_26">
         <property name="text">
-         <string>Usually, ReplayGain analysis will reduce track gain by about half, or approximately -6db. Setting an adjustment of +6db to analyzed tracks will restore ReplayGain tracks to full volume, but some tracks may clip.  Users using this setup will want to set the volume adjustment for unanalyzed tracks to 0db.  For users using a 0db adjustment to ReplayGain tracks, it's recommended to adjust unanalyzed tracks by -6db to prevent large volume changes when mixing between analyzed and unanalyzed tracks.</string>
-        </property>
-        <property name="scaledContents">
-         <bool>true</bool>
+         <string>When an unanalyzed track is playing, Mixxx will avoid an abrupt volume change by not applying a newly calculated ReplayGain value.</string>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
