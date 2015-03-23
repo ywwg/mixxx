@@ -389,11 +389,13 @@ void EngineBuffer::enableIndependentPitchTempoScaling(bool bEnable,
     EngineBufferScale* keylock_scale = m_pScaleKeylock;
 
     if (bEnable && m_pScale != keylock_scale) {
+        qDebug() << getGroup() << "switch to keylock scaler";
         readToCrossfadeBuffer(iBufferSize);
         m_pScale = keylock_scale;
         m_pScale->clear();
         m_bScalerChanged = true;
     } else if (!bEnable && m_pScale != m_pScaleLinear) {
+        qDebug() << getGroup() << "switch to linear scaler";
         readToCrossfadeBuffer(iBufferSize);
         m_pScale = m_pScaleLinear;
         m_pScale->clear();

@@ -44,6 +44,7 @@ EngineBufferScaleRubberBand::~EngineBufferScaleRubberBand() {
 }
 
 void EngineBufferScaleRubberBand::initializeRubberBand(int iSampleRate) {
+    qDebug() << "init rubberband";
     if (m_pRubberBand) {
         delete m_pRubberBand;
         m_pRubberBand = NULL;
