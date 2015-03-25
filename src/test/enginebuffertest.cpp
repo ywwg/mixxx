@@ -116,8 +116,8 @@ TEST_F(EngineBufferTest, ResetPitchUsesLinear) {
     EXPECT_EQ(m_pMockScaleKeylock1, m_pChannel1->getEngineBuffer()->m_pScale);
 
     // Reset pitch, and we should be back to the linear scaler.
-    ControlObject::set(ConfigKey(m_sGroup1, "pitch_set_default"), 1.0);
+    ControlObject::set(ConfigKey(m_sGroup1, "pitch_adjust_set_default"), 1.0);
     ProcessBuffer();
     // Now we should be back to the linear scaler.
-    EXPECT_EQ(m_pMockScaleLinear1, m_pChannel1->getEngineBuffer()->m_pScale);
+    EXPECT_EQ(m_pMockScaleVinyl1, m_pChannel1->getEngineBuffer()->m_pScale);
 }
