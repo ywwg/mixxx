@@ -356,7 +356,7 @@ class EngineBuffer : public EngineObject {
     // three pointers may be reassigned depending on configuration and tests.
     EngineBufferScale* m_pScale;
     FRIEND_TEST(EngineBufferTest, SlowRubberBand);
-    FRIEND_TEST(EngineBufferTest, ResetPitchUsesLinear);
+    FRIEND_TEST(EngineBufferTest, ResetPitchAdjustUsesLinear);
     EngineBufferScale* m_pScaleVinyl;
     // The keylock engine is configurable, so it could flip flop between
     // ScaleST and ScaleRB during a single callback.

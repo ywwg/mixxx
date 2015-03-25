@@ -103,7 +103,7 @@ TEST_F(EngineBufferTest, SlowRubberBand) {
     EXPECT_EQ(m_pMockScaleVinyl1, m_pChannel1->getEngineBuffer()->m_pScale);
 }
 
-TEST_F(EngineBufferTest, ResetPitchUsesLinear) {
+TEST_F(EngineBufferTest, ResetPitchAdjustUsesLinear) {
     // If the key was adjusted, but keylock is off, and then the key is
     // reset, then the engine should be using the linear scaler.
 
@@ -115,9 +115,8 @@ TEST_F(EngineBufferTest, ResetPitchUsesLinear) {
     ProcessBuffer();
     EXPECT_EQ(m_pMockScaleKeylock1, m_pChannel1->getEngineBuffer()->m_pScale);
 
-    // Reset pitch, and we should be back to the linear scaler.
+    // Reset pitch adjust, and we should be back to the linear scaler.
     ControlObject::set(ConfigKey(m_sGroup1, "pitch_adjust_set_default"), 1.0);
     ProcessBuffer();
-    // Now we should be back to the linear scaler.
     EXPECT_EQ(m_pMockScaleVinyl1, m_pChannel1->getEngineBuffer()->m_pScale);
 }
