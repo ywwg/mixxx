@@ -120,7 +120,7 @@ class BaseSqlTableModel : public QAbstractTableModel, public TrackModel {
     struct RowInfo {
         int trackId;
         int order;
-        QHash<int, QVariant> metadata;
+        QVector<QVariant> metadata;
 
         bool operator<(const RowInfo& other) const {
             // -1 is greater than anything
@@ -132,6 +132,17 @@ class BaseSqlTableModel : public QAbstractTableModel, public TrackModel {
             return order < other.order;
         }
     };
+
+    class SortColumn {
+      public:
+        SortColumn(int column, Qt::SortOrder order)
+            : m_column(column),
+              m_order(order) {
+        }
+        int m_column;
+        Qt::SortOrder m_order;
+    };
+
     QVector<RowInfo> m_rowInfo;
 
     QString m_tableName;
@@ -140,8 +151,7 @@ class BaseSqlTableModel : public QAbstractTableModel, public TrackModel {
     QStringList m_tableColumns;
     QString m_tableColumnsJoined;
     ColumnCache m_tableColumnCache;
-    int m_iSortColumn;
-    Qt::SortOrder m_eSortOrder;
+    QList<SortColumn> m_sortColumns;
     bool m_bInitialized;
     QSqlRecord m_queryRecord;
     QHash<int, int> m_trackSortOrder;
@@ -149,6 +159,11 @@ class BaseSqlTableModel : public QAbstractTableModel, public TrackModel {
     QString m_currentSearch;
     QString m_currentSearchFilter;
     QVector<QHash<int, QVariant> > m_headerInfo;
+    QString m_trackSourceOrderBy;
+    QString m_tableOrderBy;
+    int m_trackSourceSortColumn;
+    Qt::SortOrder m_trackSourceSortOrder;
+
     CoverArtDelegate* m_pCoverDelegate;
     QString m_sPrefix;
 
