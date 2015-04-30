@@ -279,18 +279,41 @@ int main(int argc, char * argv[])
     //it seems like this code should be inline in MessageHandler() but for some reason having it there corrupts the messages sometimes -kousu 2/2009
 
 #ifdef __WINDOWS__
-        // Setup Windows console encoding
-        // toLocal8Bit() returns the file encoding format
-        // this does not necessarily match the console encoding
-        // in case of a German Windows XP to 10 console encoding is cp850
-        // where files encoding is cp1252
-        // Qt has no solution for it https://bugreports.qt.io/browse/QTBUG-13303
-        // http://stackoverflow.com/questions/1259084/what-encoding-code-page-is-cmd-exe-using
-        // We try to change the console encoding to file encoding
-        // For a German windows we expect
-        // LOCALE_IDEFAULTANSICODEPAGE "1252" // used by Qt toLocal8Bit
-        // LOCALE_IDEFAULTCODEPAGE "850" // Console
-        SetConsoleOutputCP(LOCALE_IDEFAULTANSICODEPAGE);
+    // Setup Windows console encoding
+    // toLocal8Bit() returns the ANSI file encoding format
+    // this does not necessarily match the OEM console encoding
+    // https://www.microsoft.com/resources/msdn/goglobal/default.mspx
+    // In case of a German Windows XP to 10 console encoding is cp850
+    // where files encoding is cp1252
+    // Qt has no solution for it https://bugreports.qt.io/browse/QTBUG-13303
+    // http://stackoverflow.com/questions/1259084/what-encoding-code-page-is-cmd-exe-using
+    // We try to change the console encoding to file encoding
+    // For a German windows we expect
+    // LOCALE_IDEFAULTANSICODEPAGE "1252" // ANSI Codepage used by Qt toLocal8Bit
+    // LOCALE_IDEFAULTCODEPAGE "850" // OEM Codepage Console
+
+    // Save current code page
+    UINT oldCodePage = GetConsoleOutputCP();
+
+    // Use a unicode font
+    CONSOLE_FONT_INFOEX newFont;
+    newFont.cbSize = sizeof newFont;
+    newFont.nFont = 0;
+    newFont.dwFontSize.X = 0;
+    newFont.dwFontSize.Y = 14;
+    newFont.FontFamily = FF_DONTCARE;
+    newFont.FontWeight = FW_NORMAL;
+    wcscpy_s(newFont.FaceName, L"Consolas");
+    SetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &newFont);
+
+    // set console to the default ANSI Code Page
+    UINT defaultCodePage;
+    GetLocaleInfo(LOCALE_USER_DEFAULT,
+    		      LOCALE_RETURN_NUMBER | LOCALE_IDEFAULTANSICODEPAGE,
+				  reinterpret_cast<LPWSTR>(&defaultCodePage),
+				  sizeof(defaultCodePage));
+    SetConsoleOutputCP(defaultCodePage);
+
   #ifdef DEBUGCONSOLE
     InitDebugConsole();
   #endif
@@ -328,6 +351,10 @@ int main(int argc, char * argv[])
 //    for (int i=0; i<argc; ++i)
 //        if(QString("--no-visuals")==argv[i])
 //            bVisuals = false;
+
+#ifdef __WINDOWS__
+     qDebug() << "using CP" << LOCALE_IDEFAULTANSICODEPAGE << "for console";
+#endif
 
 
 #ifdef __APPLE__
@@ -380,6 +407,13 @@ int main(int argc, char * argv[])
             Logfile.close();
         }
     }
+
+#ifdef __WINDOWS__
+    // Reset Windows console to old code page
+    // We need to stick with the unicode font since
+    // changing back will destroy the console history
+    SetConsoleOutputCP(oldCodePage);
+#endif
 
     //delete plugin_paths;
     return result;
