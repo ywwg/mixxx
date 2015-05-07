@@ -571,9 +571,6 @@ void EngineBuffer::slotTrackLoaded(TrackPointer pTrack,
 void EngineBuffer::slotTrackLoadFailed(TrackPointer pTrack,
                                        QString reason) {
     m_iTrackLoading = 0;
-    // NOTE(rryan) ejectTrack will not eject a playing track so set playing
-    // false before calling.
-    m_playButton->set(0.0);
     ejectTrack();
     emit(trackLoadFailed(pTrack, reason));
 }
@@ -583,12 +580,7 @@ TrackPointer EngineBuffer::getLoadedTrack() const {
 }
 
 void EngineBuffer::ejectTrack() {
-    // Don't allow ejections while playing a track. We don't need to lock to
-    // call ControlObject::get() so this is fine.
-    if (m_playButton->get() > 0 || !m_pCurrentTrack) {
-        return;
-    }
-
+    // clear track values in any case, this may fix Bug #1450424
     m_pause.lock();
     m_iTrackLoading = 0;
     m_pTrackSamples->set(0);
@@ -600,10 +592,12 @@ void EngineBuffer::ejectTrack() {
     m_playButton->set(0.0);
     m_visualBpm->set(0.0);
     m_visualKey->set(0.0);
-    doSeekFractional(0., SEEK_EXACT);
+    doSeekFractional(0.0, SEEK_EXACT);
     m_pause.unlock();
 
-    emit(trackUnloaded(pTrack));
+    if (pTrack) {
+        emit(trackUnloaded(pTrack));
+    }
 }
 
 void EngineBuffer::slotPassthroughChanged(double enabled) {
@@ -1376,6 +1370,11 @@ bool EngineBuffer::isTrackLoaded() {
 
 void EngineBuffer::slotEjectTrack(double v) {
     if (v > 0) {
+        // Don't allow rejections while playing a track. We don't need to lock to
+        // call ControlObject::get() so this is fine.
+        if (m_playButton->get() > 0) {
+            return;
+        }
         ejectTrack();
     }
 }
