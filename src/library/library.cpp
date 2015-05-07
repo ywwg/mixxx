@@ -54,7 +54,7 @@ Library::Library(QObject* parent, ConfigObject<ConfigValue>* pConfig,
 
     // TODO(rryan) -- turn this construction / adding of features into a static
     // method or something -- CreateDefaultLibrary
-    QString prefix = m_pConfig->getValueString(ConfigKey("[Playlist]", "Directory"));
+    QString prefix = m_pConfig->getValueString(ConfigKey("[Playlist]", "Directory"), "/");
     m_pMixxxLibraryFeature = new MixxxLibraryFeature(this, m_pTrackCollection,m_pConfig);
     m_pMixxxLibraryFeature->setLibraryPrefix(prefix);
     addFeature(m_pMixxxLibraryFeature);
