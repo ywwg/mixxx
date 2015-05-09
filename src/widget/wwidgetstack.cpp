@@ -41,7 +41,8 @@ WWidgetStack::WWidgetStack(QWidget* pParent,
           m_prevControl(pPrevControl ? pPrevControl->getKey() : ConfigKey()),
           m_currentPageControl(
                   pCurrentPageControl ?
-                  pCurrentPageControl->getKey() : ConfigKey()) {
+                  pCurrentPageControl->getKey() : ConfigKey()),
+          m_bRespondToChanges(true) {
     connect(&m_nextControl, SIGNAL(valueChanged(double)),
             this, SLOT(onNextControlChanged(double)));
     connect(&m_prevControl, SIGNAL(valueChanged(double)),
@@ -49,7 +50,7 @@ WWidgetStack::WWidgetStack(QWidget* pParent,
     connect(&m_currentPageControl, SIGNAL(valueChanged(double)),
             this, SLOT(onCurrentPageControlChanged(double)));
     connect(&m_showMapper, SIGNAL(mapped(int)),
-            this, SLOT(setCurrentIndex(int)));
+            this, SLOT(showIndex(int)));
     connect(&m_hideMapper, SIGNAL(mapped(int)),
             this, SLOT(hideIndex(int)));
 }
@@ -74,24 +75,59 @@ QSize WWidgetStack::minimumSizeHint() const {
     return pWidget ? pWidget->minimumSizeHint() : QSize();
 }
 
+void WWidgetStack::showIndex(int index) {
+    if (m_bRespondToChanges) {
+        setCurrentIndex(index);
+    }
+}
+
 void WWidgetStack::hideIndex(int index) {
+    if (!m_bRespondToChanges) {
+        return;
+    }
     if (currentIndex() == index) {
         QMap<int, int>::const_iterator it = m_hideMap.find(index);
         if (it != m_hideMap.end()) {
             setCurrentIndex(*it);
         } else {
+            // TODO: This default behavior is a little odd, is it really what
+            // we want?  Or should we save the previously-selected page and then
+            // switch to that.
             setCurrentIndex((index + 1) % count());
         }
     }
 }
 
+void WWidgetStack::showEvent(QShowEvent*) {
+    int index = static_cast<int>(m_currentPageControl.get());
+
+    // Set the page triggers to match the current index.
+    for (QMap<int, ControlObject*>::iterator it = m_triggers.begin();
+            it != m_triggers.end(); ++it) {
+        it.value()->set(it.key() == index ? 1.0 : 0.0);
+    }
+
+    m_bRespondToChanges = true;
+    setCurrentIndex(index);
+}
+
+void WWidgetStack::hideEvent(QHideEvent*) {
+    m_bRespondToChanges = false;
+}
+
 void WWidgetStack::onNextControlChanged(double v) {
+    if (!m_bRespondToChanges) {
+        return;
+    }
     if (v > 0.0) {
         setCurrentIndex((currentIndex() + 1) % count());
     }
 }
 
 void WWidgetStack::onPrevControlChanged(double v) {
+    if (!m_bRespondToChanges) {
+        return;
+    }
     if (v > 0.0) {
         int newIndex = currentIndex() - 1;
         while (newIndex < 0) {
@@ -102,10 +138,16 @@ void WWidgetStack::onPrevControlChanged(double v) {
 }
 
 void WWidgetStack::onCurrentPageChanged(int index) {
+    if (!m_bRespondToChanges) {
+        return;
+    }
     m_currentPageControl.set(static_cast<double>(index));
 }
 
 void WWidgetStack::onCurrentPageControlChanged(double v) {
+    if (!m_bRespondToChanges) {
+        return;
+    }
     int newIndex = static_cast<int>(v);
     setCurrentIndex(newIndex);
 }
@@ -114,6 +156,7 @@ void WWidgetStack::addWidgetWithControl(QWidget* pWidget, ControlObject* pContro
                                         int on_hide_select) {
     int index = addWidget(pWidget);
     if (pControl) {
+        m_triggers[index] = pControl;
         WidgetStackControlListener* pListener = new WidgetStackControlListener(
             this, pControl, index);
         m_showMapper.setMapping(pListener, index);
@@ -131,6 +174,8 @@ void WWidgetStack::addWidgetWithControl(QWidget* pWidget, ControlObject* pContro
     }
 
     if (m_currentPageControl.get() == index) {
+        // The value in the curren page control overrides whatever initial
+        // values the individual page triggers may have.
         setCurrentIndex(index);
     }
     if (on_hide_select != -1) {
