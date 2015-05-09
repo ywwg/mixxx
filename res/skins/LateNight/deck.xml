@@ -281,7 +281,7 @@
                                 </Connection>
                             </PushButton>
                             <!-- Disable explicit master for now. -->
-                            <PushButton>
+                            <!-- <PushButton>
                                 <TooltipId>sync_master</TooltipId>
                                 <Style></Style>
                                 <NumberStates>2</NumberStates>
@@ -299,7 +299,7 @@
                                     <ConfigKey>[Channel<Variable name="channum" />],sync_master</ConfigKey>
                                     <ButtonState>LeftButton</ButtonState>
                                 </Connection>
-                            </PushButton>
+                            </PushButton>-->
                         </Children>
                     </WidgetGroup>
 	            </Children>
