@@ -20,15 +20,6 @@ class SkinLoader {
     virtual ~SkinLoader();
 
     QWidget* loadDefaultSkin(QWidget* pParent,
-                               MixxxKeyboard* pKeyboard,
-                               PlayerManager* pPlayerManager,
-                               ControllerManager* pControllerManager,
-                               Library* pLibrary,
-                               VinylControlManager* pVCMan,
-                               EffectsManager* pEffectsManager);
-
-	QWidget* loadCustomSkin(QString custom_skinpath,
-							 QWidget* pParent,
                              MixxxKeyboard* pKeyboard,
                              PlayerManager* pPlayerManager,
                              ControllerManager* pControllerManager,

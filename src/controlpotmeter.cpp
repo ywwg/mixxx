@@ -32,8 +32,7 @@ ControlPotmeter::ControlPotmeter(ConfigKey key, double dMinValue, double dMaxVal
     if (!bPersist) {
         set(default_value);
     }
-    //qDebug() << "" << this << key << ", min " << dMinValue << ", max " << dMaxValue << ", default"
-    //        << default_value;
+    //qDebug() << "" << this << ", min " << m_dMinValue << ", max " << m_dMaxValue << ", range " << m_dValueRange << ", val " << m_dValue;
 }
 
 ControlPotmeter::~ControlPotmeter() {
