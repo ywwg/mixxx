@@ -152,10 +152,10 @@
                         <SizePolicy>me,min</SizePolicy>
                         <Children></Children>
                     </WidgetGroup>
-                    <!-- <WidgetGroup>
+                    <WidgetGroup>
                       <Layout>vertical</Layout>
                       <SizePolicy>min,min</SizePolicy>
-                      <Children> -->
+                      <Children>
                         <WidgetGroup>
                           <ObjectName>ClockWidget</ObjectName>
                           <Layout>horizontal</Layout>
@@ -171,13 +171,13 @@
                           </Children>
                         </WidgetGroup>
                         <!-- Disable latency meter in hopes it reduces underruns -->
-                        <!-- <Template src="skin:vumeter_latency.xml">
+                        <Template src="skin:vumeter_latency.xml">
                           <SetVariable name="TooltipId">audio_latency_usage</SetVariable>
                           <SetVariable name="group">[Master]</SetVariable>
                           <SetVariable name="control">audio_latency_usage</SetVariable>
-                        </Template> 
+                        </Template>
                       </Children>
-                    </WidgetGroup>-->
+                    </WidgetGroup>
                 </Children>
             </WidgetGroup>
 			<WidgetGroup>
@@ -312,7 +312,7 @@
                         <Not/>
                     </Transform>
                 </Connection>
-            </WidgetGroup> 
+            </WidgetGroup>
 		</Children>
 	</WidgetGroup>
 </Template>
