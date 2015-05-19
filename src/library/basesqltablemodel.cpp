@@ -962,9 +962,6 @@ void BaseSqlTableModel::setLibraryPrefix(QString sPrefix)
     m_sPrefix = sPrefix;
     if (sPrefix[sPrefix.length()-1] == '/' || sPrefix[sPrefix.length()-1] == '\\')
         m_sPrefix.chop(1);
-    if (m_pCoverDelegate != NULL) {
-        m_pCoverDelegate->setLibraryPrefix(m_sPrefix);
-    }
 }
 
 QAbstractItemDelegate* BaseSqlTableModel::delegateForColumn(const int i, QObject* pParent) {
