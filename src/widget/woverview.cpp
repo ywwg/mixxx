@@ -525,7 +525,7 @@ void WOverview::dropEvent(QDropEvent* event) {
                 *event->mimeData(), m_group, true, false, m_sPrefix);
         if (!files.isEmpty()) {
             event->accept();
-            emit(trackDropped(files.at(0).canonicalFilePath(), m_group));
+            emit(trackDropped(files.at(0).absoluteFilePath(), m_group));
             return;
         }
     }
