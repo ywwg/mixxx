@@ -350,6 +350,11 @@ class Qt(Dependence):
                 build.env.Append(LINKFLAGS="-Wl,-rpath," + framework_path)
                 build.env.Append(LINKFLAGS="-L" + framework_path)
 
+        # Mixxx requires C++11 support. Windows enables C++11 features by
+        # default but Clang/GCC require a flag.
+        if not build.platform_is_windows:
+            build.env.Append(CXXFLAGS='-std=c++11')
+
 
 class TestHeaders(Dependence):
     def configure(self, build, conf):
@@ -575,6 +580,7 @@ class MixxxCore(Feature):
                    "engine/sync/enginesync.cpp",
                    "engine/sync/synccontrol.cpp",
                    "engine/sync/internalclock.cpp",
+                   "engine/sync/midimaster.cpp",
 
                    "engine/engineworker.cpp",
                    "engine/engineworkerscheduler.cpp",
@@ -646,6 +652,7 @@ class MixxxCore(Feature):
                    "controllers/midi/midicontrollerpresetfilehandler.cpp",
                    "controllers/midi/midienumerator.cpp",
                    "controllers/midi/midioutputhandler.cpp",
+                   "controllers/midi/midiclock.cpp",
                    "controllers/qtscript-bytearray/bytearrayclass.cpp",
                    "controllers/qtscript-bytearray/bytearrayprototype.cpp",
                    "controllers/softtakeover.cpp",

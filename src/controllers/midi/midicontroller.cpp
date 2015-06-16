@@ -11,13 +11,19 @@
 #include "controllers/midi/midiutils.h"
 #include "controllers/defs_controllers.h"
 #include "controlobject.h"
+#include "controlobjectslave.h"
 #include "errordialoghandler.h"
 #include "playermanager.h"
 #include "util/math.h"
 
 MidiController::MidiController()
-        : Controller() {
+        : Controller(), m_midiClock(&m_mixxxClock) {
     setDeviceCategory(tr("MIDI Controller"));
+    qDebug() << "MIDI CONTROLLER CONSTRUCTOR";
+    m_pClockBpm.reset(new ControlObjectSlave("[MidiClock]", "bpm"));
+    m_pClockLastBeat.reset(
+            new ControlObjectSlave("[MidiClock]", "last_beat_time"));
+    m_pClockRunning.reset(new ControlObjectSlave("[MidiClock]", "play"));
 }
 
 MidiController::~MidiController() {
@@ -193,6 +199,15 @@ QString formatMidiMessage(unsigned char status, unsigned char control, unsigned 
                          QString::number((status & 255)>>4, 16).toUpper(),
                          QString::number(control, 16).toUpper().rightJustified(2,'0'),
                          QString::number(value, 16).toUpper().rightJustified(2,'0'));
+        case MIDI_START:
+            return QString("MIDI status 0x%1: Start Sequence")
+                    .arg(QString::number(status, 16).toUpper());
+        case MIDI_TIMING_CLK:
+            return QString("MIDI status 0x%1: Clock Tick")
+                    .arg(QString::number(status, 16).toUpper());
+        case MIDI_STOP:
+            return QString("MIDI status 0x%1: Stop Sequence")
+                    .arg(QString::number(status, 16).toUpper());
         default:
             return QString("MIDI status 0x%1")
                     .arg(QString::number(status, 16).toUpper());
@@ -243,6 +258,15 @@ void MidiController::receive(unsigned char status, unsigned char control,
 
     if (debugging()) {
         qDebug() << formatMidiMessage(status, control, value, channel, opCode);
+    }
+
+    // If midiclock handles the message, record the updated values and
+    // no further action is needed.
+    if (m_midiClock.handleMessage(status)) {
+        m_pClockBpm->set(m_midiClock.bpm());
+        m_pClockLastBeat->set(m_midiClock.lastBeatTime());
+        m_pClockRunning->set(static_cast<double>(m_midiClock.running()));
+        return;
     }
 
     MidiKey mappingKey(status, control);
@@ -310,7 +334,7 @@ void MidiController::processInputMapping(const MidiInputMapping& mapping,
         m_fourteen_bit_queued_mappings.clear();
     }
 
-    //qDebug() << "MIDI Options" << QString::number(mapping.options.all, 2).rightJustified(16,'0');
+    qDebug() << "MIDI Options" << QString::number(mapping.options.all, 2).rightJustified(16,'0');
 
     if (mapping_is_14bit) {
         bool found = false;
