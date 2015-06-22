@@ -334,7 +334,7 @@ void MidiController::processInputMapping(const MidiInputMapping& mapping,
         m_fourteen_bit_queued_mappings.clear();
     }
 
-    qDebug() << "MIDI Options" << QString::number(mapping.options.all, 2).rightJustified(16,'0');
+    //qDebug() << "MIDI Options" << QString::number(mapping.options.all, 2).rightJustified(16,'0');
 
     if (mapping_is_14bit) {
         bool found = false;
