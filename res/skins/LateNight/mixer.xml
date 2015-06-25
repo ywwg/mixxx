@@ -72,25 +72,6 @@
         					<Layout>vertical</Layout>
         					<SizePolicy>e,max</SizePolicy>
         					<Children>
-                                <WidgetGroup>
-                                   <ObjectName>AuxContainer</ObjectName>
-                                   <Layout>horizontal</Layout>
-                                   <SizePolicy>max,min</SizePolicy>
-                                   <Children>
-                                       <Template src="skin:aux.xml">
-                                           <SetVariable name="channum">1</SetVariable>
-                                       </Template>
-                                       <Template src="skin:aux.xml">
-                                           <SetVariable name="channum">2</SetVariable>
-                                       </Template>
-                                       <Template src="skin:aux.xml">
-                                           <SetVariable name="channum">3</SetVariable>
-                                       </Template>
-                                       <Template src="skin:aux.xml">
-                                           <SetVariable name="channum">4</SetVariable>
-                                       </Template>
-                                   </Children>
-                               </WidgetGroup>
         						<WidgetGroup>
         						    <SizePolicy>max,min</SizePolicy>
         							<Layout>horizontal</Layout>
