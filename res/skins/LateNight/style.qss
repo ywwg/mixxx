@@ -273,7 +273,6 @@
   qproperty-layoutAlignment: 'AlignLeft | AlignVCenter';
 }
 
-
 #TitleGutter, #AlbumGutter {
   qproperty-layoutAlignment: 'AlignLeft | AlignBottom';
   padding: 1px;
