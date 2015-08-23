@@ -239,7 +239,7 @@ class EngineBuffer : public EngineObject {
     void processSyncRequests();
     void processSeek();
 
-    double updateIndicatorsAndModifyPlay(double v);
+    bool updateIndicatorsAndModifyPlay(bool newPlay);
     void verifyPlay();
 
     // Holds the name of the control group
