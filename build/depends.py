@@ -912,6 +912,8 @@ class MixxxCore(Feature):
                    "playermanager.cpp",
                    "samplerbank.cpp",
                    "sounddevice.cpp",
+                   "sounddevicenetwork.cpp",
+                   "engine/sidechain/enginenetworkstream.cpp",
                    "soundmanager.cpp",
                    "soundmanagerconfig.cpp",
                    "soundmanagerutil.cpp",
