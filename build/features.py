@@ -994,9 +994,11 @@ class Optimize(Feature):
 
     @staticmethod
     def get_optimization_level(build):
-        optimize_level = SCons.ARGUMENTS.get('optimize', 'unset')
-        if optimize_level == 'unset':
-            optimize_level = build.env['optimize']
+        optimize_level = build.env.get('optimize', None)
+        if optimize_level is None:
+            optimize_level = SCons.ARGUMENTS.get('optimize',
+                                                 Optimize.LEVEL_DEFAULT)
+
         try:
             optimize_integer = int(optimize_level)
             if optimize_integer == 0:
