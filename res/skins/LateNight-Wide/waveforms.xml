@@ -1,0 +1,246 @@
+<Template>
+  <WidgetGroup>
+    <Layout>horizontal</Layout>
+    <SizePolicy>me,min</SizePolicy>
+    <Children>
+      <WidgetGroup>
+        <ObjectName>WaveformContainer</ObjectName>
+        <Layout>vertical</Layout>
+        <SizePolicy>me,min</SizePolicy>
+        <Children>
+          <WidgetGroup>
+            <Layout>horizontal</Layout>
+            <SizePolicy>me,f</SizePolicy>
+            <Children>
+              <Template src="skin:spinny.xml">
+                <SetVariable name="channum">3</SetVariable>
+                <SetVariable name="color">2</SetVariable>
+              </Template>
+              <Template src="skin:waveform.xml">
+                <SetVariable name="channum">3</SetVariable>
+                <SetVariable name="signal_color">#09B2AE</SetVariable>
+                <SetVariable name="SignalBgColor">#012322</SetVariable>
+                <SetVariable name="SignalRGBLowColor">#cb3433</SetVariable>
+                <SetVariable name="SignalRGBMidColor">#00ff33</SetVariable>
+                <SetVariable name="SignalRGBHighColor">#0034fe</SetVariable>
+              </Template>
+            </Children>
+            <Connection>
+              <ConfigKey persist="true">[Master],show_4decks</ConfigKey>
+              <BindProperty>visible</BindProperty>
+            </Connection>
+          </WidgetGroup>
+          <WidgetGroup>
+            <Layout>horizontal</Layout>
+            <SizePolicy>me,f</SizePolicy>
+            <Children>
+              <Template src="skin:spinny.xml">
+                <SetVariable name="channum">1</SetVariable>
+                <SetVariable name="color">1</SetVariable>
+              </Template>
+              <Template src="skin:waveform.xml">
+                <SetVariable name="channum">1</SetVariable>
+                <SetVariable name="signal_color">#E7C413</SetVariable>
+                <SetVariable name="SignalBgColor">#2f290a</SetVariable>
+                <SetVariable name="SignalRGBLowColor">#ff2a00</SetVariable>
+                <SetVariable name="SignalRGBMidColor">#33f600</SetVariable>
+                <SetVariable name="SignalRGBHighColor">#332acc</SetVariable>
+              </Template>
+            </Children>
+          </WidgetGroup>
+          <WidgetGroup>
+            <Layout>horizontal</Layout>
+            <SizePolicy>me,f</SizePolicy>
+            <Children>
+              <Template src="skin:spinny.xml">
+                <SetVariable name="channum">2</SetVariable>
+                <SetVariable name="color">1</SetVariable>
+              </Template>
+              <Template src="skin:waveform.xml">
+                <SetVariable name="channum">2</SetVariable>
+                <SetVariable name="signal_color">#E7C413</SetVariable>
+                <SetVariable name="SignalBgColor">#2f290a</SetVariable>
+                <SetVariable name="SignalRGBLowColor">#ff2a00</SetVariable>
+                <SetVariable name="SignalRGBMidColor">#33f600</SetVariable>
+                <SetVariable name="SignalRGBHighColor">#332acc</SetVariable>
+              </Template>
+            </Children>
+          </WidgetGroup>
+          <WidgetGroup>
+            <SizePolicy>me,f</SizePolicy>
+            <Layout>horizontal</Layout>
+            <Children>
+              <Template src="skin:spinny.xml">
+                <SetVariable name="channum">4</SetVariable>
+                <SetVariable name="color">2</SetVariable>
+              </Template>
+              <Template src="skin:waveform.xml">
+                <SetVariable name="channum">4</SetVariable>
+                <SetVariable name="signal_color">#09B2AE</SetVariable>
+                <SetVariable name="SignalBgColor">#012322</SetVariable>
+                <SetVariable name="SignalRGBLowColor">#cb3433</SetVariable>
+                <SetVariable name="SignalRGBMidColor">#00ff33</SetVariable>
+                <SetVariable name="SignalRGBHighColor">#0034fe</SetVariable>
+              </Template>
+            </Children>
+            <Connection>
+              <ConfigKey persist="true">[Master],show_4decks</ConfigKey>
+              <BindProperty>visible</BindProperty>
+            </Connection>
+          </WidgetGroup>
+          <WidgetGroup>
+            <ObjectName>HorizBorder</ObjectName>
+            <Layout>horizontal</Layout>
+            <SizePolicy>me,f</SizePolicy>
+            <Size>,1</Size>
+            <Children></Children>
+          </WidgetGroup>
+        </Children>
+      </WidgetGroup>
+      <WidgetGroup>
+        <Layout>vertical</Layout>
+        <SizePolicy>max,max</SizePolicy>
+        <Children>
+          <WidgetGroup>
+            <Layout>horizontal</Layout>
+            <SizePolicy>max,max</SizePolicy>
+            <Children>
+              <WidgetGroup>
+                <ObjectName>MasterControls</ObjectName>
+                <SizePolicy>max,max</SizePolicy>
+                <Layout>vertical</Layout>
+                <Children>
+                  <WidgetGroup>
+                    <ObjectName>MasterKnobs</ObjectName>
+                    <Layout>horizontal</Layout>
+                    <SizePolicy>max,me</SizePolicy>
+                    <Children>
+                      <WidgetGroup>
+                        <Layout>vertical</Layout>
+                        <SizePolicy>max,max</SizePolicy>
+                        <ObjectName>MasterKnobCol</ObjectName>
+                        <Children>
+                          <Template src="skin:knob.xml">
+                            <SetVariable name="tooltip">master_gain</SetVariable>
+                            <SetVariable name="group">[Master]</SetVariable>
+                            <SetVariable name="control">gain</SetVariable>
+                            <SetVariable name="label">Master</SetVariable>
+                          </Template>
+                          <Template src="skin:knob.xml">
+                            <SetVariable name="tooltip">balance</SetVariable>
+                            <SetVariable name="group">[Master]</SetVariable>
+                            <SetVariable name="control">balance</SetVariable>
+                            <SetVariable name="label">Balance</SetVariable>
+                          </Template>
+                        </Children>
+                      </WidgetGroup>
+                      <WidgetGroup>
+                        <Layout>vertical</Layout>
+                        <SizePolicy>max,max</SizePolicy>
+                        <ObjectName>MasterKnobCol</ObjectName>
+                        <Children>
+                          <Template src="skin:knob.xml">
+                            <SetVariable name="tooltip">headphone_gain</SetVariable>
+                            <SetVariable name="group">[Master]</SetVariable>
+                            <SetVariable name="control">headGain</SetVariable>
+                            <SetVariable name="label">Head Gain</SetVariable>
+                          </Template>
+                          <Template src="skin:knob.xml">
+                            <SetVariable name="tooltip">headMix</SetVariable>
+                            <SetVariable name="group">[Master]</SetVariable>
+                            <SetVariable name="control">headMix</SetVariable>
+                            <SetVariable name="label">Pre/Main</SetVariable>
+                          </Template>
+                        </Children>
+                      </WidgetGroup>
+                    </Children>
+                  </WidgetGroup>
+                </Children>
+              </WidgetGroup>
+              <WidgetGroup>
+                <ObjectName>MasterVuMeter4ch</ObjectName>
+                <Layout>horizontal</Layout>
+                <SizePolicy>min,max</SizePolicy>
+                <Children>
+                  <WidgetGroup>
+                    <Layout>vertical</Layout>
+                    <Children>
+                      <StatusLight>
+                        <TooltipId>master_PeakIndicator</TooltipId>
+                        <Style></Style>
+                        <PathStatusLight>btn_clipping1_over.png</PathStatusLight>
+                        <PathBack>btn_clipping1.png</PathBack>
+                        <Connection>
+                          <ConfigKey>[Master],PeakIndicatorL</ConfigKey>
+                        </Connection>
+                      </StatusLight>
+                      <VuMeter>
+                        <TooltipId>master_VuMeterL</TooltipId>
+                        <Style></Style>
+                        <PathVu>btn_volume_display1_over.png</PathVu>
+                        <PathBack>btn_volume_display1.png</PathBack>
+                        <Horizontal>false</Horizontal>
+                        <PeakHoldSize>5</PeakHoldSize>
+                        <PeakHoldTime>500</PeakHoldTime>
+                        <PeakFallTime>50</PeakFallTime>
+                        <PeakFallStep>2</PeakFallStep>
+                        <Connection>
+                          <ConfigKey>[Master],VuMeterL</ConfigKey>
+                        </Connection>
+                      </VuMeter>
+                    </Children>
+                  </WidgetGroup>
+                  <WidgetGroup>
+                    <Layout>vertical</Layout>
+                    <Children>
+                      <StatusLight>
+                        <TooltipId>master_PeakIndicator</TooltipId>
+                        <Style></Style>
+                        <PathStatusLight>btn_clipping1_over.png</PathStatusLight>
+                        <PathBack>btn_clipping1.png</PathBack>
+                        <Connection>
+                          <ConfigKey>[Master],PeakIndicatorR</ConfigKey>
+                        </Connection>
+                      </StatusLight>
+                      <VuMeter>
+                        <TooltipId>master_VuMeterR</TooltipId>
+                        <Style></Style>
+                        <PathVu>btn_volume_display1_over.png</PathVu>
+                        <PathBack>btn_volume_display1.png</PathBack>
+                        <Horizontal>false</Horizontal>
+                        <PeakHoldSize>5</PeakHoldSize>
+                        <PeakHoldTime>500</PeakHoldTime>
+                        <PeakFallTime>50</PeakFallTime>
+                        <PeakFallStep>2</PeakFallStep>
+                        <Connection>
+                          <ConfigKey>[Master],VuMeterR</ConfigKey>
+                        </Connection>
+                      </VuMeter>
+                    </Children>
+                  </WidgetGroup>
+                </Children>
+                <Connection>
+                  <ConfigKey>[Master],show_4decks</ConfigKey>
+                  <BindProperty>visible</BindProperty>
+                </Connection>
+              </WidgetGroup>
+            </Children>
+          </WidgetGroup>
+          <WidgetGroup>
+            <ObjectName>AlignRightBottom</ObjectName>
+            <Layout>horizontal</Layout>
+            <SizePolicy>min,f</SizePolicy>
+            <Children>
+              <WidgetGroup>
+                <Layout>horizontal</Layout>
+                <SizePolicy>f,f</SizePolicy>
+                <Size>103,40</Size>
+                <BackPath>style/mixxx_logo.png</BackPath>
+              </WidgetGroup>
+            </Children>
+          </WidgetGroup>
+        </Children>
+      </WidgetGroup>
+    </Children>
+  </WidgetGroup>
+</Template>

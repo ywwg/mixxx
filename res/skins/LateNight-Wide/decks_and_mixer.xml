@@ -1,0 +1,108 @@
+<Template>
+  <WidgetGroup>
+    <Layout>horizontal</Layout>
+    <SizePolicy>i,max</SizePolicy>
+    <Children>
+      <WidgetGroup>
+        <ObjectName>Deck</ObjectName>
+        <Layout>horizontal</Layout>
+        <SizePolicy>me,me</SizePolicy>
+        <Children>
+          <Template src="skin:deck.xml">
+            <SetVariable name="channum">3</SetVariable>
+            <SetVariable name="signal_color">#09B2AE</SetVariable>
+            <SetVariable name="SignalBgColor">#2f290a</SetVariable>
+            <SetVariable name="SignalRGBLowColor">#ff2a00</SetVariable>
+            <SetVariable name="SignalRGBMidColor">#33f600</SetVariable>
+            <SetVariable name="SignalRGBHighColor">#332acc</SetVariable>
+          </Template>
+        </Children>
+        <Connection>
+          <ConfigKey>[Master],show_4decks</ConfigKey>
+          <BindProperty>visible</BindProperty>
+        </Connection>
+      </WidgetGroup>
+      <Template src="skin:deck.xml">
+        <SetVariable name="channum">1</SetVariable>
+        <SetVariable name="signal_color">#E7C413</SetVariable>
+        <SetVariable name="SignalBgColor">#2f290a</SetVariable>
+        <SetVariable name="SignalRGBLowColor">#ff2a00</SetVariable>
+        <SetVariable name="SignalRGBMidColor">#33f600</SetVariable>
+        <SetVariable name="SignalRGBHighColor">#332acc</SetVariable>
+      </Template>
+      <WidgetGroup>
+        <Layout>horizontal</Layout>
+        <Children>
+          <Template src="skin:mixer.xml" />
+        </Children>
+        <Connection>
+          <ConfigKey>[Master],show_mixer</ConfigKey>
+          <BindProperty>visible</BindProperty>
+        </Connection>
+      </WidgetGroup>
+      <!-- <WidgetGroup>
+        <ObjectName>NoMixerLogo</ObjectName>
+        <Layout>horizontal</Layout>
+        <SizePolicy>min,me</SizePolicy>
+        <MinimumSize>0,</MinimumSize>
+        <Children>
+          <WidgetGroup>
+            <Layout>horizontal</Layout>
+            <SizePolicy>min,min</SizePolicy>
+            <Children />
+          </WidgetGroup>
+          <WidgetGroup>
+            <Layout>vertical</Layout>
+            <SizePolicy>max,me</SizePolicy>
+            <Children>
+              <WidgetGroup>
+                <Layout>horizontal</Layout>
+                <SizePolicy>me,me</SizePolicy>
+                <Children />
+              </WidgetGroup>
+              <WidgetGroup>
+                <SizePolicy>f,f</SizePolicy>
+                <Size>103,40</Size>
+                <BackPath>style/mixxx_logo.png</BackPath>
+              </WidgetGroup>
+            </Children>
+          </WidgetGroup>
+        </Children>
+        <Connection>
+          <ConfigKey>[Master],show_mixer</ConfigKey>
+          <BindProperty>visible</BindProperty>
+          <Transform>
+            <Not />
+          </Transform>
+        </Connection>
+      </WidgetGroup> -->
+      <Template src="skin:deck.xml">
+        <SetVariable name="channum">2</SetVariable>
+        <SetVariable name="signal_color">#E7C413</SetVariable>
+        <SetVariable name="SignalBgColor">#2f290a</SetVariable>
+        <SetVariable name="SignalRGBLowColor">#ff2a00</SetVariable>
+        <SetVariable name="SignalRGBMidColor">#33f600</SetVariable>
+        <SetVariable name="SignalRGBHighColor">#332acc</SetVariable>
+      </Template>
+      <WidgetGroup>
+        <ObjectName>Deck</ObjectName>
+        <Layout>horizontal</Layout>
+        <SizePolicy>me,me</SizePolicy>
+        <Children>
+          <Template src="skin:deck.xml">
+            <SetVariable name="channum">4</SetVariable>
+            <SetVariable name="signal_color">#09B2AE</SetVariable>
+            <SetVariable name="SignalBgColor">#2f290a</SetVariable>
+            <SetVariable name="SignalRGBLowColor">#ff2a00</SetVariable>
+            <SetVariable name="SignalRGBMidColor">#33f600</SetVariable>
+            <SetVariable name="SignalRGBHighColor">#332acc</SetVariable>
+          </Template>
+        </Children>
+        <Connection>
+          <ConfigKey>[Master],show_4decks</ConfigKey>
+          <BindProperty>visible</BindProperty>
+        </Connection>
+      </WidgetGroup>
+    </Children>
+  </WidgetGroup>
+</Template>
