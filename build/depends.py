@@ -550,7 +550,6 @@ class MixxxCore(Feature):
                    "dlgprefcontrols.cpp",
                    "dlgprefwaveform.cpp",
                    "dlgprefautodj.cpp",
-                   "dlgprefkey.cpp",
                    "dlgprefreplaygain.cpp",
                    "dlgprefnovinyl.cpp",
                    "dlgabout.cpp",
@@ -653,7 +652,6 @@ class MixxxCore(Feature):
                    "analyserrg.cpp",
                    "analyserqueue.cpp",
                    "analyserwaveform.cpp",
-                   "analyserkey.cpp",
 
                    "controllers/controller.cpp",
                    "controllers/controllerengine.cpp",
@@ -1135,6 +1133,10 @@ class MixxxCore(Feature):
             # Check for pkg-config >= 0.15.0
             if not conf.CheckForPKGConfig('0.15.0'):
                 raise Exception('pkg-config >= 0.15.0 not found.')
+
+            if not conf.CheckLib(['X11', 'libX11']):
+                raise Exception(
+                    "Could not find libX11 or its development headers.")
 
         elif build.platform_is_osx:
             # Stuff you may have compiled by hand
