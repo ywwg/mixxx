@@ -58,6 +58,8 @@ class BasePlaylistFeature : public LibraryFeature {
     void slotTogglePlaylistLock();
     void slotImportPlaylist();
     void slotExportPlaylist();
+    // Copy all of the tracks in a crate to a new directory (like a thumbdrive).
+    void slotExportTrackFiles();
     void slotAnalyzePlaylist();
 
   protected:
@@ -86,6 +88,7 @@ class BasePlaylistFeature : public LibraryFeature {
     QAction *m_pLockPlaylistAction;
     QAction *m_pImportPlaylistAction;
     QAction *m_pExportPlaylistAction;
+    QAction *m_pExportTrackFilesAction;
     QAction *m_pDuplicatePlaylistAction;
     QAction *m_pAnalyzePlaylistAction;
     QList<QPair<int, QString> > m_playlistList;
