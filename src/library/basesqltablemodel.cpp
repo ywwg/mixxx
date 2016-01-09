@@ -785,6 +785,9 @@ QString BaseSqlTableModel::getTrackLocation(const QModelIndex& index) const {
     }
     QString location = index.sibling(
         index.row(), fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_LOCATION)).data().toString();
+    if (location[0] != '/') {
+        return m_sPrefix + "/" + location;
+    }
     return location;
 }
 
