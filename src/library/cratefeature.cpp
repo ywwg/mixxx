@@ -723,26 +723,6 @@ void CrateFeature::slotExportTrackFiles() {
         trackpointers.push_back(m_crateTableModel.getTrack(index));
     }
 
-    DlgTrackExport track_export_dlg(nullptr, m_pConfig, trackpointers);
-    if (track_export_dlg.selectDestinationDirectory()) {
-        track_export_dlg.exec();
-    }
-}
-
-void CrateFeature::slotExportTrackFiles() {
-    // Create a new table model since the main one might have an active search.
-    QScopedPointer<CrateTableModel> pCrateTableModel(
-        new CrateTableModel(this, m_pTrackCollection));
-    pCrateTableModel->setTableModel(m_crateTableModel.getCrate());
-    pCrateTableModel->select();
-
-    int rows = pCrateTableModel->rowCount();
-    QList<TrackPointer> trackpointers;
-    for (int i = 0; i < rows; ++i) {
-        QModelIndex index = m_crateTableModel.index(i, 0);
-        trackpointers.push_back(m_crateTableModel.getTrack(index));
-    }
-
     TrackExportWizard track_export(nullptr, m_pConfig, trackpointers);
     track_export.exportTracks();
 }

@@ -478,20 +478,6 @@ void BasePlaylistFeature::slotExportPlaylist() {
 }
 
 void BasePlaylistFeature::slotExportTrackFiles() {
-    int rows = m_pPlaylistTableModel->rowCount();
-    QList<TrackPointer> tracks;
-    for (int i = 0; i < rows; ++i) {
-        QModelIndex index = m_pPlaylistTableModel->index(i, 0);
-        tracks.push_back(m_pPlaylistTableModel->getTrack(index));
-    }
-
-    DlgTrackExport track_export_dlg(nullptr, m_pConfig, tracks);
-    if (track_export_dlg.selectDestinationDirectory()) {
-        track_export_dlg.exec();
-    }
-}
-
-void BasePlaylistFeature::slotExportTrackFiles() {
     QScopedPointer<PlaylistTableModel> pPlaylistTableModel(
         new PlaylistTableModel(this, m_pTrackCollection,
                                "mixxx.db.model.playlist_export"));
