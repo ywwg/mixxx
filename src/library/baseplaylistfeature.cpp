@@ -5,6 +5,7 @@
 #include <QFileInfo>
 #include <QDesktopServices>
 
+#include "library/export/trackexportwizard.h"
 #include "library/parser.h"
 #include "library/parserm3u.h"
 #include "library/parserpls.h"
@@ -12,7 +13,6 @@
 #include "library/playlisttablemodel.h"
 #include "library/trackcollection.h"
 #include "library/treeitem.h"
-#include "library/export/dlgtrackexport.h"
 #include "mixxxkeyboard.h"
 #include "widget/wlibrary.h"
 #include "widget/wlibrarytextbrowser.h"
@@ -478,6 +478,10 @@ void BasePlaylistFeature::slotExportPlaylist() {
 }
 
 void BasePlaylistFeature::slotExportTrackFiles() {
+    // TODO: The table model might have an active search, so make a new one
+    // and use that instead.  How do I get at the settingsNamespace in order
+    // to construct?
+
     int rows = m_pPlaylistTableModel->rowCount();
     QList<TrackPointer> tracks;
     for (int i = 0; i < rows; ++i) {
@@ -485,10 +489,8 @@ void BasePlaylistFeature::slotExportTrackFiles() {
         tracks.push_back(m_pPlaylistTableModel->getTrack(index));
     }
 
-    DlgTrackExport track_export_dlg(nullptr, m_pConfig, tracks);
-    if (track_export_dlg.selectDestinationDirectory()) {
-        track_export_dlg.exec();
-    }
+    TrackExportWizard track_export(nullptr, m_pConfig, tracks);
+    track_export.exportTracks();
 }
 
 void BasePlaylistFeature::slotAddToAutoDJ() {
