@@ -8,7 +8,7 @@
 #include <QDesktopServices>
 
 #include "library/cratefeature.h"
-#include "library/export/dlgtrackexport.h"
+#include "library/export/trackexportwizard.h"
 #include "library/parser.h"
 #include "library/parserm3u.h"
 #include "library/parserpls.h"
@@ -56,6 +56,10 @@ CrateFeature::CrateFeature(QObject* parent,
     m_pExportPlaylistAction = new QAction(tr("Export Crate"), this);
     connect(m_pExportPlaylistAction, SIGNAL(triggered()),
             this, SLOT(slotExportPlaylist()));
+
+    m_pExportTrackFilesAction = new QAction(tr("Export Track Files"), this);
+    connect(m_pExportTrackFilesAction, SIGNAL(triggered()),
+            this, SLOT(slotExportTrackFiles()));
 
     m_pExportTrackFilesAction = new QAction(tr("Export Track Files"), this);
     connect(m_pExportTrackFilesAction, SIGNAL(triggered()),
@@ -723,6 +727,24 @@ void CrateFeature::slotExportTrackFiles() {
     if (track_export_dlg.selectDestinationDirectory()) {
         track_export_dlg.exec();
     }
+}
+
+void CrateFeature::slotExportTrackFiles() {
+    // Create a new table model since the main one might have an active search.
+    QScopedPointer<CrateTableModel> pCrateTableModel(
+        new CrateTableModel(this, m_pTrackCollection));
+    pCrateTableModel->setTableModel(m_crateTableModel.getCrate());
+    pCrateTableModel->select();
+
+    int rows = pCrateTableModel->rowCount();
+    QList<TrackPointer> trackpointers;
+    for (int i = 0; i < rows; ++i) {
+        QModelIndex index = m_crateTableModel.index(i, 0);
+        trackpointers.push_back(m_crateTableModel.getTrack(index));
+    }
+
+    TrackExportWizard track_export(nullptr, m_pConfig, trackpointers);
+    track_export.exportTracks();
 }
 
 void CrateFeature::slotCrateTableChanged(int crateId) {
