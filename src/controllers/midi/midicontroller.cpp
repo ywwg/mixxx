@@ -16,8 +16,8 @@
 #include "mixer/playermanager.h"
 #include "util/math.h"
 
-MidiController::MidiController()
-        : Controller() {
+MidiController::MidiController(UserSettingsPointer config)
+        : Controller(config) {
     setDeviceCategory(tr("MIDI Controller"));
 }
 

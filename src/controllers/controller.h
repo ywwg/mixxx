@@ -23,7 +23,7 @@
 class Controller : public QObject, ConstControllerPresetVisitor {
     Q_OBJECT
   public:
-    Controller();
+    Controller(UserSettingsPointer config);
     virtual ~Controller();  // Subclass should call close() at minimum.
 
     // Returns the extension for the controller (type) preset files.  This is
@@ -115,6 +115,8 @@ class Controller : public QObject, ConstControllerPresetVisitor {
     inline void setOpen(bool open) {
         m_bIsOpen = open;
     }
+
+    UserSettingsPointer m_pConfig;
 
   private slots:
     virtual int open() = 0;

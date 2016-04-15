@@ -24,7 +24,7 @@
 class MidiController : public Controller {
     Q_OBJECT
   public:
-    MidiController();
+    MidiController(UserSettingsPointer config);
     virtual ~MidiController();
 
     virtual QString presetExtension();

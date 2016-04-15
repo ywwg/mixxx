@@ -41,7 +41,7 @@ class HidReader : public QThread {
 class HidController : public Controller {
     Q_OBJECT
   public:
-    HidController(const hid_device_info deviceInfo);
+    HidController(UserSettingsPointer config, const hid_device_info deviceInfo);
     virtual ~HidController();
 
     virtual QString presetExtension();

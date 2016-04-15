@@ -83,15 +83,15 @@ ControllerManager::ControllerManager(UserSettingsPointer pConfig)
     m_pMainThreadPresetEnumerator = new PresetInfoEnumerator(presetSearchPaths);
 
     // Instantiate all enumerators
-    m_enumerators.append(new PortMidiEnumerator());
+    m_enumerators.append(new PortMidiEnumerator(m_pConfig));
 #ifdef __HSS1394__
-    m_enumerators.append(new Hss1394Enumerator());
+    m_enumerators.append(new Hss1394Enumerator(m_pConfig));
 #endif
 #ifdef __BULK__
-    m_enumerators.append(new BulkEnumerator());
+    m_enumerators.append(new BulkEnumerator(m_pConfig));
 #endif
 #ifdef __HID__
-    m_enumerators.append(new HidEnumerator());
+    m_enumerators.append(new HidEnumerator(m_pConfig));
 #endif
 
     m_pollTimer.setInterval(kPollIntervalMillis);

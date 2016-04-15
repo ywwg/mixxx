@@ -9,7 +9,8 @@
 #include "controllers/midi/hss1394controller.h"
 #include "controllers/midi/hss1394enumerator.h"
 
-Hss1394Enumerator::Hss1394Enumerator() : MidiEnumerator() {
+Hss1394Enumerator::Hss1394Enumerator(UserSettingsPointer config)
+        : MidiEnumerator(config) {
 }
 
 Hss1394Enumerator::~Hss1394Enumerator() {
@@ -43,7 +44,7 @@ QList<Controller*> Hss1394Enumerator::queryDevices() {
                          QString("%1").arg(tNodeInfo.uProtocolVersion, 0, 16));
             qDebug() << " " << message;
             Hss1394Controller *currentDevice = new Hss1394Controller(
-                tNodeInfo, i);
+                m_pConfig, tNodeInfo, i);
             m_devices.push_back(currentDevice);
         }
     }

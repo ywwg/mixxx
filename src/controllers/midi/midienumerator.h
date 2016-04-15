@@ -17,7 +17,7 @@
 class MidiEnumerator : public ControllerEnumerator {
     Q_OBJECT
   public:
-    MidiEnumerator();
+    MidiEnumerator(UserSettingsPointer config);
     virtual ~MidiEnumerator();
 
     virtual QList<Controller*> queryDevices() = 0;

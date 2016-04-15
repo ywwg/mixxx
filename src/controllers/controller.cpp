@@ -12,9 +12,10 @@
 #include "controllers/controllerdebug.h"
 #include "controllers/defs_controllers.h"
 
-Controller::Controller()
+Controller::Controller(UserSettingsPointer config)
         : QObject(),
-          m_pEngine(NULL),
+          m_pConfig(config),
+          m_pEngine(new ControllerEngine(config, nullptr)),
           m_bIsOutputDevice(false),
           m_bIsInputDevice(false),
           m_bIsOpen(false),
@@ -33,7 +34,7 @@ void Controller::startEngine()
         qWarning() << "Controller: Engine already exists! Restarting:";
         stopEngine();
     }
-    m_pEngine = new ControllerEngine(this);
+    m_pEngine = new ControllerEngine(m_pConfig, this);
 }
 
 void Controller::stopEngine() {

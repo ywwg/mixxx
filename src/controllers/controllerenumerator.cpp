@@ -10,8 +10,9 @@
 
 #include "controllers/controllerenumerator.h"
 
-ControllerEnumerator::ControllerEnumerator()
-        : QObject() {
+ControllerEnumerator::ControllerEnumerator(UserSettingsPointer config)
+        : QObject(),
+          m_pConfig(config) {
 }
 
 ControllerEnumerator::~ControllerEnumerator() {

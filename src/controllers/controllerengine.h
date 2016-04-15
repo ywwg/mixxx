@@ -62,7 +62,7 @@ inline bool operator==(const ControllerEngineConnection &c1, const ControllerEng
 class ControllerEngine : public QObject {
     Q_OBJECT
   public:
-    ControllerEngine(Controller* controller);
+    ControllerEngine(UserSettingsPointer config, Controller* controller);
     virtual ~ControllerEngine();
 
     bool isReady();
@@ -155,13 +155,14 @@ class ControllerEngine : public QObject {
     void initializeScriptEngine();
 
     void scriptErrorDialog(const QString& detailedError);
-    void generateScriptFunctions(const QString& code);
+    QMap<QString, QString> getPrefsForController();
     // Stops and removes all timers (for shutdown).
     void stopAllTimers();
 
     void callFunctionOnObjects(QList<QString>, const QString&, QScriptValueList args = QScriptValueList());
     bool checkException();
     QScriptEngine *m_pEngine;
+    UserSettingsPointer m_pConfig;
 
     ControlObjectScript* getControlObjectScript(const QString& group, const QString& name);
 

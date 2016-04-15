@@ -8,7 +8,8 @@
 
 #include "controllers/midi/midienumerator.h"
 
-MidiEnumerator::MidiEnumerator() : ControllerEnumerator() {
+MidiEnumerator::MidiEnumerator(UserSettingsPointer config)
+        : ControllerEnumerator(config) {
 }
 
 MidiEnumerator::~MidiEnumerator() {

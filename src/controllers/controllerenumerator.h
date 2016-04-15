@@ -12,11 +12,12 @@
 #define CONTROLLERENUMERATOR_H
 
 #include "controllers/controller.h"
+#include "preferences/usersettings.h"
 
 class ControllerEnumerator : public QObject {
     Q_OBJECT
   public:
-    ControllerEnumerator();
+    ControllerEnumerator(UserSettingsPointer config);
     // In this function, the inheriting class must delete the Controllers it
     // creates
     virtual ~ControllerEnumerator();
@@ -28,6 +29,9 @@ class ControllerEnumerator : public QObject {
     virtual bool needPolling() {
         return false;
     }
+
+  protected:
+    UserSettingsPointer m_pConfig;
 };
 
 #endif
