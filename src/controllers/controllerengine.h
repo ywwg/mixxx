@@ -17,6 +17,7 @@
 #include "preferences/usersettings.h"
 #include "controllers/controllerpreset.h"
 #include "controllers/softtakeover.h"
+#include "controlobjectslave.h"
 #include "util/alphabetafilter.h"
 #include "util/duration.h"
 
@@ -137,6 +138,7 @@ class ControllerEngine : public QObject {
     bool loadScriptFiles(const QList<QString>& scriptPaths,
                          const QList<ControllerPreset::ScriptFileInfo>& scripts);
     void initializeScripts(const QList<ControllerPreset::ScriptFileInfo>& scripts);
+    void preferencesUpdated(double dValue);
     void gracefulShutdown();
     void scriptHasChanged(const QString&);
 
@@ -153,11 +155,16 @@ class ControllerEngine : public QObject {
     bool internalExecute(QScriptValue thisObject, QScriptValue functionObject,
                          QScriptValueList arguments);
     void initializeScriptEngine();
-
-    void scriptErrorDialog(const QString& detailedError);
     // Returns saved preferences for this controller.  The return value is a map
     // from the name of the preference to its value as a QString.
     QMap<QString, QString> getPrefsForController();
+    // Iterate through all preferences and look for those matching this
+    // controller.  Calls updatePreferences in the controller js with an Object
+    // with preference key:values.  Assumes m_scriptFunctionPrefixes is already
+    // initialized.
+    void updatePreferences();
+
+    void scriptErrorDialog(const QString& detailedError);
     // Stops and removes all timers (for shutdown).
     void stopAllTimers();
 
@@ -165,6 +172,7 @@ class ControllerEngine : public QObject {
     bool checkException();
     QScriptEngine *m_pEngine;
     UserSettingsPointer m_pConfig;
+    ControlObjectSlave m_preferencesUpdated;
 
     ControlObjectScript* getControlObjectScript(const QString& group, const QString& name);
 

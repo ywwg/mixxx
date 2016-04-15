@@ -33,6 +33,7 @@ ControllerEngine::ControllerEngine(UserSettingsPointer config,
                                    Controller* controller)
         : m_pEngine(nullptr),
           m_pConfig(config),
+          m_preferencesUpdated("[Preferences]", "updated", this),
           m_pController(controller),
           m_bPopups(false),
           m_pBaClass(nullptr) {
@@ -54,8 +55,8 @@ ControllerEngine::ControllerEngine(UserSettingsPointer config,
         m_scratchFilters[i] = new AlphaBetaFilter();
         m_ramp[i] = false;
     }
-
     initializeScriptEngine();
+    m_preferencesUpdated.connectValueChanged(SLOT(preferencesUpdated(double)));
 }
 
 ControllerEngine::~ControllerEngine() {
@@ -283,6 +284,12 @@ void ControllerEngine::initializeScripts(const QList<ControllerPreset::ScriptFil
     // Call the init method for all the prefixes.
     callFunctionOnObjects(m_scriptFunctionPrefixes, "init", args);
 
+    updatePreferences();
+
+    emit(initialized());
+}
+
+void ControllerEngine::updatePreferences() {
     QScriptValue preferenceObject = m_pEngine->newObject();
     const QMap<QString, QString> pref_map = getPrefsForController();
     for (const auto& key : pref_map.keys()) {
@@ -291,8 +298,6 @@ void ControllerEngine::initializeScripts(const QList<ControllerPreset::ScriptFil
     QScriptValueList prefs;
     prefs << preferenceObject;
     callFunctionOnObjects(m_scriptFunctionPrefixes, "updatePreferences", prefs);
-
-    emit(initialized());
 }
 
 QMap<QString, QString> ControllerEngine::getPrefsForController() {
@@ -305,6 +310,13 @@ QMap<QString, QString> ControllerEngine::getPrefsForController() {
     }
     return prefs;
 }
+
+void ControllerEngine::preferencesUpdated(double dValue) {
+    if (dValue > 0) {
+        updatePreferences();
+    }
+}
+
 
 /* -------- ------------------------------------------------------
    Purpose: Validate script syntax, then evaluate() it so the
