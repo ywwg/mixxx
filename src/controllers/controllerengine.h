@@ -155,6 +155,8 @@ class ControllerEngine : public QObject {
     void initializeScriptEngine();
 
     void scriptErrorDialog(const QString& detailedError);
+    // Returns saved preferences for this controller.  The return value is a map
+    // from the name of the preference to its value as a QString.
     QMap<QString, QString> getPrefsForController();
     // Stops and removes all timers (for shutdown).
     void stopAllTimers();

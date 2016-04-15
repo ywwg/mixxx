@@ -307,5 +307,10 @@ QMultiHash<ValueType, ConfigKey> ConfigObject<ValueType>::transpose() const {
     return transposedHash;
 }
 
+template <class ValueType>
+QList<ConfigKey> ConfigObject<ValueType>::getKeys() const {
+    return m_values.keys();
+}
+
 template class ConfigObject<ConfigValue>;
 template class ConfigObject<ConfigValueKbd>;

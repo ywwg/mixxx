@@ -283,21 +283,27 @@ void ControllerEngine::initializeScripts(const QList<ControllerPreset::ScriptFil
     // Call the init method for all the prefixes.
     callFunctionOnObjects(m_scriptFunctionPrefixes, "init", args);
 
-//    QScriptValue preferenceObject = m_pEngine->newObject();
-//    for (const auto& key : getPrefsForController()) {
-//      preferenceObject.setProperty(key, pair.second);
-//    }
-//    QScriptValueList prefs;
-//    prefs << preferenceObject;
-//    callFunctionOnObjects(m_scriptFunctionPrefixes, "updatePreferences", prefs);
+    QScriptValue preferenceObject = m_pEngine->newObject();
+    const QMap<QString, QString> pref_map = getPrefsForController();
+    for (const auto& key : pref_map.keys()) {
+        preferenceObject.setProperty(key, pref_map[key]);
+    }
+    QScriptValueList prefs;
+    prefs << preferenceObject;
+    callFunctionOnObjects(m_scriptFunctionPrefixes, "updatePreferences", prefs);
 
     emit(initialized());
 }
 
 QMap<QString, QString> ControllerEngine::getPrefsForController() {
-    // ok so we have to go through all the preferences and pull out the ones
-    // marked [Controller_[My_Controller_1]_XXX], value
-    //m_pConfig->
+    QMap<QString, QString> prefs;
+    const QString pref_group = "[Controller_" + m_pController->getName();
+    for (const auto& key : m_pConfig->getKeys()) {
+        if (key.group == pref_group) {
+            prefs[key.item] = m_pConfig->getValueString(key);
+        }
+    }
+    return prefs;
 }
 
 /* -------- ------------------------------------------------------
