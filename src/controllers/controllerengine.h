@@ -88,6 +88,17 @@ class ControllerEngine : public QObject {
     void disconnectControl(const ControllerEngineConnection conn);
 
   protected:
+    Q_INVOKABLE void registerPreferenceBool(QString name, bool defaultValue,
+                                            QString helpText);
+    Q_INVOKABLE void registerPreferenceValue(QString name,
+                                             double minValue, double maxValue,
+                                             double defaultValue,
+                                             QString helpText);
+    Q_INVOKABLE void registerPreferenceEnum(QString name, QScriptValue choices,
+                                            QString defaultValue, QString helpText);
+    Q_INVOKABLE void registerPreferenceButton(QString name, QString callback,
+                                              QString helpText);
+    Q_INVOKABLE void savePreferences(QScriptValue preferences);
     Q_INVOKABLE double getValue(QString group, QString name);
     Q_INVOKABLE void setValue(QString group, QString name, double newValue);
     Q_INVOKABLE double getParameter(QString group, QString name);
@@ -138,6 +149,8 @@ class ControllerEngine : public QObject {
     bool loadScriptFiles(const QList<QString>& scriptPaths,
                          const QList<ControllerPreset::ScriptFileInfo>& scripts);
     void initializeScripts(const QList<ControllerPreset::ScriptFileInfo>& scripts);
+    // Called when preferences are updated.  Probably this needs to be much more
+    // focussed just for updates to this controller's preferences.
     void preferencesUpdated(double dValue);
     void gracefulShutdown();
     void scriptHasChanged(const QString&);
@@ -155,14 +168,12 @@ class ControllerEngine : public QObject {
     bool internalExecute(QScriptValue thisObject, QScriptValue functionObject,
                          QScriptValueList arguments);
     void initializeScriptEngine();
-    // Returns saved preferences for this controller.  The return value is a map
-    // from the name of the preference to its value as a QString.
-    QMap<QString, QString> getPrefsForController();
     // Iterate through all preferences and look for those matching this
     // controller.  Calls updatePreferences in the controller js with an Object
     // with preference key:values.  Assumes m_scriptFunctionPrefixes is already
     // initialized.
     void updatePreferences();
+    const QString preferenceGroup() const;
 
     void scriptErrorDialog(const QString& detailedError);
     // Stops and removes all timers (for shutdown).
@@ -186,6 +197,7 @@ class ControllerEngine : public QObject {
     bool m_bPopups;
     QMultiHash<ConfigKey, ControllerEngineConnection> m_connectedControls;
     QList<QString> m_scriptFunctionPrefixes;
+    QMap<ConfigKey, QString> m_controllerPrefs;
     QMap<QString, QStringList> m_scriptErrors;
     QHash<ConfigKey, ControlObjectScript*> m_controlCache;
     struct TimerInfo {

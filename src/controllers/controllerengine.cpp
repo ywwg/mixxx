@@ -291,24 +291,12 @@ void ControllerEngine::initializeScripts(const QList<ControllerPreset::ScriptFil
 
 void ControllerEngine::updatePreferences() {
     QScriptValue preferenceObject = m_pEngine->newObject();
-    const QMap<QString, QString> pref_map = getPrefsForController();
-    for (const auto& key : pref_map.keys()) {
-        preferenceObject.setProperty(key, pref_map[key]);
+    for (const auto& key : m_controllerPrefs.keys()) {
+        preferenceObject.setProperty(key.item, m_controllerPrefs[key]);
     }
     QScriptValueList prefs;
     prefs << preferenceObject;
     callFunctionOnObjects(m_scriptFunctionPrefixes, "updatePreferences", prefs);
-}
-
-QMap<QString, QString> ControllerEngine::getPrefsForController() {
-    QMap<QString, QString> prefs;
-    const QString pref_group = "[Controller_" + m_pController->getName();
-    for (const auto& key : m_pConfig->getKeys()) {
-        if (key.group == pref_group) {
-            prefs[key.item] = m_pConfig->getValueString(key);
-        }
-    }
-    return prefs;
 }
 
 void ControllerEngine::preferencesUpdated(double dValue) {
@@ -317,6 +305,22 @@ void ControllerEngine::preferencesUpdated(double dValue) {
     }
 }
 
+void ControllerEngine::savePreferences(QScriptValue preferences) {
+    QScriptValueIterator it(preferences);
+    while (it.hasNext()) {
+        it.next();
+        // UNTESTED
+        const ConfigKey prefKey = ConfigKey(preferenceGroup(), it.name());
+        const auto pref_it = m_controllerPrefs.find(prefKey);
+        if (pref_it == m_controllerPrefs.end()) {
+            qWarning() << "ControllerEngine: Not syncing unrecognized preference:"
+                    << it.name();
+            continue;
+        }
+        // also talk to the dialog???
+        m_pConfig->set(prefKey, it.value().toString());
+    }
+}
 
 /* -------- ------------------------------------------------------
    Purpose: Validate script syntax, then evaluate() it so the
@@ -547,6 +551,80 @@ ControlObjectScript* ControllerEngine::getControlObjectScript(const QString& gro
         }
     }
     return coScript;
+}
+
+const QString ControllerEngine::preferenceGroup() const {
+    // TODO factor out [Controller into a const define
+    return "[Controller_" + m_pController->getName();
+}
+
+void ControllerEngine::registerPreferenceBool(QString name, bool defaultValue,
+                                              QString helpText) {
+    const ConfigKey prefKey = ConfigKey(preferenceGroup(), name);
+    QString value = m_pConfig->getValueString(prefKey,
+                                              defaultValue ? "true" : "false");
+    m_controllerPrefs[prefKey] = value;
+}
+
+void ControllerEngine::registerPreferenceValue(QString name,
+                                               double minValue, double maxValue,
+                                               double defaultValue,
+                                               QString helpText) {
+    const ConfigKey prefKey = ConfigKey(preferenceGroup(), name);
+
+    // Pre-clamp the default value
+    double clampedDefault = math_clamp(defaultValue, minValue, maxValue);
+    const QString defaultStr = QString::number(clampedDefault);
+    // Get the stored value as a string, or the default.
+    QString stored = m_pConfig->getValueString(prefKey, defaultStr);
+    bool ok = false;
+    double value = stored.toDouble(&ok);
+    if (!ok) {
+        // Invalid stored value, set the default
+        m_controllerPrefs[prefKey] = defaultStr;
+        m_pConfig->set(prefKey, ConfigValue(defaultStr));
+        return;
+    }
+    // it's valid, clamp and store as string.
+    value = math_clamp(value, minValue, maxValue);
+    m_controllerPrefs[prefKey] = QString::number(value);
+}
+
+void ControllerEngine::registerPreferenceEnum(QString name, QScriptValue choices,
+                                              QString defaultValue, QString helpText) {
+    const ConfigKey prefKey = ConfigKey(preferenceGroup(), name);
+    QSet<QString> validChoices;
+    // check isArray???
+    QScriptValueIterator it(choices);
+    while (it.hasNext()) {
+        it.next();
+        // UNTESTED
+        validChoices.insert(it.name());
+    }
+
+    if (validChoices.find(defaultValue) == validChoices.end()) {
+        qWarning() << "ControllerEngine: Script error, default enum not in "
+                "list of choices";
+        return;
+    }
+
+    // Get the stored value as a string, or the default.
+    QString stored = m_pConfig->getValueString(prefKey, defaultValue);
+    if (validChoices.find(stored) == validChoices.end()) {
+        // Invalid stored value, set the default
+        m_controllerPrefs[prefKey] = defaultValue;
+        m_pConfig->set(prefKey, ConfigValue(defaultValue));
+        return;
+    }
+    m_controllerPrefs[prefKey] = stored;
+}
+
+// Not a preference per se, but an action that should show up in the preferences
+void ControllerEngine::registerPreferenceButton(QString name, QString callback,
+                                                QString helpText) {
+    const ConfigKey prefKey = ConfigKey(preferenceGroup(), name);
+    // Do a thing and make a button in the prefs and then connect the button to
+    // a slot that calls the named callback.
 }
 
 /* -------- ------------------------------------------------------

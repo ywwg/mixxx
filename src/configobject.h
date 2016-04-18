@@ -128,7 +128,6 @@ template <class ValueType> class ConfigObject {
     QString getValueString(const ConfigKey& k) const;
     QString getValueString(const ConfigKey& k, const QString& default_string) const;
     QMultiHash<ValueType, ConfigKey> transpose() const;
-    QList<ConfigKey> getKeys() const;
 
     void reopen(const QString& file);
     void save();
