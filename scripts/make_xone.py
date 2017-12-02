@@ -31,16 +31,24 @@ fname = ""
 # Each item in the list is a tuple of string and int, where the string is either "deck" or "fx"
 # and the int is the channel number
 LAYOUT = []
+NAME = ''
+ID = ''
 
 try:
   opts, args = getopt.getopt(sys.argv[1:], "",["4decks","4fx","2decks2fx"])
   for o, a in opts:
     if o == "--4decks":
       LAYOUT = [('deck', 2), ('deck', 0), ('deck', 1), ('deck', 3)]
+      NAME = 'Allen&amp;Heath Xone K2 - 4 decks'
+      ID = 'XONE:K2:4D'
     elif o == "--4fx":
       LAYOUT = [('fx', 0), ('fx', 1), ('fx', 2), ('fx', 3)]
+      NAME = 'Allen&amp;Heath Xone K2 - 4 fx'
+      ID = 'XONE:K2:4FX'
     elif o == "--2decks2fx":
       LAYOUT = [('deck', 0), ('deck', 1), ('fx', 0), ('fx', 1)]
+      NAME = 'Allen&amp;Heath Xone K2 - 2 decks 2 fx'
+      ID = 'XONE:K2:2D2FX'
   if len(args) > 0:
     fname = args[0]
 except Exception, e:
@@ -154,27 +162,55 @@ for cc in cc_controls:
 # Note that EQ control objects are munged in code to produce the correct control objects as of
 # Mixxx 2.0.
 
-deck_cc_mapping = {
-  'spinknob':('XoneK2.encoderJog','<Script-Binding/>','ch'),
-  'eq1':('parameter3','<normal/>','eq'),
-  'eq2':('parameter2','<normal/>','eq'),
-  'eq3':('parameter1','<normal/>','eq'),
-  'slider':('volume','<normal/>','ch')}
+cc_mapping = {
+  'deck': {
+    'spinknob':('XoneK2.encoderJog','<Script-Binding/>','ch'),
+    'eq1':('parameter3','<normal/>','eq'),
+    'eq2':('parameter2','<normal/>','eq'),
+    'eq3':('parameter1','<normal/>','eq'),
+    'slider':('volume','<normal/>','ch')},
+  'fx': {
+    'spinknob':('effect_selector','<selectknob/>','fx'),
+    'eq1':('parameter3','<normal/>','fx'),
+    'eq2':('parameter2','<normal/>','fx'),
+    'eq3':('parameter1','<normal/>','fx'),
+    'slider':('mix','<normal/>','ufx')},
+}
 
-button_mapping = {'spinknob':('XoneK2.encoderButton','<Script-Binding/>', 'ch'),
-       'knoblight1':('keylock','<button/>','ch'), 'knoblight2':('quantize','<normal/>', 'ch'), 'knoblight3':('button_parameter1','<normal/>', 'eq'),
-       'button1':{'red':('pfl','<button/>','ch'), 'orange':('beatloop_4','<button/>','ch'),  'green':('hotcue_1_activate','<button/>','ch')},
-       'button2':{'red':('sync_enabled','<button/>','ch'), 'orange':('loop_double','<button/>','ch'), 'green':('hotcue_2_activate','<button/>','ch')},
-       'button3':{'red':('cue_default','<button/>','ch'), 'orange':('loop_halve','<button/>','ch'),  'green':('hotcue_3_activate','<button/>','ch')},
-       'button4':{'red':('play','<button/>','ch'), 'orange':('reloop_exit','<button/>','ch'), 'green':('hotcue_4_activate','<button/>','ch')}}
+button_mapping = {
+  'deck': {
+    'spinknob':('XoneK2.encoderButton','<Script-Binding/>', 'ch'),
+    'knoblight1':('keylock','<button/>','ch'), 'knoblight2':('quantize','<normal/>', 'ch'), 'knoblight3':('button_parameter1','<normal/>', 'eq'),
+    'button1':{'red':('pfl','<button/>','ch'), 'orange':('beatloop_4','<button/>','ch'),  'green':('hotcue_1_activate','<button/>','ch')},
+    'button2':{'red':('sync_enabled','<button/>','ch'), 'orange':('loop_double','<button/>','ch'), 'green':('hotcue_2_activate','<button/>','ch')},
+    'button3':{'red':('cue_default','<button/>','ch'), 'orange':('loop_halve','<button/>','ch'),  'green':('hotcue_3_activate','<button/>','ch')},
+    'button4':{'red':('play','<button/>','ch'), 'orange':('reloop_exit','<button/>','ch'), 'green':('hotcue_4_activate','<button/>','ch')}},
+  'fx': {
+    'spinknob':('enabled','<button/>', 'fx'),
+    'knoblight1':('enabled','<button/>','fx'), 'knoblight2':('quantize','<normal/>', 'ch'), 'knoblight3':('button_parameter1','<normal/>', 'eq'),
+    'button1':{'red':('group_channel4_enable','<button/>','fx'), 'orange':('beatloop_4','<button/>','ch'),  'green':('hotcue_1_activate','<button/>','ch')},
+    'button2':{'red':('group_channel3_enable','<button/>','fx'), 'orange':('loop_double','<button/>','ch'), 'green':('hotcue_2_activate','<button/>','ch')},
+    'button3':{'red':('group_channel2_enable','<button/>','fx'), 'orange':('loop_halve','<button/>','ch'),  'green':('hotcue_3_activate','<button/>','ch')},
+    'button4':{'red':('group_channel1_enable','<button/>','fx'), 'orange':('reloop_exit','<button/>','ch'), 'green':('hotcue_4_activate','<button/>','ch')}
+  },
+}
 
-
-light_mapping = {#'spinknob':('jog', 'ch'),
-       'knoblight1':('keylock', 'ch'), 'knoblight2':('quantize', 'ch'), 'knoblight3':('button_parameter1', 'eq'),
-       'button1':{'red':('pfl', 'ch'), 'orange':('beatloop_4', 'ch'), 'green':('hotcue_1_enabled', 'ch')},
-       'button2':{'red':('sync_enabled', 'ch'), 'orange':('loop_double', 'ch'), 'green':('hotcue_2_enabled', 'ch')},
-       'button3':{'red':('cue_default', 'ch'), 'orange':('loop_halve', 'ch'), 'green':('hotcue_3_enabled', 'ch')},
-       'button4':{'red':('play', 'ch'), 'orange':('loop_enabled', 'ch'), 'green':('hotcue_4_enabled', 'ch')}}
+light_mapping = {
+  'deck': {
+    #'spinknob':('jog', 'ch'),
+    'knoblight1':('keylock', 'ch'), 'knoblight2':('quantize', 'ch'), 'knoblight3':('button_parameter1', 'eq'),
+    'button1':{'red':('pfl', 'ch'), 'orange':('beatloop_4', 'ch'), 'green':('hotcue_1_enabled', 'ch')},
+    'button2':{'red':('sync_enabled', 'ch'), 'orange':('loop_double', 'ch'), 'green':('hotcue_2_enabled', 'ch')},
+    'button3':{'red':('cue_default', 'ch'), 'orange':('loop_halve', 'ch'), 'green':('hotcue_3_enabled', 'ch')},
+    'button4':{'red':('play', 'ch'), 'orange':('loop_enabled', 'ch'), 'green':('hotcue_4_enabled', 'ch')}},
+  'fx':{
+    'knoblight1':('enabled', 'fx'), 'knoblight2':('quantize', 'ch'), 'knoblight3':('button_parameter1', 'eq'),
+    'button1':{'red':('group_channel4_enable', 'fx'), 'orange':('beatloop_4', 'ch'), 'green':('hotcue_1_enabled', 'ch')},
+    'button2':{'red':('group_channel3_enable', 'fx'), 'orange':('loop_double', 'ch'), 'green':('hotcue_2_enabled', 'ch')},
+    'button3':{'red':('group_channel2_enable', 'fx'), 'orange':('loop_halve', 'ch'), 'green':('hotcue_3_enabled', 'ch')},
+    'button4':{'red':('group_channel1_enable', 'fx'), 'orange':('loop_enabled', 'ch'), 'green':('hotcue_4_enabled', 'ch')}
+  },
+}
 
 
 #these aren't worth automating
@@ -230,20 +266,18 @@ xml.append("""<?xml version='1.0' encoding='utf-8'?>
 <!-- This file automatically generated by make_xone.py. -->
 <MixxxControllerPreset mixxxVersion="" schemaVersion="1">
     <info>
-        <name>Allen&amp;Heath Xone K2</name>
+        <name>%s</name>
         <author>Owen Williams</author>
         <description>For this mapping to work:
 - Set Xone:K2 midi channel to 16;
 - Set Xone:K2 Latching Layers state to "Switch Matrix" (state 2).
 (See product manual for details.)</description>
     </info>
-    <controller id="XONE:K2">
+    <controller id="%s">
         <scriptfiles>
             <file filename="Xone-K2-scripts.js" functionprefix="XoneK2"/>
         </scriptfiles>
-        <controls>""")
-
-
+        <controls>""" % (NAME, ID))
 
 
 xml.append("<!-- CC Controls (knobs and sliders) -->")
@@ -254,20 +288,22 @@ xml.append("<!-- CC Controls (knobs and sliders) -->")
 # ok back to boilerplate...
 
 def get_group_name(channel, key, cotype):
-  """Optionally munge group name if an EQ"""
+  """Builds correct group name based on type and channel and key"""
   if cotype == 'eq':
     return "[EqualizerRack1_[Channel%d]_Effect1]" % channel
   elif cotype == 'ch':
     return "[Channel%d]" % channel
   elif cotype == 'fx':
     return "[EffectRack1_EffectUnit1_Effect%d]" % channel
+  elif cotype == 'ufx':
+    return "[EffectRack1_EffectUnit1]"
 
 #cc controls (no latching needed)
 for i, op in enumerate(LAYOUT):
   chantype, channel = op
-  if chantype == 'deck':
-    for cc in deck_cc_mapping:
-      xml.append("""            <control>
+  ccmap = cc_mapping[chantype]
+  for cc in ccmap:
+    xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0xBF</status>
@@ -275,14 +311,14 @@ for i, op in enumerate(LAYOUT):
                 <options>
                     %s
                 </options>
-            </control>""" % (get_group_name(channel+1, deck_cc_mapping[cc][0], deck_cc_mapping[cc][2]),
-                             deck_cc_mapping[cc][0], midi_cc[cc][i], deck_cc_mapping[cc][1]))
+            </control>""" % (get_group_name(channel+1, ccmap[cc][0], ccmap[cc][2]),
+                             ccmap[cc][0], midi_cc[cc][i], ccmap[cc][1]))
 
 #Spin Knob buttons (no latching needed)
 for i, op in enumerate(LAYOUT):
   chantype, channel = op
-  if chantype == 'deck':
-    xml.append("""            <control>
+  bmap = button_mapping[chantype]
+  xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x9F</status>
@@ -290,9 +326,9 @@ for i, op in enumerate(LAYOUT):
                 <options>
                     %s
                 </options>
-            </control>""" % (get_group_name(channel+1, button_mapping['spinknob'][0], button_mapping['spinknob'][2]),
-                             button_mapping['spinknob'][0], midi['spinknob'][i]['red'], button_mapping['spinknob'][1]))
-    xml.append("""            <control>
+            </control>""" % (get_group_name(channel+1, bmap['spinknob'][0], bmap['spinknob'][2]),
+                             bmap['spinknob'][0], midi['spinknob'][i]['red'], bmap['spinknob'][1]))
+  xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x8F</status>
@@ -300,16 +336,16 @@ for i, op in enumerate(LAYOUT):
                 <options>
                     %s
                 </options>
-            </control>""" % (get_group_name(channel+1, button_mapping['spinknob'][0], button_mapping['spinknob'][2]),
-                             button_mapping['spinknob'][0], midi['spinknob'][i]['red'], button_mapping['spinknob'][1]))
+            </control>""" % (get_group_name(channel+1, bmap['spinknob'][0], bmap['spinknob'][2]),
+                             bmap['spinknob'][0], midi['spinknob'][i]['red'], bmap['spinknob'][1]))
 
 xml.append("<!-- Upper Buttons -->")
 #knoblight buttons (no latching)
 for j, op in enumerate(LAYOUT):
   chantype, channel = op
-  if chantype == 'deck':
-    for knob in ['knoblight%i' % i for i in range(1,4)]:
-      xml.append("""            <control>
+  bmap = button_mapping[chantype]
+  for knob in ['knoblight%i' % i for i in range(1,4)]:
+    xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x9F</status>
@@ -317,9 +353,9 @@ for j, op in enumerate(LAYOUT):
                 <options>
                     %s
                 </options>
-            </control>""" % (get_group_name(channel+1, button_mapping[knob][0], button_mapping[knob][2]),
-                             button_mapping[knob][0], midi[knob][j]['red'], button_mapping[knob][1]))
-      xml.append("""            <control>
+            </control>""" % (get_group_name(channel+1, bmap[knob][0], bmap[knob][2]),
+                             bmap[knob][0], midi[knob][j]['red'], bmap[knob][1]))
+    xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x8F</status>
@@ -327,18 +363,18 @@ for j, op in enumerate(LAYOUT):
                 <options>
                     %s
                 </options>
-            </control>""" % (get_group_name(channel+1, button_mapping[knob][0], button_mapping[knob][2]),
-                             button_mapping[knob][0], midi[knob][j]['red'], button_mapping[knob][1]))
+            </control>""" % (get_group_name(channel+1, bmap[knob][0], bmap[knob][2]),
+                             bmap[knob][0], midi[knob][j]['red'], bmap[knob][1]))
 
 xml.append("<!-- Lower Button Grid -->")
 
 #buttons
 for j, op in enumerate(LAYOUT):
   chantype, channel = op
-  if chantype == 'deck':
-    for latch in ['red','orange','green']:
-      for button in ['button%i' % i for i in range(1,5)]:
-        xml.append("""            <control>
+  bmap = button_mapping[chantype]
+  for latch in ['red','orange','green']:
+    for button in ['button%i' % i for i in range(1,5)]:
+      xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x9F</status>
@@ -346,9 +382,9 @@ for j, op in enumerate(LAYOUT):
                 <options>
                     %s
                 </options>
-            </control>""" % (get_group_name(channel+1, button_mapping[button][latch][0], button_mapping[button][latch][2]),
-                             button_mapping[button][latch][0], midi[button][j][latch], button_mapping[button][latch][1]))
-        xml.append("""            <control>
+            </control>""" % (get_group_name(channel+1, bmap[button][latch][0], bmap[button][latch][2]),
+                             bmap[button][latch][0], midi[button][j][latch], bmap[button][latch][1]))
+      xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x8F</status>
@@ -356,8 +392,8 @@ for j, op in enumerate(LAYOUT):
                 <options>
                     %s
                 </options>
-            </control>""" % (get_group_name(channel+1, button_mapping[button][latch][0], button_mapping[button][latch][2]),
-                             button_mapping[button][latch][0], midi[button][j][latch], button_mapping[button][latch][1]))
+            </control>""" % (get_group_name(channel+1, bmap[button][latch][0], bmap[button][latch][2]),
+                             bmap[button][latch][0], midi[button][j][latch], bmap[button][latch][1]))
 
 xml.append("<!-- Special Case Knobs / buttons -->")
 # a couple custom entries:
@@ -373,47 +409,47 @@ xml.append("""        </controls>
 if 'spinknob' in light_mapping:
   for i, op in enumerate(LAYOUT):
     chantype, channel = op
-    if chantype == 'deck':
-      xml.append("""            <output>
+    lmap = light_mapping[chantype]
+    xml.append("""            <output>
                   <group>%s</group>
                   <key>%s</key>
                   <status>0x9F</status>
                   <midino>%s</midino>
                   <minimum>0.5</minimum>
-              </output>""" % (get_group_name(channel+1, mapping['spinknob'][0], mapping['spinknob'][1]),
-                              mapping['spinknob'][0], midi['spinknob'][i]['red']))
+              </output>""" % (get_group_name(channel+1, lmap['spinknob'][0], lmap['spinknob'][1]),
+                              lmap['spinknob'][0], midi['spinknob'][i]['red']))
 
 
 xml.append("<!-- Knob lights -->")
 #knoblight buttons (no latching)
 for j, op in enumerate(LAYOUT):
   chantype, channel = op
-  if chantype == 'deck':
-    for knob in ['knoblight%i' % i for i in range(1,4)]:
-        xml.append("""            <output>
+  lmap = light_mapping[chantype]
+  for knob in ['knoblight%i' % i for i in range(1,4)]:
+    xml.append("""            <output>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x9F</status>
                 <midino>%s</midino>
                 <minimum>0.5</minimum>
-            </output>""" % (get_group_name(channel+1, light_mapping[knob][0], light_mapping[knob][1]),
-                            light_mapping[knob][0], midi[knob][j]['red']))
+            </output>""" % (get_group_name(channel+1, lmap[knob][0], lmap[knob][1]),
+                            lmap[knob][0], midi[knob][j]['red']))
 
 xml.append("<!-- Button lights -->")
 #buttons (latched)
 for j, op in enumerate(LAYOUT):
   chantype, channel = op
-  if chantype == 'deck':
-    for latch in ['red','orange','green']:
-      for button in ['button%i' % i for i in range(1,5)]:
-        xml.append("""            <output>
+  lmap = light_mapping[chantype]
+  for latch in ['red','orange','green']:
+    for button in ['button%i' % i for i in range(1,5)]:
+      xml.append("""            <output>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x9F</status>
                 <midino>%s</midino>
                 <minimum>0.5</minimum>
-            </output>""" % (get_group_name(channel+1, light_mapping[button][latch][0], light_mapping[button][latch][1]),
-                            light_mapping[button][latch][0], midi[button][j][latch]))
+            </output>""" % (get_group_name(channel+1, lmap[button][latch][0], lmap[button][latch][1]),
+                            lmap[button][latch][0], midi[button][j][latch]))
 
 xml.append("""        </outputs>
     </controller>
