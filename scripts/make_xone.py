@@ -15,15 +15,15 @@ import sys
 import getopt
 
 def help():
-    print "usage: make_xone [args] outputfilename"
-    print "optional args: "
-    print "          --4decks     to generate a layout for 4 decks"
-    print "          --2deck2fx   to generate a layout for 2 decks and 2 effect units"
-    print "          --4fx        to generate a layout for 4 effect units"
+  print "usage: make_xone [args] outputfilename"
+  print "optional args: "
+  print "          --4decks     to generate a layout for 4 decks"
+  print "          --2deck2fx   to generate a layout for 2 decks and 2 effect units"
+  print "          --4fx        to generate a layout for 4 effect units"
 
 if len(sys.argv) < 2:
-    help()
-    sys.exit(1)
+  help()
+  sys.exit(1)
 
 fname = ""
 # Layout defines how decks and fx are arranged on the xone.
@@ -33,26 +33,26 @@ fname = ""
 LAYOUT = [('deck', 2), ('deck', 0), ('deck', 1), ('deck', 3)]
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "",["4decks"])
-    for o, a in opts:
-        if o == "--4decks":
-            pass
-    if len(args) > 0:
-        fname = args[0]
+  opts, args = getopt.getopt(sys.argv[1:], "",["4decks"])
+  for o, a in opts:
+    if o == "--4decks":
+      pass
+  if len(args) > 0:
+    fname = args[0]
 except Exception, e:
-    print str(e)
-    help()
-    sys.exit(1)
+  print str(e)
+  help()
+  sys.exit(1)
 
 if fname == "":
-    help()
-    sys.exit(1)
+  help()
+  sys.exit(1)
 
 try:
-    fh = open(fname, "w")
+  fh = open(fname, "w")
 except Exception, e:
-    print "Error opening file for write:", str(e)
-    sys.exit(1)
+  print "Error opening file for write:", str(e)
+  sys.exit(1)
 
 button_definitions = """0x34	0x35	0x36	0x37
 0x58	0x59	0x5A	0x5B
@@ -105,23 +105,23 @@ cur_color = 0
 midi = {}
 current_control = controls.pop()
 for line in button_definitions.split("\n"):
-    if len(line.strip()) == 0:
-        continue
+  if len(line.strip()) == 0:
+    continue
 
-    hexlist = line.split()
+  hexlist = line.split()
 
-    if current_control not in midi:
-        midi[current_control] = [{},{},{},{}]
+  if current_control not in midi:
+    midi[current_control] = [{},{},{},{}]
 
-    for i,h in enumerate(hexlist):
-        midi[current_control][i][colors[cur_color]]=h
+  for i,h in enumerate(hexlist):
+    midi[current_control][i][colors[cur_color]]=h
 
-    cur_color = (cur_color + 1) % len(colors)
-    if cur_color == 0:
-        try:
-            current_control = controls.pop()
-        except:
-            break
+  cur_color = (cur_color + 1) % len(colors)
+  if cur_color == 0:
+    try:
+      current_control = controls.pop()
+    except:
+        break
 
 #ok now we have a mapping between control and hex key
 
@@ -131,10 +131,10 @@ cc_controls=['spinknob', 'eq1', 'eq2', 'eq3', 'slider']
 cc_code=0
 midi_cc = {}
 for cc in cc_controls:
-    midi_cc[cc] = []
-    for i in range(0, 4):
-        midi_cc[cc].append("0x%x" % cc_code)
-        cc_code += 1
+  midi_cc[cc] = []
+  for i in range(0, 4):
+    midi_cc[cc].append("0x%x" % cc_code)
+    cc_code += 1
 
 
 #now we need a mapping of control and controlobject
@@ -275,10 +275,10 @@ def get_key_name(key):
 
 #cc controls (no latching needed)
 for i, op in enumerate(LAYOUT):
-    chantype, channel = op
-    if chantype == 'deck':
-      for cc in cc_mapping:
-          xml.append("""            <control>
+  chantype, channel = op
+  if chantype == 'deck':
+    for cc in cc_mapping:
+      xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0xBF</status>
@@ -291,9 +291,9 @@ for i, op in enumerate(LAYOUT):
 
 #Spin Knob buttons (no latching needed)
 for i, op in enumerate(LAYOUT):
-    chantype, channel = op
-    if chantype == 'deck':
-      xml.append("""            <control>
+  chantype, channel = op
+  if chantype == 'deck':
+    xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x9F</status>
@@ -303,7 +303,7 @@ for i, op in enumerate(LAYOUT):
                 </options>
             </control>""" % (get_group_name(channel+1, button_mapping['spinknob'][0]),
                              get_key_name(button_mapping['spinknob'][0]), midi['spinknob'][i]['red'], button_mapping['spinknob'][1]))
-      xml.append("""            <control>
+    xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x8F</status>
@@ -317,10 +317,10 @@ for i, op in enumerate(LAYOUT):
 xml.append("<!-- Upper Buttons -->")
 #knoblight buttons (no latching)
 for j, op in enumerate(LAYOUT):
-    chantype, channel = op
-    if chantype == 'deck':
-      for knob in ['knoblight%i' % i for i in range(1,4)]:
-          xml.append("""            <control>
+  chantype, channel = op
+  if chantype == 'deck':
+    for knob in ['knoblight%i' % i for i in range(1,4)]:
+      xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x9F</status>
@@ -330,7 +330,7 @@ for j, op in enumerate(LAYOUT):
                 </options>
             </control>""" % (get_group_name(channel+1, button_mapping[knob][0]),
                              get_key_name(button_mapping[knob][0]), midi[knob][j]['red'], button_mapping[knob][1]))
-          xml.append("""            <control>
+      xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x8F</status>
@@ -345,11 +345,11 @@ xml.append("<!-- Lower Button Grid -->")
 
 #buttons
 for j, op in enumerate(LAYOUT):
-    chantype, channel = op
-    if chantype == 'deck':
-      for latch in ['red','orange','green']:
-          for button in ['button%i' % i for i in range(1,5)]:
-              xml.append("""            <control>
+  chantype, channel = op
+  if chantype == 'deck':
+    for latch in ['red','orange','green']:
+      for button in ['button%i' % i for i in range(1,5)]:
+        xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x9F</status>
@@ -359,7 +359,7 @@ for j, op in enumerate(LAYOUT):
                 </options>
             </control>""" % (get_group_name(channel+1, button_mapping[button][latch][0]),
                              get_key_name(button_mapping[button][latch][0]), midi[button][j][latch], button_mapping[button][latch][1]))
-              xml.append("""            <control>
+        xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x8F</status>
@@ -382,10 +382,10 @@ xml.append("""        </controls>
 
 #ok now the lights
 if 'spinknob' in light_mapping:
-    for i, op in enumerate(LAYOUT):
-      chantype, channel = op
-      if chantype == 'deck':
-        xml.append("""            <output>
+  for i, op in enumerate(LAYOUT):
+    chantype, channel = op
+    if chantype == 'deck':
+      xml.append("""            <output>
                   <group>%s</group>
                   <key>%s</key>
                   <status>0x9F</status>
@@ -398,10 +398,10 @@ if 'spinknob' in light_mapping:
 xml.append("<!-- Knob lights -->")
 #knoblight buttons (no latching)
 for j, op in enumerate(LAYOUT):
-    chantype, channel = op
-    if chantype == 'deck':
-      for knob in ['knoblight%i' % i for i in range(1,4)]:
-          xml.append("""            <output>
+  chantype, channel = op
+  if chantype == 'deck':
+    for knob in ['knoblight%i' % i for i in range(1,4)]:
+        xml.append("""            <output>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x9F</status>
@@ -413,11 +413,11 @@ for j, op in enumerate(LAYOUT):
 xml.append("<!-- Button lights -->")
 #buttons (latched)
 for j, op in enumerate(LAYOUT):
-    chantype, channel = op
-    if chantype == 'deck':
-      for latch in ['red','orange','green']:
-          for button in ['button%i' % i for i in range(1,5)]:
-              xml.append("""            <output>
+  chantype, channel = op
+  if chantype == 'deck':
+    for latch in ['red','orange','green']:
+      for button in ['button%i' % i for i in range(1,5)]:
+        xml.append("""            <output>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x9F</status>
