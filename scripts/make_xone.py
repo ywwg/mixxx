@@ -17,27 +17,26 @@ import getopt
 def help():
     print "usage: make_xone [args] outputfilename"
     print "optional args: "
-    print "          --4decks     to generate a layout for 4 deck-enabled versions of mixxx"
-    print "          --mastersync to generate alternative layout for master_sync testing"
+    print "          --4decks     to generate a layout for 4 decks"
+    print "          --2deck2fx   to generate a layout for 2 decks and 2 effect units"
+    print "          --4fx        to generate a layout for 4 effect units"
 
 if len(sys.argv) < 2:
     help()
     sys.exit(1)
 
-MASTER_SYNC_LAYOUT = False
-MAX_DECKS = 2
 fname = ""
-DECK_ORDER = range(0,2)
+# Layout defines how decks and fx are arranged on the xone.
+# the first dimension is the xone channel 0 through 3.
+# Each item in the list is a tuple of string and int, where the string is either "deck" or "fx"
+# and the int is the channel number
+LAYOUT = [('deck', 2), ('deck', 0), ('deck', 1), ('deck', 3)]
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "",["mastersync","4decks"])
+    opts, args = getopt.getopt(sys.argv[1:], "",["4decks"])
     for o, a in opts:
-        if o == "--mastersync":
-            # This is an alternative layout for my work on master sync
-            MASTER_SYNC_LAYOUT = True
-        elif o == "--4decks":
-            MAX_DECKS = 4
-            DECK_ORDER = (2, 0, 1, 3)
+        if o == "--4decks":
+            pass
     if len(args) > 0:
         fname = args[0]
 except Exception, e:
@@ -157,87 +156,24 @@ cc_mapping = {'spinknob':['XoneK2.encoderJog','<Script-Binding/>'],
               'eq3':['filterLow','<normal/>'],
               'slider':['volume','<normal/>']}
 
-button_mapping = {'spinknob':['beatsync','<button/>'],
-           'knoblight1':['filterHighKill','<normal/>'], 'knoblight2':['filterMidKill','<normal/>'], 'knoblight3':['filterLowKill','<normal/>'],
-           'button1':{'red':['pfl','<normal/>'],         'orange':['beatloop_4','<button/>'],  'green':['hotcue_1_activate','<button/>']},
-           'button2':{'red':['keylock','<normal/>'],     'orange':['loop_double','<button/>'], 'green':['hotcue_2_activate','<button/>']},
-           'button3':{'red':['cue_default','<button/>'], 'orange':['loop_halve','<button/>'],  'green':['hotcue_3_activate','<button/>']},
-           'button4':{'red':['play','<normal/>'],        'orange':['reloop_exit','<button/>'], 'green':['hotcue_4_activate','<button/>']}}
-
-if MASTER_SYNC_LAYOUT:
-    button_mapping = {'spinknob':['XoneK2.encoderButton','<Script-Binding/>'],
-           'knoblight1':['keylock','<button/>'], 'knoblight2':['quantize','<normal/>'], 'knoblight3':['filterLowKill','<normal/>'],
-           'button1':{'red':['pfl','<button/>'], 'orange':['beatloop_4','<button/>'],  'green':['hotcue_1_activate','<button/>']},
-           'button2':{'red':['sync_enabled','<button/>'],  'orange':['loop_double','<button/>'], 'green':['hotcue_2_activate','<button/>']},
-           'button3':{'red':['cue_default','<button/>'], 'orange':['loop_halve','<button/>'],  'green':['hotcue_3_activate','<button/>']},
-           'button4':{'red':['play','<button/>'],        'orange':['reloop_exit','<button/>'], 'green':['hotcue_4_activate','<button/>']}}
+button_mapping = {'spinknob':['XoneK2.encoderButton','<Script-Binding/>'],
+       'knoblight1':['keylock','<button/>'], 'knoblight2':['quantize','<normal/>'], 'knoblight3':['filterLowKill','<normal/>'],
+       'button1':{'red':['pfl','<button/>'], 'orange':['beatloop_4','<button/>'],  'green':['hotcue_1_activate','<button/>']},
+       'button2':{'red':['sync_enabled','<button/>'],  'orange':['loop_double','<button/>'], 'green':['hotcue_2_activate','<button/>']},
+       'button3':{'red':['cue_default','<button/>'], 'orange':['loop_halve','<button/>'],  'green':['hotcue_3_activate','<button/>']},
+       'button4':{'red':['play','<button/>'],        'orange':['reloop_exit','<button/>'], 'green':['hotcue_4_activate','<button/>']}}
 
 
 light_mapping = {#'spinknob':'jog',
-           'knoblight1':'filterHighKill', 'knoblight2':'filterMidKill', 'knoblight3':'filterLowKill',
-           'button1':{'red':'pfl',         'orange':'beatloop_4',   'green':'hotcue_1_enabled'},
-           'button2':{'red':'keylock',     'orange':'loop_double',  'green':'hotcue_2_enabled'},
-           'button3':{'red':'cue_default', 'orange':'loop_halve',   'green':'hotcue_3_enabled'},
-           'button4':{'red':'play',        'orange':'loop_enabled', 'green':'hotcue_4_enabled'}}
-
-if MASTER_SYNC_LAYOUT:
-    light_mapping = {#'spinknob':'jog',
-           'knoblight1':'keylock', 'knoblight2':'quantize', 'knoblight3':'filterLowKill',
-           'button1':{'red':'pfl', 'orange':'beatloop_4',   'green':'hotcue_1_enabled'},
-           'button2':{'red':'sync_enabled',  'orange':'loop_double',  'green':'hotcue_2_enabled'},
-           'button3':{'red':'cue_default', 'orange':'loop_halve',   'green':'hotcue_3_enabled'},
-           'button4':{'red':'play',        'orange':'loop_enabled', 'green':'hotcue_4_enabled'}}
+       'knoblight1':'keylock', 'knoblight2':'quantize', 'knoblight3':'filterLowKill',
+       'button1':{'red':'pfl', 'orange':'beatloop_4',   'green':'hotcue_1_enabled'},
+       'button2':{'red':'sync_enabled',  'orange':'loop_double',  'green':'hotcue_2_enabled'},
+       'button3':{'red':'cue_default', 'orange':'loop_halve',   'green':'hotcue_3_enabled'},
+       'button4':{'red':'play',        'orange':'loop_enabled', 'green':'hotcue_4_enabled'}}
 
 
 #these aren't worth automating
-master_knobs = """            <control>
-                <group>[Playlist]</group>
-                <key>XoneK2.rightBottomKnob</key>
-                <status>0xBF</status>
-                <midino>0x15</midino>
-                <options>
-                    <Script-Binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Playlist]</group>
-                <key>LoadSelectedIntoFirstStopped</key>
-                <status>0x9F</status>
-                <midino>0x0E</midino>
-                <options>
-                    <normal/>
-                </options>
-            </control>
-            <control>
-                <group>[Master]</group>
-                <key>XoneK2.leftBottomKnob</key>
-                <status>0xBF</status>
-                <midino>0x14</midino>
-                <options>
-                    <Script-Binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Master]</group>
-                <key>XoneK2.shift_on</key>
-                <status>0x9F</status>
-                <midino>0xF</midino>
-                <options>
-                    <Script-Binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Master]</group>
-                <key>XoneK2.shift_on</key>
-                <status>0x8F</status>
-                <midino>0xF</midino>
-                <options>
-                    <Script-Binding/>
-                </options>
-            </control>"""
-
-if MASTER_SYNC_LAYOUT:
-    master_knobs ="""            <control>
+master_knobs ="""            <control>
                 <group>[Playlist]</group>
                 <key>XoneK2.rightBottomKnob</key>
                 <status>0xBF</status>
@@ -307,18 +243,6 @@ xml.append("""<?xml version='1.0' encoding='utf-8'?>
 
 xml.append("<!-- CC Controls (knobs and sliders) -->")
 
-#for i, deck in enumerate(DECK_ORDER):
-#    xml.append("""            <control>
-#                <group>[Channel%i]</group>
-#                <key>XoneK2.encoderJog%i</key>
-#                <status>0xBF</status>
-#                <midino>%s</midino>
-#                <options>
-#                    <Script-Binding/>
-#                </options>
-#            </control>""" % (deck+1, deck+1, midi_cc['spinknob'][i]))
-
-
 ########################################
 ########################################
 ########################################
@@ -350,9 +274,11 @@ def get_key_name(key):
 
 
 #cc controls (no latching needed)
-for i, channel in enumerate(DECK_ORDER):
-    for cc in cc_mapping:
-        xml.append("""            <control>
+for i, op in enumerate(LAYOUT):
+    chantype, channel = op
+    if chantype == 'deck':
+      for cc in cc_mapping:
+          xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0xBF</status>
@@ -364,8 +290,10 @@ for i, channel in enumerate(DECK_ORDER):
                              get_key_name(cc_mapping[cc][0]), midi_cc[cc][i], cc_mapping[cc][1]))
 
 #Spin Knob buttons (no latching needed)
-for i, channel in enumerate(DECK_ORDER):
-    xml.append("""            <control>
+for i, op in enumerate(LAYOUT):
+    chantype, channel = op
+    if chantype == 'deck':
+      xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x9F</status>
@@ -375,7 +303,7 @@ for i, channel in enumerate(DECK_ORDER):
                 </options>
             </control>""" % (get_group_name(channel+1, button_mapping['spinknob'][0]),
                              get_key_name(button_mapping['spinknob'][0]), midi['spinknob'][i]['red'], button_mapping['spinknob'][1]))
-    xml.append("""            <control>
+      xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x8F</status>
@@ -388,9 +316,11 @@ for i, channel in enumerate(DECK_ORDER):
 
 xml.append("<!-- Upper Buttons -->")
 #knoblight buttons (no latching)
-for j, channel in enumerate(DECK_ORDER):
-    for knob in ['knoblight%i' % i for i in range(1,4)]:
-        xml.append("""            <control>
+for j, op in enumerate(LAYOUT):
+    chantype, channel = op
+    if chantype == 'deck':
+      for knob in ['knoblight%i' % i for i in range(1,4)]:
+          xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x9F</status>
@@ -400,7 +330,7 @@ for j, channel in enumerate(DECK_ORDER):
                 </options>
             </control>""" % (get_group_name(channel+1, button_mapping[knob][0]),
                              get_key_name(button_mapping[knob][0]), midi[knob][j]['red'], button_mapping[knob][1]))
-        xml.append("""            <control>
+          xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x8F</status>
@@ -414,10 +344,12 @@ for j, channel in enumerate(DECK_ORDER):
 xml.append("<!-- Lower Button Grid -->")
 
 #buttons
-for j, channel in enumerate(DECK_ORDER):
-    for latch in ['red','orange','green']:
-        for button in ['button%i' % i for i in range(1,5)]:
-            xml.append("""            <control>
+for j, op in enumerate(LAYOUT):
+    chantype, channel = op
+    if chantype == 'deck':
+      for latch in ['red','orange','green']:
+          for button in ['button%i' % i for i in range(1,5)]:
+              xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x9F</status>
@@ -427,7 +359,7 @@ for j, channel in enumerate(DECK_ORDER):
                 </options>
             </control>""" % (get_group_name(channel+1, button_mapping[button][latch][0]),
                              get_key_name(button_mapping[button][latch][0]), midi[button][j][latch], button_mapping[button][latch][1]))
-            xml.append("""            <control>
+              xml.append("""            <control>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x8F</status>
@@ -450,22 +382,26 @@ xml.append("""        </controls>
 
 #ok now the lights
 if 'spinknob' in light_mapping:
-    for i, channel in enumerate(DECK_ORDER):
+    for i, op in enumerate(LAYOUT):
+      chantype, channel = op
+      if chantype == 'deck':
         xml.append("""            <output>
-                    <group>%s</group>
-                    <key>%s</key>
-                    <status>0x9F</status>
-                    <midino>%s</midino>
-                    <minimum>0.5</minimum>
-                </output>""" % (get_group_name(channel+1, mapping['spinknob']),
-                                get_key_name(mapping['spinknob']), midi['spinknob'][i]['red']))
+                  <group>%s</group>
+                  <key>%s</key>
+                  <status>0x9F</status>
+                  <midino>%s</midino>
+                  <minimum>0.5</minimum>
+              </output>""" % (get_group_name(channel+1, mapping['spinknob']),
+                              get_key_name(mapping['spinknob']), midi['spinknob'][i]['red']))
 
 
 xml.append("<!-- Knob lights -->")
 #knoblight buttons (no latching)
-for j, channel in enumerate(DECK_ORDER):
-    for knob in ['knoblight%i' % i for i in range(1,4)]:
-        xml.append("""            <output>
+for j, op in enumerate(LAYOUT):
+    chantype, channel = op
+    if chantype == 'deck':
+      for knob in ['knoblight%i' % i for i in range(1,4)]:
+          xml.append("""            <output>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x9F</status>
@@ -476,10 +412,12 @@ for j, channel in enumerate(DECK_ORDER):
 
 xml.append("<!-- Button lights -->")
 #buttons (latched)
-for j, channel in enumerate(DECK_ORDER):
-    for latch in ['red','orange','green']:
-        for button in ['button%i' % i for i in range(1,5)]:
-            xml.append("""            <output>
+for j, op in enumerate(LAYOUT):
+    chantype, channel = op
+    if chantype == 'deck':
+      for latch in ['red','orange','green']:
+          for button in ['button%i' % i for i in range(1,5)]:
+              xml.append("""            <output>
                 <group>%s</group>
                 <key>%s</key>
                 <status>0x9F</status>
