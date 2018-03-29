@@ -473,7 +473,7 @@ void LibraryControl::slotFontSize(double v) {
     }
     QFont font = m_pLibrary->getTrackTableFont();
     font.setPointSizeF(font.pointSizeF() + v);
-    m_pLibrary->slotSetTrackTableFont(font);
+    m_pLibrary->setFont(font);
 }
 
 void LibraryControl::slotIncrementFontSize(double v) {
