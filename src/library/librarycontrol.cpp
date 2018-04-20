@@ -316,8 +316,6 @@ void LibraryControl::slotSelectTrack(double v) {
     activeView->moveSelection(i);
 }
 
-
-
 void LibraryControl::slotMoveUp(double v) {
     if (v > 0) {
         emitKeyEvent(QKeyEvent{QEvent::KeyPress, Qt::Key_Up, Qt::NoModifier});
