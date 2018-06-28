@@ -132,14 +132,7 @@ void EnginePregain::process(CSAMPLE* pInOut, const int iBufferSize) {
     // This compensates a negative ReplayGain or PreGain setting.
 
     double speedGain = log10((fabs(m_dSpeed) * kSpeedGainMultiplyer) + 1) / kSpeedOneDiv;
-    // Limit speed Gain to 0 dB if totalGain is already > 0.9 or Limit the
-    // resulting totalGain to 0.9 for all other cases. This should avoid clipping even
-    // if the source track has some samples above 1.0 due to lossy codecs.
-    if (totalGain > kMaxTotalGainBySpeed) {
-        speedGain = math_min(1.0, speedGain);
-    } else {
-        speedGain = math_min(kMaxTotalGainBySpeed / totalGain, speedGain);
-    }
+    speedGain = math_min(1.0, speedGain);
     totalGain *= speedGain;
 
     if ((m_dSpeed * m_dOldSpeed < 0) && m_scratching) {
@@ -160,4 +153,3 @@ void EnginePregain::collectFeatures(GroupFeatureState* pGroupFeatures) const {
     pGroupFeatures->gain = m_pPotmeterPregain->get();
     pGroupFeatures->has_gain = true;
 }
-
