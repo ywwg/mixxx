@@ -1459,6 +1459,10 @@ void ControllerEngine::brake(int deck, bool activate, double factor, double rate
             // taking pitch into account
             initRate = getDeckRate(group);
         }
+        // I don't know why this is happening
+        if (initRate == 0.0) {
+            initRate = -10.0;
+        }
         // stop ramping at a rate which doesn't produce any audible output anymore
         m_rampTo[deck] = 0.01;
         // if we are currently softStart()ing, stop it
