@@ -685,12 +685,11 @@ VestaxVCI400.playButton = function (channel, control, value, status, group) {
         return;
     }
     var playing = engine.getValue(group, "play");
-    if (VestaxVCI400.shiftActive) {
-      if (playing) {
-          script.brake(channel, control, value, status, group, 100.0);
-      }
-      return;
+    if (playing && VestaxVCI400.shiftActive) {
+        script.brake(channel, control, value, status, group, 100.0);
+        return;
     }
+
     script.toggleControl(group, "play");
 };
 
@@ -698,14 +697,11 @@ VestaxVCI400.playButton = function (channel, control, value, status, group) {
 // we do a backspin stop.
 VestaxVCI400.censorButton = function (channel, control, value, status, group) {
     var playing = engine.getValue(group, "play");
-
-    if (VestaxVCI400.shiftActive) {
-      if (playing && value !== 0) {
-          print ("spinback! " + channel +" " + control + " "+ value + " " + status + " " + group);
-          script.spinback(channel, control, value, status, group, 30.0, -10.0);
-      }
-      return;
+    if (playing && VestaxVCI400.shiftActive && value !== 0) {
+        script.spinback(channel, control, value, status, group, 30.0, -10.0);
+        return;
     }
+
     engine.setValue(group, "reverseroll", value);
 };
 
