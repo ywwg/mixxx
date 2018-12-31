@@ -124,7 +124,6 @@ class WaveformWidgetFactory : public QObject, public Singleton<WaveformWidgetFac
     void waveformUpdateTick();
     void waveformMeasured(float frameRate, int droppedFrames);
     void renderSpinnies();
-    void swapSpinnies();
 
   protected:
     WaveformWidgetFactory();
@@ -134,7 +133,6 @@ class WaveformWidgetFactory : public QObject, public Singleton<WaveformWidgetFac
 
   private slots:
     void render();
-    void swap();
 
   private:
     void evaluateWidgets();
