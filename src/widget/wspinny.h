@@ -16,6 +16,7 @@
 #include "widget/wbasewidget.h"
 #include "widget/wcoverartmenu.h"
 #include "widget/wwidget.h"
+#include "util/duration.h"
 
 class ControlProxy;
 class VisualPlayPosition;
@@ -44,7 +45,6 @@ class WSpinny : public QOpenGLWidget, public WBaseWidget, public VinylSignalQual
     void updateVinylControlSignalEnabled(double enabled);
     void updateSlipEnabled(double enabled);
     void render();
-    void swap();
 
   protected slots:
     void slotCoverFound(const QObject* pRequestor,
@@ -52,7 +52,6 @@ class WSpinny : public QOpenGLWidget, public WBaseWidget, public VinylSignalQual
     void slotCoverInfoSelected(const CoverInfoRelative& coverInfo);
     void slotReloadCoverArt();
     void slotTrackCoverArtUpdated();
-
 
   signals:
     void trackDropped(QString filename, QString group);
@@ -72,6 +71,11 @@ class WSpinny : public QOpenGLWidget, public WBaseWidget, public VinylSignalQual
     int calculateFullRotations(double playpos);
     double calculatePositionFromAngle(double angle);
     QPixmap scaledCoverArt(const QPixmap& normal);
+
+  private slots:
+    void slotAboutToCompose();
+    void slotFrameSwapped();
+    void slotShouldRenderOnNextTick();
 
   private:
     QString m_group;
@@ -129,6 +133,12 @@ class WSpinny : public QOpenGLWidget, public WBaseWidget, public VinylSignalQual
     BaseTrackPlayer* m_pPlayer;
     DlgCoverArtFullSize* m_pDlgCoverArt;
     WCoverArtMenu* m_pCoverMenu;
+
+    bool m_shouldRenderOnNextTick;
+    mixxx::Duration m_lastRender;
+    mixxx::Duration m_lastSwapRender;
+    mixxx::Duration m_lastSwapDuration;
+    mixxx::Duration m_lastSwapDurationMovingAverage;
 };
 
 #endif //_WSPINNY_H

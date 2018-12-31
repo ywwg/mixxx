@@ -1096,6 +1096,7 @@ class MixxxCore(Feature):
                    "src/waveform/renderers/glslwaveformrenderersignal.cpp",
                    "src/waveform/renderers/glvsynctestrenderer.cpp",
 
+                   "src/waveform/widgets/baseqopenglwidget.cpp",
                    "src/waveform/widgets/waveformwidgetabstract.cpp",
                    "src/waveform/widgets/emptywaveformwidget.cpp",
                    "src/waveform/widgets/softwarewaveformwidget.cpp",
