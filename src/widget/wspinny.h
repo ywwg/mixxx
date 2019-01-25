@@ -2,7 +2,7 @@
 #ifndef _WSPINNY_H
 #define _WSPINNY_H
 
-#include <QGLWidget>
+#include <QOpenGLWidget>
 #include <QShowEvent>
 #include <QHideEvent>
 #include <QEvent>
@@ -16,12 +16,13 @@
 #include "widget/wbasewidget.h"
 #include "widget/wcoverartmenu.h"
 #include "widget/wwidget.h"
+#include "util/duration.h"
 
 class ControlProxy;
 class VisualPlayPosition;
 class VinylControlManager;
 
-class WSpinny : public QGLWidget, public WBaseWidget, public VinylSignalQualityListener {
+class WSpinny : public QOpenGLWidget, public WBaseWidget, public VinylSignalQualityListener {
     Q_OBJECT
   public:
     WSpinny(QWidget* parent, const QString& group,
@@ -44,7 +45,6 @@ class WSpinny : public QGLWidget, public WBaseWidget, public VinylSignalQualityL
     void updateVinylControlSignalEnabled(double enabled);
     void updateSlipEnabled(double enabled);
     void render();
-    void swap();
 
   protected slots:
     void slotCoverFound(const QObject* pRequestor,
@@ -52,7 +52,6 @@ class WSpinny : public QGLWidget, public WBaseWidget, public VinylSignalQualityL
     void slotCoverInfoSelected(const CoverInfoRelative& coverInfo);
     void slotReloadCoverArt();
     void slotTrackCoverArtUpdated();
-
 
   signals:
     void trackDropped(QString filename, QString group);
@@ -63,7 +62,7 @@ class WSpinny : public QGLWidget, public WBaseWidget, public VinylSignalQualityL
     void mouseMoveEvent(QMouseEvent * e) override;
     void mousePressEvent(QMouseEvent * e) override;
     void mouseReleaseEvent(QMouseEvent * e) override;
-    void resizeEvent(QResizeEvent* /*unused*/) override;
+    void resizeEvent(QResizeEvent* event) override;
     void showEvent(QShowEvent* event) override;
     void hideEvent(QHideEvent* event) override;
     bool event(QEvent* pEvent) override;
@@ -72,6 +71,11 @@ class WSpinny : public QGLWidget, public WBaseWidget, public VinylSignalQualityL
     int calculateFullRotations(double playpos);
     double calculatePositionFromAngle(double angle);
     QPixmap scaledCoverArt(const QPixmap& normal);
+
+  private slots:
+    void slotAboutToCompose();
+    void slotFrameSwapped();
+    void slotShouldRenderOnNextTick();
 
   private:
     QString m_group;
@@ -129,6 +133,12 @@ class WSpinny : public QGLWidget, public WBaseWidget, public VinylSignalQualityL
     BaseTrackPlayer* m_pPlayer;
     DlgCoverArtFullSize* m_pDlgCoverArt;
     WCoverArtMenu* m_pCoverMenu;
+
+    bool m_shouldRenderOnNextTick;
+    mixxx::Duration m_lastRender;
+    mixxx::Duration m_lastSwapRender;
+    mixxx::Duration m_lastSwapDuration;
+    mixxx::Duration m_lastSwapDurationMovingAverage;
 };
 
 #endif //_WSPINNY_H

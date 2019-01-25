@@ -21,7 +21,7 @@
 #include <QStandardPaths>
 #include <QDesktopWidget>
 #include <QFileDialog>
-#include <QGLWidget>
+#include <QOpenGLWidget>
 #include <QUrl>
 #include <QtDebug>
 #include <QLocale>
@@ -54,7 +54,6 @@
 #include "track/track.h"
 #include "waveform/waveformwidgetfactory.h"
 #include "waveform/visualsmanager.h"
-#include "waveform/sharedglcontext.h"
 #include "database/mixxxdb.h"
 #include "util/debug.h"
 #include "util/statsmanager.h"
@@ -423,14 +422,6 @@ void MixxxMainWindow::initialize(QApplication* pApp, const CmdlineArgs& args) {
     // Connect signals to the menubar. Should be done before we go fullscreen
     // and emit newSkinLoaded.
     connectMenuBar();
-
-    // Before creating the first skin we need to create a QGLWidget so that all
-    // the QGLWidget's we create can use it as a shared QGLContext.
-    if (!CmdlineArgs::Instance().getSafeMode()) {
-        QGLWidget* pContextWidget = new QGLWidget(this);
-        pContextWidget->hide();
-        SharedGLContext::setWidget(pContextWidget);
-    }
 
     launchProgress(63);
 

@@ -9,8 +9,8 @@
 #include "control/controlproxy.h"
 #include "library/coverartcache.h"
 #include "util/dnd.h"
-#include "waveform/sharedglcontext.h"
 #include "util/math.h"
+#include "util/time.h"
 #include "waveform/visualplayposition.h"
 #include "waveform/vsyncthread.h"
 #include "vinylcontrol/vinylcontrol.h"
@@ -23,7 +23,7 @@ WSpinny::WSpinny(QWidget* parent, const QString& group,
                  UserSettingsPointer pConfig,
                  VinylControlManager* pVCMan,
                  BaseTrackPlayer* pPlayer)
-        : QGLWidget(parent, SharedGLContext::getWidget()),
+        : QOpenGLWidget(parent),
           WBaseWidget(this),
           m_group(group),
           m_pConfig(pConfig),
@@ -60,15 +60,13 @@ WSpinny::WSpinny(QWidget* parent, const QString& group,
           m_bGhostPlayback(false),
           m_pPlayer(pPlayer),
           m_pDlgCoverArt(new DlgCoverArtFullSize(parent, pPlayer)),
-          m_pCoverMenu(new WCoverArtMenu(this)) {
+          m_pCoverMenu(new WCoverArtMenu(this)),
+          m_shouldRenderOnNextTick(false) {
 #ifdef __VINYLCONTROL__
     m_pVCManager = pVCMan;
 #endif
     //Drag and drop
     setAcceptDrops(true);
-    qDebug() << "WSpinny(): Created QGLWidget, Context"
-             << "Valid:" << context()->isValid()
-             << "Sharing:" << context()->isSharing();
 
     CoverArtCache* pCache = CoverArtCache::instance();
     if (pCache != nullptr) {
@@ -95,8 +93,8 @@ WSpinny::WSpinny(QWidget* parent, const QString& group,
     setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_OpaquePaintEvent);
 
-    setAutoFillBackground(false);
-    setAutoBufferSwap(false);
+    connect(this, SIGNAL(aboutToCompose()), this, SLOT(slotAboutToCompose()));
+    connect(this, SIGNAL(frameSwapped()), this, SLOT(slotFrameSwapped()));
 }
 
 WSpinny::~WSpinny() {
@@ -306,24 +304,16 @@ void WSpinny::render() {
         return;
     }
 
-    auto window = windowHandle();
-    if (window == nullptr || !window->isExposed()) {
-        return;
-    }
-
     if (!m_pVisualPlayPos.isNull()) {
-        m_pVisualPlayPos->getPlaySlipAt(0,
+        m_pVisualPlayPos->getPlaySlipAt(m_lastSwapDurationMovingAverage,
                                         &m_dAngleCurrentPlaypos,
                                         &m_dGhostAngleCurrentPlaypos);
     }
 
-    QStyleOption option;
-    option.initFrom(this);
-    QStylePainter p(this);
+    QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing);
     p.setRenderHint(QPainter::HighQualityAntialiasing);
     p.setRenderHint(QPainter::SmoothPixmapTransform);
-    p.drawPrimitive(QStyle::PE_Widget, option);
 
     if (m_pBgImage) {
         p.drawImage(rect(), *m_pBgImage, m_pBgImage->rect());
@@ -389,18 +379,6 @@ void WSpinny::render() {
     }
 }
 
-void WSpinny::swap() {
-    if (!isValid() || !isVisible()) {
-        return;
-    }
-    auto window = windowHandle();
-    if (window == nullptr || !window->isExposed()) {
-        return;
-    }
-    VSyncThread::swapGl(this, 0);
-}
-
-
 QPixmap WSpinny::scaledCoverArt(const QPixmap& normal) {
     if (normal.isNull()) {
         return QPixmap();
@@ -408,7 +386,8 @@ QPixmap WSpinny::scaledCoverArt(const QPixmap& normal) {
     return normal.scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
 }
 
-void WSpinny::resizeEvent(QResizeEvent* /*unused*/) {
+void WSpinny::resizeEvent(QResizeEvent* event) {
+    QOpenGLWidget::resizeEvent(event);
     m_loadedCoverScaled = scaledCoverArt(m_loadedCover);
     if (m_pFgImage && !m_pFgImage->isNull()) {
         m_fgImageScaled = m_pFgImage->scaled(
@@ -674,7 +653,7 @@ bool WSpinny::event(QEvent* pEvent) {
     if (pEvent->type() == QEvent::ToolTip) {
         updateTooltip();
     }
-    return QGLWidget::event(pEvent);
+    return QOpenGLWidget::event(pEvent);
 }
 
 void WSpinny::dragEnterEvent(QDragEnterEvent* event) {
@@ -700,4 +679,28 @@ void WSpinny::dropEvent(QDropEvent * event) {
         }
     }
     event->ignore();
+}
+
+void WSpinny::slotAboutToCompose() {
+    if (m_shouldRenderOnNextTick) {
+        m_lastRender = mixxx::Time::elapsed();
+        render();
+        m_shouldRenderOnNextTick = false;
+    }
+}
+
+void WSpinny::slotFrameSwapped() {
+    if (m_lastRender != m_lastSwapRender) {
+        m_lastSwapRender = m_lastRender;
+        m_lastSwapDuration = mixxx::Time::elapsed() - m_lastRender;
+        const double decay = 0.5;
+        m_lastSwapDurationMovingAverage = mixxx::Duration::fromNanos(
+            decay * m_lastSwapDurationMovingAverage.toDoubleNanos() +
+            (1.0 - decay) * m_lastSwapDuration.toDoubleNanos());
+    }
+}
+
+void WSpinny::slotShouldRenderOnNextTick() {
+    m_shouldRenderOnNextTick = true;
+    update();
 }

@@ -5,7 +5,7 @@
 #include <QThread>
 #include <QSemaphore>
 #include <QPair>
-#include <QGLWidget>
+#include <QOpenGLWidget>
 
 #if defined(__APPLE__)
 
@@ -28,6 +28,8 @@
 
 #include "util/performancetimer.h"
 
+// TODO(rryan): Rename to RenderThread or something, or possibly replace with a
+// generic BlockingThreadTimer class.
 class VSyncThread : public QThread {
     Q_OBJECT
   public:
@@ -40,41 +42,32 @@ class VSyncThread : public QThread {
         ST_COUNT // Dummy Type at last, counting possible types
     };
 
-    static void swapGl(QGLWidget* glw, int index);
-
     VSyncThread(QObject* pParent);
     ~VSyncThread();
 
     void run();
     void stop();
 
-    bool waitForVideoSync(QGLWidget* glw);
     int elapsed();
     int toNextSyncMicros();
     void setSyncIntervalTimeMicros(int usSyncTimer);
     void setVSyncType(int mode);
     int droppedFrames();
-    void setSwapWait(int sw);
     int fromTimerToNextSyncMicros(const PerformanceTimer& timer);
     void vsyncSlotFinished();
     void getAvailableVSyncTypes(QList<QPair<int, QString > >* list);
-    void setupSync(QGLWidget* glw, int index);
-    void waitUntilSwap(QGLWidget* glw);
 
   signals:
     void vsyncRender();
-    void vsyncSwap();
 
   private:
     bool m_bDoRendering;
-    //QGLWidget *m_glw;
 
 #if defined(__APPLE__)
 
 #elif defined(__WINDOWS__)
 
 #else
-    void initGlxext(QGLWidget* glw);
     //bool glXExtensionSupported(Display *dpy, int screen, const char *extension);
 
     /* Currently unused, but probably part of later a hardware sync solution

@@ -1,11 +1,9 @@
 #ifndef GLVSYNCTESTWIDGET_H
 #define GLVSYNCTESTWIDGET_H
 
-#include <QGLWidget>
+#include "waveform/widgets/baseqopenglwidget.h"
 
-#include "waveformwidgetabstract.h"
-
-class GLVSyncTestWidget : public QGLWidget, public WaveformWidgetAbstract {
+class GLVSyncTestWidget : public BaseQOpenGLWidget {
     Q_OBJECT
   public:
     GLVSyncTestWidget(const char* group, QWidget* parent);
@@ -21,7 +19,9 @@ class GLVSyncTestWidget : public QGLWidget, public WaveformWidgetAbstract {
   protected:
     virtual void castToQWidget();
     virtual void paintEvent(QPaintEvent* event);
-    virtual mixxx::Duration render();
+
+  protected slots:
+    mixxx::Duration render() override;
 
   private:
     friend class WaveformWidgetFactory;

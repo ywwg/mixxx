@@ -1062,7 +1062,6 @@ class MixxxCore(Feature):
 
                    "src/widget/wwaveformviewer.cpp",
 
-                   "src/waveform/sharedglcontext.cpp",
                    "src/waveform/waveform.cpp",
                    "src/waveform/waveformfactory.cpp",
                    "src/waveform/waveformwidgetfactory.cpp",
@@ -1098,6 +1097,7 @@ class MixxxCore(Feature):
                    "src/waveform/renderers/glslwaveformrenderersignal.cpp",
                    "src/waveform/renderers/glvsynctestrenderer.cpp",
 
+                   "src/waveform/widgets/baseqopenglwidget.cpp",
                    "src/waveform/widgets/waveformwidgetabstract.cpp",
                    "src/waveform/widgets/emptywaveformwidget.cpp",
                    "src/waveform/widgets/softwarewaveformwidget.cpp",
