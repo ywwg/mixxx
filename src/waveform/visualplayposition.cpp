@@ -26,8 +26,7 @@ VisualPlayPosition::VisualPlayPosition(const QString& key)
           m_key(key) {
     m_audioBufferSize = new ControlProxy(
             "[Master]", "audio_buffer_size", this);
-    m_audioBufferSize->connectValueChanged(
-            SLOT(slotAudioBufferSizeChanged(double)));
+    m_audioBufferSize->connectValueChanged(this, &VisualPlayPosition::slotAudioBufferSizeChanged);
     m_audioBufferMicros = static_cast<int>(m_audioBufferSize->get() * kMicrosPerMillis);
 }
 
@@ -35,15 +34,16 @@ VisualPlayPosition::~VisualPlayPosition() {
     m_listVisualPlayPosition.remove(m_key);
 }
 
-void VisualPlayPosition::set(double playPos, double rate,
-                             double positionStep, double pSlipPosition) {
+void VisualPlayPosition::set(double playPos, double rate, double positionStep,
+        double slipPosition, double tempoTrackSeconds) {
     VisualPlayPositionData data;
     data.m_referenceTime = m_timeInfoTime;
     data.m_callbackEntrytoDac = m_dCallbackEntryToDacSecs * 1000000; // s to µs
     data.m_enginePlayPos = playPos;
     data.m_rate = rate;
     data.m_positionStep = positionStep;
-    data.m_pSlipPosition = pSlipPosition;
+    data.m_slipPosition = slipPosition;
+    data.m_tempoTrackSeconds = tempoTrackSeconds;
 
     // Atomic write
     m_data.setValue(data);
@@ -99,7 +99,7 @@ void VisualPlayPosition::getPlaySlipAt(mixxx::Duration estimatedTimeUntilSwap,
         // configured audio buffer size.
         playPos += data.m_positionStep * offsetMicros * data.m_rate / m_audioBufferMicros;
         *playPosition = playPos;
-        *slipPosition = data.m_pSlipPosition;
+        *slipPosition = data.m_slipPosition;
     }
 }
 
@@ -109,6 +109,17 @@ double VisualPlayPosition::getEnginePlayPos() {
         return data.m_enginePlayPos;
     } else {
         return -1;
+    }
+}
+
+void VisualPlayPosition::getTrackTime(double* pPlayPosition, double* pTempoTrackSeconds) {
+    if (m_valid) {
+        VisualPlayPositionData data = m_data.getValue();
+        *pPlayPosition = data.m_enginePlayPos;
+        *pTempoTrackSeconds = data.m_tempoTrackSeconds;
+    } else {
+        *pPlayPosition = 0;
+        *pTempoTrackSeconds = 0;
     }
 }
 
