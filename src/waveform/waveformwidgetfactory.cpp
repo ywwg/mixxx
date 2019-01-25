@@ -731,3 +731,14 @@ float WaveformWidgetFactory::getDevicePixelRatio() {
     }
     return devicePixelRatio;
 }
+
+void WaveformWidgetFactory::setDefaultSurfaceFormat() {
+    QGuiApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+    QSurfaceFormat defaultFormat;
+    defaultFormat.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+    defaultFormat.setSwapInterval(1);
+    defaultFormat.setProfile(QSurfaceFormat::CompatibilityProfile);
+    defaultFormat.setRenderableType(QSurfaceFormat::OpenGL);
+    defaultFormat.setVersion(2, 1);
+    QSurfaceFormat::setDefaultFormat(defaultFormat);
+}
