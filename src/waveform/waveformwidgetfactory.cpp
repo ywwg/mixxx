@@ -1,4 +1,5 @@
 #include <QStringList>
+#include <QScopedPointer>
 #include <QTime>
 #include <QTimer>
 #include <QWidget>
