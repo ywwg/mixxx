@@ -46,8 +46,7 @@ class VisualPlayPosition : public QObject {
 
     // WARNING: Not thread safe. This function must be called only from the
     // engine thread.
-    void set(double playPos, double rate, double positionStep,
-             double slipPosition, double tempoTrackSeconds);
+    void set(double playPos, double rate, double positionStep, double pSlipPosition, double tempoTrackSeconds);
     double getAtNextSwap(mixxx::Duration estimatedTimeUntilSwap);
     void getPlaySlipAt(mixxx::Duration estimatedTimeUntilSwap,
                        double* playPosition, double* slipPosition);

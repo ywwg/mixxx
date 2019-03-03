@@ -1049,6 +1049,7 @@ class MixxxCore(Feature):
                    "src/library/bpmdelegate.cpp",
                    "src/library/previewbuttondelegate.cpp",
                    "src/library/coverartdelegate.cpp",
+                   "src/library/locationdelegate.cpp",
                    "src/library/tableitemdelegate.cpp",
 
                    "src/library/treeitemmodel.cpp",
@@ -1064,7 +1065,7 @@ class MixxxCore(Feature):
                    "src/waveform/waveform.cpp",
                    "src/waveform/waveformfactory.cpp",
                    "src/waveform/waveformwidgetfactory.cpp",
-                   "src/waveform/vsyncthread.cpp",
+                   "src/waveform/renderthread.cpp",
                    "src/waveform/guitick.cpp",
                    "src/waveform/visualsmanager.cpp",
                    "src/waveform/visualplayposition.cpp",

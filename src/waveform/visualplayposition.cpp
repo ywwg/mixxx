@@ -5,7 +5,6 @@
 #include "control/controlproxy.h"
 #include "control/controlobject.h"
 #include "util/math.h"
-#include "waveform/vsyncthread.h"
 
 namespace {
 // The offset is limited to two callback intervals.
@@ -80,7 +79,7 @@ double VisualPlayPosition::getAtNextSwap(mixxx::Duration estimatedTimeUntilSwap)
 }
 
 void VisualPlayPosition::getPlaySlipAt(mixxx::Duration estimatedTimeUntilSwap,
-                                       double* playPosition, double* slipPosition) {
+                                       double* pPlayPosition, double* pSlipPosition) {
     //static double testPos = 0;
     //testPos += 0.000017759; //0.000016608; //  1.46257e-05;
     //return testPos;
@@ -98,8 +97,8 @@ void VisualPlayPosition::getPlaySlipAt(mixxx::Duration estimatedTimeUntilSwap,
         // should use the PortAudio reported actual latency instead of Mixxx's
         // configured audio buffer size.
         playPos += data.m_positionStep * offsetMicros * data.m_rate / m_audioBufferMicros;
-        *playPosition = playPos;
-        *slipPosition = data.m_slipPosition;
+        *pPlayPosition = playPos;
+        *pSlipPosition = data.m_slipPosition;
     }
 }
 
