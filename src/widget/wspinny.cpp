@@ -12,7 +12,6 @@
 #include "util/math.h"
 #include "util/time.h"
 #include "waveform/visualplayposition.h"
-#include "waveform/vsyncthread.h"
 #include "vinylcontrol/vinylcontrol.h"
 #include "vinylcontrol/vinylcontrolmanager.h"
 #include "widget/wspinny.h"
@@ -27,7 +26,6 @@ WSpinny::WSpinny(QWidget* parent, const QString& group,
           WBaseWidget(this),
           m_group(group),
           m_pConfig(pConfig),
-          m_pPlay(nullptr),
           m_pPlayPos(nullptr),
           m_pVisualPlayPos(nullptr),
           m_pTrackSamples(nullptr),
@@ -93,8 +91,10 @@ WSpinny::WSpinny(QWidget* parent, const QString& group,
     setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_OpaquePaintEvent);
 
-    connect(this, SIGNAL(aboutToCompose()), this, SLOT(slotAboutToCompose()));
-    connect(this, SIGNAL(frameSwapped()), this, SLOT(slotFrameSwapped()));
+    connect(this, &QOpenGLWidget::aboutToCompose,
+            this, &WSpinny::slotAboutToCompose);
+    connect(this, &QOpenGLWidget::frameSwapped,
+            this, &WSpinny::slotFrameSwapped);
 }
 
 WSpinny::~WSpinny() {
@@ -180,8 +180,6 @@ void WSpinny::setup(const QDomNode& node, const SkinContext& context) {
     m_qImage.fill(qRgba(0,0,0,0));
 #endif
 
-    m_pPlay = new ControlProxy(
-            m_group, "play", this);
     m_pPlayPos = new ControlProxy(
             m_group, "playposition", this);
     m_pVisualPlayPos = VisualPlayPosition::getVisualPlayPosition(m_group);
@@ -657,28 +655,11 @@ bool WSpinny::event(QEvent* pEvent) {
 }
 
 void WSpinny::dragEnterEvent(QDragEnterEvent* event) {
-    if (DragAndDropHelper::allowLoadToPlayer(m_group, m_pPlay->get() > 0.0,
-                                             m_pConfig) &&
-            DragAndDropHelper::dragEnterAccept(*event->mimeData(), m_group,
-                                               true, false)) {
-        event->acceptProposedAction();
-    } else {
-        event->ignore();
-    }
+    DragAndDropHelper::handleTrackDragEnterEvent(event, m_group, m_pConfig);
 }
 
 void WSpinny::dropEvent(QDropEvent * event) {
-    if (DragAndDropHelper::allowLoadToPlayer(m_group, m_pPlay->get() > 0.0,
-                                             m_pConfig)) {
-        QList<QFileInfo> files = DragAndDropHelper::dropEventFiles(
-                *event->mimeData(), m_group, true, false);
-        if (!files.isEmpty()) {
-            event->accept();
-            emit(trackDropped(files.at(0).absoluteFilePath(), m_group));
-            return;
-        }
-    }
-    event->ignore();
+    DragAndDropHelper::handleTrackDropEvent(event, *this, m_group, m_pConfig);
 }
 
 void WSpinny::slotAboutToCompose() {
