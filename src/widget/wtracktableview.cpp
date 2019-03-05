@@ -236,6 +236,15 @@ void WTrackTableView::slotGuiTick50ms(double /*unused*/) {
     }
 }
 
+void WTrackTableView::unloadTrackModel() {
+    // We save the header state when a track model is going away.
+    WTrackTableViewHeader* pHeader =
+            dynamic_cast<WTrackTableViewHeader*>(horizontalHeader());
+    if (pHeader) {
+        pHeader->saveHeaderState();
+    }
+}
+
 // slot
 void WTrackTableView::loadTrackModel(QAbstractItemModel *model) {
     qDebug() << "WTrackTableView::loadTrackModel()" << model;
@@ -255,12 +264,18 @@ void WTrackTableView::loadTrackModel(QAbstractItemModel *model) {
      * there's no need to exchange the headers
      * this will cause a small GUI freeze
      */
+    WTrackTableViewHeader* oldHeader =
+            dynamic_cast<WTrackTableViewHeader*>(horizontalHeader());
     if (getTrackModel() == trackModel) {
-        // Re-sort the table even if the track model is the same. This triggers
-        // a select() if the table is dirty.
-        doSortByColumn(horizontalHeader()->sortIndicatorSection());
+        // Call select() on the table so it refreshes if it's dirty.
+        getTrackModel()->select();
+        // Also restore the header state, which may be different than for
+        // the previously-loaded table for this model. (Different crates).
+        if (oldHeader != nullptr) {
+            oldHeader->restoreHeaderState();
+        }
         return;
-    }else{
+    } else {
         newModel = trackModel;
         saveVScrollBarPos(getTrackModel());
         //saving current vertical bar position
@@ -281,9 +296,7 @@ void WTrackTableView::loadTrackModel(QAbstractItemModel *model) {
     setVisible(false);
 
     // Save the previous track model's header state
-    WTrackTableViewHeader* oldHeader =
-            dynamic_cast<WTrackTableViewHeader*>(horizontalHeader());
-    if (oldHeader) {
+    if (oldHeader != nullptr) {
         oldHeader->saveHeaderState();
     }
 

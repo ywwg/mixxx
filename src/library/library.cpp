@@ -249,6 +249,8 @@ void Library::bindWidget(WLibrary* pLibraryWidget,
     pTrackTableView->installEventFilter(pKeyboard);
     connect(this, SIGNAL(showTrackModel(QAbstractItemModel*)),
             pTrackTableView, SLOT(loadTrackModel(QAbstractItemModel*)));
+    connect(this, SIGNAL(unshowTrackModel()),
+            pTrackTableView, SLOT(unloadTrackModel()));
     connect(pTrackTableView, SIGNAL(loadTrack(TrackPointer)),
             this, SLOT(slotLoadTrack(TrackPointer)));
     connect(pTrackTableView, SIGNAL(loadTrackToPlayer(TrackPointer, QString, bool)),
@@ -291,6 +293,8 @@ void Library::addFeature(LibraryFeature* feature) {
     m_pSidebarModel->addLibraryFeature(feature);
     connect(feature, SIGNAL(showTrackModel(QAbstractItemModel*)),
             this, SLOT(slotShowTrackModel(QAbstractItemModel*)));
+    connect(feature, SIGNAL(unshowTrackModel()),
+            this, SLOT(slotUnshowTrackModel()));
     connect(feature, SIGNAL(switchToView(const QString&)),
             this, SLOT(slotSwitchToView(const QString&)));
     connect(feature, SIGNAL(loadTrack(TrackPointer)),
@@ -329,6 +333,11 @@ void Library::slotShowTrackModel(QAbstractItemModel* model) {
     emit(showTrackModel(model));
     emit(switchToView(m_sTrackViewName));
     emit(restoreSearch(trackModel->currentSearch()));
+}
+
+void Library::slotUnshowTrackModel() {
+    //qDebug() << "Library::slotUnshowTrackModel";
+    emit(unshowTrackModel());
 }
 
 void Library::slotSwitchToView(const QString& view) {
