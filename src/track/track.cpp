@@ -408,7 +408,7 @@ QDateTime Track::getLastPlayedDate() const {
 
 void Track::setLastPlayedDate(const QDateTime& playedDate) {
     QMutexLocker lock(&m_qMutex);
-    if (playedDate != m_lastPlayed) {
+    if (playedDate == m_lastPlayed) {
         return;
     }
     m_lastPlayed = playedDate;
