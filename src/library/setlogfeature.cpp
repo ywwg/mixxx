@@ -21,12 +21,13 @@ SetlogFeature::SetlogFeature(
         Library* pLibrary,
         UserSettingsPointer pConfig)
         : BasePlaylistFeature(
-                pLibrary,
-                pConfig,
-                QStringLiteral("SETLOGHOME")),
+                  pLibrary,
+                  pConfig,
+                  QStringLiteral("SETLOGHOME")),
           m_playlistId(-1),
           m_libraryWidget(nullptr),
-          m_icon(QStringLiteral(":/images/library/ic_library_history.svg")) {
+          m_icon(QStringLiteral(":/images/library/ic_library_history.svg")),
+          m_pPracticemodeEnabled(new ControlProxy("[Library]", "practice_mode")) {
     initTableModel(new PlaylistTableModel(
             this,
             pLibrary->trackCollections(),
@@ -313,6 +314,12 @@ void SetlogFeature::slotPlayingTrackChanged(TrackPointer currentPlayingTrack) {
     // We can only add tracks that are Mixxx library tracks, not external
     // sources.
     if (!currentPlayingTrackId.isValid()) {
+        return;
+    }
+
+    // Don't add to the set list at all in practice mode.  We do keep the logic
+    // above so that the played indicator will be ticked.
+    if (m_pPracticemodeEnabled->toBool()) {
         return;
     }
 

@@ -52,6 +52,7 @@ public:
     WLibrary* m_libraryWidget;
     QPointer<WLibrarySidebar> m_pSidebarWidget;
     const QIcon m_icon;
+    ControlProxy* m_pPracticemodeEnabled;
 };
 
 #endif // SETLOGFEATURE_H

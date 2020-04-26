@@ -2,8 +2,8 @@
 
 PlayCounter::PlayCounter(int timesPlayed)
         : m_iTimesPlayed(timesPlayed),
-          m_bPlayed(false) {
-    m_pPracticemodeEnabled = std::make_shared<ControlProxy>("[Library]", "practice_mode");
+          m_bPlayed(false),
+          m_pPracticemodeEnabled(std::make_shared<ControlProxy>("[Library]", "practice_mode")) {
 }
 
 void PlayCounter::setPlayedAndUpdateTimesPlayed(bool bPlayed) {
