@@ -19,18 +19,23 @@
 #ifndef ENGINESYNC_H
 #define ENGINESYNC_H
 
-#include "preferences/usersettings.h"
+#include "engine/sync/internalclock.h"
 #include "engine/sync/syncable.h"
-#include "engine/sync/basesyncablelistener.h"
+#include "preferences/usersettings.h"
 
 /// EngineSync is the heart of the Mixxx Master Sync engine.  It knows which objects
 /// (Decks, Internal Clock, etc) are participating in Sync and what their statuses
 /// are. It also orchestrates sync handoffs between different decks as they play,
 /// stop, or request their status to change.
-class EngineSync : public BaseSyncableListener {
+class EngineSync : public SyncableListener {
   public:
     explicit EngineSync(UserSettingsPointer pConfig);
     ~EngineSync() override;
+
+    void addSyncableDeck(Syncable* pSyncable);
+    EngineChannel* getMaster() const;
+    void onCallbackStart(int sampleRate, int bufferSize);
+    void onCallbackEnd(int sampleRate, int bufferSize);
 
     // Used by Syncables to tell EngineSync it wants to be enabled in a
     // specific mode. If the state change is accepted, EngineSync calls
@@ -58,7 +63,44 @@ class EngineSync : public BaseSyncableListener {
     // of other Syncables that are playing
     bool otherSyncedPlaying(const QString& group);
 
+    // Only for testing. Do not use.
+    Syncable* getSyncableForGroup(const QString& group);
+    Syncable* getMasterSyncable() override {
+        return m_pMasterSyncable;
+    }
+
   private:
+    // This utility method returns true if it finds a deck not in SYNC_NONE mode.
+    bool syncDeckExists() const;
+
+    // Return the current BPM of the master Syncable. If no master syncable is
+    // set then returns the BPM of the internal clock.
+    double masterBpm() const;
+
+    // Returns the current beat distance of the master Syncable. If no master
+    // Syncable is set, then returns the beat distance of the internal clock.
+    double masterBeatDistance() const;
+
+    // Returns the current BPM of the master Syncable if it were playing
+    // at 1.0 rate.
+    double masterBaseBpm() const;
+
+    // Set the BPM on every sync-enabled Syncable except pSource.
+    void setMasterBpm(Syncable* pSource, double bpm);
+
+    // Set the master instantaneous BPM on every sync-enabled Syncable except
+    // pSource.
+    void setMasterInstantaneousBpm(Syncable* pSource, double bpm);
+
+    // Set the master beat distance on every sync-enabled Syncable except
+    // pSource.
+    void setMasterBeatDistance(Syncable* pSource, double beat_distance);
+
+    void setMasterParams(Syncable* pSource, double beat_distance, double base_bpm, double bpm);
+
+    // Check if there is only one playing syncable deck, and notify it if so.
+    void checkUniquePlayingSyncable();
+
     // Iterate over decks, and based on sync and play status, pick a new master.
     // if enabling_syncable is not null, we treat it as if it were enabled because we may
     // be in the process of enabling it.
@@ -78,6 +120,15 @@ class EngineSync : public BaseSyncableListener {
 
     // Unsets all sync state on a Syncable.
     void deactivateSync(Syncable* pSyncable);
+
+    UserSettingsPointer m_pConfig;
+    // The InternalClock syncable.
+    InternalClock* m_pInternalClock;
+    // The current Syncable that is the master.
+    Syncable* m_pMasterSyncable;
+    // The list of all Syncables registered with EngineSync via
+    // addSyncableDeck.
+    QList<Syncable*> m_syncables;
 };
 
 #endif
