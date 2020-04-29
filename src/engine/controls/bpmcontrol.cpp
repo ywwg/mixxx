@@ -632,7 +632,7 @@ double BpmControl::getNearestPositionInPhase(
     }
 
     double dOtherBeatFraction;
-    if (syncMode == SYNC_FOLLOWER) {
+    if (isFollower(syncMode)) {
         // If we're a follower, it's easy to get the other beat fraction
         dOtherBeatFraction = m_dSyncTargetBeatDistance.getValue();
     } else {

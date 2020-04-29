@@ -62,7 +62,7 @@ class EngineSync : public BaseSyncableListener {
 
     // Activate a specific channel as Follower. Sets the syncable's bpm and
     // beat_distance to match the master.
-    void activateFollower(Syncable* pSyncable);
+    void activateFollower(Syncable* pSyncable, bool waitingFollower);
 
     // Unsets all sync state on a Syncable.
     void deactivateSync(Syncable* pSyncable);

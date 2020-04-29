@@ -319,9 +319,12 @@ void SyncControl::setInstantaneousBpm(double bpm) {
 void SyncControl::reportTrackPosition(double fractionalPlaypos) {
     // If we're close to the end, and master, disable master so we don't stop
     // the party.
-    if (isMaster(getSyncMode()) &&
-            fractionalPlaypos > kTrackPositionMasterHandoff) {
-        m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_FOLLOWER);
+    if (fractionalPlaypos > kTrackPositionMasterHandoff) {
+        if (getSyncMode() == SYNC_MASTER_SOFT) {
+            m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_FOLLOWER);
+        } else if (getSyncMode() == SYNC_MASTER_EXPLICIT) {
+            m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_MASTER_WAITING);
+        }
     }
 }
 
@@ -350,16 +353,24 @@ void SyncControl::trackBeatsUpdated(mixxx::BeatsPointer pBeats) {
     m_masterBpmAdjustFactor = kBpmUnity;
 
     SyncMode syncMode = getSyncMode();
-    if (syncMode == SYNC_MASTER_SOFT || syncMode == SYNC_FOLLOWER) {
-        // If we change or remove beats while soft master, hand off.
-        // If we were a follower, requesting sync mode refreshes
-        // the soft master.
+    // If we change or remove beats while soft master, hand off.
+    // If we were a follower, requesting sync mode refreshes
+    // the soft master.
+    if (syncMode == SYNC_MASTER_SOFT) {
         m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_FOLLOWER);
+    } else if (isFollower(syncMode)) {
+        m_pChannel->getEngineBuffer()->requestSyncMode(syncMode);
     }
     setLocalBpm(m_pLocalBpm->get());
 }
 
 void SyncControl::slotControlPlay(double play) {
+    if (getSyncMode() == SYNC_MASTER_WAITING && play > 0.0) {
+        m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_MASTER_EXPLICIT);
+    }
+    if (getSyncMode() == SYNC_MASTER_EXPLICIT && play == 0.0) {
+        m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_MASTER_WAITING);
+    }
     m_pEngineSync->notifyPlaying(this, play > 0.0);
 }
 
@@ -406,15 +417,12 @@ void SyncControl::slotSyncMasterEnabledChangeRequest(double state) {
         }
         // If we're not playing, override request and set as follower.
         if (!isPlaying()) {
-            m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_FOLLOWER);
+            m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_MASTER_WAITING);
             return;
         }
         m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_MASTER_EXPLICIT);
     } else {
-        // If we're any sort of master, become follower.
-        if (isMaster(getSyncMode())) {
-            m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_FOLLOWER);
-        }
+        m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_FOLLOWER);
     }
 }
 
@@ -443,7 +451,7 @@ void SyncControl::setLocalBpm(double local_bpm) {
 
     double bpm = local_bpm * m_pRateRatio->get();
 
-    if (syncMode == SYNC_FOLLOWER) {
+    if (isFollower(syncMode)) {
         // In this case we need an update from the current master to adjust
         // the rate that we continue with the master BPM. If there is no
         // master bpm, our bpm value is adopted and the m_masterBpmAdjustFactor

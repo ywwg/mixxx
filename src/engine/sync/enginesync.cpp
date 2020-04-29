@@ -94,7 +94,7 @@ void EngineSync::requestSyncMode(Syncable* pSyncable, SyncMode mode) {
             setMasterParams(pSyncable, pSyncable->getBeatDistance(),
                             pSyncable->getBaseBpm(), pSyncable->getBpm());
         }
-    } else if (mode == SYNC_FOLLOWER ||
+    } else if (isFollower(mode) ||
             mode == SYNC_MASTER_SOFT ||
             pSyncable == m_pInternalClock) {
         // Note: SYNC_MASTER_SOFT and SYNC_FOLLOWER cannot be set explicitly,
@@ -103,14 +103,14 @@ void EngineSync::requestSyncMode(Syncable* pSyncable, SyncMode mode) {
         if (m_pMasterSyncable == pSyncable) {
             // This Syncable was master before. Hand off.
             m_pMasterSyncable = nullptr;
-            pSyncable->setSyncMode(SYNC_FOLLOWER);
+            pSyncable->setSyncMode(mode);
         }
         Syncable* newMaster = pickMaster(pSyncable);
         if (newMaster) {
             activateMaster(newMaster, false);
         }
         if (pSyncable != newMaster) {
-            activateFollower(pSyncable);
+            activateFollower(pSyncable, mode == SYNC_MASTER_WAITING);
         }
     } else {
         deactivateSync(pSyncable);
@@ -324,13 +324,17 @@ void EngineSync::notifyBeatDistanceChanged(Syncable* pSyncable, double beat_dist
     setMasterBeatDistance(pSyncable, beat_distance);
 }
 
-void EngineSync::activateFollower(Syncable* pSyncable) {
+void EngineSync::activateFollower(Syncable* pSyncable, bool waitingFollower) {
     if (pSyncable == nullptr) {
         qWarning() << "WARNING: Logic Error: Called activateFollower on a nullptr Syncable.";
         return;
     }
 
-    pSyncable->setSyncMode(SYNC_FOLLOWER);
+    if (waitingFollower) {
+        pSyncable->setSyncMode(SYNC_MASTER_WAITING);
+    } else {
+        pSyncable->setSyncMode(SYNC_FOLLOWER);
+    }
     pSyncable->setMasterParams(masterBeatDistance(), masterBaseBpm(), masterBpm());
     pSyncable->setInstantaneousBpm(masterBpm());
 }
@@ -366,7 +370,11 @@ void EngineSync::activateMaster(Syncable* pSyncable, bool explicitMaster) {
 
     m_pMasterSyncable = nullptr;
     if (pOldChannelMaster) {
-        pOldChannelMaster->setSyncMode(SYNC_FOLLOWER);
+        if (pOldChannelMaster->getSyncMode() == SYNC_MASTER_EXPLICIT) {
+            pOldChannelMaster->setSyncMode(SYNC_MASTER_WAITING);
+        } else {
+            pOldChannelMaster->setSyncMode(SYNC_FOLLOWER);
+        }
     }
 
     //qDebug() << "Setting up master " << pSyncable->getGroup();
@@ -380,7 +388,7 @@ void EngineSync::activateMaster(Syncable* pSyncable, bool explicitMaster) {
     pSyncable->setInstantaneousBpm(masterBpm());
 
     if (m_pMasterSyncable != m_pInternalClock) {
-        activateFollower(m_pInternalClock);
+        activateFollower(m_pInternalClock, false);
     }
 
     // It is up to callers of this function to initialize bpm and beat_distance

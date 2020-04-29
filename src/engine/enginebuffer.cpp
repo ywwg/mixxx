@@ -925,8 +925,8 @@ void EngineBuffer::processTrackLocked(
     // we need to sync phase or we'll be totally out of whack and the sync
     // adjuster will kick in and push the track back in to sync with the
     // master.
-    if (m_scratching_old && !is_scratching && m_pQuantize->toBool()
-            && m_pSyncControl->getSyncMode() == SYNC_FOLLOWER && !paused) {
+    if (m_scratching_old && !is_scratching && m_pQuantize->toBool() &&
+            isFollower(m_pSyncControl->getSyncMode()) && !paused) {
         // TODO() The resulting seek is processed in the following callback
         // That is to late
         requestSyncPhase();
@@ -1291,7 +1291,7 @@ void EngineBuffer::postProcess(const int iBufferSize) {
     SyncMode mode = m_pSyncControl->getSyncMode();
     if (isMaster(mode)) {
         m_pEngineSync->notifyBeatDistanceChanged(m_pSyncControl, beat_distance);
-    } else if (mode == SYNC_FOLLOWER) {
+    } else if (isFollower(mode)) {
         // Report our speed to SyncControl.  If we are master, we already did this.
         m_pSyncControl->reportPlayerSpeed(m_speed_old, m_scratching_old);
         m_pSyncControl->updateTargetBeatDistance();
