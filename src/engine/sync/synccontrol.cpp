@@ -415,14 +415,16 @@ void SyncControl::slotSyncMasterEnabledChangeRequest(double state) {
             qDebug() << "Disallowing enabling of sync mode when passthrough active";
             return;
         }
+        if (mode == SYNC_MASTER_EXPLICIT || mode == SYNC_MASTER_WAITING) {
+            m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_FOLLOWER);
+            return;
+        }
         // If we're not playing, override request and set as follower.
         if (!isPlaying()) {
             m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_MASTER_WAITING);
             return;
         }
         m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_MASTER_EXPLICIT);
-    } else {
-        m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_FOLLOWER);
     }
 }
 

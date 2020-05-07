@@ -439,6 +439,7 @@ double BpmControl::calcSyncAdjustment(bool reversed, bool userTweakingSync) {
     double syncTargetBeatDistance = m_dSyncTargetBeatDistance.getValue();
     // We want the untweaked beat distance, so we have to add the offset here.
     double thisBeatDistance = m_pThisBeatDistance->get() + m_dUserOffset.getValue();
+    // If we are moving backwards, we have to invert the calculations.
     if (reversed) {
         syncTargetBeatDistance = 1.0 - syncTargetBeatDistance;
         thisBeatDistance = 1.0 - thisBeatDistance;
