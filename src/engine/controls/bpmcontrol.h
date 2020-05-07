@@ -106,7 +106,7 @@ class BpmControl : public EngineControl {
         return toSynchronized(getSyncMode());
     }
     bool syncTempo();
-    double calcSyncAdjustment(bool userTweakingSync);
+    double calcSyncAdjustment(bool reversed, bool userTweakingSync);
 
     friend class SyncControl;
 

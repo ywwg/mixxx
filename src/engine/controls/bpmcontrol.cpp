@@ -413,11 +413,11 @@ double BpmControl::calcSyncedRate(double userTweak) {
     }
 
     // Now we have all we need to calculate the sync adjustment if any.
-    double adjustment = calcSyncAdjustment(m_dUserTweakingSync);
+    double adjustment = calcSyncAdjustment(rate < 0.0, m_dUserTweakingSync);
     return (rate + userTweak) * adjustment;
 }
 
-double BpmControl::calcSyncAdjustment(bool userTweakingSync) {
+double BpmControl::calcSyncAdjustment(bool reversed, bool userTweakingSync) {
     int resetSyncAdjustment = m_resetSyncAdjustment.fetchAndStoreRelaxed(0);
     if (resetSyncAdjustment) {
         m_dLastSyncAdjustment = 1.0;
@@ -439,6 +439,10 @@ double BpmControl::calcSyncAdjustment(bool userTweakingSync) {
     double syncTargetBeatDistance = m_dSyncTargetBeatDistance.getValue();
     // We want the untweaked beat distance, so we have to add the offset here.
     double thisBeatDistance = m_pThisBeatDistance->get() + m_dUserOffset.getValue();
+    if (reversed) {
+        syncTargetBeatDistance = 1.0 - syncTargetBeatDistance;
+        thisBeatDistance = 1.0 - thisBeatDistance;
+    }
     double shortest_distance = shortestPercentageChange(
             syncTargetBeatDistance, thisBeatDistance);
 
