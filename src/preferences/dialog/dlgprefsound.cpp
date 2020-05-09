@@ -222,7 +222,7 @@ void DlgPrefSound::slotApply() {
 
     m_config.clearInputs();
     m_config.clearOutputs();
-    emit(writePaths(&m_config));
+    emit writePaths(&m_config);
 
     SoundDeviceError err = SOUNDDEVICE_ERROR_OK;
     {
@@ -244,6 +244,10 @@ void DlgPrefSound::slotApply() {
     loadSettings(); // in case SM decided to change anything it didn't like
     checkLatencyCompensation();
     m_bSkipConfigClear = false;
+}
+
+QUrl DlgPrefSound::helpUrl() const {
+    return QUrl(MIXXX_MANUAL_SOUND_URL);
 }
 
 /**
@@ -420,7 +424,7 @@ void DlgPrefSound::loadSettings(const SoundManagerConfig &config) {
 
     m_loading = false;
     // DlgPrefSoundItem has it's own inhibit flag
-    emit(loadPaths(m_config));
+    emit loadPaths(m_config);
 }
 
 /**
@@ -452,7 +456,7 @@ void DlgPrefSound::apiChanged(int index) {
  */
 void DlgPrefSound::updateAPIs() {
     QString currentAPI(apiComboBox->itemData(apiComboBox->currentIndex()).toString());
-    emit(updatingAPI());
+    emit updatingAPI();
     while (apiComboBox->count() > 1) {
         apiComboBox->removeItem(apiComboBox->count() - 1);
     }
@@ -463,7 +467,7 @@ void DlgPrefSound::updateAPIs() {
     if (newIndex > -1) {
         apiComboBox->setCurrentIndex(newIndex);
     }
-    emit(updatedAPI());
+    emit updatedAPI();
 }
 
 /**
@@ -558,8 +562,8 @@ void DlgPrefSound::refreshDevices() {
         m_inputDevices =
             m_pSoundManager->getDeviceList(m_config.getAPI(), false, true);
     }
-    emit(refreshOutputDevices(m_outputDevices));
-    emit(refreshInputDevices(m_inputDevices));
+    emit refreshOutputDevices(m_outputDevices);
+    emit refreshInputDevices(m_inputDevices);
 }
 
 /**
@@ -686,7 +690,7 @@ void DlgPrefSound::checkLatencyCompensation() {
         m_config.clearOutputs();
     }
 
-    emit(writePaths(&m_config));
+    emit writePaths(&m_config);
 
     if (m_config.hasMicInputs() && !m_config.hasExternalRecordBroadcast()) {
         micMonitorModeComboBox->setEnabled(true);

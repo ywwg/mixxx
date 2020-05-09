@@ -30,6 +30,8 @@ bool BeatLessThan(const Beat& beat1, const Beat& beat2) {
     return beat1.frame_position() < beat2.frame_position();
 }
 
+namespace mixxx {
+
 class BeatMapIterator : public BeatIterator {
   public:
     BeatMapIterator(BeatList::const_iterator start, BeatList::const_iterator end)
@@ -469,7 +471,7 @@ void BeatMap::addBeat(double dBeatSample) {
     m_beats.insert(it, beat);
     onBeatlistChanged();
     locker.unlock();
-    emit(updated());
+    emit updated();
 }
 
 void BeatMap::removeBeat(double dBeatSample) {
@@ -487,37 +489,7 @@ void BeatMap::removeBeat(double dBeatSample) {
     }
     onBeatlistChanged();
     locker.unlock();
-    emit(updated());
-}
-
-void BeatMap::moveBeat(double dBeatSample, double dNewBeatSample) {
-    QMutexLocker locker(&m_mutex);
-    Beat beat, newBeat;
-    beat.set_frame_position(samplesToFrames(dBeatSample));
-    newBeat.set_frame_position(samplesToFrames(dNewBeatSample));
-
-    BeatList::iterator it = std::lower_bound(
-        m_beats.begin(), m_beats.end(), beat, BeatLessThan);
-
-    // In case there are duplicates, remove every instance of dBeatSample
-    // TODO(XXX) add invariant checks against this
-    // TODO(XXX) determine what epsilon to consider a beat identical to another
-    while (it->frame_position() == beat.frame_position()) {
-        if (newBeat.enabled() != it->enabled()) {
-            newBeat.set_enabled(it->enabled());
-        }
-        it = m_beats.erase(it);
-    }
-
-    // Now add a beat to dNewBeatSample
-    it = std::lower_bound(m_beats.begin(), m_beats.end(), newBeat, BeatLessThan);
-    // TODO(XXX) beat epsilon
-    if (it->frame_position() != newBeat.frame_position()) {
-        m_beats.insert(it, newBeat);
-    }
-    onBeatlistChanged();
-    locker.unlock();
-    emit(updated());
+    emit updated();
 }
 
 void BeatMap::translate(double dNumSamples) {
@@ -540,7 +512,7 @@ void BeatMap::translate(double dNumSamples) {
     }
     onBeatlistChanged();
     locker.unlock();
-    emit(updated());
+    emit updated();
 }
 
 void BeatMap::scale(enum BPMScale scale) {
@@ -589,7 +561,7 @@ void BeatMap::scale(enum BPMScale scale) {
     }
     onBeatlistChanged();
     locker.unlock();
-    emit(updated());
+    emit updated();
 }
 
 void BeatMap::scaleDouble() {
@@ -752,3 +724,5 @@ double BeatMap::calculateBpm(const Beat& startBeat, const Beat& stopBeat) const 
 
     return BeatUtils::calculateBpm(beatvect, m_iSampleRate, 0, 9999);
 }
+
+} // namespace mixxx

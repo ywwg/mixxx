@@ -100,11 +100,12 @@ class MixxxMainWindow : public QMainWindow {
 
     // Warn the user when inputs are not configured.
     void slotNoMicrophoneInputConfigured();
+    void slotNoAuxiliaryInputConfigured();
     void slotNoDeckPassthroughInputConfigured();
     void slotNoVinylControlInputConfigured();
 
   signals:
-    void newSkinLoaded();
+    void skinLoaded();
     // used to uncheck the menu when the dialog of develeoper tools is closed
     void developerToolsDlgClosed(int r);
     void closeDeveloperToolsDlgChecked(int r);

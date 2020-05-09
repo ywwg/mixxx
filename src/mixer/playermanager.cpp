@@ -5,9 +5,8 @@
 #include <QMutexLocker>
 
 #include "control/controlobject.h"
-#include "control/controlobject.h"
-#include "effects/effectsmanager.h"
 #include "effects/effectrack.h"
+#include "effects/effectsmanager.h"
 #include "engine/channels/enginedeck.h"
 #include "engine/enginemaster.h"
 #include "library/library.h"
@@ -17,14 +16,14 @@
 #include "mixer/previewdeck.h"
 #include "mixer/sampler.h"
 #include "mixer/samplerbank.h"
+#include "preferences/dialog/dlgprefdeck.h"
 #include "soundio/soundmanager.h"
 #include "track/track.h"
 #include "util/assert.h"
+#include "util/defs.h"
 #include "util/logger.h"
-#include "util/stat.h"
 #include "util/sleepableqthread.h"
-#include "preferences/dialog/dlgprefdeck.h"
-
+#include "util/stat.h"
 
 namespace {
 
@@ -268,6 +267,13 @@ void PlayerManager::slotChangeNumDecks(double v) {
     QMutexLocker locker(&m_mutex);
     int num = (int)v;
 
+    VERIFY_OR_DEBUG_ASSERT(num <= kMaxNumberOfDecks) {
+        qWarning() << "Number of decks exceeds the maximum we expect."
+                   << num << "vs" << kMaxNumberOfDecks
+                   << " Refusing to add another deck. Please update util/defs.h";
+        return;
+    }
+
     // Update the soundmanager config even if the number of decks has been
     // reduced.
     m_pSoundManager->setConfiguredDeckCount(num);
@@ -283,7 +289,7 @@ void PlayerManager::slotChangeNumDecks(double v) {
             addDeckInner();
         } while (m_decks.size() < num);
         m_pCONumDecks->setAndConfirm(m_decks.size());
-        emit(numberOfDecksChanged(m_decks.count()));
+        emit numberOfDecksChanged(m_decks.count());
     }
 }
 
@@ -370,8 +376,10 @@ void PlayerManager::addDeckInner() {
 
     Deck* pDeck = new Deck(this, m_pConfig, m_pEngine, m_pEffectsManager,
             m_pVisualsManager, orientation, group);
-    connect(pDeck, SIGNAL(noPassthroughInputConfigured()),
-            this, SIGNAL(noDeckPassthroughInputConfigured()));
+    connect(pDeck->getEngineDeck(),
+            &EngineDeck::noPassthroughInputConfigured,
+            this,
+            &PlayerManager::noDeckPassthroughInputConfigured);
     connect(pDeck, SIGNAL(noVinylControlInputConfigured()),
             this, SIGNAL(noVinylControlInputConfigured()));
 
@@ -499,6 +507,8 @@ void PlayerManager::addAuxiliaryInner() {
 
     Auxiliary* pAuxiliary = new Auxiliary(this, group, index, m_pSoundManager,
                                           m_pEngine, m_pEffectsManager);
+    connect(pAuxiliary, SIGNAL(noAuxiliaryInputConfigured()),
+            this, SIGNAL(noAuxiliaryInputConfigured()));
     m_auxiliaries.append(pAuxiliary);
 }
 
@@ -613,7 +623,7 @@ void PlayerManager::slotLoadTrackToPlayer(TrackPointer pTrack, QString group, bo
 void PlayerManager::slotLoadToPlayer(QString location, QString group) {
     // The library will get the track and then signal back to us to load the
     // track via slotLoadTrackToPlayer.
-    emit(loadLocationToPlayer(location, group));
+    emit loadLocationToPlayer(location, group);
 }
 
 void PlayerManager::slotLoadToDeck(QString location, int deck) {
