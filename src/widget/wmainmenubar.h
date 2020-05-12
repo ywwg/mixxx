@@ -7,9 +7,11 @@
 #include <QObject>
 #include <QScopedPointer>
 
+#include "control/controlobject.h"
 #include "control/controlproxy.h"
 #include "preferences/configobject.h"
 #include "preferences/usersettings.h"
+#include "util/memory.h"
 
 class VisibilityControlConnection : public QObject {
     Q_OBJECT
@@ -78,6 +80,7 @@ class WMainMenuBar : public QMenuBar {
     void slotDeveloperStatsBase(bool enable);
     void slotDeveloperDebugger(bool toggle);
     void slotVisitUrl(const QString& url);
+    void togglePracticemode(bool toggle);
 
   private:
     void initialize();
@@ -85,6 +88,8 @@ class WMainMenuBar : public QMenuBar {
 
     UserSettingsPointer m_pConfig;
     ConfigObject<ConfigValueKbd>* m_pKbdConfig;
+    ControlObject* m_pConfigTrainingmodeEnabled;
+    std::unique_ptr<ControlObject> m_pConfigPracticemodeEnabled;
     QList<QAction*> m_loadToDeckActions;
     QList<QAction*> m_vinylControlEnabledActions;
 };

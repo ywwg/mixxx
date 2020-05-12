@@ -1,7 +1,19 @@
 #include "track/playcounter.h"
 
+PlayCounter::PlayCounter(int timesPlayed)
+        : m_iTimesPlayed(timesPlayed),
+          m_bPlayed(false),
+          m_pPracticemodeEnabled(std::make_shared<ControlProxy>("[Library]", "practice_mode")) {
+}
 
 void PlayCounter::setPlayedAndUpdateTimesPlayed(bool bPlayed) {
+    // if we are in PracticeMode mode, the play count should not be changed
+    // so we can return here
+    if (m_pPracticemodeEnabled->toBool()) {
+        m_bPlayed = bPlayed;
+        return;
+    }
+
     // This should never happen if the play counter is used
     // as intended! But since this class provides independent
     // setters for both members we need to check and re-establish
@@ -11,6 +23,7 @@ void PlayCounter::setPlayedAndUpdateTimesPlayed(bool bPlayed) {
         // not become negative!
         m_iTimesPlayed = 1;
     }
+
     if (bPlayed) {
         // Increment always
         ++m_iTimesPlayed;
