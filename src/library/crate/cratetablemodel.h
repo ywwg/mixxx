@@ -29,6 +29,9 @@ class CrateTableModel : public BaseSqlTableModel {
     int addTracks(const QModelIndex& index, const QList<QString>& locations) final;
     CapabilitiesFlags getCapabilities() const final;
 
+    QString getModelSetting(QString name) override;
+    bool setModelSetting(QString name, QVariant value) override;
+
   private:
     CrateId m_selectedCrate;
 };

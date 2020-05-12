@@ -303,6 +303,10 @@ void Library::bindLibraryWidget(WLibrary* pLibraryWidget,
             &Library::showTrackModel,
             pTrackTableView,
             &WTrackTableView::loadTrackModel);
+    connect(this,
+            &Library::saveViewState,
+            pTrackTableView,
+            &WTrackTableView::saveViewState);
     connect(pTrackTableView,
             &WTrackTableView::loadTrack,
             this,
@@ -387,6 +391,10 @@ void Library::addFeature(LibraryFeature* feature) {
             &LibraryFeature::trackSelected,
             this,
             &Library::trackSelected);
+    connect(feature,
+            &LibraryFeature::saveViewState,
+            this,
+            &Library::saveViewState);
 }
 
 void Library::onPlayerManagerTrackAnalyzerProgress(

@@ -135,6 +135,15 @@ void WTrackTableView::slotGuiTick50ms(double /*unused*/) {
     }
 }
 
+void WTrackTableView::saveViewState() {
+    // We save the header state when a track model requests it.
+    WTrackTableViewHeader* pHeader =
+            dynamic_cast<WTrackTableViewHeader*>(horizontalHeader());
+    if (pHeader) {
+        pHeader->saveHeaderState();
+    }
+}
+
 // slot
 void WTrackTableView::loadTrackModel(QAbstractItemModel* model) {
     qDebug() << "WTrackTableView::loadTrackModel()" << model;
@@ -154,13 +163,26 @@ void WTrackTableView::loadTrackModel(QAbstractItemModel* model) {
      * there's no need to exchange the headers
      * this will cause a small GUI freeze
      */
+    WTrackTableViewHeader* oldHeader =
+            dynamic_cast<WTrackTableViewHeader*>(horizontalHeader());
     if (getTrackModel() == trackModel) {
-        // Re-sort the table even if the track model is the same. This triggers
-        // a select() if the table is dirty.
-        doSortByColumn(horizontalHeader()->sortIndicatorSection(),
-                horizontalHeader()->sortIndicatorOrder());
+        // Call select() on the table so it refreshes if it's dirty.
+        getTrackModel()->select();
+        // Also restore the header state, which may be different than for
+        // the previously-loaded table for this model. This happens when the user
+        // switches between crates, for example.
+        // If your Feature needs to save state before it changes (as with the
+        // CrateFeature), it must emit saveViewState before emitting showTrackModel
+        // so the header state gets correctly saved.
+        if (oldHeader) {
+            oldHeader->restoreHeaderState();
+        }
         return;
     } else {
+        // Save the previous track model's header state.
+        if (oldHeader) {
+            oldHeader->saveHeaderState();
+        }
         newModel = trackModel;
         saveVScrollBarPos(getTrackModel());
         //saving current vertical bar position
@@ -169,12 +191,6 @@ void WTrackTableView::loadTrackModel(QAbstractItemModel* model) {
 
     setVisible(false);
 
-    // Save the previous track model's header state
-    WTrackTableViewHeader* oldHeader =
-            dynamic_cast<WTrackTableViewHeader*>(horizontalHeader());
-    if (oldHeader) {
-        oldHeader->saveHeaderState();
-    }
 
     // rryan 12/2009 : Due to a bug in Qt, in order to switch to a model with
     // different columns than the old model, we have to create a new horizontal
@@ -771,13 +787,13 @@ QList<TrackId> WTrackTableView::getSelectedTrackIds() const {
     QList<TrackId> trackIds;
 
     QItemSelectionModel* pSelectionModel = selectionModel();
-    VERIFY_OR_DEBUG_ASSERT(pSelectionModel != nullptr) {
+    VERIFY_OR_DEBUG_ASSERT(pSelectionModel) {
         qWarning() << "No selected tracks available";
         return trackIds;
     }
 
     TrackModel* pTrackModel = getTrackModel();
-    VERIFY_OR_DEBUG_ASSERT(pTrackModel != nullptr) {
+    VERIFY_OR_DEBUG_ASSERT(pTrackModel) {
         qWarning() << "No selected tracks available";
         return trackIds;
     }
@@ -800,13 +816,13 @@ QList<TrackId> WTrackTableView::getSelectedTrackIds() const {
 
 void WTrackTableView::setSelectedTracks(const QList<TrackId>& trackIds) {
     QItemSelectionModel* pSelectionModel = selectionModel();
-    VERIFY_OR_DEBUG_ASSERT(pSelectionModel != nullptr) {
+    VERIFY_OR_DEBUG_ASSERT(pSelectionModel) {
         qWarning() << "No selected tracks available";
         return;
     }
 
     TrackModel* pTrackModel = getTrackModel();
-    VERIFY_OR_DEBUG_ASSERT(pTrackModel != nullptr) {
+    VERIFY_OR_DEBUG_ASSERT(pTrackModel) {
         qWarning() << "No selected tracks available";
         return;
     }

@@ -105,6 +105,7 @@ class Library: public QObject {
 
   signals:
     void showTrackModel(QAbstractItemModel* model);
+    void saveViewState();
     void switchToView(const QString& view);
     void loadTrack(TrackPointer pTrack);
     void loadTrackToPlayer(TrackPointer pTrack, QString group, bool play = false);
