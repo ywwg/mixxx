@@ -86,7 +86,7 @@ void WWaveformViewer::mousePressEvent(QMouseEvent* event) {
             if (cueAtClickPos) {
                 m_pCueMenuPopup->setTrackAndCue(currentTrack, cueAtClickPos);
                 QPoint cueMenuTopLeft = mixxx::widgethelper::mapPopupToScreen(
-                        windowHandle()->screen()->size(),
+                        *this,
                         event->globalPos(),
                         m_pCueMenuPopup->size());
                 m_pCueMenuPopup->popup(cueMenuTopLeft);
@@ -176,7 +176,7 @@ void WWaveformViewer::mouseReleaseEvent(QMouseEvent* /*event*/) {
 
 void WWaveformViewer::wheelEvent(QWheelEvent *event) {
     if (m_waveformWidget) {
-        if (event->delta() > 0) {
+        if (event->angleDelta().y() > 0) {
             onZoomChange(m_waveformWidget->getZoomFactor() * 1.05);
         } else {
             onZoomChange(m_waveformWidget->getZoomFactor() / 1.05);
