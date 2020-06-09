@@ -6,8 +6,7 @@
 
 #include "library/crate/crateid.h"
 
-
-class CrateTableModel : public BaseSqlTableModel {
+class CrateTableModel final : public BaseSqlTableModel {
     Q_OBJECT
 
   public:
@@ -35,6 +34,5 @@ class CrateTableModel : public BaseSqlTableModel {
   private:
     CrateId m_selectedCrate;
 };
-
 
 #endif // MIXXX_CRATETABLEMODEL_H
