@@ -166,6 +166,8 @@ int PlaylistDAO::getPlaylistIdFromName(const QString& name) const {
 
 void PlaylistDAO::deletePlaylist(const int playlistId) {
     //qDebug() << "PlaylistDAO::deletePlaylist" << QThread::currentThread() << m_database.connectionName();
+    const auto trackIds = getTrackIds(playlistId);
+
     ScopedTransaction transaction(m_database);
 
     // Get the playlist id for this
@@ -201,6 +203,9 @@ void PlaylistDAO::deletePlaylist(const int playlistId) {
         }
     }
 
+    for (const auto& trackId : trackIds) {
+        emit trackRemoved(playlistId, trackId);
+    }
     emit deleted(playlistId);
 }
 
@@ -510,7 +515,7 @@ void PlaylistDAO::removeTracksFromPlaylistInner(int playlistId, int position) {
     }
 
     m_playlistsTrackIsIn.remove(trackId, playlistId);
-    emit trackRemoved(playlistId, trackId, position);
+    emit trackRemoved(playlistId, trackId);
 }
 
 
