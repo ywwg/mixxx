@@ -401,6 +401,18 @@ void Track::setDateAdded(const QDateTime& dateAdded) {
     return m_record.setDateAdded(dateAdded);
 }
 
+QDateTime Track::getLastPlayedDate() const {
+    QMutexLocker lock(&m_qMutex);
+    return m_lastPlayed;
+}
+
+void Track::setLastPlayedDate(const QDateTime& playedDate) {
+    QMutexLocker lock(&m_qMutex);
+    if (compareAndSet(&m_lastPlayed, playedDate)) {
+        markDirtyAndUnlock(&lock);
+    }
+}
+
 void Track::setDuration(mixxx::Duration duration) {
     QMutexLocker lock(&m_qMutex);
     VERIFY_OR_DEBUG_ASSERT(!m_streamInfo ||
@@ -1048,18 +1060,19 @@ void Track::setDirtyAndUnlock(QMutexLocker* pLock, bool bDirty) {
     // Unlock before emitting any signals!
     pLock->unlock();
 
-    if (trackId.isValid()) {
-        if (dirtyChanged) {
-            if (bDirty) {
-                emit dirty(trackId);
-            } else {
-                emit clean(trackId);
-            }
-        }
+    if (!trackId.isValid()) {
+        return;
+    }
+    if (dirtyChanged) {
         if (bDirty) {
-            // Emit a changed signal regardless if this attempted to set us dirty.
-            emit changed(trackId);
+            emit dirty(trackId);
+        } else {
+            emit clean(trackId);
         }
+    }
+    if (bDirty) {
+        // Emit a changed signal regardless if this attempted to set us dirty.
+        emit changed(trackId);
     }
 }
 

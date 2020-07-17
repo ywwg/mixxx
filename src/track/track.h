@@ -164,6 +164,9 @@ class Track : public QObject {
     void setDateAdded(const QDateTime& dateAdded);
     QDateTime getDateAdded() const;
 
+    void setLastPlayedDate(const QDateTime& playedDate);
+    QDateTime getLastPlayedDate() const;
+
     // Getter/Setter methods for metadata
     // Return title
     QString getTitle() const;
@@ -451,6 +454,8 @@ class Track : public QObject {
     ConstWaveformPointer m_waveformSummary;
 
     mixxx::CueInfoImporterPointer m_pCueInfoImporterPending;
+
+    QDateTime m_lastPlayed;
 
     friend class TrackDAO;
     friend class GlobalTrackCache;

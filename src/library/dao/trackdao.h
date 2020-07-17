@@ -2,15 +2,16 @@
 #define TRACKDAO_H
 
 #include <QFileInfo>
+#include <QList>
 #include <QObject>
 #include <QSet>
-#include <QList>
 #include <QSqlDatabase>
 #include <QString>
 
-#include "preferences/usersettings.h"
 #include "library/dao/dao.h"
+#include "library/lastplayedcache.h"
 #include "library/relocatedtrack.h"
+#include "preferences/usersettings.h"
 #include "track/globaltrackcache.h"
 #include "util/class.h"
 #include "util/memory.h"
@@ -44,11 +45,12 @@ class TrackDAO : public QObject, public virtual DAO, public virtual GlobalTrackC
 
     void initialize(const QSqlDatabase& database) override {
         m_database = database;
+        m_pLastPlayedFetcher.reset(new LastPlayedFetcher(m_database));
     }
     void finish();
 
     QList<TrackId> resolveTrackIds(
-            const QList<TrackFile> &trackFiles,
+            const QList<TrackFile>& trackFiles,
             ResolveTrackIdFlags flags = ResolveTrackIdFlag::ResolveOnly);
 
     TrackId getTrackIdByRef(
@@ -151,7 +153,7 @@ class TrackDAO : public QObject, public virtual DAO, public virtual GlobalTrackC
             volatile const bool* pCancel);
 
     void detectCoverArtForTracksWithoutCover(volatile const bool* pCancel,
-                                        QSet<TrackId>* pTracksChanged);
+            QSet<TrackId>* pTracksChanged);
 
     // Callback for GlobalTrackCache
     TrackFile relocateCachedTrack(
@@ -173,6 +175,7 @@ class TrackDAO : public QObject, public virtual DAO, public virtual GlobalTrackC
     std::unique_ptr<QSqlQuery> m_pQueryLibraryUpdate;
     std::unique_ptr<QSqlQuery> m_pQueryLibrarySelect;
     std::unique_ptr<SqlTransaction> m_pTransaction;
+    std::unique_ptr<LastPlayedFetcher> m_pLastPlayedFetcher;
     int m_trackLocationIdColumn;
     int m_queryLibraryIdColumn;
     int m_queryLibraryMixxxDeletedColumn;

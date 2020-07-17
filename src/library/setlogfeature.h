@@ -1,10 +1,12 @@
 #pragma once
 
 #include <QAction>
+#include <QLinkedList>
 #include <QPointer>
 #include <QSqlTableModel>
 
 #include "library/baseplaylistfeature.h"
+#include "library/lastplayedcache.h"
 #include "preferences/usersettings.h"
 
 class SetlogFeature : public BasePlaylistFeature {
