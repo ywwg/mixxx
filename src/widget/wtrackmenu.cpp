@@ -1196,25 +1196,39 @@ void WTrackMenu::lockBpm(bool lock) {
             &trackOperator);
 }
 
-void WTrackMenu::slotRescanBpmConstant() {
-    // TODO: This should be done in a thread for large selections
-    for (const auto& pTrack : getTrackPointers()) {
-        if (pTrack->isBpmLocked()) {
-            continue;
-        }
+namespace {
+
+class ClearBeatsTrackPointerOperation : public mixxx::TrackPointerOperation {
+  private:
+    void doApply(
+            const TrackPointer& pTrack) const override {
         pTrack->setBeats(mixxx::BeatsPointer());
     }
+};
+
+} // anonymous namespace
+
+void WTrackMenu::slotRescanBpmConstant() {
+    const auto progressLabelText =
+            tr("Clearing existing beats", "", getTrackCount());
+    const auto trackOperator =
+            ClearBeatsTrackPointerOperation();
+    applyTrackPointerOperation(
+            progressLabelText,
+            &trackOperator,
+            mixxx::ModalTrackBatchOperationProcessor::Mode::Apply);
     emit analyzeTracks(getTrackPointers(), AnalyzerBeatsOverride::FixedBpm);
 }
 
 void WTrackMenu::slotRescanBpmNonConstant() {
-    // TODO: This should be done in a thread for large selections
-    for (const auto& pTrack : getTrackPointers()) {
-        if (pTrack->isBpmLocked()) {
-            continue;
-        }
-        pTrack->setBeats(mixxx::BeatsPointer());
-    }
+    const auto progressLabelText =
+            tr("Clearing existing beats", "", getTrackCount());
+    const auto trackOperator =
+            ClearBeatsTrackPointerOperation();
+    applyTrackPointerOperation(
+            progressLabelText,
+            &trackOperator,
+            mixxx::ModalTrackBatchOperationProcessor::Mode::Apply);
     emit analyzeTracks(getTrackPointers(), AnalyzerBeatsOverride::UnfixedBpm);
 }
 
