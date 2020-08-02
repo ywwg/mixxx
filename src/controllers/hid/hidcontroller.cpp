@@ -22,7 +22,8 @@ ControllerJSProxy* HidController::jsProxy() {
 
 HidController::HidController(const hid_device_info& deviceInfo)
         : Controller(),
-          m_pHidDevice(NULL) {
+          m_lastIncomingData(),
+          m_pHidDevice(nullptr) {
 
     // Copy required variables from deviceInfo, which will be freed after
     // this class is initialized by caller.
@@ -255,8 +256,14 @@ bool HidController::poll() {
             return false;
         } else if (result > 0) {
             Trace process("HidController process packet");
-            auto data = QByteArray::fromRawData(reinterpret_cast<char*>(m_pPollData), result);
-            receive(data, mixxx::Time::elapsed());
+            auto byteArray = QByteArray::fromRawData(reinterpret_cast<char*>(m_pPollData), result);
+            if (byteArray == m_lastIncomingData) {
+                continue;
+            } else {
+                // force a copy
+                m_lastIncomingData = QByteArray(byteArray.data());
+            }
+            receive(byteArray, mixxx::Time::elapsed());
         }
     }
 
