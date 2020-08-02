@@ -665,6 +665,7 @@ HIDPacket.prototype.parse = function(data) {
  * field object values are packed to the HID packet according to the
  * field type. */
 HIDPacket.prototype.send = function(debug) {
+    HIDDebug("~~~~~~~~~~~~~~~~");
     var data = [];
 
     if (this.header !== undefined) {
@@ -1530,6 +1531,7 @@ HIDController.prototype.setOutput = function(group, name, value, send_packet) {
         HIDDebug("setOutput: unknown field: " + group + "." + name);
         return;
     }
+    HIDDebug("lighting: " + field.id + " 0x" + value.toString(16));
     field.value = value << field.bit_offset;
     field.toggle = value << field.bit_offset;
     if (send_packet)
