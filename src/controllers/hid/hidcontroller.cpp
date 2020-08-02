@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "util/path.h" // for PATH_MAX on Windows
+#include "controllers/controllermanager.h"
 #include "controllers/hid/hidcontroller.h"
 #include "controllers/defs_controllers.h"
 #include "util/trace.h"
@@ -22,7 +23,6 @@ ControllerJSProxy* HidController::jsProxy() {
 
 HidController::HidController(const hid_device_info& deviceInfo)
         : Controller(),
-          m_lastIncomingData(),
           m_pHidDevice(nullptr) {
 
     // Copy required variables from deviceInfo, which will be freed after
@@ -250,19 +250,19 @@ bool HidController::poll() {
     Trace hidRead("HidController poll");
 
     int result = 1;
+    auto loopStartTime = mixxx::Time::elapsed();
     while (result > 0) {
+        // Failsafe in case the script takes too long. This can happen if a controller constitutively spams
+        // HID messages even if there are no changes since the last message, for example the Gemini GMX.
+        if (mixxx::Time::elapsed() - loopStartTime >= ControllerManager::kPollInterval) {
+            return true;
+        }
         result = hid_read(m_pHidDevice, m_pPollData, sizeof(m_pPollData) / sizeof(m_pPollData[0]));
         if (result == -1) {
             return false;
         } else if (result > 0) {
             Trace process("HidController process packet");
             auto byteArray = QByteArray::fromRawData(reinterpret_cast<char*>(m_pPollData), result);
-            if (byteArray == m_lastIncomingData) {
-                continue;
-            } else {
-                // force a copy
-                m_lastIncomingData = QByteArray(byteArray.data());
-            }
             receive(byteArray, mixxx::Time::elapsed());
         }
     }
