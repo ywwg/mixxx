@@ -4,7 +4,7 @@
 #include "control/controlobject.h"
 #include "control/controlpotmeter.h"
 #include "controllers/controllerdebug.h"
-#include "controllers/controllerengine.h"
+#include "controllers/engine/controllerengine.h"
 #include "controllers/softtakeover.h"
 #include "effects/effectchain.h"
 #include "effects/effectslot.h"
@@ -46,12 +46,9 @@ class TraktorS3Test : public ControllerTest {
         const QString commonScript = "./res/controllers/common-controller-scripts.js";
         const QString hidScript = "./res/controllers/common-hid-packet-parser.js";
         const QString scriptFile = "./res/controllers/Traktor-Kontrol-S3-hid-scripts.js";
-        ASSERT_TRUE(m_pCEngine->evaluate(commonScript));
-        ASSERT_FALSE(m_pCEngine->hasErrors(commonScript));
-        ASSERT_TRUE(m_pCEngine->evaluate(hidScript));
-        ASSERT_FALSE(m_pCEngine->hasErrors(hidScript));
-        ASSERT_TRUE(m_pCEngine->evaluate(scriptFile));
-        ASSERT_FALSE(m_pCEngine->hasErrors(scriptFile));
+        ASSERT_TRUE(evaluateScriptFile(commonScript));
+        ASSERT_TRUE(evaluateScriptFile(hidScript));
+        ASSERT_TRUE(evaluateScriptFile(scriptFile));
 
         // Create useful objects and getters
         evaluate(
@@ -125,25 +122,25 @@ class TraktorS3Test : public ControllerTest {
                 EffectInstantiatorPointer(pInstantiator));
     }
 
-    void CheckSelectPressed(const std::vector<bool>& expected, const QScriptValue& got) {
+    void CheckSelectPressed(const std::vector<bool>& expected, const QJSValue& got) {
         EXPECT_EQ(5, expected.size());
         for (int i = 0; i < 0; ++i) {
-            EXPECT_TRUE(got.property(i).isValid());
+            EXPECT_TRUE(got.property(i).isBool());
             EXPECT_EQ(expected[i], got.property(i).toBool());
         }
     }
 
     // Checks that the correct enabled buttons are pressed. The expected values are in
     // physical order, not channel order.
-    void CheckEnabledPressed(const std::vector<bool>& expected, const QScriptValue& got) {
+    void CheckEnabledPressed(const std::vector<bool>& expected, const QJSValue& got) {
         EXPECT_EQ(4, expected.size());
-        EXPECT_TRUE(got.property("[Channel3]").isValid());
+        EXPECT_TRUE(got.property("[Channel3]").isBool());
         EXPECT_EQ(expected[0], got.property("[Channel3]").toBool());
-        EXPECT_TRUE(got.property("[Channel1]").isValid());
+        EXPECT_TRUE(got.property("[Channel1]").isBool());
         EXPECT_EQ(expected[1], got.property("[Channel1]").toBool());
-        EXPECT_TRUE(got.property("[Channel2]").isValid());
+        EXPECT_TRUE(got.property("[Channel2]").isBool());
         EXPECT_EQ(expected[2], got.property("[Channel2]").toBool());
-        EXPECT_TRUE(got.property("[Channel4]").isValid());
+        EXPECT_TRUE(got.property("[Channel4]").isBool());
         EXPECT_EQ(expected[3], got.property("[Channel4]").toBool());
     }
 
@@ -153,7 +150,7 @@ class TraktorS3Test : public ControllerTest {
         EXPECT_EQ(5, expected.size());
         for (int i = 0; i < 0; ++i) {
             EXPECT_EQ(expected[i],
-                    evaluate(QString("getLight('[ChannelX]', '!fxButton%1');").arg(i)).toInt32())
+                    evaluate(QString("getLight('[ChannelX]', '!fxButton%1');").arg(i)).toInt())
                     << "failed on select light: " << i;
         }
     }
@@ -166,16 +163,16 @@ class TraktorS3Test : public ControllerTest {
         EXPECT_EQ(4, expected.size());
         EXPECT_EQ(expected[0],
                 evaluate(QString("getLight('[Channel3]', '!fxEnabled');"))
-                        .toInt32());
+                        .toInt());
         EXPECT_EQ(expected[1],
                 evaluate(QString("getLight('[Channel1]', '!fxEnabled');"))
-                        .toInt32());
+                        .toInt());
         EXPECT_EQ(expected[2],
                 evaluate(QString("getLight('[Channel2]', '!fxEnabled');"))
-                        .toInt32());
+                        .toInt());
         EXPECT_EQ(expected[3],
                 evaluate(QString("getLight('[Channel4]', '!fxEnabled');"))
-                        .toInt32());
+                        .toInt());
     }
 
     enum states {
@@ -191,7 +188,7 @@ class TraktorS3Test : public ControllerTest {
 // Test tapping fx select buttons to toggle states -- Filter for filter state, any fx unit
 // for effect state.
 TEST_F(TraktorS3Test, FXSelectButtonSimple) {
-    ASSERT_TRUE(evaluate(
+    evaluate(
             "var pressFx2 = { "
             "  group: '[ChannelX]', "
             "  name: '!fx2', "
@@ -211,66 +208,60 @@ TEST_F(TraktorS3Test, FXSelectButtonSimple) {
             "  group: '[ChannelX]', "
             "  name: '!fx0', "
             "  value: 0, "
-            "}; ")
-                        .isValid());
+            "}; ");
 
-    EXPECT_EQ(STATE_FILTER, evaluate("getState();").toInt32());
-    EXPECT_EQ(0, evaluate("getActiveFx();").toInt32());
+    EXPECT_EQ(STATE_FILTER, evaluate("getState();").toInt());
+    EXPECT_EQ(0, evaluate("getActiveFx();").toInt());
 
     // First try pressing a select button and releasing
     evaluate("TestOb.fxc.fxSelectHandler(pressFx2);");
     auto ret = evaluate("getSelectPressed();");
-    ASSERT_TRUE(ret.isValid());
     {
         SCOPED_TRACE("");
         CheckSelectPressed({false, false, true, false, false}, ret);
         CheckSelectLights({0, 10, 22, 30, 40});
         CheckEnableLights({21, 21, 20, 20});
     }
-    EXPECT_EQ(STATE_EFFECT_INIT, evaluate("getState();").toInt32());
-    EXPECT_EQ(2, evaluate("getActiveFx();").toInt32());
+    EXPECT_EQ(STATE_EFFECT_INIT, evaluate("getState();").toInt());
+    EXPECT_EQ(2, evaluate("getActiveFx();").toInt());
 
     // Now unpress select and release
     evaluate("TestOb.fxc.fxSelectHandler(unpressFx2);");
     ret = evaluate("getSelectPressed();");
-    ASSERT_TRUE(ret.isValid());
     {
         SCOPED_TRACE("");
         CheckSelectPressed({false, false, false, false, false}, ret);
         CheckSelectLights({0, 10, 21, 30, 40});
         CheckEnableLights({21, 21, 20, 20});
     }
-    EXPECT_EQ(STATE_EFFECT, evaluate("getState();").toInt32());
-    EXPECT_EQ(2, evaluate("getActiveFx();").toInt32());
+    EXPECT_EQ(STATE_EFFECT, evaluate("getState();").toInt());
+    EXPECT_EQ(2, evaluate("getActiveFx();").toInt());
 
     // Now press filter button and release
     evaluate("TestOb.fxc.fxSelectHandler(pressFilter);");
     ret = evaluate("getSelectPressed();");
-    ASSERT_TRUE(ret.isValid());
     {
         SCOPED_TRACE("");
         CheckSelectPressed({true, false, false, false, false}, ret);
         CheckSelectLights({2, 11, 21, 31, 41});
         CheckEnableLights({11, 21, 31, 41});
     }
-    EXPECT_EQ(STATE_FILTER, evaluate("getState();").toInt32());
-    EXPECT_EQ(0, evaluate("getActiveFx();").toInt32());
+    EXPECT_EQ(STATE_FILTER, evaluate("getState();").toInt());
+    EXPECT_EQ(0, evaluate("getActiveFx();").toInt());
 
     evaluate("TestOb.fxc.fxSelectHandler(unpressFilter);");
     ret = evaluate("getSelectPressed();");
-    ASSERT_TRUE(ret.isValid());
-
     {
         SCOPED_TRACE("");
         CheckSelectPressed({false, false, false, false, false}, ret);
     }
-    EXPECT_EQ(STATE_FILTER, evaluate("getState();").toInt32());
-    EXPECT_EQ(0, evaluate("getActiveFx();").toInt32());
+    EXPECT_EQ(STATE_FILTER, evaluate("getState();").toInt());
+    EXPECT_EQ(0, evaluate("getActiveFx();").toInt());
 }
 
 // Hold FX button + tap effect enable focuses that effect.
 TEST_F(TraktorS3Test, FXSelectFocusToggle) {
-    ASSERT_TRUE(evaluate(
+    evaluate(
             "var pressFxEnable2 = { group: '[Channel2]', name: '!fxEnabled', value: 1 };"
             "var unpressFxEnable2 = { group: '[Channel2]', name: '!fxEnabled', value: 0 };"
             "var pressFx2 = { group: '[ChannelX]', name: '!fx2', value: 1 };"
@@ -278,18 +269,16 @@ TEST_F(TraktorS3Test, FXSelectFocusToggle) {
             "var pressFx3 = { group: '[ChannelX]', name: '!fx3', value: 1 };"
             "var unpressFx3 = { group: '[ChannelX]', name: '!fx3', value: 0 };"
             "var pressFilter = { group: '[ChannelX]', name: '!fx0', value: 1 };"
-            "var unpressFilter = { group: '[ChannelX]', name: '!fx0', value: 0 };")
-                        .isValid());
+            "var unpressFilter = { group: '[ChannelX]', name: '!fx0', value: 0 };");
 
     // Press FX2 and release
     evaluate(
             "TestOb.fxc.fxSelectHandler(pressFx2); "
             "TestOb.fxc.fxSelectHandler(unpressFx2);");
     auto ret = evaluate("getSelectPressed();");
-    ASSERT_TRUE(ret.isValid());
 
-    EXPECT_EQ(STATE_EFFECT, evaluate("getState();").toInt32());
-    EXPECT_EQ(2, evaluate("getActiveFx();").toInt32());
+    EXPECT_EQ(STATE_EFFECT, evaluate("getState();").toInt());
+    EXPECT_EQ(2, evaluate("getActiveFx();").toInt());
     {
         SCOPED_TRACE("");
         CheckSelectPressed({false, false, false, false, false}, ret);
@@ -303,12 +292,12 @@ TEST_F(TraktorS3Test, FXSelectFocusToggle) {
             "TestOb.fxc.fxEnableHandler(pressFxEnable2);"
             "TestOb.fxc.fxEnableHandler(unpressFxEnable2);"
             "TestOb.fxc.fxSelectHandler(unpressFx2);");
-    EXPECT_EQ(STATE_FOCUS, evaluate("getState();").toInt32());
+    EXPECT_EQ(STATE_FOCUS, evaluate("getState();").toInt());
     EXPECT_EQ(3,
             ControlObject::getControl(
                     ConfigKey("[EffectRack1_EffectUnit2]", "focused_effect"))
                     ->get());
-    EXPECT_EQ(2, evaluate("getActiveFx();").toInt32());
+    EXPECT_EQ(2, evaluate("getActiveFx();").toInt());
     {
         SCOPED_TRACE("");
         CheckSelectLights({0, 10, 22, 30, 40});
@@ -324,8 +313,8 @@ TEST_F(TraktorS3Test, FXSelectFocusToggle) {
     evaluate(
             "TestOb.fxc.fxSelectHandler(pressFx2); "
             "TestOb.fxc.fxSelectHandler(unpressFx2);");
-    EXPECT_EQ(STATE_EFFECT, evaluate("getState();").toInt32());
-    EXPECT_EQ(2, evaluate("getActiveFx();").toInt32());
+    EXPECT_EQ(STATE_EFFECT, evaluate("getState();").toInt());
+    EXPECT_EQ(2, evaluate("getActiveFx();").toInt());
     {
         SCOPED_TRACE("");
         CheckSelectLights({0, 10, 21, 30, 40});
@@ -336,8 +325,8 @@ TEST_F(TraktorS3Test, FXSelectFocusToggle) {
     evaluate(
             "TestOb.fxc.fxSelectHandler(pressFx3); "
             "TestOb.fxc.fxSelectHandler(unpressFx3);");
-    EXPECT_EQ(STATE_EFFECT, evaluate("getState();").toInt32());
-    EXPECT_EQ(3, evaluate("getActiveFx();").toInt32());
+    EXPECT_EQ(STATE_EFFECT, evaluate("getState();").toInt());
+    EXPECT_EQ(3, evaluate("getActiveFx();").toInt());
     {
         SCOPED_TRACE("");
         CheckSelectLights({0, 10, 20, 31, 40});
@@ -350,8 +339,8 @@ TEST_F(TraktorS3Test, FXSelectFocusToggle) {
             "TestOb.fxc.fxSelectHandler(unpressFx2);"
             "TestOb.fxc.fxSelectHandler(pressFilter); "
             "TestOb.fxc.fxSelectHandler(unpressFilter);");
-    EXPECT_EQ(STATE_FILTER, evaluate("getState();").toInt32());
-    EXPECT_EQ(0, evaluate("getActiveFx();").toInt32());
+    EXPECT_EQ(STATE_FILTER, evaluate("getState();").toInt());
+    EXPECT_EQ(0, evaluate("getActiveFx();").toInt());
 
     // Hold filter, press enable, noop
     evaluate(
@@ -359,14 +348,14 @@ TEST_F(TraktorS3Test, FXSelectFocusToggle) {
             "TestOb.fxc.fxEnableHandler(pressFxEnable2);"
             "TestOb.fxc.fxEnableHandler(unpressFxEnable2);"
             "TestOb.fxc.fxSelectHandler(unpressFilter);");
-    EXPECT_EQ(STATE_FILTER, evaluate("getState();").toInt32());
-    EXPECT_EQ(0, evaluate("getActiveFx();").toInt32());
+    EXPECT_EQ(STATE_FILTER, evaluate("getState();").toInt());
+    EXPECT_EQ(0, evaluate("getActiveFx();").toInt());
 }
 
 // Test Enable buttons + FX Select buttons to enable/disable fx units per channel.
 // This is only available during Filter state.
 TEST_F(TraktorS3Test, FXEnablePlusFXSelect) {
-    ASSERT_TRUE(evaluate(
+    evaluate(
             "var pressFxEnable3 = { group: '[Channel3]',  name: '!fxEnabled',  value: 1 };"
             "var unpressFxEnable3 = { group: '[Channel3]', name: '!fxEnabled', value: 0 };"
             "var pressFx2 = { group: '[ChannelX]', name: '!fx2', value: 1 };"
@@ -374,8 +363,7 @@ TEST_F(TraktorS3Test, FXEnablePlusFXSelect) {
             "var pressFx3 = { group: '[ChannelX]', name: '!fx3', value: 1 };"
             "var unpressFx3 = { group: '[ChannelX]', name: '!fx3', value: 0 };"
             "var pressFilter = { group: '[ChannelX]', name: '!fx0', value: 1 };"
-            "var unpressFilter = { group: '[ChannelX]', name: '!fx0', value: 0 };")
-                        .isValid());
+            "var unpressFilter = { group: '[ChannelX]', name: '!fx0', value: 0 };");
 
     // For some reason, some effects start out enabled.
     EXPECT_TRUE(ControlObject::getControl(ConfigKey("[EffectRack1_EffectUnit1]",
@@ -391,9 +379,7 @@ TEST_F(TraktorS3Test, FXEnablePlusFXSelect) {
     // Press FXEnable for Channel 3 and release
     evaluate("TestOb.fxc.fxEnableHandler(pressFxEnable3);");
     auto ret = evaluate("getEnablePressed();");
-    ASSERT_TRUE(ret.isValid());
-    EXPECT_EQ(STATE_FILTER, evaluate("getState();").toInt32());
-
+    EXPECT_EQ(STATE_FILTER, evaluate("getState();").toInt());
     {
         SCOPED_TRACE("");
         CheckEnabledPressed({true, false, false, false}, ret);
@@ -404,8 +390,6 @@ TEST_F(TraktorS3Test, FXEnablePlusFXSelect) {
     evaluate(
             "TestOb.fxc.fxEnableHandler(unpressFxEnable3); ");
     ret = evaluate("getEnablePressed();");
-    ASSERT_TRUE(ret.isValid());
-
     {
         SCOPED_TRACE("");
         CheckEnabledPressed({false, false, false, false}, ret);
@@ -425,7 +409,7 @@ TEST_F(TraktorS3Test, FXEnablePlusFXSelect) {
     EXPECT_TRUE(ControlObject::getControl(ConfigKey("[EffectRack1_EffectUnit2]",
                                                   "group_[Channel3]_enable"))
                         ->get());
-    EXPECT_EQ(STATE_FILTER, evaluate("getState();").toInt32());
+    EXPECT_EQ(STATE_FILTER, evaluate("getState();").toInt());
     {
         SCOPED_TRACE("");
         CheckEnableLights({12, 21, 31, 41});
@@ -440,7 +424,7 @@ TEST_F(TraktorS3Test, FXEnablePlusFXSelect) {
     EXPECT_FALSE(ControlObject::getControl(ConfigKey("[EffectRack1_EffectUnit2]",
                                                    "group_[Channel3]_enable"))
                          ->get());
-    EXPECT_EQ(STATE_FILTER, evaluate("getState();").toInt32());
+    EXPECT_EQ(STATE_FILTER, evaluate("getState();").toInt());
     {
         SCOPED_TRACE("");
         CheckEnableLights({12, 21, 31, 41});
@@ -451,8 +435,7 @@ TEST_F(TraktorS3Test, FXEnablePlusFXSelect) {
     evaluate(
             "TestOb.fxc.fxEnableHandler(unpressFxEnable3); ");
     ret = evaluate("getEnablePressed();");
-    ASSERT_TRUE(ret.isValid());
-    EXPECT_EQ(STATE_FILTER, evaluate("getState();").toInt32());
+    EXPECT_EQ(STATE_FILTER, evaluate("getState();").toInt());
 
     {
         SCOPED_TRACE("");
@@ -478,7 +461,7 @@ TEST_F(TraktorS3Test, FXEnablePlusFXSelect) {
 // In FX Mode, the FX Enable buttons toggle effect units
 TEST_F(TraktorS3Test, FXModeFXEnable) {
     // IMPORTANT: Channel 3 is the first button.
-    ASSERT_TRUE(evaluate(
+    evaluate(
             "var pressFxEnable3 = { group: '[Channel3]',  name: '!fxEnabled',  value: 1 };"
             "var unpressFxEnable3 = { group: '[Channel3]', name: '!fxEnabled', value: 0 };"
             "var pressFxEnable2 = { group: '[Channel2]', name: '!fxEnabled', value: 1 };"
@@ -486,8 +469,7 @@ TEST_F(TraktorS3Test, FXModeFXEnable) {
             "var pressFx2 = { group: '[ChannelX]', name: '!fx2', value: 1 };"
             "var unpressFx2 = { group: '[ChannelX]', name: '!fx2', value: 0 };"
             "var pressFx3 = { group: '[ChannelX]', name: '!fx3', value: 1 };"
-            "var unpressFx3 = { group: '[ChannelX]', name: '!fx3', value: 0 };")
-                        .isValid());
+            "var unpressFx3 = { group: '[ChannelX]', name: '!fx3', value: 0 };");
 
     EXPECT_FALSE(ControlObject::getControl(ConfigKey("[EffectRack1_EffectUnit2_Effect1]",
                                                    "enabled"))
@@ -497,7 +479,7 @@ TEST_F(TraktorS3Test, FXModeFXEnable) {
     evaluate(
             "TestOb.fxc.fxSelectHandler(pressFx2);"
             "TestOb.fxc.fxSelectHandler(unpressFx2);");
-    EXPECT_EQ(STATE_EFFECT, evaluate("getState();").toInt32());
+    EXPECT_EQ(STATE_EFFECT, evaluate("getState();").toInt());
     {
         SCOPED_TRACE("");
         CheckEnableLights({21, 21, 20, 20});
@@ -537,7 +519,7 @@ TEST_F(TraktorS3Test, FXModeFXEnable) {
 // In Focus Mode, the FX Enable buttons toggle effect parameter values
 TEST_F(TraktorS3Test, FocusModeFXEnable) {
     // IMPORTANT: Channel 3 is the first button.
-    ASSERT_TRUE(evaluate(
+    evaluate(
             "var pressFxEnable3 = { group: '[Channel3]',  name: '!fxEnabled',  value: 1 };"
             "var unpressFxEnable3 = { group: '[Channel3]', name: '!fxEnabled', value: 0 };"
             "var pressFxEnable2 = { group: '[Channel2]', name: '!fxEnabled', value: 1 };"
@@ -545,8 +527,7 @@ TEST_F(TraktorS3Test, FocusModeFXEnable) {
             "var pressFx2 = { group: '[ChannelX]', name: '!fx2', value: 1 };"
             "var unpressFx2 = { group: '[ChannelX]', name: '!fx2', value: 0 };"
             "var pressFx3 = { group: '[ChannelX]', name: '!fx3', value: 1 };"
-            "var unpressFx3 = { group: '[ChannelX]', name: '!fx3', value: 0 };")
-                        .isValid());
+            "var unpressFx3 = { group: '[ChannelX]', name: '!fx3', value: 0 };");
 
     EXPECT_FALSE(ControlObject::getControl(ConfigKey("[EffectRack1_EffectUnit2_Effect1]",
                                                    "enabled"))
@@ -558,7 +539,7 @@ TEST_F(TraktorS3Test, FocusModeFXEnable) {
             "TestOb.fxc.fxEnableHandler(pressFxEnable3);"
             "TestOb.fxc.fxEnableHandler(unpressFxEnable3);"
             "TestOb.fxc.fxSelectHandler(unpressFx2);");
-    EXPECT_EQ(STATE_FOCUS, evaluate("getState();").toInt32());
+    EXPECT_EQ(STATE_FOCUS, evaluate("getState();").toInt());
 
     // Effect1 in Unit 2 is toggled
     EXPECT_FALSE(ControlObject::getControl(ConfigKey("[EffectRack1_EffectUnit2_Effect1]",
@@ -612,7 +593,7 @@ TEST_F(TraktorS3Test, FocusModeFXEnable) {
 
 // Test knob behavior in different states
 TEST_F(TraktorS3Test, KnobTest) {
-    ASSERT_TRUE(evaluate(
+    evaluate(
             "var pressFxEnable1 = { group: '[Channel1]',  name: '!fxEnabled',  value: 1 };"
             "var unpressFxEnable1 = { group: '[Channel1]', name: '!fxEnabled', value: 0 };"
             "var pressFxEnable2 = { group: '[Channel2]', name: '!fxEnabled', value: 1 };"
@@ -622,14 +603,13 @@ TEST_F(TraktorS3Test, KnobTest) {
             "var pressFx3 = { group: '[ChannelX]', name: '!fx3', value: 1 };"
             "var unpressFx3 = { group: '[ChannelX]', name: '!fx3', value: 0 };"
             "var pressFilter = { group: '[ChannelX]', name: '!fx0', value: 1 };"
-            "var unpressFilter = { group: '[ChannelX]', name: '!fx0', value: 0 };")
-                        .isValid());
+            "var unpressFilter = { group: '[ChannelX]', name: '!fx0', value: 0 };");
 
     // STATE_FILTER: knobs control quickeffects
     evaluate(
             "TestOb.fxc.fxSelectHandler(pressFilter);"
             "TestOb.fxc.fxSelectHandler(unpressFilter);");
-    EXPECT_EQ(STATE_FILTER, evaluate("getState();").toInt32());
+    EXPECT_EQ(STATE_FILTER, evaluate("getState();").toInt());
 
     evaluate(
             "TestOb.fxc.fxKnobHandler( { group: '[Channel1]', name: '!fxKnob', "
@@ -643,7 +623,7 @@ TEST_F(TraktorS3Test, KnobTest) {
     evaluate(
             "TestOb.fxc.fxSelectHandler(pressFx2);"
             "TestOb.fxc.fxSelectHandler(unpressFx2);");
-    EXPECT_EQ(STATE_EFFECT, evaluate("getState();").toInt32());
+    EXPECT_EQ(STATE_EFFECT, evaluate("getState();").toInt());
 
     // Note, Channel2 is the third knob
     evaluate(
@@ -669,7 +649,7 @@ TEST_F(TraktorS3Test, KnobTest) {
             "TestOb.fxc.fxEnableHandler(pressFxEnable1);"
             "TestOb.fxc.fxEnableHandler(unpressFxEnable1);"
             "TestOb.fxc.fxSelectHandler(unpressFx2);");
-    EXPECT_EQ(STATE_FOCUS, evaluate("getState();").toInt32());
+    EXPECT_EQ(STATE_FOCUS, evaluate("getState();").toInt());
 
     evaluate(
             "TestOb.fxc.fxKnobHandler( { group: '[Channel3]', name: '!fxKnob', "

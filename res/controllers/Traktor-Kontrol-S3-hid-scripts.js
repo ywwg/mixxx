@@ -1224,7 +1224,8 @@ TraktorS3.FXControl.prototype.changeState = function(newState) {
 
 TraktorS3.FXControl.prototype.fxSelectHandler = function(field) {
     var fxNumber = parseInt(field.name[field.name.length - 1]);
-    this.selectPressed[fxNumber] = field.value;
+    // Coerce to boolean
+    this.selectPressed[fxNumber] = !!field.value;
 
     if (!field.value) {
         if (fxNumber === this.activeFX) {
@@ -1286,7 +1287,8 @@ TraktorS3.FXControl.prototype.fxSelectHandler = function(field) {
 };
 
 TraktorS3.FXControl.prototype.fxEnableHandler = function(field) {
-    this.enablePressed[field.group] = field.value;
+    // Coerce to boolean
+    this.enablePressed[field.group] = !!field.value;
 
     if (!field.value) {
         this.lightFX();

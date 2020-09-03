@@ -4,7 +4,7 @@
 #include <QtDebug>
 
 #include "controllers/controllerdebug.h"
-#include "controllers/controllerengine.h"
+#include "controllers/engine/controllerengine.h"
 #include "effects/effectrack.h"
 #include "test/signalpathtest.h"
 #include "util/time.h"
@@ -17,20 +17,14 @@ class ControllerTest : public BaseSignalPathTest {
         mixxx::Time::setTestMode(true);
         mixxx::Time::setTestElapsedTime(mixxx::Duration::fromMillis(10));
         QThread::currentThread()->setObjectName("Main");
-        m_pCEngine = new ControllerEngine(nullptr, config());
+        m_pCEngine = new ControllerEngine(nullptr);
         ControllerDebug::enable();
-        m_pCEngine->setPopups(false);
         m_pRack = m_pEffectsManager->addStandardEffectRack();
-        // EffectChainSlotPointer pChainSlot = pRack->getEffectChainSlot(iChainNumber);
-        // pChainSlot->registerInputChannel(m_master);
         m_pQuickRack = m_pEffectsManager->addQuickEffectRack();
-        // Only 3 decks in BaseSignalPathTest
         m_pQuickRack->setupForGroup("[Channel1]");
         m_pQuickRack->setupForGroup("[Channel2]");
         m_pQuickRack->setupForGroup("[Channel3]");
         m_pQuickRack->setupForGroup("[Channel4]");
-        // pChainSlot = pRack->getEffectChainSlot(iChainNumber);
-        // pChainSlot->registerInputChannel(m_master);
     }
 
     void TearDown() override {
@@ -39,10 +33,12 @@ class ControllerTest : public BaseSignalPathTest {
         mixxx::Time::setTestMode(false);
     }
 
-    QScriptValue evaluate(const QString& program) {
-        QScriptValue ret;
-        EXPECT_TRUE(m_pCEngine->evaluateWithReturn(program, QString(), &ret));
-        return ret;
+    bool evaluateScriptFile(const QFileInfo& scriptFile) {
+        return m_pCEngine->evaluateScriptFile(scriptFile);
+    }
+
+    QJSValue evaluate(const QString& program) {
+        return m_pCEngine->evaluateCodeString(program);
     }
 
     void processEvents() {

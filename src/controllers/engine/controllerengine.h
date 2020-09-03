@@ -104,6 +104,9 @@ class ControllerEngine : public QObject {
     /// Handler for timers that scripts set.
     virtual void timerEvent(QTimerEvent* event);
 
+    // Make these protected so tests can run arbitrary javascript easily.
+    bool evaluateScriptFile(const QFileInfo& scriptFile);
+    QJSValue evaluateCodeString(const QString& program, const QString& fileName = QString(), int lineNumber = 1);
   public slots:
     void loadModule(QFileInfo moduleFileInfo);
     bool loadScriptFiles(const QList<ControllerPreset::ScriptFileInfo>& scripts);
@@ -115,7 +118,6 @@ class ControllerEngine : public QObject {
     void errorDialogButton(const QString& key, QMessageBox::StandardButton button);
 
   private:
-    bool evaluateScriptFile(const QFileInfo& scriptFile);
     void initializeScriptEngine();
     void uninitializeScriptEngine();
     void reloadScripts();
@@ -131,7 +133,6 @@ class ControllerEngine : public QObject {
             bool bFatalError = false);
     /// Convert a byteArray to a JS typed array over an ArrayBuffer
     QJSValue byteArrayToScriptValue(const QByteArray& byteArray);
-    QJSValue evaluateCodeString(const QString& program, const QString& fileName = QString(), int lineNumber = 1);
 
     void throwJSError(const QString& message);
 
@@ -181,4 +182,5 @@ class ControllerEngine : public QObject {
     friend class ColorJSProxy;
     friend class ColorMapperJSProxy;
     friend class ControllerEngineTest;
+    friend class ControllerTest;
 };

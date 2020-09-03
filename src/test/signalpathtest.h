@@ -90,13 +90,13 @@ class BaseSignalPathTest : public MixxxTest {
                 m_pVisualsManager,
                 EngineChannel::CENTER,
                 m_pEngineMaster->registerChannelGroup(m_sGroup3));
-        m_pMixerDeck4 = new Deck(NULL,
+        m_pMixerDeck4 = new Deck(nullptr,
                 m_pConfig,
                 m_pEngineMaster,
                 m_pEffectsManager,
                 m_pVisualsManager,
                 EngineChannel::CENTER,
-                m_sGroup4);
+                 m_pEngineMaster->registerChannelGroup(m_sGroup4));
 
         m_pChannel1 = m_pMixerDeck1->getEngineDeck();
         m_pChannel2 = m_pMixerDeck2->getEngineDeck();
