@@ -16,6 +16,7 @@
 #include "util/types.h"
 #include "widget/wcoverartlabel.h"
 #include "widget/wcoverartmenu.h"
+#include "widget/wstarrating.h"
 
 /// A dialog box to display and edit track properties.
 /// Use TrackPointer to load a track into the dialog or
@@ -74,7 +75,7 @@ class DlgTrackInfo : public QDialog, public Ui::DlgTrackInfo {
             const QObject* pRequestor,
             const CoverInfo& info,
             const QPixmap& pixmap,
-            quint16 requestedHash,
+            mixxx::cache_key_t requestedCacheKey,
             bool coverInfoUpdated);
     void slotCoverInfoSelected(const CoverInfoRelative& coverInfo);
     void slotReloadCoverArt();
@@ -100,6 +101,7 @@ class DlgTrackInfo : public QDialog, public Ui::DlgTrackInfo {
 
     CoverInfo m_loadedCoverInfo;
     WCoverArtLabel* m_pWCoverArtLabel;
+    WStarRating* m_pWStarRating;
     UserSettingsPointer m_pConfig;
 
     const TrackModel* m_pTrackModel;

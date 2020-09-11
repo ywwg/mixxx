@@ -21,7 +21,7 @@ class WTrackProperty : public WLabel, public TrackDropTarget {
             QWidget* pParent,
             UserSettingsPointer pConfig,
             TrackCollectionManager* pTrackCollectionManager,
-            const char* group);
+            const QString& group);
     ~WTrackProperty() override;
 
     void setup(const QDomNode& node, const SkinContext& context) override;
@@ -31,21 +31,24 @@ signals:
     void cloneDeck(QString source_group, QString target_group) override;
 
   public slots:
-    void slotTrackLoaded(TrackPointer track);
+    void slotTrackLoaded(TrackPointer pTrack);
     void slotLoadingTrack(TrackPointer pNewTrack, TrackPointer pOldTrack);
+
+  protected:
+    void contextMenuEvent(QContextMenuEvent* event) override;
 
   private slots:
     void slotTrackChanged(TrackId);
-    void contextMenuEvent(QContextMenuEvent* event) override;
 
   private:
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseDoubleClickEvent(QMouseEvent* event) override;
 
     void updateLabel();
 
-    const char* m_pGroup;
+    const QString m_group;
     const UserSettingsPointer m_pConfig;
     TrackPointer m_pCurrentTrack;
     QString m_property;

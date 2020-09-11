@@ -20,8 +20,10 @@
 class HidController final : public Controller {
     Q_OBJECT
   public:
-    HidController(const hid_device_info& deviceInfo, UserSettingsPointer pConfig);
+    HidController(const hid_device_info& deviceInfo);
     ~HidController() override;
+
+    ControllerJSProxy* jsProxy() override;
 
     QString presetExtension() override;
 
@@ -49,7 +51,7 @@ class HidController final : public Controller {
     static QString safeDecodeWideString(const wchar_t* pStr, size_t max_length);
 
   protected:
-    Q_INVOKABLE void send(QList<int> data, unsigned int length, unsigned int reportID = 0);
+    void sendReport(QList<int> data, unsigned int length, unsigned int reportID);
 
   private slots:
     int open() override;
@@ -61,8 +63,8 @@ class HidController final : public Controller {
   private:
     // For devices which only support a single report, reportID must be set to
     // 0x0.
-    void send(QByteArray data) override;
-    void virtual send(QByteArray data, unsigned int reportID);
+    void sendBytes(const QByteArray& data) override;
+    void sendBytesReport(QByteArray data, unsigned int reportID);
 
     // Returns a pointer to the currently loaded controller preset. For internal
     // use only.
@@ -90,6 +92,28 @@ class HidController final : public Controller {
     HidControllerPreset m_preset;
 
     unsigned char m_pPollData[255];
+
+    friend class HidControllerJSProxy;
+};
+
+class HidControllerJSProxy : public ControllerJSProxy {
+    Q_OBJECT
+  public:
+    HidControllerJSProxy(HidController* m_pController)
+            : ControllerJSProxy(m_pController),
+              m_pHidController(m_pController) {
+    }
+
+    Q_INVOKABLE void send(QList<int> data, unsigned int length = 0) override {
+        m_pHidController->send(data, length);
+    }
+
+    Q_INVOKABLE void send(QList<int> data, unsigned int length, unsigned int reportID) {
+        m_pHidController->sendReport(data, length, reportID);
+    }
+
+  private:
+    HidController* m_pHidController;
 };
 
 #endif

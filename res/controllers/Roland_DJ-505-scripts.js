@@ -222,7 +222,7 @@ DJ505.browseEncoder = new components.Encoder({
                 this.isLongPressed = false;
                 this.longPressTimer = engine.beginTimer(
                     this.longPressTimeout,
-                    function() { this.isLongPressed = true; },
+                    function() { this.isLongPressed = true; }.bind(this),
                     true
                 );
 
@@ -490,7 +490,7 @@ DJ505.Deck = function(deckNumbers, offset) {
 
         // Send a value between 0x00 and 0x7F to set jog wheel LED indicator
         midi.sendShortMsg(status, 0x06, Math.round(0x1f * value + 0x20 * this.beatIndex));
-    });
+    }.bind(this));
 
     // ========================== LOOP SECTION ==============================
 
@@ -608,7 +608,7 @@ DJ505.Deck = function(deckNumbers, offset) {
                 this.longPressTimer = engine.beginTimer(this.longPressTimeout, function() {
                     this.onLongPress();
                     this.longPressTimer = 0;
-                }, true);
+                }.bind(this), true);
             } else if (this.longPressTimer !== 0) {
                 // Button released after short press
                 engine.stopTimer(this.longPressTimer);
@@ -672,7 +672,7 @@ DJ505.Deck = function(deckNumbers, offset) {
                 this.longPressTimer = engine.beginTimer(this.longPressTimeout, function() {
                     this.onLongPress(group);
                     this.longPressTimer = 0;
-                }, true);
+                }.bind(this), true);
             } else if (this.longPressTimer !== 0) {
                 // Button released after short press
                 engine.stopTimer(this.longPressTimer);
@@ -725,7 +725,7 @@ DJ505.DeckToggleButton.prototype.input = function(channel, control, value, statu
         // Button was pressed
         this.longPressTimer = engine.beginTimer(
             this.longPressTimeout,
-            function() { this.isLongPressed = true; },
+            function() { this.isLongPressed = true; }.bind(this),
             true
         );
         this.secondaryDeck = !this.secondaryDeck;
@@ -859,7 +859,7 @@ DJ505.Sampler = function() {
             this.playbackTimer = engine.beginTimer(500, function() {
                 midi.sendShortMsg(0xBA, 0x02, this.playbackCounter);
                 this.playbackCounter = (this.playbackCounter % 4) + 1;
-            });
+            }.bind(this));
         } else if (status === 0xFC) {
             if (this.playbackTimer) {
                 engine.stopTimer(this.playbackTimer);
@@ -940,7 +940,7 @@ DJ505.SlipModeButton.prototype.unshift = function() {
             function() {
                 this.doubleTapped = false;
                 this.doubleTapTimer = null;
-            },
+            }.bind(this),
             true
         );
     };
@@ -1109,6 +1109,7 @@ DJ505.PadSection = function(deck, offset) {
         // call won't influence all modes at once
         "hotcue": new DJ505.HotcueMode(deck, offset),
         "cueloop": new DJ505.CueLoopMode(deck, offset),
+        "edit": new DJ505.EditMode(deck, offset),
         "roll": new DJ505.RollMode(deck, offset),
         "sampler": new DJ505.SamplerMode(deck, offset),
         "velocitysampler": new DJ505.VelocitySamplerMode(deck, offset),
@@ -1137,7 +1138,11 @@ DJ505.PadSection.prototype.controlToPadMode = function(control) {
     //    mode = this.modes.flip;
     //    break;
     case DJ505.PadMode.CUELOOP:
-        mode = this.modes.cueloop;
+        if (this.currentMode === this.modes.cueloop) {
+            mode = this.modes.edit;
+        } else {
+            mode = this.modes.cueloop;
+        }
         break;
     case DJ505.PadMode.TR:
     case DJ505.PadMode.PATTERN:
@@ -1175,8 +1180,10 @@ DJ505.PadSection.prototype.controlToPadMode = function(control) {
     return mode;
 };
 
-DJ505.PadSection.prototype.padModeButtonPressed = function(channel, control, _value, _status, _group) {
-    this.setPadMode(control);
+DJ505.PadSection.prototype.padModeButtonPressed = function(channel, control, value, _status, _group) {
+    if (value) {
+        this.setPadMode(control);
+    }
 };
 
 DJ505.PadSection.prototype.paramButtonPressed = function(channel, control, value, status, group) {
@@ -1404,6 +1411,58 @@ DJ505.CueLoopMode = function(deck, offset) {
     });
 };
 DJ505.CueLoopMode.prototype = Object.create(components.ComponentContainer.prototype);
+
+DJ505.EditMode = function(deck, offset) {
+    components.ComponentContainer.call(this);
+    this.ledControl = DJ505.PadMode.HOTCUE;
+    this.color = DJ505.PadColor.RED;
+
+    this.pads = new components.ComponentContainer();
+    for (var i = 0; i <= 3; i++) {
+        var baseKey = [
+            "intro_start",
+            "intro_end",
+            "outro_start",
+            "outro_end",
+        ][i];
+        var color = (i > 1) ? DJ505.PadColor.AZURE : DJ505.PadColor.BLUE;
+
+        this.pads[i] = new components.Button({
+            midi: [0x94 + offset, 0x14 + i],
+            sendShifted: true,
+            shiftControl: true,
+            shiftOffset: 8,
+            baseKey: baseKey,
+            outKey: baseKey + "_enabled",
+            group: deck.currentDeck,
+            on: color,
+            off: color + DJ505.PadColor.DIM_MODIFIER,
+            outConnect: false,
+            unshift: function() {
+                this.inKey = this.baseKey + "_activate";
+            },
+            shift: function() {
+                this.inKey = this.baseKey + "_clear";
+            },
+        });
+    }
+
+    // Disable other pads (reserved for editing downbeats or sections)
+    for (i = 4; i <= 7; i++) {
+        this.pads[i] = new components.Component({
+            midi: [0x94 + offset, 0x14 + i],
+            sendShifted: true,
+            shiftControl: true,
+            shiftOffset: 8,
+            input: function(_channel, _control, _value, _status, _group) {},
+            connect: function() {},
+            trigger: function() {
+                this.send(0);
+            },
+        });
+    }
+};
+DJ505.EditMode.prototype = Object.create(components.ComponentContainer.prototype);
 
 DJ505.RollMode = function(deck, offset) {
     components.ComponentContainer.call(this);
@@ -1682,7 +1741,7 @@ DJ505.PitchPlayMode = function(deck, offset) {
                         if (engine.getValue(this.group, this.outKey)) {
                             this.outputColor(id);
                         }
-                    });
+                    }.bind(this));
                 }
             };
             if (this.connections[0] !== undefined) {

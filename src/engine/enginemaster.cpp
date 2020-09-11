@@ -29,13 +29,14 @@
 #include "util/timer.h"
 #include "util/trace.h"
 
-EngineMaster::EngineMaster(UserSettingsPointer pConfig,
-        const char* group,
+EngineMaster::EngineMaster(
+        UserSettingsPointer pConfig,
+        const QString& group,
         EffectsManager* pEffectsManager,
         ChannelHandleFactoryPointer pChannelHandleFactory,
         bool bEnableSidechain)
         : m_pChannelHandleFactory(pChannelHandleFactory),
-          m_pEngineEffectsManager(pEffectsManager ? pEffectsManager->getEngineEffectsManager() : NULL),
+          m_pEngineEffectsManager(pEffectsManager->getEngineEffectsManager()),
           m_masterGainOld(0.0),
           m_boothGainOld(0.0),
           m_headphoneMasterGainOld(0.0),
@@ -464,11 +465,15 @@ void EngineMaster::process(const int iBufferSize) {
     // Process effects on all microphones mixed together
     // We have no metadata for mixed effect buses, so use an empty GroupFeatureState.
     GroupFeatureState busFeatures;
-    m_pEngineEffectsManager->processPostFaderInPlace(
-            m_busTalkoverHandle.handle(),
-            m_masterHandle.handle(),
-            m_pTalkover,
-            m_iBufferSize, m_iSampleRate, busFeatures);
+    if (m_pEngineEffectsManager) {
+        m_pEngineEffectsManager->processPostFaderInPlace(
+                m_busTalkoverHandle.handle(),
+                m_masterHandle.handle(),
+                m_pTalkover,
+                m_iBufferSize,
+                m_iSampleRate,
+                busFeatures);
+    }
 
     switch (m_pTalkoverDucking->getMode()) {
     case EngineTalkoverDucking::OFF:

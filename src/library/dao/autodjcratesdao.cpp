@@ -6,12 +6,12 @@
 #include <QtDebug>
 #include <QtSql>
 
-#include "library/crate/crateschema.h"
 #include "library/dao/settingsdao.h"
 #include "library/dao/trackdao.h"
 #include "library/dao/trackschema.h"
 #include "library/queryutil.h"
 #include "library/trackcollection.h"
+#include "library/trackset/crate/crateschema.h"
 #include "mixer/playerinfo.h"
 #include "mixer/playermanager.h"
 
@@ -39,7 +39,7 @@ namespace {
 const int kLeastPreferredPercent = 15;
 
 // These consts are only used for DEBUG_ASSERTs
-#ifdef MIXXX_BUILD_DEBUG
+#ifdef MIXXX_DEBUG_ASSERTIONS_ENABLED
 const int kLeastPreferredPercentMin = 0;
 const int kLeastPreferredPercentMax = 50;
 #endif

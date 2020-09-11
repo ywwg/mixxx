@@ -84,7 +84,7 @@ CoverInfoRelative CoverArtUtils::selectCoverArtForTrack(
         const QList<QFileInfo>& covers) {
     CoverInfoRelative coverInfoRelative;
     DEBUG_ASSERT(coverInfoRelative.type == CoverInfo::NONE);
-    DEBUG_ASSERT(!CoverImageUtils::isValidHash(coverInfoRelative.hash));
+    DEBUG_ASSERT(coverInfoRelative.imageDigest().isNull());
     DEBUG_ASSERT(coverInfoRelative.coverLocation.isNull());
     coverInfoRelative.source = CoverInfo::GUESSED;
     if (covers.isEmpty()) {
@@ -110,9 +110,8 @@ CoverInfoRelative CoverArtUtils::selectCoverArtForTrack(
             if (bestType > TRACK_BASENAME &&
                 coverBaseName.compare(trackFile.baseName(),
                                       Qt::CaseInsensitive) == 0) {
-                bestType = TRACK_BASENAME;
                 bestInfo = &file;
-                // This is the best type so we know we're done.
+                // This is the best type (TRACK_BASENAME) so we know we're done.
                 break;
             } else if (bestType > ALBUM_NAME &&
                        coverBaseName.compare(albumName,
@@ -143,13 +142,12 @@ CoverInfoRelative CoverArtUtils::selectCoverArtForTrack(
         }
     }
 
-    if (bestInfo != NULL) {
-        QImage image(bestInfo->filePath());
+    if (bestInfo) {
+        const QImage image(bestInfo->filePath());
         if (!image.isNull()) {
             coverInfoRelative.type = CoverInfo::FILE;
-            // TODO() here we may introduce a duplicate hash code
-            coverInfoRelative.hash = CoverImageUtils::calculateHash(image);
             coverInfoRelative.coverLocation = bestInfo->fileName();
+            coverInfoRelative.setImage(image);
         }
     }
 
@@ -164,7 +162,7 @@ CoverInfoRelative CoverInfoGuesser::guessCoverInfo(
         CoverInfoRelative coverInfo;
         coverInfo.source = CoverInfo::GUESSED;
         coverInfo.type = CoverInfo::METADATA;
-        coverInfo.hash = CoverImageUtils::calculateHash(embeddedCover);
+        coverInfo.setImage(embeddedCover);
         DEBUG_ASSERT(coverInfo.coverLocation.isNull());
         return coverInfo;
     }
@@ -220,20 +218,6 @@ void guessTrackCoverInfoConcurrently(
     } else {
         // Disabled only during tests
         CoverInfoGuesser().guessAndSetCoverInfoForTrack(*pTrack);
-    }
-}
-
-void guessTrackCoverInfoConcurrently(
-        QList<TrackPointer> tracks) {
-    if (tracks.isEmpty()) {
-        return;
-    }
-    if (s_enableConcurrentGuessingOfTrackCoverInfo) {
-        QtConcurrent::run([tracks] {
-            CoverInfoGuesser().guessAndSetCoverInfoForTracks(tracks);
-        });
-    } else {
-        CoverInfoGuesser().guessAndSetCoverInfoForTracks(tracks);
     }
 }
 
