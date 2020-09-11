@@ -185,7 +185,6 @@ class TrackDAO : public QObject, public virtual DAO, public virtual GlobalTrackC
     DISALLOW_COPY_AND_ASSIGN(TrackDAO);
 };
 
-
 Q_DECLARE_OPERATORS_FOR_FLAGS(TrackDAO::ResolveTrackIdFlags)
 
 #endif //TRACKDAO_H
