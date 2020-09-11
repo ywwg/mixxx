@@ -1214,10 +1214,17 @@ TraktorS3.FXControl.prototype.changeState = function(newState) {
         engine.stopTimer(this.focusBlinkTimer);
         this.focusBlinkTimer = 0;
     }
-    if (newState === this.STATE_FOCUS) {
+    switch (newState) {
+    case this.STATE_FILTER:
+        break;
+    case this.STATE_EFFECT_INIT:
+        break;
+    case this.STATE_EFFECT:
+        break;
+    case this.STATE_FOCUS:
         this.focusBlinkTimer = engine.beginTimer(150, function() {
-            this.focusBlinkState = !this.focusBlinkState;
-            this.lightFX();
+            TraktorS3.fxController.focusBlinkState = !TraktorS3.fxController.focusBlinkState;
+            TraktorS3.fxController.lightFX();
         }, false);
     }
 };
@@ -1598,6 +1605,15 @@ TraktorS3.registerInputPackets = function() {
         engine.softTakeover(group, "pregain", true);
         engine.softTakeover("[QuickEffectRack1_" + group + "]", "super1", true);
     }
+    for (var unit = 1; unit <= 4; unit++) {
+        for (var effect = 1; effect <= 4; effect++) {
+            for (var param = 1; param <= 4; param++) {
+                group = "[EffectRack1_EffectUnit" + unit + "_Effect" + effect;
+                var key = "parameter" + param;
+                engine.softTakeover(group, key, true);
+            }
+        }
+    }
 
     engine.softTakeover("[Microphone]", "volume", true);
     engine.softTakeover("[Microphone]", "pregain", true);
@@ -1695,38 +1711,6 @@ TraktorS3.deckSwitchHandler = function(field) {
     var deck = channel.parentDeck;
     deck.activateChannel(channel);
 };
-
-// TraktorS3.toggleFX = function() {
-//     // This is an AND operation.  We go through each channel, and if
-//     // the filter button is ON and the fx is ON, we turn the effect ON.
-//     // We turn OFF if either is false.
-
-//     // The only exception is the Filter effect.  If the channel fxenable
-//     // is off, the Filter effect is still automatically enabled.
-//     // If the fxenable button is on, the Filter effect is only enabled if
-//     // the Filter FX button is enabled.
-//     for (var ch = 1; ch <= 4; ch++) {
-//         var channel = TraktorS3.Channels["[Channel" + ch + "]"];
-//         var chEnabled = channel.fxEnabledState;
-//         if (ch === 4 && TraktorS3.channel4InputMode) {
-//             chEnabled = TraktorS3.inputFxEnabledState;
-//         } else {
-//             // There is no quickeffect for the microphone
-//             var newState = !chEnabled || TraktorS3.fxButtonState[5];
-//             engine.setValue("[QuickEffectRack1_[Channel" + ch + "]]", "enabled",
-//                 newState);
-//         }
-//         for (var fxNumber = 1; fxNumber <= 4; fxNumber++) {
-//             var fxGroup = "[EffectRack1_EffectUnit" + fxNumber + "]";
-//             var fxKey = "group_[Channel" + ch + "]_enable";
-//             newState = chEnabled && TraktorS3.fxButtonState[fxNumber];
-//             if (ch === 4 && TraktorS3.channel4InputMode) {
-//                 fxKey = "group_[Microphone]_enable";
-//             }
-//             engine.setValue(fxGroup, fxKey, newState);
-//         }
-//     }
-// };
 
 TraktorS3.extModeHandler = function(field) {
     if (!field.value) {
@@ -2064,7 +2048,7 @@ TraktorS3.guiTickHandler = function() {
 // A special packet sent to the controller switches between mic and line
 // input modes.  if lineMode is true, sets input to line. Otherwise, mic.
 TraktorS3.setInputLineMode = function(lineMode) {
-    var packet = Object();
+    var packet = Array();
     packet.length = 33;
     packet[0] = 0x20;
     if (!lineMode) {
@@ -2105,7 +2089,7 @@ TraktorS3.debugLights = function() {
         "00"
     ];
 
-    var data = [Object(), Object(), Object()];
+    var data = [Array(), Array(), Array()];
 
 
     for (var i = 0; i < data.length; i++) {
@@ -2156,7 +2140,7 @@ TraktorS3.shutdown = function() {
         "00 00 00 00  00 00 00 00  00 00 00 00  00 00 00",
     ];
 
-    var data = [Object(), Object()];
+    var data = [Array(), Array()];
 
 
     for (var i = 0; i < data.length; i++) {
