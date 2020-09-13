@@ -2095,11 +2095,11 @@ TraktorS3.debugLights = function() {
 
     for (var i = 0; i < data.length; i++) {
         var ok = true;
-        var splitted = dataStrings[i].split(/\s+/);
-        HIDDebug("i " + i + " " + splitted);
-        data[i].length = splitted.length;
-        for (var j = 0; j < splitted.length; j++) {
-            var byteStr = splitted[j];
+        var tokens = dataStrings[i].split(/\s+/);
+        HIDDebug("i " + i + " " + tokens);
+        data[i].length = tokens.length;
+        for (var j = 0; j < tokens.length; j++) {
+            var byteStr = tokens[j];
             if (byteStr.length === 0) {
                 continue;
             }
@@ -2145,10 +2145,10 @@ TraktorS3.shutdown = function() {
 
 
     for (var i = 0; i < data.length; i++) {
-        var splitted = dataStrings[i].split(/\s+/);
-        data[i].length = splitted.length;
-        for (var j = 0; j < splitted.length; j++) {
-            var byteStr = splitted[j];
+        var tokens = dataStrings[i].split(/\s+/);
+        data[i].length = tokens.length;
+        for (var j = 0; j < tokens.length; j++) {
+            var byteStr = tokens[j];
             if (byteStr.length === 0) {
                 continue;
             }
