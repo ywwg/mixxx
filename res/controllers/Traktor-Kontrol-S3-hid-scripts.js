@@ -10,7 +10,6 @@
 ///////////////////////////////////////////////////////////////////////////////////
 /*                                                                               */
 /* TODO:                                                                         */
-/*   * FX soft takeover is not right yet                                         */
 /*   * jog button                                                                */
 /*   * star button                                                               */
 /*                                                                               */
@@ -1208,6 +1207,28 @@ TraktorS3.FXControl.prototype.changeState = function(newState) {
     if (newState === this.currentState) {
         return;
     }
+
+    // Ignore next values for all knob actions. This is safe to do for all knobs
+    // even if we're ignoring knobs that aren't active in the new state.
+    for (var ch = 1; ch <= 4; ch++) {
+        var group = "[Channel" + ch + "]";
+        engine.softTakeoverIgnoreNextValue("[QuickEffectRack1_" + group + "]", "super1");
+    }
+    for (var unit = 1; unit <= 4; unit++) {
+        group = "[EffectRack1_EffectUnit" + unit + "]";
+        key = "mix";
+        engine.softTakeoverIgnoreNextValue(group, key);
+        for (var effect = 1; effect <= 4; effect++) {
+            group = "[EffectRack1_EffectUnit" + unit + "_Effect" + effect + "]";
+            key = "meta";
+            engine.softTakeoverIgnoreNextValue(group, key);
+            for (var param = 1; param <= 4; param++) {
+                var key = "parameter" + param;
+                engine.softTakeoverIgnoreNextValue(group, key);
+            }
+        }
+    }
+
     var oldState = this.currentState;
     this.currentState = newState;
     if (oldState === this.STATE_FOCUS) {
@@ -1606,10 +1627,15 @@ TraktorS3.Controller.prototype.registerInputPackets = function() {
         engine.softTakeover("[QuickEffectRack1_" + group + "]", "super1", true);
     }
     for (var unit = 1; unit <= 4; unit++) {
+        group = "[EffectRack1_EffectUnit" + unit + "]";
+        var key = "mix";
+        engine.softTakeover(group, key, true);
         for (var effect = 1; effect <= 4; effect++) {
+            group = "[EffectRack1_EffectUnit" + unit + "_Effect" + effect + "]";
+            key = "meta";
+            engine.softTakeover(group, key, true);
             for (var param = 1; param <= 4; param++) {
-                group = "[EffectRack1_EffectUnit" + unit + "_Effect" + effect;
-                var key = "parameter" + param;
+                key = "parameter" + param;
                 engine.softTakeover(group, key, true);
             }
         }
