@@ -139,8 +139,6 @@ TraktorS3.Controller = function() {
     // If true, channel 4 is in input mode
     this.channel4InputMode = false;
 
-    this.inputFxEnabledState = false;
-
     // callbacks
     this.samplerCallbacks = [];
 };

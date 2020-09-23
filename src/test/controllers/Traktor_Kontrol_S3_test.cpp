@@ -23,7 +23,7 @@ class TraktorS3Test : public ControllerTest {
     void SetUp() override {
         ControllerTest::SetUp();
 
-        // Load a few effects so we can test that part.
+        // Load a few effects so we can interact with them.
         EffectManifestPointer pManifest(new EffectManifest());
         pManifest->setId("org.mixxx.test.effect");
         pManifest->setName("Test Effect1");
@@ -51,60 +51,64 @@ class TraktorS3Test : public ControllerTest {
         ASSERT_TRUE(evaluateScriptFile(scriptFile));
 
         // Create useful objects and getters
-        evaluate(
-                "var TestOb = {};"
-                "TestOb.fxc = new TraktorS3.FXControl(); "
-                "var getState = function() {"
-                " return TestOb.fxc.currentState;"
-                "};"
-                "var getActiveFx = function() {"
-                " return TestOb.fxc.activeFX;"
-                "};"
-                "var getSelectPressed = function() {"
-                " return TestOb.fxc.selectPressed;"
-                "};"
-                "var getEnablePressed = function() {"
-                " return TestOb.fxc.enablePressed;"
-                "};"
+        ASSERT_FALSE(evaluate(R"(
+                var TestOb = {};
+                TestOb.fxc = new TraktorS3.FXControl();
+                var getState = function() {
+                 return TestOb.fxc.currentState;
+                };
+                var getActiveFx = function() {
+                 return TestOb.fxc.activeFX;
+                };
+                var getSelectPressed = function() {
+                 return TestOb.fxc.selectPressed;
+                };
+                var getEnablePressed = function() {
+                 return TestOb.fxc.enablePressed;
+                };
                 // Mock out shift key.
-                "TestOb.shiftPressed = false;"
-                "TraktorS3.anyShiftPressed = function() {"
-                "  return TestOb.shiftPressed;"
-                "}");
+                TestOb.shiftPressed = false;
+                TraktorS3.anyShiftPressed = function() {
+                  return TestOb.shiftPressed;
+                } )")
+                             .isError());
 
         // Mock out functions and controller for testing lights
-        evaluate(
-                "TraktorS3.FXControl.prototype.getFXSelectLEDValue = function(fxNumber, status) {"
-                "  return fxNumber*10 + status;"
-                "};"
-                "TraktorS3.FXControl.prototype.getChannelColor = function(group, status) {"
-                "  return this.channelToIndex(group)*10 + status;"
-                "};"
+        ASSERT_FALSE(evaluate(R"(
+                TraktorS3.FXControl.prototype.getFXSelectLEDValue = function(fxNumber, status) {
+                    return fxNumber*10 + status;
+                };
+                TraktorS3.FXControl.prototype.getChannelColor = function(group, status) {
+                    return this.channelToIndex(group)*10 + status;
+                };
                 // stub out state changer so we don't do time-based blinking
-                "TraktorS3.FXControl.prototype.changeState = function(newState) {"
-                "  this.currentState = newState;"
-                "};"
-                "var setBlink = function(state) { "
-                "  TestOb.fxc.controller.focusBlinkState = state;"
-                "};"
-                "TestOb.fxc.controller = new function() {"
-                "  this.lightMap = {}; "
-                "  this.setOutput = function(group, key, value, batching) {"
-                "    if (!(group in this.lightMap)) {"
-                "      this.lightMap[group] = {};"
-                "    }"
-                // "    HIDDebug('light: ' + group + ' ' + key + ' ' + value);"
-                "    this.lightMap[group][key] = value;"
-                "  };"
-                "};"
-                "var getLight = function(group, key) {"
-                "  if (!(group in TestOb.fxc.controller.lightMap)) {"
-                "    return undefined;"
-                "  }"
-                // " HIDDebug('whats the frequency ' + group + ' ' + key + ' ' + "
-                // "TestOb.fxc.controller.lightMap[group][key]);"
-                "  return TestOb.fxc.controller.lightMap[group][key];"
-                "};");
+                TraktorS3.FXControl.prototype.changeState = function(newState) {
+                    this.currentState = newState;
+                };
+                var setBlink = function(state) {
+                    TestOb.fxc.controller.focusBlinkState = state;
+                };
+                TestOb.fxc.controller = new function() {
+                    this.batchingOutputs = false;
+                    this.lightMap = {};
+                    this.hid = {};
+                    this.hid.setOutput = function(group, key, value, batching) {
+                        if (!(group in TestOb.fxc.controller.lightMap)) {
+                            TestOb.fxc.controller.lightMap[group] = {};
+                        }
+                        // HIDDebug('setting light: ' + group + ' ' + key + ' ' + value);
+                        TestOb.fxc.controller.lightMap[group][key] = value;
+                    };
+                };
+                var getLight = function(group, key) {
+                    if (!(group in TestOb.fxc.controller.lightMap)) {
+                        return undefined;
+                    }
+                    // HIDDebug('getting light ' + group + ' ' + key + ' ' +
+                    //     TestOb.fxc.controller.lightMap[group][key]);
+                    return TestOb.fxc.controller.lightMap[group][key];
+                };)")
+                             .isError());
     }
 
     void registerTestEffect(EffectManifestPointer pManifest, bool willAddToEngine) {
@@ -214,7 +218,8 @@ TEST_F(TraktorS3Test, FXSelectButtonSimple) {
     EXPECT_EQ(0, evaluate("getActiveFx();").toInt());
 
     // First try pressing a select button and releasing
-    evaluate("TestOb.fxc.fxSelectHandler(pressFx2);");
+    ASSERT_FALSE(evaluate("TestOb.fxc.fxSelectHandler(pressFx2);").isError());
+
     auto ret = evaluate("getSelectPressed();");
     {
         SCOPED_TRACE("");
