@@ -604,7 +604,7 @@ TraktorS3.Deck.prototype.jogTouchHandler = function(field) {
             this.finishJogTouch();
         } else {
             this.wheelTouchInertiaTimer = engine.beginTimer(
-                inertiaTime, this.finishJogTouch, true);
+                inertiaTime, TraktorS3.bind(TraktorS3.Deck.prototype.finishJogTouch, this), true);
         }
     }
 };
@@ -659,7 +659,7 @@ TraktorS3.Deck.prototype.finishJogTouch = function() {
     } else {
         // Check again soon.
         this.wheelTouchInertiaTimer = engine.beginTimer(
-            100, this.finishJogTouch, true);
+            100, TraktorS3.bind(TraktorS3.Deck.prototype.finishJogTouch, this), true);
     }
     this.tickReceived = false;
 };
