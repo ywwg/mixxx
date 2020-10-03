@@ -10,7 +10,6 @@
 ///////////////////////////////////////////////////////////////////////////////////
 /*                                                                               */
 /* TODO:                                                                         */
-/*   * jog button                                                                */
 /*   * star button                                                               */
 /*                                                                               */
 ///////////////////////////////////////////////////////////////////////////////////
@@ -158,6 +157,7 @@ TraktorS3.Deck = function(controller, deckNumber, group) {
     this.group = group;
     this.activeChannel = "[Channel" + deckNumber + "]";
     this.shiftPressed = false;
+    this.jogButtonPressed = false;
 
     // State for pitch slider relative mode
     this.pitchSliderLastValue = -1;
@@ -257,8 +257,8 @@ TraktorS3.Deck.prototype.registerInputs = function(messageShort, messageLong) {
     // Rev / Flux / Grid / Jog
     this.defineButton(messageShort, "!reverse", 0x01, 0x04, 0x04, 0x08, deckFn.reverseHandler);
     this.defineButton(messageShort, "!slip_enabled", 0x01, 0x02, 0x04, 0x04, deckFn.fluxHandler);
-    // Grid button
     this.defineButton(messageShort, "quantize", 0x01, 0x80, 0x05, 0x01, deckFn.quantizeHandler);
+    this.defineButton(messageShort, "!jogButton", 0x02, 0x01, 0x05, 0x02, deckFn.jogButtonHandler);
 
     // Beatjump
     // TODO: bind touch detections: 0x09/0x80, 0x0A/0x04
@@ -582,6 +582,11 @@ TraktorS3.Deck.prototype.quantizeHandler = function(field) {
     }
 };
 
+TraktorS3.Deck.prototype.jogButtonHandler = function(field) {
+    this.jogButtonPressed = field.value;
+    this.colorOutput(field.value, "!jogButton");
+};
+
 TraktorS3.Deck.prototype.jogTouchHandler = function(field) {
     if (this.wheelTouchInertiaTimer !== 0) {
         // The wheel was touched again, reset the timer.
@@ -664,6 +669,15 @@ TraktorS3.Deck.prototype.finishJogTouch = function() {
 TraktorS3.Deck.prototype.jogHandler = function(field) {
     this.tickReceived = true;
     var deltas = this.wheelDeltas(field.value);
+
+    // If jog button is held, do a simple seek.
+    if (this.jogButtonPressed) {
+        var playPosition = engine.getValue(this.activeChannel, "playposition");
+        playPosition += deltas[0] / 2048.0;
+        playPosition = Math.max(Math.min(playPosition, 1.0), 0.0);
+        engine.setValue(this.activeChannel, "playposition", playPosition);
+        return;
+    }
     var tickDelta = deltas[0];
     var timeDelta = deltas[1];
 
@@ -756,6 +770,7 @@ TraktorS3.Deck.prototype.registerOutputs = function(outputA, _outputB) {
     this.defineOutput(outputA, "!QueueAutoDJ", 0x06, 0x1F);
     this.defineOutput(outputA, "!LibraryFocus", 0x07, 0x20);
     this.defineOutput(outputA, "quantize", 0x08, 0x21);
+    this.defineOutput(outputA, "!jogButton", 0x09, 0x22);
     this.defineOutput(outputA, "sync_enabled", 0x0C, 0x25);
     this.defineOutput(outputA, "keylock", 0x0D, 0x26);
     this.defineOutput(outputA, "hotcues", 0x0E, 0x27);
@@ -1564,19 +1579,19 @@ TraktorS3.Controller.prototype.registerInputPackets = function() {
         deck.registerInputs(messageShort, messageLong);
     }
 
-    this.registerInputButton(messageShort, "[Channel1]", "!switchDeck", 0x02, 0x02, this.deckSwitchHandler);
-    this.registerInputButton(messageShort, "[Channel2]", "!switchDeck", 0x05, 0x04, this.deckSwitchHandler);
-    this.registerInputButton(messageShort, "[Channel3]", "!switchDeck", 0x02, 0x04, this.deckSwitchHandler);
-    this.registerInputButton(messageShort, "[Channel4]", "!switchDeck", 0x05, 0x08, this.deckSwitchHandler);
+    this.registerInputButton(messageShort, "[Channel1]", "!switchDeck", 0x02, 0x02, TraktorS3.bind(TraktorS3.Controller.prototype.deckSwitchHandler, this));
+    this.registerInputButton(messageShort, "[Channel2]", "!switchDeck", 0x05, 0x04, TraktorS3.bind(TraktorS3.Controller.prototype.deckSwitchHandler, this));
+    this.registerInputButton(messageShort, "[Channel3]", "!switchDeck", 0x02, 0x04, TraktorS3.bind(TraktorS3.Controller.prototype.deckSwitchHandler, this));
+    this.registerInputButton(messageShort, "[Channel4]", "!switchDeck", 0x05, 0x08, TraktorS3.bind(TraktorS3.Controller.prototype.deckSwitchHandler, this));
 
     // Headphone buttons
-    this.registerInputButton(messageShort, "[Channel1]", "pfl", 0x08, 0x01, this.headphoneHandler);
-    this.registerInputButton(messageShort, "[Channel2]", "pfl", 0x08, 0x02, this.headphoneHandler);
-    this.registerInputButton(messageShort, "[Channel3]", "pfl", 0x07, 0x80, this.headphoneHandler);
-    this.registerInputButton(messageShort, "[Channel4]", "pfl", 0x08, 0x04, this.headphoneHandler);
+    this.registerInputButton(messageShort, "[Channel1]", "pfl", 0x08, 0x01, TraktorS3.bind(TraktorS3.Controller.prototype.headphoneHandler, this));
+    this.registerInputButton(messageShort, "[Channel2]", "pfl", 0x08, 0x02, TraktorS3.bind(TraktorS3.Controller.prototype.headphoneHandler, this));
+    this.registerInputButton(messageShort, "[Channel3]", "pfl", 0x07, 0x80, TraktorS3.bind(TraktorS3.Controller.prototype.headphoneHandler, this));
+    this.registerInputButton(messageShort, "[Channel4]", "pfl", 0x08, 0x04, TraktorS3.bind(TraktorS3.Controller.prototype.headphoneHandler, this));
 
     // EXT Button
-    this.registerInputButton(messageShort, "[Master]", "!extButton", 0x07, 0x04, this.extModeHandler);
+    this.registerInputButton(messageShort, "[Master]", "!extButton", 0x07, 0x04, TraktorS3.bind(TraktorS3.Controller.prototype.extModeHandler, this));
 
     this.fxController.registerInputs(messageShort, messageLong);
 
@@ -1609,7 +1624,7 @@ TraktorS3.Controller.prototype.registerInputPackets = function() {
     this.registerInputScaler(messageLong, "[EqualizerRack1_[Channel4]_Effect1]", "parameter1", 0x35, 0xFFFF, this.parameterHandler);
 
     this.registerInputScaler(messageLong, "[Master]", "crossfader", 0x0B, 0xFFFF, this.parameterHandler);
-    this.registerInputScaler(messageLong, "[Master]", "gain", 0x17, 0xFFFF, this.masterGainHandler);
+    this.registerInputScaler(messageLong, "[Master]", "gain", 0x17, 0xFFFF, TraktorS3.bind(TraktorS3.Controller.prototype.masterGainHandler, this));
     this.registerInputScaler(messageLong, "[Master]", "headMix", 0x1D, 0xFFFF, this.parameterHandler);
     this.registerInputScaler(messageLong, "[Master]", "headGain", 0x1B, 0xFFFF, this.parameterHandler);
 
@@ -2008,6 +2023,7 @@ TraktorS3.Controller.prototype.lightDeck = function(group, sendPackets) {
         deck.colorOutput(0, "!PreviewTrack");
         deck.colorOutput(0, "!QueueAutoDJ");
         deck.colorOutput(0, "!LibraryFocus");
+        deck.colorOutput(0, "!jogButton");
         if (group === "[Channel4]") {
             this.basicOutput(0, "[Master]", "!extButton");
         }
