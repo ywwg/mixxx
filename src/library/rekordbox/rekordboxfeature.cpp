@@ -24,6 +24,7 @@
 #include "track/beatmap.h"
 #include "track/cue.h"
 #include "track/keyfactory.h"
+#include "track/track.h"
 #include "util/color/color.h"
 #include "util/db/dbconnectionpooled.h"
 #include "util/db/dbconnectionpooler.h"
@@ -1283,7 +1284,15 @@ TreeItemModel* RekordboxFeature::getChildModel() {
 
 QString RekordboxFeature::formatRootViewHtml() const {
     QString title = tr("Rekordbox");
-    QString summary = tr("Reads the following from Rekordbox prepared removable devices:");
+    QString summary = tr(
+            "Reads databases for Pioneer CDJ / XDJ players. <br/>"
+            "The database has to be exported to a USB or SD device <br/>"
+            "with a FAT or HFS file system using the Rekordbox Export mode. <br/>"
+            "Not supported are databases that have been moved to an external device via <br/>"
+            "Preferences > Advanced > Database management. <br/>"
+            "<br/>"
+            "The following data is read:");
+
     QStringList items;
 
     items
@@ -1292,10 +1301,10 @@ QString RekordboxFeature::formatRootViewHtml() const {
             << tr("Beatgrids")
             << tr("Hot cues")
             << tr("Memory cues")
-            << tr("Loops (after first not usable in Mixxx 2.3 yet)");
+            << tr("Loops (only the first loop is currently usable in Mixxx)");
 
     QString html;
-    QString refreshLink = tr("Check for attached Rekordbox devices (refresh)");
+    QString refreshLink = tr("Check for attached Rekordbox USB / SD devices (refresh)");
     html.append(QString("<h2>%1</h2>").arg(title));
     html.append(QString("<p>%1</p>").arg(summary));
     html.append(QString("<ul>"));

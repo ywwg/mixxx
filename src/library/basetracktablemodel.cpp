@@ -12,6 +12,7 @@
 #include "library/trackcollectionmanager.h"
 #include "mixer/playerinfo.h"
 #include "mixer/playermanager.h"
+#include "track/track.h"
 #include "util/assert.h"
 #include "util/compatibility.h"
 #include "util/datetime.h"
@@ -604,7 +605,6 @@ QVariant BaseTrackTableModel::roleValue(
         break;
     }
     return std::move(rawValue);
-
 }
 
 bool BaseTrackTableModel::isBpmLocked(
@@ -804,4 +804,9 @@ void BaseTrackTableModel::emitDataChangedForMultipleRowsInColumn(
 TrackPointer BaseTrackTableModel::getTrackByRef(
         const TrackRef& trackRef) const {
     return m_pTrackCollectionManager->internalCollection()->getTrackByRef(trackRef);
+}
+
+TrackId BaseTrackTableModel::doGetTrackId(
+        const TrackPointer& pTrack) const {
+    return pTrack ? pTrack->getId() : TrackId();
 }
