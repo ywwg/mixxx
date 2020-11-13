@@ -133,7 +133,7 @@ void WaveformWidgetRenderer::onPreRender(VSyncThread* vsyncThread) {
     double truePlayPos = m_visualPlayPosition->getAtNextVSync(vsyncThread);
     // m_playPos = -1 happens, when a new track is in buffer but m_visualPlayPosition was not updated
 
-    if (m_audioSamplePerPixel && truePlayPos != -1) {
+    if (m_audioSamplePerPixel != 0 && truePlayPos != -1) {
         // Track length in pixels.
         m_trackPixelCount = static_cast<double>(m_trackSamples) / 2.0 / m_audioSamplePerPixel;
 
@@ -356,8 +356,13 @@ void WaveformWidgetRenderer::setTrack(TrackPointer track) {
 }
 
 WaveformMarkPointer WaveformWidgetRenderer::getCueMarkAtPoint(QPoint point) const {
-    for (const auto& pMark : m_markPositions.keys()) {
-        int markImagePositionInWidgetSpace = m_markPositions[pMark];
+    for (auto it = m_markPositions.constBegin(); it != m_markPositions.constEnd(); ++it) {
+        WaveformMarkPointer pMark = it.key();
+        VERIFY_OR_DEBUG_ASSERT(pMark) {
+            continue;
+        }
+
+        int markImagePositionInWidgetSpace = it.value();
         QPoint pointInImageSpace;
         if (getOrientation() == Qt::Horizontal) {
             pointInImageSpace = QPoint(point.x() - markImagePositionInWidgetSpace, point.y());

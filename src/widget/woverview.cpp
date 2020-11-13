@@ -384,7 +384,7 @@ void WOverview::onPassthroughChange(double v) {
 
 void WOverview::updateCues(const QList<CuePointer> &loadedCues) {
     m_marksToRender.clear();
-    for (CuePointer currentCue: loadedCues) {
+    for (const CuePointer& currentCue : loadedCues) {
         const WaveformMarkPointer pMark = m_marks.getHotCueMark(currentCue->getHotCue());
 
         if (pMark != nullptr && pMark->isValid() && pMark->isVisible()
@@ -534,8 +534,13 @@ void WOverview::mousePressEvent(QMouseEvent* e) {
                 }
             }
             if (pHoveredCue != nullptr) {
-                m_pCueMenuPopup->setTrackAndCue(m_pCurrentTrack, pHoveredCue);
-                m_pCueMenuPopup->popup(e->globalPos());
+                if (e->modifiers().testFlag(Qt::ShiftModifier)) {
+                    m_pCurrentTrack->removeCue(pHoveredCue);
+                    return;
+                } else {
+                    m_pCueMenuPopup->setTrackAndCue(m_pCurrentTrack, pHoveredCue);
+                    m_pCueMenuPopup->popup(e->globalPos());
+                }
             }
         }
     }
@@ -1091,7 +1096,7 @@ void WOverview::drawMarkLabels(QPainter* pPainter, const float offset, const flo
     QFontMetricsF fontMetrics(markerFont);
 
     // Draw WaveformMark labels
-    for (const auto& pMark : m_marksToRender) {
+    for (const auto& pMark : qAsConst(m_marksToRender)) {
         if (m_pHoveredMark != nullptr && pMark != m_pHoveredMark) {
             if (pMark->m_label.intersects(m_pHoveredMark->m_label)) {
                 continue;
