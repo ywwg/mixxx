@@ -89,7 +89,8 @@ void DlgPrefColors::loadSettings() {
                 paletteIcon);
     }
 
-    for (const auto& paletteName : m_colorPaletteSettings.getColorPaletteNames()) {
+    const QSet<QString> colorPaletteNames = m_colorPaletteSettings.getColorPaletteNames();
+    for (const auto& paletteName : colorPaletteNames) {
         QIcon paletteIcon = drawPalettePreview(paletteName);
         comboBoxHotcueColors->addItem(paletteName);
         comboBoxHotcueColors->setItemIcon(
@@ -223,7 +224,7 @@ QPixmap DlgPrefColors::drawPalettePreview(const QString& paletteName) {
         QPixmap pixmap(kPalettePreviewSize);
         int count = math_max(palette.size(), 1);
         // Rounding up is required so the entire width of the pixmap is filled up to the edge.
-        int widthPerColor = ceil(pixmap.width() / static_cast<float>(count));
+        int widthPerColor = static_cast<int>(ceil(pixmap.width() / static_cast<float>(count)));
         QPainter painter(&pixmap);
         for (int i = 0; i < palette.size(); ++i) {
             painter.setPen(mixxx::RgbColor::toQColor(palette.at(i)));

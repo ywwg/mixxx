@@ -11,7 +11,8 @@
 #include "engine/controls/enginecontrol.h"
 #include "preferences/colorpalettesettings.h"
 #include "preferences/usersettings.h"
-#include "track/track.h"
+#include "track/cue.h"
+#include "track/track_decl.h"
 
 #define NUM_HOT_CUES 37
 
@@ -124,7 +125,7 @@ class CueControl : public EngineControl {
     ~CueControl() override;
 
     void hintReader(HintVector* pHintList) override;
-    bool updateIndicatorsAndModifyPlay(bool newPlay, bool playPossible);
+    bool updateIndicatorsAndModifyPlay(bool newPlay, bool oldPlay, bool playPossible);
     void updateIndicators();
     bool isTrackAtIntroCue();
     void resetIndicators();

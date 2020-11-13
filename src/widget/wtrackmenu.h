@@ -5,10 +5,12 @@
 #include <QPointer>
 #include <memory>
 
+#include "library/coverart.h"
 #include "library/dao/playlistdao.h"
 #include "library/trackprocessing.h"
 #include "preferences/usersettings.h"
 #include "track/trackref.h"
+#include "util/color/rgbcolor.h"
 
 class ControlProxy;
 class DlgTagFetcher;
@@ -67,7 +69,7 @@ class WTrackMenu : public QMenu {
     // WARNING: This function hides non-virtual QMenu::popup().
     // This has been done on purpose to ensure menu doesn't popup without loaded track(s).
     void popup(const QPoint& pos, QAction* at = nullptr);
-    void slotShowTrackInfo();
+    void slotShowDlgTrackInfo();
 
   signals:
     void loadTrackToPlayer(TrackPointer pTrack, QString group, bool play = false);
@@ -135,6 +137,10 @@ class WTrackMenu : public QMenu {
 
     std::unique_ptr<mixxx::TrackPointerIterator> newTrackPointerIterator() const;
 
+    /// WARNING: The provided pTrackPointerOperation must ensure NOT
+    /// TO MODIFY the underlying m_pTrackModel during the iteration!!!
+    /// This might happen not only directly but also indirectly by
+    /// handling signals, e.g. TrackDAO::enforceModelUpdate().
     int applyTrackPointerOperation(
             const QString& progressLabelText,
             const mixxx::TrackPointerOperation* pTrackPointerOperation,
@@ -253,8 +259,8 @@ class WTrackMenu : public QMenu {
     const UserSettingsPointer m_pConfig;
     TrackCollectionManager* const m_pTrackCollectionManager;
 
-    QScopedPointer<DlgTrackInfo> m_pTrackInfo;
-    QScopedPointer<DlgTagFetcher> m_pTagFetcher;
+    std::unique_ptr<DlgTrackInfo> m_pDlgTrackInfo;
+    std::unique_ptr<DlgTagFetcher> m_pDlgTagFetcher;
 
     struct UpdateExternalTrackCollection {
         QPointer<ExternalTrackCollection> externalTrackCollection;
