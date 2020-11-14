@@ -17,9 +17,14 @@ const double WaveformWidgetRenderer::s_waveformMaxZoom = 10.0;
 const double WaveformWidgetRenderer::s_waveformDefaultZoom = 3.0;
 const double WaveformWidgetRenderer::s_defaultPlayMarkerPosition = 0.5;
 
+namespace {
+constexpr int kDefaultDimBrightThreshold = 127;
+}
+
 WaveformWidgetRenderer::WaveformWidgetRenderer(const QString& group)
         : m_group(group),
           m_orientation(Qt::Horizontal),
+          m_dimBrightThreshold(kDefaultDimBrightThreshold),
           m_height(-1),
           m_width(-1),
           m_devicePixelRatio(1.0f),
@@ -128,7 +133,7 @@ void WaveformWidgetRenderer::onPreRender(VSyncThread* vsyncThread) {
     double truePlayPos = m_visualPlayPosition->getAtNextVSync(vsyncThread);
     // m_playPos = -1 happens, when a new track is in buffer but m_visualPlayPosition was not updated
 
-    if (m_audioSamplePerPixel && truePlayPos != -1) {
+    if (m_audioSamplePerPixel != 0 && truePlayPos != -1) {
         // Track length in pixels.
         m_trackPixelCount = static_cast<double>(m_trackSamples) / 2.0 / m_audioSamplePerPixel;
 
@@ -318,6 +323,12 @@ void WaveformWidgetRenderer::setup(
         m_orientation = Qt::Horizontal;
     }
 
+    bool okay;
+    m_dimBrightThreshold = context.selectInt(node, QStringLiteral("DimBrightThreshold"), &okay);
+    if (!okay) {
+        m_dimBrightThreshold = kDefaultDimBrightThreshold;
+    }
+
     m_colors.setup(node, context);
     for (int i = 0; i < m_rendererStack.size(); ++i) {
         m_rendererStack[i]->setScaleFactor(m_scaleFactor);
@@ -345,8 +356,13 @@ void WaveformWidgetRenderer::setTrack(TrackPointer track) {
 }
 
 WaveformMarkPointer WaveformWidgetRenderer::getCueMarkAtPoint(QPoint point) const {
-    for (const auto& pMark : m_markPositions.keys()) {
-        int markImagePositionInWidgetSpace = m_markPositions[pMark];
+    for (auto it = m_markPositions.constBegin(); it != m_markPositions.constEnd(); ++it) {
+        WaveformMarkPointer pMark = it.key();
+        VERIFY_OR_DEBUG_ASSERT(pMark) {
+            continue;
+        }
+
+        int markImagePositionInWidgetSpace = it.value();
         QPoint pointInImageSpace;
         if (getOrientation() == Qt::Horizontal) {
             pointInImageSpace = QPoint(point.x() - markImagePositionInWidgetSpace, point.y());

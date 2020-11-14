@@ -29,6 +29,7 @@
 #include "util/assert.h"
 #include "util/compatibility.h"
 #include "util/datetime.h"
+#include "util/db/fwdsqlquery.h"
 #include "util/db/sqllikewildcardescaper.h"
 #include "util/db/sqllikewildcards.h"
 #include "util/db/sqlstringformatter.h"
@@ -36,6 +37,7 @@
 #include "util/file.h"
 #include "util/logger.h"
 #include "util/math.h"
+#include "util/qt.h"
 #include "util/timer.h"
 
 namespace {
@@ -57,6 +59,15 @@ void markTrackLocationsAsDeleted(QSqlDatabase database, const QString& directory
     }
 }
 
+QString joinTrackIdList(const QSet<TrackId>& trackIds) {
+    QStringList trackIdList;
+    trackIdList.reserve(trackIds.size());
+    for (const auto& trackId : trackIds) {
+        trackIdList.append(trackId.toString());
+    }
+    return trackIdList.join(QChar(','));
+}
+
 } // anonymous namespace
 
 TrackDAO::TrackDAO(CueDAO& cueDao,
@@ -72,6 +83,14 @@ TrackDAO::TrackDAO(CueDAO& cueDao,
           m_trackLocationIdColumn(UndefinedRecordIndex),
           m_queryLibraryIdColumn(UndefinedRecordIndex),
           m_queryLibraryMixxxDeletedColumn(UndefinedRecordIndex) {
+    connect(&m_playlistDao,
+            &PlaylistDAO::tracksRemovedFromPlayedHistory,
+            this,
+            [this](const QSet<TrackId>& playedTrackIds) {
+                VERIFY_OR_DEBUG_ASSERT(updatePlayCounterFromPlayedHistory(playedTrackIds)) {
+                    return;
+                }
+            });
 }
 
 TrackDAO::~TrackDAO() {
@@ -290,7 +309,7 @@ void TrackDAO::saveTrack(Track* pTrack) const {
         // not receive any signals that are usually forwarded to
         // BaseTrackCache.
         DEBUG_ASSERT(!pTrack->isDirty());
-        emit trackClean(trackId);
+        emit mixxx::thisAsNonConst(this)->trackClean(trackId);
     }
 }
 
@@ -378,6 +397,7 @@ void TrackDAO::addTracksPrepare() {
             "replaygain_peak,"
             "wavesummaryhex,"
             "timesplayed,"
+            "last_played_at,"
             "played,"
             "mixxx_deleted,"
             "header_parsed,"
@@ -424,6 +444,7 @@ void TrackDAO::addTracksPrepare() {
             ":replaygain_peak,"
             ":wavesummaryhex,"
             ":timesplayed,"
+            ":last_played_at,"
             ":played,"
             ":mixxx_deleted,"
             ":header_parsed,"
@@ -537,6 +558,7 @@ void bindTrackLibraryValues(
 
     const PlayCounter& playCounter = track.getPlayCounter();
     pTrackLibraryQuery->bindValue(":timesplayed", playCounter.getTimesPlayed());
+    pTrackLibraryQuery->bindValue(":last_played_at", playCounter.getLastPlayedAt());
     pTrackLibraryQuery->bindValue(":played", playCounter.isPlayed() ? 1 : 0);
 
     const CoverInfoRelative& coverInfo = track.getCoverInfo();
@@ -1147,7 +1169,14 @@ bool setTrackTimesPlayed(const QSqlRecord& record, const int column,
 bool setTrackPlayed(const QSqlRecord& record, const int column,
                     TrackPointer pTrack) {
     PlayCounter playCounter(pTrack->getPlayCounter());
-    playCounter.setPlayed(record.value(column).toBool());
+    playCounter.setPlayedFlag(record.value(column).toBool());
+    pTrack->setPlayCounter(playCounter);
+    return false;
+}
+
+bool setTrackLastPlayedAt(const QSqlRecord& record, const int column, TrackPointer pTrack) {
+    PlayCounter playCounter(pTrack->getPlayCounter());
+    playCounter.setLastPlayedAt(record.value(column).toDateTime());
     pTrack->setPlayCounter(playCounter);
     return false;
 }
@@ -1296,6 +1325,7 @@ TrackPointer TrackDAO::getTrackById(TrackId trackId) const {
             {"replaygain", setTrackReplayGainRatio},
             {"replaygain_peak", setTrackReplayGainPeak},
             {"timesplayed", setTrackTimesPlayed},
+            {"last_played_at", setTrackLastPlayedAt},
             {"played", setTrackPlayed},
             {"datetime_added", setTrackDateAdded},
             {"header_parsed", setTrackMetadataSynchronized},
@@ -1468,7 +1498,7 @@ TrackPointer TrackDAO::getTrackById(TrackId trackId) const {
             this,
             [this](TrackId trackId) {
                 // Adapt and forward signal
-                emit tracksChanged(QSet<TrackId>{trackId});
+                emit mixxx::thisAsNonConst(this)->tracksChanged(QSet<TrackId>{trackId});
             });
 
     // BaseTrackCache cares about track trackDirty/trackClean notifications
@@ -1476,9 +1506,9 @@ TrackPointer TrackDAO::getTrackById(TrackId trackId) const {
     // track modifications above have been sent before the TrackDAO has been
     // connected to the track's signals and need to be replayed manually.
     if (pTrack->isDirty()) {
-        emit trackDirty(trackId);
+        emit mixxx::thisAsNonConst(this)->trackDirty(trackId);
     } else {
-        emit trackClean(trackId);
+        emit mixxx::thisAsNonConst(this)->trackClean(trackId);
     }
 
     return pTrack;
@@ -1563,6 +1593,7 @@ bool TrackDAO::updateTrack(Track* pTrack) const {
             "replaygain=:replaygain,"
             "replaygain_peak=:replaygain_peak,"
             "timesplayed=:timesplayed,"
+            "last_played_at=:last_played_at,"
             "played=:played,"
             "header_parsed=:header_parsed,"
             "channels=:channels,"
@@ -2148,4 +2179,47 @@ TrackFile TrackDAO::relocateCachedTrack(
     } else {
         return TrackFile(trackLocation);
     }
+}
+
+bool TrackDAO::updatePlayCounterFromPlayedHistory(
+        const QSet<TrackId> trackIds) const {
+    // Update both timesplay and last_played_at according to the
+    // corresponding aggregated properties from the played history,
+    // i.e. COUNT for the number of times a track has been played
+    // and MAX for the last time it has been played.
+    // NOTE: The played flag for the current session is NOT updated!
+    // The current session is unaffected, because the corresponding
+    // playlist cannot be deleted.
+    FwdSqlQuery query(
+            m_database,
+            QStringLiteral(
+                    "UPDATE library SET "
+                    "timesplayed=q.timesplayed,"
+                    "last_played_at=q.last_played_at "
+                    "FROM("
+                    "SELECT "
+                    "PlaylistTracks.track_id as id,"
+                    "COUNT(PlaylistTracks.track_id) as timesplayed,"
+                    "MAX(PlaylistTracks.pl_datetime_added) as last_played_at "
+                    "FROM PlaylistTracks "
+                    "JOIN Playlists ON "
+                    "PlaylistTracks.playlist_id=Playlists.id "
+                    "WHERE Playlists.hidden=%2 "
+                    "GROUP BY PlaylistTracks.track_id"
+                    ") q "
+                    "WHERE library.id=q.id "
+                    "AND library.id IN (%1)")
+                    .arg(joinTrackIdList(trackIds),
+                            QString::number(PlaylistDAO::PLHT_SET_LOG)));
+    VERIFY_OR_DEBUG_ASSERT(!query.hasError()) {
+        return false;
+    }
+    VERIFY_OR_DEBUG_ASSERT(query.execPrepared()) {
+        return false;
+    }
+    // TODO: DAOs should be passive and simply execute queries. They
+    // should neither make assumptions about transaction boundaries
+    // nor receive or emit any signals.
+    emit mixxx::thisAsNonConst(this)->tracksChanged(trackIds);
+    return true;
 }

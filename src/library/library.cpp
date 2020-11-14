@@ -289,7 +289,7 @@ void Library::bindSidebarWidget(WLibrarySidebar* pSidebarWidget) {
             pSidebarWidget,
             &WLibrarySidebar::slotSetFont);
 
-    for (const auto& feature : m_features) {
+    for (const auto& feature : qAsConst(m_features)) {
         feature->bindSidebarWidget(pSidebarWidget);
     }
 }
@@ -298,7 +298,7 @@ void Library::bindLibraryWidget(
         WLibrary* pLibraryWidget, KeyboardEventFilter* pKeyboard) {
     WTrackTableView* pTrackTableView = new WTrackTableView(pLibraryWidget,
             m_pConfig,
-            m_pTrackCollectionManager,
+            this,
             pLibraryWidget->getTrackTableBackgroundColorOpacity(),
             true);
     pTrackTableView->installEventFilter(pKeyboard);
@@ -341,7 +341,7 @@ void Library::bindLibraryWidget(
 
     m_pLibraryControl->bindLibraryWidget(pLibraryWidget, pKeyboard);
 
-    for (const auto& feature : m_features) {
+    for (const auto& feature : qAsConst(m_features)) {
         feature->bindLibraryWidget(pLibraryWidget, pKeyboard);
     }
 
@@ -550,4 +550,13 @@ TrackCollection& Library::trackCollection() {
     DEBUG_ASSERT(m_pTrackCollectionManager);
     DEBUG_ASSERT(m_pTrackCollectionManager->internalCollection());
     return *m_pTrackCollectionManager->internalCollection();
+}
+
+void Library::searchTracksInCollection(const QString& query) {
+    VERIFY_OR_DEBUG_ASSERT(m_pMixxxLibraryFeature) {
+        return;
+    }
+    m_pMixxxLibraryFeature->searchAndActivate(query);
+    emit switchToView(m_sTrackViewName);
+    m_pSidebarModel->activateDefaultSelection();
 }

@@ -872,7 +872,8 @@ void setHotCue(TrackPointer track,
     CuePointer pCue;
     bool hotCueFound = false;
 
-    for (const CuePointer& trackCue : track->getCuePoints()) {
+    const QList<CuePointer> cuePoints = track->getCuePoints();
+    for (const CuePointer& trackCue : cuePoints) {
         if (trackCue->getHotCue() == id) {
             pCue = trackCue;
             hotCueFound = true;
@@ -1156,74 +1157,91 @@ RekordboxPlaylistModel::RekordboxPlaylistModel(QObject* parent,
 
 void RekordboxPlaylistModel::initSortColumnMapping() {
     // Add a bijective mapping between the SortColumnIds and column indices
-    for (int i = 0; i < TrackModel::SortColumnId::NUM_SORTCOLUMNIDS; ++i) {
+    for (int i = 0; i < static_cast<int>(TrackModel::SortColumnId::IdMax); ++i) {
         m_columnIndexBySortColumnId[i] = -1;
     }
 
-    m_columnIndexBySortColumnId[TrackModel::SortColumnId::SORTCOLUMN_ARTIST] =
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::Artist)] =
             fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_ARTIST);
-    m_columnIndexBySortColumnId[TrackModel::SortColumnId::SORTCOLUMN_TITLE] =
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::Title)] =
             fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_TITLE);
-    m_columnIndexBySortColumnId[TrackModel::SortColumnId::SORTCOLUMN_ALBUM] =
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::Album)] =
             fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_ALBUM);
-    m_columnIndexBySortColumnId
-            [TrackModel::SortColumnId::SORTCOLUMN_ALBUMARTIST] =
-                    fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_ALBUMARTIST);
-    m_columnIndexBySortColumnId[TrackModel::SortColumnId::SORTCOLUMN_YEAR] =
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::AlbumArtist)] =
+            fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_ALBUMARTIST);
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::Year)] =
             fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_YEAR);
-    m_columnIndexBySortColumnId[TrackModel::SortColumnId::SORTCOLUMN_GENRE] =
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::Genre)] =
             fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_GENRE);
-    m_columnIndexBySortColumnId[TrackModel::SortColumnId::SORTCOLUMN_COMPOSER] =
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::Composer)] =
             fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_COMPOSER);
-    m_columnIndexBySortColumnId[TrackModel::SortColumnId::SORTCOLUMN_GROUPING] =
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::Grouping)] =
             fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_GROUPING);
-    m_columnIndexBySortColumnId
-            [TrackModel::SortColumnId::SORTCOLUMN_TRACKNUMBER] =
-                    fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_TRACKNUMBER);
-    m_columnIndexBySortColumnId[TrackModel::SortColumnId::SORTCOLUMN_FILETYPE] =
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::TrackNumber)] =
+            fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_TRACKNUMBER);
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::FileType)] =
             fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_FILETYPE);
-    m_columnIndexBySortColumnId
-            [TrackModel::SortColumnId::SORTCOLUMN_NATIVELOCATION] =
-                    fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_NATIVELOCATION);
-    m_columnIndexBySortColumnId[TrackModel::SortColumnId::SORTCOLUMN_COMMENT] =
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::NativeLocation)] =
+            fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_NATIVELOCATION);
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::Comment)] =
             fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_COMMENT);
-    m_columnIndexBySortColumnId[TrackModel::SortColumnId::SORTCOLUMN_DURATION] =
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::Duration)] =
             fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_DURATION);
-    m_columnIndexBySortColumnId[TrackModel::SortColumnId::SORTCOLUMN_BITRATE] =
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::BitRate)] =
             fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_BITRATE);
-    m_columnIndexBySortColumnId[TrackModel::SortColumnId::SORTCOLUMN_BPM] =
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::Bpm)] =
             fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_BPM);
-    m_columnIndexBySortColumnId
-            [TrackModel::SortColumnId::SORTCOLUMN_REPLAYGAIN] =
-                    fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_REPLAYGAIN);
-    m_columnIndexBySortColumnId
-            [TrackModel::SortColumnId::SORTCOLUMN_DATETIMEADDED] =
-                    fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_DATETIMEADDED);
-    m_columnIndexBySortColumnId
-            [TrackModel::SortColumnId::SORTCOLUMN_LASTPLAYEDDATETIME] =
-                    fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_DATETIMEPLAYED);
-    m_columnIndexBySortColumnId
-            [TrackModel::SortColumnId::SORTCOLUMN_TIMESPLAYED] =
-                    fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_TIMESPLAYED);
-    m_columnIndexBySortColumnId[TrackModel::SortColumnId::SORTCOLUMN_RATING] =
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::ReplayGain)] =
+            fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_REPLAYGAIN);
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::DateTimeAdded)] =
+            fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_DATETIMEADDED);
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::TimesPlayed)] =
+            fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_TIMESPLAYED);
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::Rating)] =
             fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_RATING);
-    m_columnIndexBySortColumnId[TrackModel::SortColumnId::SORTCOLUMN_KEY] =
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::Key)] =
             fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_KEY);
-    m_columnIndexBySortColumnId[TrackModel::SortColumnId::SORTCOLUMN_PREVIEW] =
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::Preview)] =
             fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_PREVIEW);
-    m_columnIndexBySortColumnId[TrackModel::SortColumnId::SORTCOLUMN_COLOR] =
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::Color)] =
             fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_COLOR);
-    m_columnIndexBySortColumnId[TrackModel::SortColumnId::SORTCOLUMN_COVERART] =
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::CoverArt)] =
             fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_COVERART);
-    m_columnIndexBySortColumnId[TrackModel::SortColumnId::SORTCOLUMN_POSITION] =
+    m_columnIndexBySortColumnId[static_cast<int>(
+            TrackModel::SortColumnId::Position)] =
             fieldIndex(ColumnCache::COLUMN_PLAYLISTTRACKSTABLE_POSITION);
 
     m_sortColumnIdByColumnIndex.clear();
-    for (int i = 0; i < TrackModel::SortColumnId::NUM_SORTCOLUMNIDS; ++i) {
-        TrackModel::SortColumnId sortColumn =
-                static_cast<TrackModel::SortColumnId>(i);
+    for (int i = static_cast<int>(TrackModel::SortColumnId::IdMin);
+            i < static_cast<int>(TrackModel::SortColumnId::IdMax);
+            ++i) {
+        TrackModel::SortColumnId sortColumn = static_cast<TrackModel::SortColumnId>(i);
         m_sortColumnIdByColumnIndex.insert(
-                m_columnIndexBySortColumnId[sortColumn], sortColumn);
+                m_columnIndexBySortColumnId[static_cast<int>(sortColumn)],
+                sortColumn);
     }
 }
 
@@ -1475,7 +1493,7 @@ QString RekordboxFeature::formatRootViewHtml() const {
     html.append(QString("<h2>%1</h2>").arg(title));
     html.append(QString("<p>%1</p>").arg(summary));
     html.append(QString("<ul>"));
-    for (const auto& item : items) {
+    for (const auto& item : qAsConst(items)) {
         html.append(QString("<li>%1</li>").arg(item));
     }
     html.append(QString("</ul>"));
