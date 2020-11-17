@@ -13,7 +13,8 @@ DlgPrefEffects::DlgPrefEffects(QWidget* pParent,
     setupUi(this);
 
     m_availableEffectsModel.resetFromEffectManager(pEffectsManager);
-    for (auto& profile : m_availableEffectsModel.profiles()) {
+    const QList<EffectProfilePtr> effectProfiles = m_availableEffectsModel.profiles();
+    for (auto& profile : effectProfiles) {
         EffectManifestPointer pManifest = profile->pManifest;
 
         // Users are likely to have lots of external plugins installed and
@@ -27,11 +28,12 @@ DlgPrefEffects::DlgPrefEffects(QWidget* pParent,
         m_pEffectsManager->setEffectVisibility(pManifest, visible);
     }
     availableEffectsList->setModel(&m_availableEffectsModel);
+    availableEffectsList->setTabKeyNavigation(false);
 
     connect(availableEffectsList->selectionModel(),
-            SIGNAL(currentRowChanged(const QModelIndex&, const QModelIndex&)),
+            &QItemSelectionModel::currentRowChanged,
             this,
-            SLOT(availableEffectsListItemSelected(const QModelIndex&)));
+            &DlgPrefEffects::availableEffectsListItemSelected);
 
     // Highlight first row
     availableEffectsList->selectRow(0);
@@ -59,7 +61,8 @@ void DlgPrefEffects::slotUpdate() {
 }
 
 void DlgPrefEffects::slotApply() {
-    for (EffectProfilePtr profile : m_availableEffectsModel.profiles()) {
+    const QList<EffectProfilePtr> effectProfiles = m_availableEffectsModel.profiles();
+    for (const EffectProfilePtr& profile : effectProfiles) {
         EffectManifestPointer pManifest = profile->pManifest;
         m_pEffectsManager->setEffectVisibility(pManifest, profile->bIsVisible);
 

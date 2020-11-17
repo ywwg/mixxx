@@ -57,29 +57,95 @@ void WaveformRenderMark::draw(QPainter* painter, QPaintEvent* /*event*/) {
             generateMarkImage(pMark);
         }
 
-        double samplePosition = pMark->getSamplePosition();
-        if (samplePosition != -1.0) {
-            double currentMarkPoint =
+        const double samplePosition = pMark->getSamplePosition();
+        if (samplePosition != Cue::kNoPosition) {
+            const double currentMarkPoint =
                     m_waveformRenderer->transformSamplePositionInRendererWorld(samplePosition);
+            const double sampleEndPosition = pMark->getSampleEndPosition();
             if (m_waveformRenderer->getOrientation() == Qt::Horizontal) {
                 // NOTE: vRince I guess image width is odd to display the center on the exact line !
                 // external image should respect that ...
-                const int markHalfWidth = pMark->m_image.width() / 2.0
-                        / m_waveformRenderer->getDevicePixelRatio();
+                const int markHalfWidth =
+                        static_cast<int>(pMark->m_image.width() / 2.0 /
+                                m_waveformRenderer->getDevicePixelRatio());
+                const int drawOffset = static_cast<int>(currentMarkPoint) - markHalfWidth;
 
+                bool visible = false;
                 // Check if the current point needs to be displayed.
                 if (currentMarkPoint > -markHalfWidth && currentMarkPoint < m_waveformRenderer->getWidth() + markHalfWidth) {
-                    int drawOffset = currentMarkPoint - markHalfWidth;
-                    painter->drawImage(QPoint(drawOffset, 0), pMark->m_image);
+                    painter->drawImage(drawOffset, 0, pMark->m_image);
+                    visible = true;
+                }
+
+                // Check if the range needs to be displayed.
+                if (sampleEndPosition != Cue::kNoPosition) {
+                    DEBUG_ASSERT(samplePosition < sampleEndPosition);
+                    const double currentMarkEndPoint =
+                            m_waveformRenderer->transformSamplePositionInRendererWorld(
+                                    sampleEndPosition);
+                    if (visible || currentMarkEndPoint > 0) {
+                        QColor color = pMark->fillColor();
+                        color.setAlphaF(0.4);
+
+                        QLinearGradient gradient(QPointF(0, 0),
+                                QPointF(0, m_waveformRenderer->getHeight()));
+                        gradient.setColorAt(0, color);
+                        gradient.setColorAt(0.25, QColor(Qt::transparent));
+                        gradient.setColorAt(0.75, QColor(Qt::transparent));
+                        gradient.setColorAt(1, color);
+                        painter->fillRect(
+                                QRectF(QPointF(currentMarkPoint, 0),
+                                        QPointF(currentMarkEndPoint,
+                                                m_waveformRenderer
+                                                        ->getHeight())),
+                                QBrush(gradient));
+                        visible = true;
+                    }
+                }
+
+                if (visible) {
                     marksOnScreen[pMark] = drawOffset;
                 }
             } else {
-                const int markHalfHeight = pMark->m_image.height() / 2.0;
+                const int markHalfHeight = static_cast<int>(pMark->m_image.height() / 2.0);
+                const int drawOffset = static_cast<int>(currentMarkPoint) - markHalfHeight;
+
+                bool visible = false;
+                // Check if the current point needs to be displayed.
                 if (currentMarkPoint > -markHalfHeight &&
                         currentMarkPoint < m_waveformRenderer->getHeight() +
                                         markHalfHeight) {
-                    int drawOffset = currentMarkPoint - markHalfHeight;
-                    painter->drawImage(QPoint(0, drawOffset), pMark->m_image);
+                    painter->drawImage(drawOffset, 0, pMark->m_image);
+                    visible = true;
+                }
+
+                // Check if the range needs to be displayed.
+                if (sampleEndPosition != Cue::kNoPosition) {
+                    DEBUG_ASSERT(samplePosition < sampleEndPosition);
+                    double currentMarkEndPoint =
+                            m_waveformRenderer
+                                    ->transformSamplePositionInRendererWorld(
+                                            sampleEndPosition);
+                    if (currentMarkEndPoint < m_waveformRenderer->getHeight()) {
+                        QColor color = pMark->fillColor();
+                        color.setAlphaF(0.4);
+
+                        QLinearGradient gradient(QPointF(0, 0),
+                                QPointF(m_waveformRenderer->getWidth(), 0));
+                        gradient.setColorAt(0, color);
+                        gradient.setColorAt(0.25, QColor(Qt::transparent));
+                        gradient.setColorAt(0.75, QColor(Qt::transparent));
+                        gradient.setColorAt(1, color);
+                        painter->fillRect(
+                                QRectF(QPointF(0, currentMarkPoint),
+                                        QPointF(m_waveformRenderer->getWidth(),
+                                                currentMarkEndPoint)),
+                                QBrush(gradient));
+                        visible = true;
+                    }
+                }
+
+                if (visible) {
                     marksOnScreen[pMark] = drawOffset;
                 }
             }
@@ -134,7 +200,8 @@ void WaveformRenderMark::slotCuesUpdated() {
                 !pMark->fillColor().isValid() ||
                 newColor != pMark->fillColor()) {
             pMark->m_text = newLabel;
-            pMark->setBaseColor(newColor);
+            int dimBrightThreshold = m_waveformRenderer->getDimBrightThreshold();
+            pMark->setBaseColor(newColor, dimBrightThreshold);
             generateMarkImage(pMark);
         }
     }
@@ -205,8 +272,9 @@ void WaveformRenderMark::generateMarkImage(WaveformMarkPointer pMark) {
         height = 2 * labelRectHeight + 1;
     }
 
-    pMark->m_image = QImage(width * m_waveformRenderer->getDevicePixelRatio(),
-            height * m_waveformRenderer->getDevicePixelRatio(),
+    pMark->m_image = QImage(
+            width * static_cast<int>(m_waveformRenderer->getDevicePixelRatio()),
+            height * static_cast<int>(m_waveformRenderer->getDevicePixelRatio()),
             QImage::Format_ARGB32_Premultiplied);
     pMark->m_image.setDevicePixelRatio(
             m_waveformRenderer->getDevicePixelRatio());
