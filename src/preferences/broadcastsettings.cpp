@@ -1,11 +1,13 @@
+#include "preferences/broadcastsettings.h"
+
 #include <QDir>
-#include <QStringList>
-#include <QFileInfoList>
 #include <QFileInfo>
+#include <QFileInfoList>
+#include <QStringList>
 
 #include "broadcast/defs_broadcast.h"
 #include "defs_urls.h"
-#include "preferences/broadcastsettings.h"
+#include "moc_broadcastsettings.cpp"
 #include "util/logger.h"
 #include "util/memory.h"
 
@@ -53,8 +55,9 @@ void BroadcastSettings::loadProfiles() {
             BroadcastProfilePtr profile =
                     BroadcastProfile::loadFromFile(fileInfo.absoluteFilePath());
 
-            if (profile)
+            if (profile) {
                 addProfile(profile);
+            }
         }
     } else {
         kLogger.info() << "No profiles found. Creating default profile.";
@@ -70,8 +73,9 @@ void BroadcastSettings::loadProfiles() {
 }
 
 bool BroadcastSettings::addProfile(BroadcastProfilePtr profile) {
-    if (!profile)
+    if (!profile) {
         return false;
+    }
 
     if (m_profiles.size() >= BROADCAST_MAX_CONNECTIONS) {
         kLogger.warning() << "addProfile: connection limit reached."
@@ -85,10 +89,14 @@ bool BroadcastSettings::addProfile(BroadcastProfilePtr profile) {
     // at risk of being manually deleted.
     // However it's fine with Qt's connect because it can be trusted that
     // it won't delete the pointer.
-    connect(profile.data(), SIGNAL(profileNameChanged(QString, QString)),
-            this, SLOT(onProfileNameChanged(QString,QString)));
-    connect(profile.data(), SIGNAL(connectionStatusChanged(int)),
-            this, SLOT(onConnectionStatusChanged(int)));
+    connect(profile.data(),
+            &BroadcastProfile::profileNameChanged,
+            this,
+            &BroadcastSettings::onProfileNameChanged);
+    connect(profile.data(),
+            &BroadcastProfile::connectionStatusChanged,
+            this,
+            &BroadcastSettings::onConnectionStatusChanged);
     m_profiles.insert(profile->getProfileName(), BroadcastProfilePtr(profile));
 
     emit profileAdded(profile);
@@ -96,8 +104,9 @@ bool BroadcastSettings::addProfile(BroadcastProfilePtr profile) {
 }
 
 bool BroadcastSettings::saveProfile(BroadcastProfilePtr profile) {
-    if (!profile)
+    if (!profile) {
         return false;
+    }
 
     QString filename = profile->getLastFilename();
     if (filename.isEmpty()) {
@@ -127,15 +136,17 @@ QString BroadcastSettings::filePathForProfile(const QString& profileName) {
 }
 
 QString BroadcastSettings::filePathForProfile(BroadcastProfilePtr profile) {
-    if (!profile)
+    if (!profile) {
         return QString();
+    }
 
     return filePathForProfile(profile->getProfileName());
 }
 
 bool BroadcastSettings::deleteFileForProfile(BroadcastProfilePtr profile) {
-    if (!profile)
+    if (!profile) {
         return false;
+    }
 
     QString filename = profile->getLastFilename();
     if (filename.isEmpty()) {
@@ -163,9 +174,10 @@ void BroadcastSettings::saveAll() {
     emit profilesChanged();
 }
 
-void BroadcastSettings::onProfileNameChanged(QString oldName, QString newName) {
-    if (!m_profiles.contains(oldName))
+void BroadcastSettings::onProfileNameChanged(const QString& oldName, const QString& newName) {
+    if (!m_profiles.contains(oldName)) {
         return;
+    }
 
     BroadcastProfilePtr profile = m_profiles.take(oldName);
     if (profile) {

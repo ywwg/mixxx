@@ -1,10 +1,10 @@
 #include "library/columncache.h"
 
-#include "library/dao/trackschema.h"
 #include "library/dao/playlistdao.h"
+#include "library/dao/trackschema.h"
+#include "moc_columncache.cpp"
 
-
- ColumnCache::ColumnCache(const QStringList& columns) {
+ColumnCache::ColumnCache(const QStringList& columns) {
     m_pKeyNotationCP = new ControlProxy("[Library]", "key_notation", this);
     m_pKeyNotationCP->connectValueChanged(this, &ColumnCache::slotSetKeySortOrder);
 
@@ -53,8 +53,8 @@ void ColumnCache::setColumns(const QStringList& columns) {
     m_columnIndexByEnum[COLUMN_LIBRARYTABLE_CHANNELS] = fieldIndex(LIBRARYTABLE_CHANNELS);
     m_columnIndexByEnum[COLUMN_LIBRARYTABLE_MIXXXDELETED] = fieldIndex(LIBRARYTABLE_MIXXXDELETED);
     m_columnIndexByEnum[COLUMN_LIBRARYTABLE_DATETIMEADDED] = fieldIndex(LIBRARYTABLE_DATETIMEADDED);
-    m_columnIndexByEnum[COLUMN_LIBRARYTABLE_DATETIMEPLAYED] =
-            fieldIndex(LIBRARYTABLE_DATETIMEPLAYED);
+    m_columnIndexByEnum[COLUMN_LIBRARYTABLE_LAST_PLAYED_AT] =
+            fieldIndex(LIBRARYTABLE_LAST_PLAYED_AT);
     m_columnIndexByEnum[COLUMN_LIBRARYTABLE_HEADERPARSED] = fieldIndex(LIBRARYTABLE_HEADERPARSED);
     m_columnIndexByEnum[COLUMN_LIBRARYTABLE_TIMESPLAYED] = fieldIndex(LIBRARYTABLE_TIMESPLAYED);
     m_columnIndexByEnum[COLUMN_LIBRARYTABLE_PLAYED] = fieldIndex(LIBRARYTABLE_PLAYED);
@@ -112,7 +112,9 @@ void ColumnCache::setColumns(const QStringList& columns) {
 }
 
 void ColumnCache::slotSetKeySortOrder(double notationValue) {
-    if (m_columnIndexByEnum[COLUMN_LIBRARYTABLE_KEY] < 0) return;
+    if (m_columnIndexByEnum[COLUMN_LIBRARYTABLE_KEY] < 0) {
+        return;
+    }
 
     // A custom COLLATE function was tested, but using CASE ... WHEN was found to be faster
     // see GitHub PR#649

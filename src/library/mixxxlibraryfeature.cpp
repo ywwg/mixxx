@@ -1,6 +1,3 @@
-// mixxxlibraryfeature.cpp
-// Created 8/23/2009 by RJ Ryan (rryan@mit.edu)
-
 #include "library/mixxxlibraryfeature.h"
 
 #include <QtDebug>
@@ -18,18 +15,18 @@
 #include "library/trackcollection.h"
 #include "library/trackcollectionmanager.h"
 #include "library/treeitem.h"
+#include "moc_mixxxlibraryfeature.cpp"
 #include "sources/soundsourceproxy.h"
 #include "util/dnd.h"
 #include "widget/wlibrary.h"
 
 MixxxLibraryFeature::MixxxLibraryFeature(Library* pLibrary,
-        UserSettingsPointer pConfig)
+                                         UserSettingsPointer pConfig)
         : LibraryFeature(pLibrary, pConfig),
           kMissingTitle(tr("Missing Tracks")),
           kHiddenTitle(tr("Hidden Tracks")),
           m_icon(":/images/library/ic_library_tracks.svg"),
           m_pTrackCollection(pLibrary->trackCollections()->internalCollection()),
-          m_pLastPlayedCache(new LastPlayedCache(m_pTrackCollection)),
           m_pLibraryTableModel(nullptr),
           m_pMissingView(nullptr),
           m_pHiddenView(nullptr) {
@@ -61,7 +58,6 @@ MixxxLibraryFeature::MixxxLibraryFeature(Library* pLibrary,
             << "library." + LIBRARYTABLE_REPLAYGAIN
             << "library." + LIBRARYTABLE_FILETYPE
             << "library." + LIBRARYTABLE_DATETIMEADDED
-            << LASTPLAYEDTABLE_NAME + "." + LIBRARYTABLE_DATETIMEPLAYED
             << "track_locations.location"
             << "track_locations.fs_deleted"
             << "library." + LIBRARYTABLE_COMMENT
@@ -74,20 +70,16 @@ MixxxLibraryFeature::MixxxLibraryFeature(Library* pLibrary,
             << "library." + LIBRARYTABLE_COVERART_DIGEST
             << "library." + LIBRARYTABLE_COVERART_HASH;
 
-    QSqlQuery createCacheQuery(m_pTrackCollection->database());
-    const QString cacheTableName = "library_cache_view";
-    const QString cacheQueryString =
-            QString("CREATE TEMPORARY VIEW IF NOT EXISTS %1 AS "
-                    "SELECT %2 FROM library "
-                    "INNER JOIN track_locations ON library.location = "
-                    "track_locations.id "
-                    "LEFT JOIN %3 ON library.id = %3.track_id")
-                    .arg(cacheTableName,
-                            columns.join(","),
-                            LASTPLAYEDTABLE_NAME);
-    createCacheQuery.prepare(cacheQueryString);
-    if (!createCacheQuery.exec()) {
-        LOG_FAILED_QUERY(createCacheQuery);
+    QSqlQuery query(m_pTrackCollection->database());
+    QString tableName = "library_cache_view";
+    QString queryString = QString(
+        "CREATE TEMPORARY VIEW IF NOT EXISTS %1 AS "
+        "SELECT %2 FROM library "
+        "INNER JOIN track_locations ON library.location = track_locations.id")
+            .arg(tableName, columns.join(","));
+    query.prepare(queryString);
+    if (!query.exec()) {
+        LOG_FAILED_QUERY(query);
     }
 
     // Strip out library. and track_locations.
@@ -97,13 +89,11 @@ MixxxLibraryFeature::MixxxLibraryFeature(Library* pLibrary,
             *it = it->replace("library.", "");
         } else if (it->startsWith("track_locations.")) {
             *it = it->replace("track_locations.", "");
-        } else if (it->startsWith(LASTPLAYEDTABLE_NAME + ".")) {
-            *it = it->replace(LASTPLAYEDTABLE_NAME + ".", "");
         }
     }
 
     BaseTrackCache* pBaseTrackCache = new BaseTrackCache(
-            m_pTrackCollection, cacheTableName, LIBRARYTABLE_ID, columns, true);
+            m_pTrackCollection, tableName, LIBRARYTABLE_ID, columns, true);
     m_pBaseTrackCache = QSharedPointer<BaseTrackCache>(pBaseTrackCache);
     m_pTrackCollection->connectTrackSource(m_pBaseTrackCache);
 
@@ -184,7 +174,7 @@ void MixxxLibraryFeature::activateChild(const QModelIndex& index) {
     emit enableCoverArtDisplay(true);
 }
 
-bool MixxxLibraryFeature::dropAccept(QList<QUrl> urls, QObject* pSource) {
+bool MixxxLibraryFeature::dropAccept(const QList<QUrl>& urls, QObject* pSource) {
     if (pSource) {
         return false;
     } else {
@@ -194,7 +184,7 @@ bool MixxxLibraryFeature::dropAccept(QList<QUrl> urls, QObject* pSource) {
     }
 }
 
-bool MixxxLibraryFeature::dragMoveAccept(QUrl url) {
+bool MixxxLibraryFeature::dragMoveAccept(const QUrl& url) {
     return SoundSourceProxy::isUrlSupported(url) ||
             Parser::isPlaylistFilenameSupported(url.toLocalFile());
 }

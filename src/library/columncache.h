@@ -1,5 +1,4 @@
-#ifndef COLUMNCACHE_H
-#define COLUMNCACHE_H
+#pragma once
 
 #include <QObject>
 #include <QMap>
@@ -56,6 +55,7 @@ class ColumnCache : public QObject {
         COLUMN_LIBRARYTABLE_COVERART_COLOR,
         COLUMN_LIBRARYTABLE_COVERART_DIGEST,
         COLUMN_LIBRARYTABLE_COVERART_HASH,
+        COLUMN_LIBRARYTABLE_LAST_PLAYED_AT,
 
         COLUMN_TRACKLOCATIONSTABLE_FSDELETED,
 
@@ -69,7 +69,6 @@ class ColumnCache : public QObject {
 
         COLUMN_REKORDBOX_ANALYZE_PATH,
 
-        COLUMN_LIBRARYTABLE_DATETIMEPLAYED,
         // NUM_COLUMNS should always be the last item.
         NUM_COLUMNS
     };
@@ -123,5 +122,3 @@ class ColumnCache : public QObject {
   private slots:
     void slotSetKeySortOrder(double);
 };
-
-#endif /* COLUMNCACHE_H */

@@ -1,22 +1,17 @@
-// mixxxlibraryfeature.h
-// Created 8/23/2009 by RJ Ryan (rryan@mit.edu)
+#pragma once
 
-#ifndef MIXXXLIBRARYFEATURE_H
-#define MIXXXLIBRARYFEATURE_H
-
-#include <QIcon>
-#include <QList>
-#include <QModelIndex>
-#include <QObject>
-#include <QSharedPointer>
-#include <QString>
 #include <QStringListModel>
 #include <QUrl>
 #include <QVariant>
+#include <QIcon>
+#include <QModelIndex>
+#include <QList>
+#include <QString>
+#include <QSharedPointer>
+#include <QObject>
 
-#include "library/dao/trackdao.h"
-#include "library/lastplayedcache.h"
 #include "library/libraryfeature.h"
+#include "library/dao/trackdao.h"
 #include "library/treeitemmodel.h"
 #include "preferences/usersettings.h"
 
@@ -35,8 +30,8 @@ class MixxxLibraryFeature final : public LibraryFeature {
 
     QVariant title() override;
     QIcon getIcon() override;
-    bool dropAccept(QList<QUrl> urls, QObject* pSource) override;
-    bool dragMoveAccept(QUrl url) override;
+    bool dropAccept(const QList<QUrl>& urls, QObject* pSource) override;
+    bool dragMoveAccept(const QUrl& url) override;
     TreeItemModel* getChildModel() override;
     void bindLibraryWidget(WLibrary* pLibrary,
                     KeyboardEventFilter* pKeyboard) override;
@@ -59,7 +54,6 @@ class MixxxLibraryFeature final : public LibraryFeature {
     TrackCollection* const m_pTrackCollection;
 
     QSharedPointer<BaseTrackCache> m_pBaseTrackCache;
-    QSharedPointer<LastPlayedCache> m_pLastPlayedCache;
     LibraryTableModel* m_pLibraryTableModel;
 
     TreeItemModel m_childModel;
@@ -67,5 +61,3 @@ class MixxxLibraryFeature final : public LibraryFeature {
     DlgMissing* m_pMissingView;
     DlgHidden* m_pHiddenView;
 };
-
-#endif /* MIXXXLIBRARYFEATURE_H */
