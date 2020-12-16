@@ -1,16 +1,16 @@
 #include "effects/effectsmanager.h"
 
 #include <QMetaType>
-
 #include <algorithm>
 
-#include "engine/effects/engineeffectsmanager.h"
 #include "effects/effectchainmanager.h"
 #include "effects/effectsbackend.h"
 #include "effects/effectslot.h"
 #include "engine/effects/engineeffect.h"
-#include "engine/effects/engineeffectrack.h"
 #include "engine/effects/engineeffectchain.h"
+#include "engine/effects/engineeffectrack.h"
+#include "engine/effects/engineeffectsmanager.h"
+#include "moc_effectsmanager.cpp"
 #include "util/assert.h"
 
 namespace {
@@ -26,8 +26,8 @@ EffectsManager::EffectsManager(QObject* pParent,
           m_pChannelHandleFactory(pChannelHandleFactory),
           m_pEffectChainManager(new EffectChainManager(pConfig, this)),
           m_nextRequestId(0),
-          m_pLoEqFreq(NULL),
-          m_pHiEqFreq(NULL),
+          m_pLoEqFreq(nullptr),
+          m_pHiEqFreq(nullptr),
           m_underDestruction(false) {
     qRegisterMetaType<EffectChainMixMode>("EffectChainMixMode");
     QPair<EffectsRequestPipe*, EffectsResponsePipe*> requestPipes =
@@ -91,11 +91,15 @@ void EffectsManager::addEffectsBackend(EffectsBackend* pBackend) {
     std::sort(m_availableEffectManifests.begin(), m_availableEffectManifests.end(),
           alphabetizeEffectManifests);
 
-    connect(pBackend, SIGNAL(effectRegistered(EffectManifestPointer)),
-            this, SLOT(slotBackendRegisteredEffect(EffectManifestPointer)));
+    connect(pBackend,
+            &EffectsBackend::effectRegistered,
+            this,
+            &EffectsManager::slotBackendRegisteredEffect);
 
-    connect(pBackend, SIGNAL(effectRegistered(EffectManifestPointer)),
-            this, SIGNAL(availableEffectsUpdated(EffectManifestPointer)));
+    connect(pBackend,
+            &EffectsBackend::effectRegistered,
+            this,
+            &EffectsManager::availableEffectsUpdated);
 }
 
 void EffectsManager::slotBackendRegisteredEffect(EffectManifestPointer pManifest) {

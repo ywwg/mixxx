@@ -16,6 +16,7 @@
 #include "mixer/previewdeck.h"
 #include "mixer/sampler.h"
 #include "mixer/samplerbank.h"
+#include "moc_playermanager.cpp"
 #include "preferences/dialog/dlgprefdeck.h"
 #include "soundio/soundmanager.h"
 #include "track/track.h"
@@ -115,12 +116,15 @@ PlayerManager::~PlayerManager() {
 
 void PlayerManager::bindToLibrary(Library* pLibrary) {
     QMutexLocker locker(&m_mutex);
-    connect(pLibrary, SIGNAL(loadTrackToPlayer(TrackPointer, QString, bool)),
-            this, SLOT(slotLoadTrackToPlayer(TrackPointer, QString, bool)));
-    connect(pLibrary, SIGNAL(loadTrack(TrackPointer)),
-            this, SLOT(slotLoadTrackIntoNextAvailableDeck(TrackPointer)));
-    connect(this, SIGNAL(loadLocationToPlayer(QString, QString)),
-            pLibrary, SLOT(slotLoadLocationToPlayer(QString, QString)));
+    connect(pLibrary, &Library::loadTrackToPlayer, this, &PlayerManager::slotLoadTrackToPlayer);
+    connect(pLibrary,
+            &Library::loadTrack,
+            this,
+            &PlayerManager::slotLoadTrackIntoNextAvailableDeck);
+    connect(this,
+            &PlayerManager::loadLocationToPlayer,
+            pLibrary,
+            &Library::slotLoadLocationToPlayer);
 
     DEBUG_ASSERT(!m_pTrackAnalysisScheduler);
     m_pTrackAnalysisScheduler = TrackAnalysisScheduler::createInstance(
@@ -137,22 +141,22 @@ void PlayerManager::bindToLibrary(Library* pLibrary) {
     // Connect the player to the analyzer queue so that loaded tracks are
     // analyzed.
     foreach(Deck* pDeck, m_decks) {
-        connect(pDeck, SIGNAL(newTrackLoaded(TrackPointer)),
-                this, SLOT(slotAnalyzeTrack(TrackPointer)));
+        connect(pDeck, &BaseTrackPlayer::newTrackLoaded, this, &PlayerManager::slotAnalyzeTrack);
     }
 
     // Connect the player to the analyzer queue so that loaded tracks are
     // analyzed.
     foreach(Sampler* pSampler, m_samplers) {
-        connect(pSampler, SIGNAL(newTrackLoaded(TrackPointer)),
-                this, SLOT(slotAnalyzeTrack(TrackPointer)));
+        connect(pSampler, &BaseTrackPlayer::newTrackLoaded, this, &PlayerManager::slotAnalyzeTrack);
     }
 
     // Connect the player to the analyzer queue so that loaded tracks are
     // analyzed.
     foreach(PreviewDeck* pPreviewDeck, m_preview_decks) {
-        connect(pPreviewDeck, SIGNAL(newTrackLoaded(TrackPointer)),
-                this, SLOT(slotAnalyzeTrack(TrackPointer)));
+        connect(pPreviewDeck,
+                &BaseTrackPlayer::newTrackLoaded,
+                this,
+                &PlayerManager::slotAnalyzeTrack);
     }
 }
 
@@ -167,7 +171,7 @@ bool PlayerManager::isDeckGroup(const QString& group, int* number) {
     if (!ok || deckNum <= 0) {
         return false;
     }
-    if (number != NULL) {
+    if (number != nullptr) {
         *number = deckNum;
     }
     return true;
@@ -201,7 +205,7 @@ bool PlayerManager::isPreviewDeckGroup(const QString& group, int* number) {
     if (!ok || deckNum <= 0) {
         return false;
     }
-    if (number != NULL) {
+    if (number != nullptr) {
         *number = deckNum;
     }
     return true;
@@ -379,12 +383,13 @@ void PlayerManager::addDeckInner() {
             &EngineDeck::noPassthroughInputConfigured,
             this,
             &PlayerManager::noDeckPassthroughInputConfigured);
-    connect(pDeck, SIGNAL(noVinylControlInputConfigured()),
-            this, SIGNAL(noVinylControlInputConfigured()));
+    connect(pDeck,
+            &BaseTrackPlayer::noVinylControlInputConfigured,
+            this,
+            &PlayerManager::noVinylControlInputConfigured);
 
     if (m_pTrackAnalysisScheduler) {
-        connect(pDeck, SIGNAL(newTrackLoaded(TrackPointer)),
-                this, SLOT(slotAnalyzeTrack(TrackPointer)));
+        connect(pDeck, &BaseTrackPlayer::newTrackLoaded, this, &PlayerManager::slotAnalyzeTrack);
     }
 
     m_players[group] = pDeck;
@@ -444,8 +449,7 @@ void PlayerManager::addSamplerInner() {
     Sampler* pSampler = new Sampler(this, m_pConfig, m_pEngine,
             m_pEffectsManager, m_pVisualsManager, orientation, group);
     if (m_pTrackAnalysisScheduler) {
-        connect(pSampler, SIGNAL(newTrackLoaded(TrackPointer)),
-                this, SLOT(slotAnalyzeTrack(TrackPointer)));
+        connect(pSampler, &BaseTrackPlayer::newTrackLoaded, this, &PlayerManager::slotAnalyzeTrack);
     }
 
     m_players[group] = pSampler;
@@ -470,8 +474,10 @@ void PlayerManager::addPreviewDeckInner() {
     PreviewDeck* pPreviewDeck = new PreviewDeck(this, m_pConfig, m_pEngine,
             m_pEffectsManager, m_pVisualsManager, orientation, group);
     if (m_pTrackAnalysisScheduler) {
-        connect(pPreviewDeck, SIGNAL(newTrackLoaded(TrackPointer)),
-                this, SLOT(slotAnalyzeTrack(TrackPointer)));
+        connect(pPreviewDeck,
+                &BaseTrackPlayer::newTrackLoaded,
+                this,
+                &PlayerManager::slotAnalyzeTrack);
     }
 
     m_players[group] = pPreviewDeck;
@@ -489,8 +495,10 @@ void PlayerManager::addMicrophoneInner() {
     QString group = groupForMicrophone(index);
     Microphone* pMicrophone = new Microphone(this, group, index, m_pSoundManager,
                                              m_pEngine, m_pEffectsManager);
-    connect(pMicrophone, SIGNAL(noMicrophoneInputConfigured()),
-            this, SIGNAL(noMicrophoneInputConfigured()));
+    connect(pMicrophone,
+            &Microphone::noMicrophoneInputConfigured,
+            this,
+            &PlayerManager::noMicrophoneInputConfigured);
     m_microphones.append(pMicrophone);
 }
 
@@ -506,17 +514,19 @@ void PlayerManager::addAuxiliaryInner() {
 
     Auxiliary* pAuxiliary = new Auxiliary(this, group, index, m_pSoundManager,
                                           m_pEngine, m_pEffectsManager);
-    connect(pAuxiliary, SIGNAL(noAuxiliaryInputConfigured()),
-            this, SIGNAL(noAuxiliaryInputConfigured()));
+    connect(pAuxiliary,
+            &Auxiliary::noAuxiliaryInputConfigured,
+            this,
+            &PlayerManager::noAuxiliaryInputConfigured);
     m_auxiliaries.append(pAuxiliary);
 }
 
-BaseTrackPlayer* PlayerManager::getPlayer(QString group) const {
+BaseTrackPlayer* PlayerManager::getPlayer(const QString& group) const {
     QMutexLocker locker(&m_mutex);
     if (m_players.contains(group)) {
         return m_players[group];
     }
-    return NULL;
+    return nullptr;
 }
 
 Deck* PlayerManager::getDeck(unsigned int deck) const {
@@ -524,7 +534,7 @@ Deck* PlayerManager::getDeck(unsigned int deck) const {
     if (deck < 1 || deck > numDecks()) {
         kLogger.warning() << "Warning getDeck() called with invalid index: "
                    << deck;
-        return NULL;
+        return nullptr;
     }
     return m_decks[deck - 1];
 }
@@ -534,7 +544,7 @@ PreviewDeck* PlayerManager::getPreviewDeck(unsigned int libPreviewPlayer) const 
     if (libPreviewPlayer < 1 || libPreviewPlayer > numPreviewDecks()) {
         kLogger.warning() << "Warning getPreviewDeck() called with invalid index: "
                    << libPreviewPlayer;
-        return NULL;
+        return nullptr;
     }
     return m_preview_decks[libPreviewPlayer - 1];
 }
@@ -544,7 +554,7 @@ Sampler* PlayerManager::getSampler(unsigned int sampler) const {
     if (sampler < 1 || sampler > numSamplers()) {
         kLogger.warning() << "Warning getSampler() called with invalid index: "
                    << sampler;
-        return NULL;
+        return nullptr;
     }
     return m_samplers[sampler - 1];
 }
@@ -554,7 +564,7 @@ Microphone* PlayerManager::getMicrophone(unsigned int microphone) const {
     if (microphone < 1 || microphone >= static_cast<unsigned int>(m_microphones.size())) {
         kLogger.warning() << "Warning getMicrophone() called with invalid index: "
                    << microphone;
-        return NULL;
+        return nullptr;
     }
     return m_microphones[microphone - 1];
 }
@@ -564,12 +574,12 @@ Auxiliary* PlayerManager::getAuxiliary(unsigned int auxiliary) const {
     if (auxiliary < 1 || auxiliary > static_cast<unsigned int>(m_auxiliaries.size())) {
         kLogger.warning() << "Warning getAuxiliary() called with invalid index: "
                    << auxiliary;
-        return NULL;
+        return nullptr;
     }
     return m_auxiliaries[auxiliary - 1];
 }
 
-void PlayerManager::slotCloneDeck(QString source_group, QString target_group) {
+void PlayerManager::slotCloneDeck(const QString& source_group, const QString& target_group) {
     BaseTrackPlayer* pPlayer = getPlayer(target_group);
 
     if (pPlayer == nullptr) {
@@ -580,12 +590,12 @@ void PlayerManager::slotCloneDeck(QString source_group, QString target_group) {
     pPlayer->slotCloneFromGroup(source_group);
 }
 
-void PlayerManager::slotLoadTrackToPlayer(TrackPointer pTrack, QString group, bool play) {
+void PlayerManager::slotLoadTrackToPlayer(TrackPointer pTrack, const QString& group, bool play) {
     // Do not lock mutex in this method unless it is changed to access
     // PlayerManager state.
     BaseTrackPlayer* pPlayer = getPlayer(group);
 
-    if (pPlayer == NULL) {
+    if (pPlayer == nullptr) {
         kLogger.warning() << "Invalid group argument " << group << " to slotLoadTrackToPlayer.";
         return;
     }
@@ -620,21 +630,21 @@ void PlayerManager::slotLoadTrackToPlayer(TrackPointer pTrack, QString group, bo
     m_lastLoadedPlayer = group;
 }
 
-void PlayerManager::slotLoadToPlayer(QString location, QString group) {
+void PlayerManager::slotLoadToPlayer(const QString& location, const QString& group) {
     // The library will get the track and then signal back to us to load the
     // track via slotLoadTrackToPlayer.
     emit loadLocationToPlayer(location, group);
 }
 
-void PlayerManager::slotLoadToDeck(QString location, int deck) {
+void PlayerManager::slotLoadToDeck(const QString& location, int deck) {
     slotLoadToPlayer(location, groupForDeck(deck-1));
 }
 
-void PlayerManager::slotLoadToPreviewDeck(QString location, int previewDeck) {
+void PlayerManager::slotLoadToPreviewDeck(const QString& location, int previewDeck) {
     slotLoadToPlayer(location, groupForPreviewDeck(previewDeck-1));
 }
 
-void PlayerManager::slotLoadToSampler(QString location, int sampler) {
+void PlayerManager::slotLoadToSampler(const QString& location, int sampler) {
     slotLoadToPlayer(location, groupForSampler(sampler-1));
 }
 

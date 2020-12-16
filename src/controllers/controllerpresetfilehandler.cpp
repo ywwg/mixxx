@@ -1,8 +1,3 @@
-/// @file controllerpresetfilehandler.cpp
-/// @author Sean Pappalardo spappalardo@mixxx.org
-/// @date Mon 9 Apr 2012
-/// @brief Handles loading and saving of Controller presets.
-
 #include "controllers/controllerpresetfilehandler.h"
 #include "controllers/controllermanager.h"
 #include "controllers/defs_controllers.h"
@@ -121,8 +116,9 @@ void ControllerPresetFileHandler::addScriptFilesToPreset(
         const QDomElement& controller,
         ControllerPreset* preset,
         const QDir& systemPresetsPath) const {
-    if (controller.isNull())
+    if (controller.isNull()) {
         return;
+    }
 
     QString deviceId = controller.attribute("id", "");
     preset->setDeviceId(deviceId);
@@ -149,7 +145,7 @@ void ControllerPresetFileHandler::addScriptFilesToPreset(
 }
 
 bool ControllerPresetFileHandler::writeDocument(
-        QDomDocument root, const QString fileName) const {
+        const QDomDocument& root, const QString& fileName) const {
     // Need to do this on Windows
     QDir directory;
     if (!directory.mkpath(fileName.left(fileName.lastIndexOf("/")))) {
@@ -175,8 +171,8 @@ bool ControllerPresetFileHandler::writeDocument(
 
 void addTextTag(QDomDocument& doc,
         QDomElement& holder,
-        QString tagName,
-        QString tagText) {
+        const QString& tagName,
+        const QString& tagText) {
     QDomElement tag = doc.createElement(tagName);
     QDomText textNode = doc.createTextNode(tagText);
     tag.appendChild(textNode);
