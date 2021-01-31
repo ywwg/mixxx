@@ -1,6 +1,6 @@
 #include "sources/soundsourcewv.h"
 
-#include <wavpack/wavpack.h>
+#include <wavpack.h>
 
 #include "util/logger.h"
 
@@ -131,7 +131,7 @@ void SoundSourceWV::close() {
 }
 
 ReadableSampleFrames SoundSourceWV::readSampleFramesClamped(
-        WritableSampleFrames writableSampleFrames) {
+        const WritableSampleFrames& writableSampleFrames) {
     const SINT firstFrameIndex = writableSampleFrames.frameIndexRange().start();
 
     if (m_curFrameIndex != firstFrameIndex) {

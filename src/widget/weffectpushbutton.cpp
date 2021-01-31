@@ -2,6 +2,7 @@
 
 #include <QtDebug>
 
+#include "moc_weffectpushbutton.cpp"
 #include "widget/effectwidgetutils.h"
 
 WEffectPushButton::WEffectPushButton(QWidget* pParent, EffectsManager* pEffectsManager)
@@ -15,8 +16,7 @@ void WEffectPushButton::setup(const QDomNode& node, const SkinContext& context) 
     WPushButton::setup(node, context);
 
     m_pButtonMenu = new QMenu(this);
-    connect(m_pButtonMenu, SIGNAL(triggered(QAction*)),
-            this, SLOT(slotActionChosen(QAction*)));
+    connect(m_pButtonMenu, &QMenu::triggered, this, &WEffectPushButton::slotActionChosen);
     setFocusPolicy(Qt::NoFocus);
 }
 
@@ -35,8 +35,10 @@ void WEffectPushButton::setEffectParameterSlot(
         EffectButtonParameterSlotPointer pParameterSlot) {
     m_pEffectParameterSlot = pParameterSlot;
     if (m_pEffectParameterSlot) {
-        connect(m_pEffectParameterSlot.data(), SIGNAL(updated()),
-                this, SLOT(parameterUpdated()));
+        connect(m_pEffectParameterSlot.data(),
+                &EffectParameterSlot::updated,
+                this,
+                &WEffectPushButton::parameterUpdated);
     }
     parameterUpdated();
 }
@@ -120,11 +122,11 @@ void WEffectPushButton::parameterUpdated() {
     }
     double value = getControlParameterLeft();
 
-    auto actionGroup = new QActionGroup(m_pButtonMenu);
+    auto* actionGroup = new QActionGroup(m_pButtonMenu);
     actionGroup->setExclusive(true);
     for (const auto& option : qAsConst(options)) {
         // action is added automatically to actionGroup
-        auto action = new QAction(actionGroup);
+        auto* action = new QAction(actionGroup);
         // qDebug() << options[i].first;
         action->setText(option.first);
         action->setData(option.second);
