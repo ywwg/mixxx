@@ -41,9 +41,6 @@ class EngineSyncTest : public MockedEngineBackendTest {
         if (group == m_sInternalClockGroup) {
             qWarning() << "test error, internal clock cannot be waiting";
         }
-        if (!ControlObject::getControl(ConfigKey(m_sInternalClockGroup, "sync_master"))->toBool()) {
-            return false;
-        }
         if (ControlObject::getControl(ConfigKey(group, "sync_mode"))
                         ->get() != SYNC_FOLLOW_MASTERWAIT) {
             return false;
@@ -264,6 +261,34 @@ TEST_F(EngineSyncTest, SetMasterWhilePlaying) {
     ASSERT_TRUE(isFollower(m_sGroup1));
     ASSERT_TRUE(isFollower(m_sGroup2));
     ASSERT_TRUE(isExplicitMaster(m_sGroup3));
+}
+
+TEST_F(EngineSyncTest, WaitingMasterStopStart) {
+    // Make sure that explicit master is restored through play/pause
+    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(*m_pTrack1, 120, 0.0);
+    m_pTrack1->setBeats(pBeats1);
+    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(*m_pTrack2, 124, 0.0);
+    m_pTrack2->setBeats(pBeats2);
+
+    auto pButtonMasterSync1 =
+            std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
+    pButtonMasterSync1->set(SYNC_MASTER_EXPLICIT);
+    auto pButtonMasterSync2 =
+            std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
+    pButtonMasterSync2->slotSet(SYNC_FOLLOWER);
+
+    ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
+    ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(1.0);
+
+    ProcessBuffer();
+    ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(0.0);
+    ProcessBuffer();
+    ASSERT_TRUE(isWaitingMaster(m_sGroup1));
+    ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
+    ProcessBuffer();
+
+    ASSERT_TRUE(isExplicitMaster(m_sGroup1));
+    ASSERT_TRUE(isFollower(m_sGroup2));
 }
 
 TEST_F(EngineSyncTest, SetEnabledBecomesMaster) {

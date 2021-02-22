@@ -100,6 +100,8 @@ void EngineSync::requestSyncMode(Syncable* pSyncable, SyncMode mode) {
             // still a follower.
             activateMasterWait(pSyncable);
         }
+    } else if (mode == SYNC_FOLLOW_MASTERWAIT) {
+        activateMasterWait(pSyncable);
     } else if (isFollower(mode) ||
             mode == SYNC_MASTER_SOFT ||
             pSyncable == m_pInternalClock) {
@@ -355,6 +357,7 @@ void EngineSync::activateMasterWait(Syncable* pSyncable) {
                         << pSyncable->getGroup();
     }
 
+    pSyncable->setSyncMode(SYNC_FOLLOW_MASTERWAIT);
     activateMaster(m_pInternalClock, SYNC_MASTER_SOFT);
 
     // if any other deck was a waiting master, now this one is.
@@ -374,7 +377,6 @@ void EngineSync::activateMasterWait(Syncable* pSyncable) {
                 pSyncable->getBaseBpm(),
                 pSyncable->getBpm());
     }
-    pSyncable->setSyncMode(SYNC_FOLLOW_MASTERWAIT);
 }
 
 void EngineSync::activateMaster(Syncable* pSyncable, SyncMode masterType) {
@@ -403,7 +405,7 @@ void EngineSync::activateMaster(Syncable* pSyncable, SyncMode masterType) {
     // If a different channel is already master, disable it.
     Syncable* pOldChannelMaster = m_pMasterSyncable;
     m_pMasterSyncable = nullptr;
-    if (pOldChannelMaster) {
+    if (pOldChannelMaster && pOldChannelMaster->getSyncMode() != SYNC_FOLLOW_MASTERWAIT) {
         pOldChannelMaster->setSyncMode(SYNC_FOLLOWER);
     }
 

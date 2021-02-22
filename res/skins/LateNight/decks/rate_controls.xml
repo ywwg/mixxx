@@ -81,7 +81,7 @@
                 <SetVariable name="Size">48f,22f</SetVariable>
                 <SetVariable name="BtnSize">sync</SetVariable>
                 <SetVariable name="ConfigKey"><Variable name="Group"/>,sync_enabled</SetVariable>
-                <SetVariable name="ConfigKeyRight"><Variable name="Group"/>,beatsync_tempo</SetVariable>
+                <SetVariable name="ConfigKeyRight"><Variable name="Group"/>,sync_master</SetVariable>
               </Template>
             </Children>
           </WidgetGroup>
