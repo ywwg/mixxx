@@ -323,7 +323,7 @@ void SyncControl::reportTrackPosition(double fractionalPlaypos) {
         if (getSyncMode() == SYNC_MASTER_SOFT) {
             m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_FOLLOWER);
         } else if (getSyncMode() == SYNC_MASTER_EXPLICIT) {
-            m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_MASTER_WAITING);
+            m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_FOLLOW_MASTERWAIT);
         }
     }
 }
@@ -365,11 +365,11 @@ void SyncControl::trackBeatsUpdated(mixxx::BeatsPointer pBeats) {
 }
 
 void SyncControl::slotControlPlay(double play) {
-    if (getSyncMode() == SYNC_MASTER_WAITING && play > 0.0) {
+    if (getSyncMode() == SYNC_FOLLOW_MASTERWAIT && play > 0.0) {
         m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_MASTER_EXPLICIT);
     }
     if (getSyncMode() == SYNC_MASTER_EXPLICIT && play == 0.0) {
-        m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_MASTER_WAITING);
+        m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_FOLLOW_MASTERWAIT);
     }
     m_pEngineSync->notifyPlaying(this, play > 0.0);
 }
@@ -415,16 +415,14 @@ void SyncControl::slotSyncMasterEnabledChangeRequest(double state) {
             qDebug() << "Disallowing enabling of sync mode when passthrough active";
             return;
         }
-        if (mode == SYNC_MASTER_EXPLICIT || mode == SYNC_MASTER_WAITING) {
-            m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_FOLLOWER);
-            return;
-        }
-        // If we're not playing, override request and set as follower.
-        if (!isPlaying()) {
-            m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_MASTER_WAITING);
-            return;
-        }
         m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_MASTER_EXPLICIT);
+    } else {
+        // Turning off master goes back to follower mode.
+        if (mode == SYNC_FOLLOWER) {
+            // Already not master.
+            return;
+        }
+        m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_FOLLOWER);
     }
 }
 
@@ -453,7 +451,14 @@ void SyncControl::setLocalBpm(double local_bpm) {
 
     double bpm = local_bpm * m_pRateRatio->get();
 
-    if (isFollower(syncMode)) {
+    // Although masterwait is a follower of sorts, its bpm changes should
+    // drive the master sync.
+    if (getSyncMode() == SYNC_FOLLOW_MASTERWAIT) {
+        qDebug() << "we here I assume? " << local_bpm << bpm;
+        if (bpm != 0.0) {
+            m_pEngineSync->notifyBpmChanged(this, bpm / m_masterBpmAdjustFactor);
+        }
+    } else if (isFollower(syncMode)) {
         // In this case we need an update from the current master to adjust
         // the rate that we continue with the master BPM. If there is no
         // master bpm, our bpm value is adopted and the m_masterBpmAdjustFactor

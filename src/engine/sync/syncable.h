@@ -8,10 +8,12 @@ enum SyncMode {
     SYNC_INVALID = -1,
     SYNC_NONE = 0,
     SYNC_FOLLOWER = 1,
-    // SYNC_MASTER_WAITING is a master that is currently stopped.
+    // SYNC_FOLLOW_MASTERWAIT is a master that is currently stopped.
     // It seeds the internal clock but doesn't control tempo otherwise.
     // When the deck plays, it becomes SYNC_MASTER_EXPLICIT.
-    SYNC_MASTER_WAITING = 2,
+    // Internally it's a follower type, but for the UI it should appear like
+    // it is master-enabled. In actuality, the internal clock will be soft master.
+    SYNC_FOLLOW_MASTERWAIT = 2,
     // SYNC_MASTER_SOFT is a master that Mixxx has chosen automatically.
     // depending on how decks stop and start, it may reassign soft master at will.
     SYNC_MASTER_SOFT = 3,
@@ -36,7 +38,7 @@ inline bool toSynchronized(SyncMode mode) {
 }
 
 inline bool isFollower(SyncMode mode) {
-    return (mode == SYNC_FOLLOWER || mode == SYNC_MASTER_WAITING);
+    return (mode == SYNC_FOLLOWER || mode == SYNC_FOLLOW_MASTERWAIT);
 }
 
 inline bool isMaster(SyncMode mode) {

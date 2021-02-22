@@ -35,10 +35,30 @@ class EngineSyncTest : public MockedEngineBackendTest {
         return QString();
     }
     bool isExplicitMaster(const QString& group) {
-        return isMaster(group, true);
+        return isMaster(group, SYNC_MASTER_EXPLICIT);
     }
+    bool isWaitingMaster(const QString& group) {
+        if (group == m_sInternalClockGroup) {
+            qWarning() << "test error, internal clock cannot be waiting";
+        }
+        if (!ControlObject::getControl(ConfigKey(m_sInternalClockGroup, "sync_master"))->toBool()) {
+            return false;
+        }
+        if (ControlObject::getControl(ConfigKey(group, "sync_mode"))
+                        ->get() != SYNC_FOLLOW_MASTERWAIT) {
+            return false;
+        }
+        if (!ControlObject::getControl(ConfigKey(group, "sync_enabled"))->toBool()) {
+            return false;
+        }
+        if (ControlObject::getControl(ConfigKey(group, "sync_master"))->toBool()) {
+            return false;
+        }
+        return true;
+    }
+
     bool isSoftMaster(const QString& group) {
-        return isMaster(group, false);
+        return isMaster(group, SYNC_MASTER_SOFT);
     }
 
     bool isFollower(const QString& group) {
@@ -84,7 +104,7 @@ class EngineSyncTest : public MockedEngineBackendTest {
     }
 
   private:
-    bool isMaster(const QString& group, bool explicitMaster) {
+    bool isMaster(const QString& group, SyncMode masterType) {
         if (group == m_sInternalClockGroup) {
             if (!ControlObject::getControl(ConfigKey(m_sInternalClockGroup,
                                                    "sync_master"))
@@ -95,11 +115,6 @@ class EngineSyncTest : public MockedEngineBackendTest {
                 return false;
             }
             if (m_sInternalClockGroup != getMasterGroup()) {
-                return false;
-            }
-            // Internal Clock doesn't have explicit mode
-            if (explicitMaster) {
-                qWarning() << "test error, internal clock can never be explicit master";
                 return false;
             }
             return true;
@@ -117,16 +132,9 @@ class EngineSyncTest : public MockedEngineBackendTest {
             return false;
         }
 
-        if (explicitMaster) {
-            if (ControlObject::getControl(ConfigKey(group, "sync_mode"))
-                            ->get() != SYNC_MASTER_EXPLICIT) {
-                return false;
-            }
-        } else {
-            if (ControlObject::getControl(ConfigKey(group, "sync_mode"))
-                            ->get() != SYNC_MASTER_SOFT) {
-                return false;
-            }
+        if (ControlObject::getControl(ConfigKey(group, "sync_mode"))
+                        ->get() != masterType) {
+            return false;
         }
         if (!ControlObject::getControl(ConfigKey(group, "sync_enabled"))->toBool()) {
             return false;
@@ -155,8 +163,9 @@ TEST_F(EngineSyncTest, SetMasterSuccess) {
     // No tracks are playing and we have no beats, SYNC_MASTER_EXPLICIT state is in stand-by
     EXPECT_DOUBLE_EQ(
             0.0, ControlObject::getControl(ConfigKey(m_sGroup1, "bpm"))->get());
-    // The master sync should now be channel 1.
-    ASSERT_TRUE(isExplicitMaster(m_sGroup1));
+    // The master sync should now be internal clock, with group 1 waiting for play.
+    ASSERT_TRUE(isSoftMaster(m_sInternalClockGroup));
+    ASSERT_TRUE(isWaitingMaster(m_sGroup1));
 
     auto pButtonMasterSync2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
@@ -169,23 +178,23 @@ TEST_F(EngineSyncTest, SetMasterSuccess) {
     pButtonMasterSync2->set(SYNC_MASTER_EXPLICIT);
     ProcessBuffer();
 
-    // Now channel 2 should be master, and channel 1 should be a follower.
-    ASSERT_TRUE(isExplicitMaster(m_sGroup2));
+    // Now channel 2 should be waiting master, and channel 1 should be a follower.
+    ASSERT_TRUE(isWaitingMaster(m_sGroup2));
     ASSERT_TRUE(isFollower(m_sGroup1));
 
     // Now back again.
     pButtonMasterSync1->set(SYNC_MASTER_EXPLICIT);
     ProcessBuffer();
 
-    // Now channel 1 should be master, and channel 2 should be a follower.
-    ASSERT_TRUE(isExplicitMaster(m_sGroup1));
+    // Now channel 1 should be waiting master, and channel 2 should be a follower.
+    ASSERT_TRUE(isWaitingMaster(m_sGroup1));
     ASSERT_TRUE(isFollower(m_sGroup2));
 
-    // Now set channel 1 to follower, no all are followers, waiting for a tempo to adopt.
+    // Now set channel 1 to follower, now all are followers, waiting for a tempo to adopt.
     pButtonMasterSync1->slotSet(SYNC_FOLLOWER);
     ProcessBuffer();
 
-    ASSERT_TRUE(isFollower(m_sInternalClockGroup));
+    ASSERT_TRUE(isSoftMaster(m_sInternalClockGroup));
     ASSERT_TRUE(isFollower(m_sGroup1));
     ASSERT_TRUE(isFollower(m_sGroup2));
 }
@@ -314,17 +323,16 @@ TEST_F(EngineSyncTest, DisableSyncOnMaster) {
     mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(*m_pTrack2, 130, 0.0);
     m_pTrack2->setBeats(pBeats2);
     // Try to set deck two to explicit master.  This is rejected because
-    // deck 2 is not playing, so it becomes a follower instead.
+    // deck 2 is not playing, so it becomes a waiting master instead.
     auto pButtonSyncMaster2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_master");
     pButtonSyncMaster2->slotSet(1.0);
     ProcessBuffer();
-    assertIsFollower(m_sGroup1);
-    assertIsFollower(m_sGroup2);
+    ASSERT_TRUE(isFollower(m_sGroup1));
+    ASSERT_TRUE(isWaitingMaster(m_sGroup2));
 
-    // Set deck 2 to playing, now we can set it to explicit master.
+    // Set deck 2 to playing, now it becomes explicit master.
     ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(1.0);
-    pButtonSyncMaster2->slotSet(1.0);
     // The request to become master is queued, so we have to process a buffer.
     ProcessBuffer();
     ASSERT_TRUE(isFollower(m_sGroup1));
@@ -348,7 +356,7 @@ TEST_F(EngineSyncTest, InternalMasterSetFollowerSliderMoves) {
     auto pMasterSyncSlider =
             std::make_unique<ControlProxy>(m_sInternalClockGroup, "bpm");
     pMasterSyncSlider->set(100.0);
-    assertIsExplicitMaster(m_sInternalClockGroup);
+    ASSERT_TRUE(isExplicitMaster(m_sInternalClockGroup));
 
     // Set the file bpm of channel 1 to 80 bpm.
     mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(*m_pTrack1, 80, 0.0);
@@ -535,8 +543,8 @@ TEST_F(EngineSyncTest, SetExplicitMasterByLightsNoTracks) {
     // Set channel 2 to be follower.
     pButtonSyncEnabled2->slotSet(1);
 
-    // Now channel 1 should be master, and channel 2 should be a follower.
-    ASSERT_TRUE(isExplicitMaster(m_sGroup1));
+    // Now channel 1 should be waiting master, and channel 2 should be a follower.
+    ASSERT_TRUE(isWaitingMaster(m_sGroup1));
     ASSERT_TRUE(isFollower(m_sGroup2));
 
     // Now set channel 1 to not-master, all will be follower waiting for a valid bpm.
@@ -544,7 +552,7 @@ TEST_F(EngineSyncTest, SetExplicitMasterByLightsNoTracks) {
 
     ASSERT_TRUE(isFollower(m_sGroup1));
     ASSERT_TRUE(isFollower(m_sGroup2));
-    ASSERT_TRUE(isFollower(m_sInternalClockGroup));
+    ASSERT_TRUE(isSoftMaster(m_sInternalClockGroup));
 }
 
 TEST_F(EngineSyncTest, RateChangeTest) {
@@ -639,7 +647,7 @@ TEST_F(EngineSyncTest, RateChangeTestOrder3) {
     pButtonMasterSync1->set(SYNC_MASTER_EXPLICIT);
     ProcessBuffer();
 
-    ASSERT_TRUE(isExplicitMaster(m_sGroup1));
+    ASSERT_TRUE(isWaitingMaster(m_sGroup1));
 
     auto pButtonMasterSync2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");

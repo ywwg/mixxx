@@ -117,10 +117,6 @@ EngineBuffer* EngineControl::pickSyncTarget() {
         return nullptr;
     }
 
-    if (auto syncMaster = pEngineSync->getMaster(); syncMaster) {
-        return syncMaster->getEngineBuffer();
-    }
-
     EngineChannel* pThisChannel = pMaster->getChannel(getGroup());
     Syncable* pSyncable = pEngineSync->pickNonSyncSyncTarget(pThisChannel);
     // pickNonSyncSyncTarget can return nullptr, but if it doesn't the Syncable

@@ -771,6 +771,14 @@ double BpmControl::getBeatMatchPosition(
     // explicit master always syncs to itself, so keep it null
     if (getSyncMode() != SYNC_MASTER_EXPLICIT) {
         pOtherEngineBuffer = pickSyncTarget();
+        if (kLogger.traceEnabled()) {
+            if (pOtherEngineBuffer) {
+                kLogger.trace() << "BpmControl::getBeatMatchPosition sync target"
+                                << pOtherEngineBuffer->getGroup();
+            } else {
+                kLogger.trace() << "BpmControl::getBeatMatchPosition no sync target found";
+            }
+        }
     }
     if (playing) {
         if (!pOtherEngineBuffer || pOtherEngineBuffer->getSpeed() == 0.0) {

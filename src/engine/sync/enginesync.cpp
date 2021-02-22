@@ -87,16 +87,24 @@ void EngineSync::requestSyncMode(Syncable* pSyncable, SyncMode mode) {
     }
 
     if (mode == SYNC_MASTER_EXPLICIT) {
-        // Note: we enable master unconditionally. If it has no valid
-        // tempo, the tempo of the old master remains until we know better
-        activateMaster(pSyncable, true);
-        if (pSyncable->getBaseBpm() > 0) {
-            setMasterParams(pSyncable, pSyncable->getBeatDistance(),
-                            pSyncable->getBaseBpm(), pSyncable->getBpm());
+        if (pSyncable == m_pInternalClock) {
+            activateMaster(pSyncable, SYNC_MASTER_EXPLICIT);
+        } else if (pSyncable->getBaseBpm() > 0 && pSyncable->isPlaying()) {
+            activateMaster(pSyncable, SYNC_MASTER_EXPLICIT);
+            setMasterParams(pSyncable,
+                    pSyncable->getBeatDistance(),
+                    pSyncable->getBaseBpm(),
+                    pSyncable->getBpm());
+        } else {
+            // If we are not playing, then we are a waiting master, which is really
+            // still a follower.
+            activateMasterWait(pSyncable);
         }
     } else if (isFollower(mode) ||
             mode == SYNC_MASTER_SOFT ||
             pSyncable == m_pInternalClock) {
+        // A request for follower mode may be converted into an enabling of soft
+        // master mode.
         // Note: SYNC_MASTER_SOFT and SYNC_FOLLOWER cannot be set explicitly,
         // they are calculated by pickMaster.
         // Internal clock cannot be disabled, it is always listening
@@ -107,10 +115,10 @@ void EngineSync::requestSyncMode(Syncable* pSyncable, SyncMode mode) {
         }
         Syncable* newMaster = pickMaster(pSyncable);
         if (newMaster) {
-            activateMaster(newMaster, false);
+            activateMaster(newMaster, SYNC_MASTER_SOFT);
         }
         if (pSyncable != newMaster) {
-            activateFollower(pSyncable, mode == SYNC_MASTER_WAITING);
+            activateFollower(pSyncable);
         }
     } else {
         deactivateSync(pSyncable);
@@ -195,8 +203,6 @@ void EngineSync::requestEnableSync(Syncable* pSyncable, bool bEnabled) {
                 if (m_pMasterSyncable) {
                     pParamsSyncable = m_pMasterSyncable;
                 } else {
-                    // Can this ever happen?
-                    DEBUG_ASSERT(false);
                     pParamsSyncable = pSyncable;
                 }
             }
@@ -221,7 +227,7 @@ void EngineSync::requestEnableSync(Syncable* pSyncable, bool bEnabled) {
     }
 
     if (newMaster != nullptr && newMaster != m_pMasterSyncable) {
-        activateMaster(newMaster, false);
+        activateMaster(newMaster, SYNC_MASTER_SOFT);
     }
 
     if (newMaster != pSyncable) {
@@ -254,7 +260,7 @@ void EngineSync::notifyPlaying(Syncable* pSyncable, bool playing) {
     Syncable* newMaster = pickMaster(playing ? pSyncable : nullptr);
 
     if (newMaster != nullptr && newMaster != m_pMasterSyncable) {
-        activateMaster(newMaster, false);
+        activateMaster(newMaster, SYNC_MASTER_SOFT);
         setMasterParams(newMaster, newMaster->getBeatDistance(), newMaster->getBaseBpm(), newMaster->getBpm());
     }
 
@@ -324,71 +330,91 @@ void EngineSync::notifyBeatDistanceChanged(Syncable* pSyncable, double beat_dist
     setMasterBeatDistance(pSyncable, beat_distance);
 }
 
-void EngineSync::activateFollower(Syncable* pSyncable, bool waitingFollower) {
+void EngineSync::activateFollower(Syncable* pSyncable) {
     if (pSyncable == nullptr) {
         qWarning() << "WARNING: Logic Error: Called activateFollower on a nullptr Syncable.";
         return;
     }
-
-    if (waitingFollower) {
-        pSyncable->setSyncMode(SYNC_MASTER_WAITING);
-    } else {
-        pSyncable->setSyncMode(SYNC_FOLLOWER);
+    if (kLogger.traceEnabled()) {
+        kLogger.trace() << "EngineSync::activateFollower: "
+                        << pSyncable->getGroup();
     }
+
+    pSyncable->setSyncMode(SYNC_FOLLOWER);
     pSyncable->setMasterParams(masterBeatDistance(), masterBaseBpm(), masterBpm());
     pSyncable->setInstantaneousBpm(masterBpm());
 }
 
-void EngineSync::activateMaster(Syncable* pSyncable, bool explicitMaster) {
+void EngineSync::activateMasterWait(Syncable* pSyncable) {
+    if (pSyncable == nullptr) {
+        qWarning() << "WARNING: Logic Error: Called activateFollower on a nullptr Syncable.";
+        return;
+    }
+    if (kLogger.traceEnabled()) {
+        kLogger.trace() << "EngineSync::activateMasterWait: "
+                        << pSyncable->getGroup();
+    }
+
+    activateMaster(m_pInternalClock, SYNC_MASTER_SOFT);
+
+    // if any other deck was a waiting master, now this one is.
+    for (const auto& otherSyncable : qAsConst(m_syncables)) {
+        if (otherSyncable == pSyncable) {
+            continue;
+        }
+        if (otherSyncable->getSyncMode() == SYNC_FOLLOW_MASTERWAIT) {
+            activateFollower(otherSyncable);
+        }
+    }
+
+    // Seed the internal clock with our settings, if valid.
+    if (pSyncable->getBaseBpm() != 0.0) {
+        setMasterParams(pSyncable,
+                pSyncable->getBeatDistance(),
+                pSyncable->getBaseBpm(),
+                pSyncable->getBpm());
+    }
+    pSyncable->setSyncMode(SYNC_FOLLOW_MASTERWAIT);
+}
+
+void EngineSync::activateMaster(Syncable* pSyncable, SyncMode masterType) {
     VERIFY_OR_DEBUG_ASSERT(pSyncable) {
         qWarning() << "WARNING: Logic Error: Called activateMaster on a nullptr Syncable.";
         return;
     }
+    VERIFY_OR_DEBUG_ASSERT(masterType == SYNC_MASTER_SOFT || masterType == SYNC_MASTER_EXPLICIT) {
+        qWarning() << "WARNING: Logic Error: Called activateMaster with non-master mode";
+    }
     if (kLogger.traceEnabled()) {
         kLogger.trace() << "EngineSync::activateMaster: "
-                        << pSyncable->getGroup() << "explicit? "
-                        << explicitMaster;
+                        << pSyncable->getGroup() << "type: "
+                        << masterType;
     }
 
     if (m_pMasterSyncable == pSyncable) {
-        // Already master, update the explicit State.
-        if (explicitMaster) {
-            if (m_pMasterSyncable->getSyncMode() != SYNC_MASTER_EXPLICIT) {
-                m_pMasterSyncable->setSyncMode(SYNC_MASTER_EXPLICIT);
-            } else if (m_pMasterSyncable->getSyncMode() != SYNC_MASTER_SOFT) {
-                m_pMasterSyncable->setSyncMode(SYNC_MASTER_SOFT);
-            } else {
-                DEBUG_ASSERT(!"Logic Error: m_pMasterSyncable is a syncable that does not think it is master.");
-            }
+        // Already master, update the master type.
+        if (m_pMasterSyncable->getSyncMode() != masterType) {
+            m_pMasterSyncable->setSyncMode(masterType);
         }
         // nothing else to do
         return;
     }
 
-    // If a channel is master, disable it.
+    // If a different channel is already master, disable it.
     Syncable* pOldChannelMaster = m_pMasterSyncable;
-
     m_pMasterSyncable = nullptr;
     if (pOldChannelMaster) {
-        if (pOldChannelMaster->getSyncMode() == SYNC_MASTER_EXPLICIT) {
-            pOldChannelMaster->setSyncMode(SYNC_MASTER_WAITING);
-        } else {
-            pOldChannelMaster->setSyncMode(SYNC_FOLLOWER);
-        }
+        pOldChannelMaster->setSyncMode(SYNC_FOLLOWER);
     }
 
     //qDebug() << "Setting up master " << pSyncable->getGroup();
     m_pMasterSyncable = pSyncable;
-    if (explicitMaster) {
-        pSyncable->setSyncMode(SYNC_MASTER_EXPLICIT);
-    } else {
-        pSyncable->setSyncMode(SYNC_MASTER_SOFT);
-    }
+    pSyncable->setSyncMode(masterType);
     pSyncable->setMasterParams(masterBeatDistance(), masterBaseBpm(), masterBpm());
     pSyncable->setInstantaneousBpm(masterBpm());
 
     if (m_pMasterSyncable != m_pInternalClock) {
-        activateFollower(m_pInternalClock, false);
+        activateFollower(m_pInternalClock);
     }
 
     // It is up to callers of this function to initialize bpm and beat_distance
@@ -417,7 +443,7 @@ void EngineSync::deactivateSync(Syncable* pSyncable) {
 
     Syncable* newMaster = pickMaster(nullptr);
     if (newMaster != nullptr && m_pMasterSyncable != newMaster) {
-        activateMaster(newMaster, false);
+        activateMaster(newMaster, SYNC_MASTER_SOFT);
     }
 }
 
