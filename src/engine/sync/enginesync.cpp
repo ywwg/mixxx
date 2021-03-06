@@ -258,6 +258,20 @@ void EngineSync::notifyPlaying(Syncable* pSyncable, bool playing) {
         return;
     }
 
+    // Handle swap from explicit master to waiting master.
+    if (pSyncable) {
+        if (pSyncable->getSyncMode() == SYNC_FOLLOW_MASTERWAIT && playing) {
+            qDebug() << "now playing, activate explicit";
+            requestSyncMode(pSyncable, SYNC_MASTER_EXPLICIT);
+            return;
+        }
+        if (pSyncable->getSyncMode() == SYNC_MASTER_EXPLICIT && !playing) {
+            qDebug() << "was playing, activate wait";
+            requestSyncMode(pSyncable, SYNC_FOLLOW_MASTERWAIT);
+            return;
+        }
+    }
+
     // similar to enablesync -- we pick a new master and maybe reinit.
     Syncable* newMaster = pickMaster(playing ? pSyncable : nullptr);
 

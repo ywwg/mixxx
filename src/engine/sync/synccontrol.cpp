@@ -54,6 +54,7 @@ SyncControl::SyncControl(const QString& group, UserSettingsPointer pConfig,
     m_pSyncMasterEnabled.reset(
             new ControlPushButton(ConfigKey(group, "sync_master")));
     m_pSyncMasterEnabled->setButtonMode(ControlPushButton::TOGGLE);
+    m_pSyncMasterEnabled->setStates(3);
     m_pSyncMasterEnabled->connectValueChangeRequest(
             this, &SyncControl::slotSyncMasterEnabledChangeRequest, Qt::DirectConnection);
 
@@ -129,7 +130,22 @@ void SyncControl::setSyncMode(SyncMode mode) {
     // requires. Bypass confirmation by using setAndConfirm.
     m_pSyncMode->setAndConfirm(mode);
     m_pSyncEnabled->setAndConfirm(mode != SYNC_NONE);
-    m_pSyncMasterEnabled->setAndConfirm(isMaster(mode));
+    switch (mode) {
+    case SYNC_INVALID:
+    case SYNC_NONE:
+    case SYNC_FOLLOWER:
+        m_pSyncMasterEnabled->setAndConfirm(0);
+        break;
+    case SYNC_FOLLOW_MASTERWAIT:
+        m_pSyncMasterEnabled->setAndConfirm(1);
+        break;
+    case SYNC_MASTER_SOFT:
+    case SYNC_MASTER_EXPLICIT:
+        m_pSyncMasterEnabled->setAndConfirm(2);
+        break;
+    case SYNC_NUM_MODES:
+        break;
+    }
     if (mode == SYNC_FOLLOWER) {
         if (m_pVCEnabled && m_pVCEnabled->toBool()) {
             // If follower mode is enabled, disable vinyl control.
@@ -365,11 +381,8 @@ void SyncControl::trackBeatsUpdated(mixxx::BeatsPointer pBeats) {
 }
 
 void SyncControl::slotControlPlay(double play) {
-    if (getSyncMode() == SYNC_FOLLOW_MASTERWAIT && play > 0.0) {
-        m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_MASTER_EXPLICIT);
-    }
-    if (getSyncMode() == SYNC_MASTER_EXPLICIT && play == 0.0) {
-        m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_FOLLOW_MASTERWAIT);
+    if (kLogger.traceEnabled()) {
+        kLogger.trace() << "SyncControl::slotControlPlay" << getSyncMode() << play;
     }
     m_pEngineSync->notifyPlaying(this, play > 0.0);
 }
@@ -409,6 +422,9 @@ void SyncControl::slotSyncModeChangeRequest(double state) {
 }
 
 void SyncControl::slotSyncMasterEnabledChangeRequest(double state) {
+    if (kLogger.traceEnabled()) {
+        kLogger.trace() << "SyncControl::slotSyncMasterEnabledChangeRequest" << getGroup();
+    }
     SyncMode mode = getSyncMode();
     if (state > 0.0) {
         if (m_pPassthroughEnabled->get()) {
@@ -427,6 +443,9 @@ void SyncControl::slotSyncMasterEnabledChangeRequest(double state) {
 }
 
 void SyncControl::slotSyncEnabledChangeRequest(double enabled) {
+    if (kLogger.traceEnabled()) {
+        kLogger.trace() << "SyncControl::slotSyncEnabledChangeRequest" << getGroup();
+    }
     bool bEnabled = enabled > 0.0;
 
     // Allow a request for state change even if it's the same as the current

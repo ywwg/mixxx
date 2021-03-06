@@ -41,14 +41,21 @@ class EngineSyncTest : public MockedEngineBackendTest {
         if (group == m_sInternalClockGroup) {
             qWarning() << "test error, internal clock cannot be waiting";
         }
-        if (ControlObject::getControl(ConfigKey(group, "sync_mode"))
-                        ->get() != SYNC_FOLLOW_MASTERWAIT) {
+        if (auto mode = ControlObject::getControl(ConfigKey(group, "sync_mode"))
+                                ->get();
+                mode != SYNC_FOLLOW_MASTERWAIT) {
+            qWarning() << group << "expected mode SYNC_FOLLOW_MASTERWAIT, is " << mode;
             return false;
         }
         if (!ControlObject::getControl(ConfigKey(group, "sync_enabled"))->toBool()) {
+            qWarning() << "sync_enabled should be on, isn't";
             return false;
         }
-        if (ControlObject::getControl(ConfigKey(group, "sync_master"))->toBool()) {
+        if (double master = ControlObject::getControl(
+                    ConfigKey(group, "sync_master"))
+                                    ->get();
+                master != 1.0) {
+            qWarning() << "sync_master should be 1.0, is" << master;
             return false;
         }
         return true;
@@ -64,13 +71,21 @@ class EngineSyncTest : public MockedEngineBackendTest {
                                                       "sync_master"))
                             ->toBool();
         }
-        if (ControlObject::getControl(ConfigKey(group, "sync_mode"))->get() != SYNC_FOLLOWER) {
+        if (auto mode = ControlObject::getControl(ConfigKey(group, "sync_mode"))
+                                ->get();
+                mode != SYNC_FOLLOWER) {
+            qWarning() << "expected mode SYNC_FOLLOWER, got" << mode;
             return false;
         }
         if (!ControlObject::getControl(ConfigKey(group, "sync_enabled"))->toBool()) {
+            qWarning() << "sync_enabled should be on, isn't";
             return false;
         }
-        if (ControlObject::getControl(ConfigKey(group, "sync_master"))->toBool()) {
+        if (double master = ControlObject::getControl(
+                    ConfigKey(group, "sync_master"))
+                                    ->get();
+                master != 0.0) {
+            qWarning() << "sync_master should be 0.0, is" << master;
             return false;
         }
         return true;
@@ -103,40 +118,54 @@ class EngineSyncTest : public MockedEngineBackendTest {
   private:
     bool isMaster(const QString& group, SyncMode masterType) {
         if (group == m_sInternalClockGroup) {
-            if (!ControlObject::getControl(ConfigKey(m_sInternalClockGroup,
-                                                   "sync_master"))
-                            ->toBool()) {
+            if (double master = ControlObject::getControl(ConfigKey(m_sInternalClockGroup,
+                                                                  "sync_master"))
+                                        ->get();
+                    master != 1.0) {
+                qWarning() << "internal clock sync_master should be 1.0, is" << master;
                 return false;
             }
             if (m_pEngineSync->getMaster()) {
+                qWarning() << "no current master";
                 return false;
             }
             if (m_sInternalClockGroup != getMasterGroup()) {
+                qWarning() << "internal clock is not master, it's" << getMasterGroup();
                 return false;
             }
             return true;
         }
         if (group == m_sGroup1) {
             if (m_pEngineSync->getMaster() != m_pChannel1) {
+                qWarning() << "master pointer is wrong";
                 return false;
             }
         } else if (group == m_sGroup2) {
             if (m_pEngineSync->getMaster() != m_pChannel2) {
+                qWarning() << "master pointer is wrong";
                 return false;
             }
         }
         if (getMasterGroup() != group) {
+            qWarning() << "master group should be" << group << ", is" << getMasterGroup();
             return false;
         }
 
-        if (ControlObject::getControl(ConfigKey(group, "sync_mode"))
-                        ->get() != masterType) {
+        if (auto mode = ControlObject::getControl(ConfigKey(group, "sync_mode"))
+                                ->get();
+                mode != masterType) {
+            qWarning() << "mode should be" << masterType << ", is" << mode;
             return false;
         }
         if (!ControlObject::getControl(ConfigKey(group, "sync_enabled"))->toBool()) {
+            qWarning() << "sync_enabled should be true, isn't";
             return false;
         }
-        if (!ControlObject::getControl(ConfigKey(group, "sync_master"))->toBool()) {
+        if (double master = ControlObject::getControl(
+                    ConfigKey(group, "sync_master"))
+                                    ->get();
+                master != 2) {
+            qWarning() << "master should be 2.0, is" << master;
             return false;
         }
         return true;
@@ -263,8 +292,32 @@ TEST_F(EngineSyncTest, SetMasterWhilePlaying) {
     ASSERT_TRUE(isExplicitMaster(m_sGroup3));
 }
 
-TEST_F(EngineSyncTest, WaitingMasterStopStart) {
-    // Make sure that explicit master is restored through play/pause
+TEST_F(EngineSyncTest, WaitingMasterStopStartOneDeck) {
+    // Make sure that explicit master is restored through play/pause with
+    // only one deck active.
+    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(*m_pTrack1, 120, 0.0);
+    m_pTrack1->setBeats(pBeats1);
+
+    auto pButtonMasterSync1 =
+            std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
+    pButtonMasterSync1->set(SYNC_MASTER_EXPLICIT);
+
+    ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
+    ProcessBuffer();
+    ASSERT_TRUE(isExplicitMaster(m_sGroup1));
+
+    ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(0.0);
+    ProcessBuffer();
+    ASSERT_TRUE(isWaitingMaster(m_sGroup1));
+
+    ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
+    ProcessBuffer();
+    ASSERT_TRUE(isExplicitMaster(m_sGroup1));
+}
+
+TEST_F(EngineSyncTest, WaitingMasterStopStartMultiDeck) {
+    // Make sure that explicit master is restored through play/pause with two
+    // decks active.
     mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(*m_pTrack1, 120, 0.0);
     m_pTrack1->setBeats(pBeats1);
     mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(*m_pTrack2, 124, 0.0);
