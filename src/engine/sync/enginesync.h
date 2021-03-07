@@ -27,8 +27,15 @@ class EngineSync : public BaseSyncableListener {
     // notifications.
     void notifyBpmChanged(Syncable* pSyncable, double bpm) override;
     void requestBpmUpdate(Syncable* pSyncable, double bpm) override;
+
+    // Instantaneous BPM refers to the actual, honest-to-god speed of playback
+    // at any moment, including any scratching that may be happening.
     void notifyInstantaneousBpmChanged(Syncable* pSyncable, double bpm) override;
+
+    // the beat distance is updated on every callback.
     void notifyBeatDistanceChanged(Syncable* pSyncable, double beatDistance) override;
+
+    // Notify the engine that a syncable has started or stopped playing
     void notifyPlaying(Syncable* pSyncable, bool playing) override;
     void notifyScratching(Syncable* pSyncable, bool scratching) override;
 
