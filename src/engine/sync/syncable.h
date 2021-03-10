@@ -8,19 +8,13 @@ enum SyncMode {
     SYNC_INVALID = -1,
     SYNC_NONE = 0,
     SYNC_FOLLOWER = 1,
-    // SYNC_FOLLOW_MASTERWAIT is a master that is currently stopped.
-    // It seeds the internal clock but doesn't control tempo otherwise.
-    // When the deck plays, it becomes SYNC_MASTER_EXPLICIT.
-    // Internally it's a follower type, but for the UI it should appear like
-    // it is master-enabled. In actuality, the internal clock will be soft master.
-    SYNC_FOLLOW_MASTERWAIT = 2,
     // SYNC_MASTER_SOFT is a master that Mixxx has chosen automatically.
     // depending on how decks stop and start, it may reassign soft master at will.
-    SYNC_MASTER_SOFT = 3,
+    SYNC_MASTER_SOFT = 2,
     // SYNC_MASTER_EXPLICIT represents an explicit request that the synacable be
     // master. Mixxx will only remove a SYNC_MASTER_SOFT if the track is stopped or
     // ejected.
-    SYNC_MASTER_EXPLICIT = 4,
+    SYNC_MASTER_EXPLICIT = 3,
     SYNC_NUM_MODES
 };
 
@@ -38,7 +32,7 @@ inline bool toSynchronized(SyncMode mode) {
 }
 
 inline bool isFollower(SyncMode mode) {
-    return (mode == SYNC_FOLLOWER || mode == SYNC_FOLLOW_MASTERWAIT);
+    return (mode == SYNC_FOLLOWER);
 }
 
 inline bool isMaster(SyncMode mode) {
@@ -121,7 +115,8 @@ class SyncableListener {
 
     // A Syncable must never call notifyBpmChanged in response to a setMasterBpm()
     // call.
-    virtual void notifyBpmChanged(Syncable* pSyncable, double bpm) = 0;
+    virtual void notifyBaseBpmChanged(Syncable* pSyncable, double bpm) = 0;
+    virtual void notifyRateChanged(Syncable* pSyncable, double bpm) = 0;
     virtual void requestBpmUpdate(Syncable* pSyncable, double bpm) = 0;
 
     // Syncables notify EngineSync directly about various events. EngineSync

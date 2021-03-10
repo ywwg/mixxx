@@ -57,7 +57,7 @@ class InternalClock : public QObject, public Clock, public Syncable {
     void onCallbackEnd(int sampleRate, int bufferSize);
 
   private slots:
-    void slotBpmChanged(double bpm);
+    void slotBaseBpmChanged(double baseBpm);
     void slotBeatDistanceChanged(double beat_distance);
     void slotSyncMasterEnabledChangeRequest(double state);
 

@@ -30,8 +30,10 @@ InternalClock::InternalClock(const QString& group, SyncableListener* pEngineSync
     // bpm_up_small / bpm_down_small steps by 0.1
     m_pClockBpm.reset(
             new ControlLinPotmeter(ConfigKey(m_group, "bpm"), 1, 200, 1, 0.1, true));
-    connect(m_pClockBpm.data(), &ControlObject::valueChanged,
-            this, &InternalClock::slotBpmChanged,
+    connect(m_pClockBpm.data(),
+            &ControlObject::valueChanged,
+            this,
+            &InternalClock::slotBaseBpmChanged,
             Qt::DirectConnection);
 
     // The relative position between two beats in the range 0.0 ... 1.0
@@ -146,13 +148,14 @@ void InternalClock::setMasterParams(double beatDistance, double baseBpm, double 
     setMasterBeatDistance(beatDistance);
 }
 
-void InternalClock::slotBpmChanged(double bpm) {
-    m_dBaseBpm = bpm;
-    updateBeatLength(m_iOldSampleRate, bpm);
+void InternalClock::slotBaseBpmChanged(double baseBpm) {
+    qDebug() << "InternalClock::slotBaseBpmChanged" << baseBpm;
+    m_dBaseBpm = baseBpm;
+    updateBeatLength(m_iOldSampleRate, m_dBaseBpm);
     if (!isSynchronized()) {
         return;
     }
-    m_pEngineSync->notifyBpmChanged(this, bpm);
+    m_pEngineSync->notifyBaseBpmChanged(this, m_dBaseBpm);
 }
 
 void InternalClock::slotBeatDistanceChanged(double beat_distance) {

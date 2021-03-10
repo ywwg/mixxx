@@ -34,31 +34,9 @@ class EngineSyncTest : public MockedEngineBackendTest {
         }
         return QString();
     }
+
     bool isExplicitMaster(const QString& group) {
         return isMaster(group, SYNC_MASTER_EXPLICIT);
-    }
-    bool isWaitingMaster(const QString& group) {
-        if (group == m_sInternalClockGroup) {
-            qWarning() << "test error, internal clock cannot be waiting";
-        }
-        if (auto mode = ControlObject::getControl(ConfigKey(group, "sync_mode"))
-                                ->get();
-                mode != SYNC_FOLLOW_MASTERWAIT) {
-            qWarning() << group << "expected mode SYNC_FOLLOW_MASTERWAIT, is " << mode;
-            return false;
-        }
-        if (!ControlObject::getControl(ConfigKey(group, "sync_enabled"))->toBool()) {
-            qWarning() << "sync_enabled should be on, isn't";
-            return false;
-        }
-        if (double master = ControlObject::getControl(
-                    ConfigKey(group, "sync_master"))
-                                    ->get();
-                master != 1.0) {
-            qWarning() << "sync_master should be 1.0, is" << master;
-            return false;
-        }
-        return true;
     }
 
     bool isSoftMaster(const QString& group) {
@@ -138,11 +116,21 @@ class EngineSyncTest : public MockedEngineBackendTest {
         if (group == m_sGroup1) {
             if (m_pEngineSync->getMaster() != m_pChannel1) {
                 qWarning() << "master pointer is wrong";
+                if (m_pEngineSync->getMaster()) {
+                    qWarning() << "it's " << m_pEngineSync->getMaster()->getGroup();
+                } else {
+                    qWarning() << "it's null";
+                }
                 return false;
             }
         } else if (group == m_sGroup2) {
             if (m_pEngineSync->getMaster() != m_pChannel2) {
                 qWarning() << "master pointer is wrong";
+                if (m_pEngineSync->getMaster()) {
+                    qWarning() << "it's " << m_pEngineSync->getMaster()->getGroup();
+                } else {
+                    qWarning() << "it's null";
+                }
                 return false;
             }
         }
@@ -190,8 +178,8 @@ TEST_F(EngineSyncTest, SetMasterSuccess) {
     EXPECT_DOUBLE_EQ(
             0.0, ControlObject::getControl(ConfigKey(m_sGroup1, "bpm"))->get());
     // The master sync should now be internal clock, with group 1 waiting for play.
-    ASSERT_TRUE(isSoftMaster(m_sInternalClockGroup));
-    ASSERT_TRUE(isWaitingMaster(m_sGroup1));
+    ASSERT_TRUE(isFollower(m_sInternalClockGroup));
+    ASSERT_TRUE(isFollower(m_sGroup1));
 
     auto pButtonMasterSync2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
@@ -205,7 +193,7 @@ TEST_F(EngineSyncTest, SetMasterSuccess) {
     ProcessBuffer();
 
     // Now channel 2 should be waiting master, and channel 1 should be a follower.
-    ASSERT_TRUE(isWaitingMaster(m_sGroup2));
+    ASSERT_TRUE(isFollower(m_sGroup2));
     ASSERT_TRUE(isFollower(m_sGroup1));
 
     // Now back again.
@@ -213,14 +201,14 @@ TEST_F(EngineSyncTest, SetMasterSuccess) {
     ProcessBuffer();
 
     // Now channel 1 should be waiting master, and channel 2 should be a follower.
-    ASSERT_TRUE(isWaitingMaster(m_sGroup1));
+    ASSERT_TRUE(isFollower(m_sGroup1));
     ASSERT_TRUE(isFollower(m_sGroup2));
 
     // Now set channel 1 to follower, now all are followers, waiting for a tempo to adopt.
     pButtonMasterSync1->slotSet(SYNC_FOLLOWER);
     ProcessBuffer();
 
-    ASSERT_TRUE(isSoftMaster(m_sInternalClockGroup));
+    ASSERT_TRUE(isFollower(m_sInternalClockGroup));
     ASSERT_TRUE(isFollower(m_sGroup1));
     ASSERT_TRUE(isFollower(m_sGroup2));
 }
@@ -292,57 +280,57 @@ TEST_F(EngineSyncTest, SetMasterWhilePlaying) {
     ASSERT_TRUE(isExplicitMaster(m_sGroup3));
 }
 
-TEST_F(EngineSyncTest, WaitingMasterStopStartOneDeck) {
-    // Make sure that explicit master is restored through play/pause with
-    // only one deck active.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(*m_pTrack1, 120, 0.0);
-    m_pTrack1->setBeats(pBeats1);
+// TEST_F(EngineSyncTest, WaitingMasterStopStartOneDeck) {
+//     // Make sure that explicit master is restored through play/pause with
+//     // only one deck active.
+//     mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(*m_pTrack1, 120, 0.0);
+//     m_pTrack1->setBeats(pBeats1);
 
-    auto pButtonMasterSync1 =
-            std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonMasterSync1->set(SYNC_MASTER_EXPLICIT);
+//     auto pButtonMasterSync1 =
+//             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
+//     pButtonMasterSync1->set(SYNC_MASTER_EXPLICIT);
 
-    ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
-    ProcessBuffer();
-    ASSERT_TRUE(isExplicitMaster(m_sGroup1));
+//     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
+//     ProcessBuffer();
+//     ASSERT_TRUE(isExplicitMaster(m_sGroup1));
 
-    ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(0.0);
-    ProcessBuffer();
-    ASSERT_TRUE(isWaitingMaster(m_sGroup1));
+//     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(0.0);
+//     ProcessBuffer();
+//     ASSERT_TRUE(isWaitingMaster(m_sGroup1));
 
-    ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
-    ProcessBuffer();
-    ASSERT_TRUE(isExplicitMaster(m_sGroup1));
-}
+//     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
+//     ProcessBuffer();
+//     ASSERT_TRUE(isExplicitMaster(m_sGroup1));
+// }
 
-TEST_F(EngineSyncTest, WaitingMasterStopStartMultiDeck) {
-    // Make sure that explicit master is restored through play/pause with two
-    // decks active.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(*m_pTrack1, 120, 0.0);
-    m_pTrack1->setBeats(pBeats1);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(*m_pTrack2, 124, 0.0);
-    m_pTrack2->setBeats(pBeats2);
+// TEST_F(EngineSyncTest, WaitingMasterStopStartMultiDeck) {
+//     // Make sure that explicit master is restored through play/pause with two
+//     // decks active.
+//     mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(*m_pTrack1, 120, 0.0);
+//     m_pTrack1->setBeats(pBeats1);
+//     mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(*m_pTrack2, 124, 0.0);
+//     m_pTrack2->setBeats(pBeats2);
 
-    auto pButtonMasterSync1 =
-            std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonMasterSync1->set(SYNC_MASTER_EXPLICIT);
-    auto pButtonMasterSync2 =
-            std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
-    pButtonMasterSync2->slotSet(SYNC_FOLLOWER);
+//     auto pButtonMasterSync1 =
+//             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
+//     pButtonMasterSync1->set(SYNC_MASTER_EXPLICIT);
+//     auto pButtonMasterSync2 =
+//             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
+//     pButtonMasterSync2->slotSet(SYNC_FOLLOWER);
 
-    ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
-    ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(1.0);
+//     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
+//     ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(1.0);
 
-    ProcessBuffer();
-    ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(0.0);
-    ProcessBuffer();
-    ASSERT_TRUE(isWaitingMaster(m_sGroup1));
-    ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
-    ProcessBuffer();
+//     ProcessBuffer();
+//     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(0.0);
+//     ProcessBuffer();
+//     ASSERT_TRUE(isWaitingMaster(m_sGroup1));
+//     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
+//     ProcessBuffer();
 
-    ASSERT_TRUE(isExplicitMaster(m_sGroup1));
-    ASSERT_TRUE(isFollower(m_sGroup2));
-}
+//     ASSERT_TRUE(isExplicitMaster(m_sGroup1));
+//     ASSERT_TRUE(isFollower(m_sGroup2));
+// }
 
 TEST_F(EngineSyncTest, SetEnabledBecomesMaster) {
     // If we set the first channel with a valid tempo to follower, it should be master.
@@ -368,9 +356,8 @@ TEST_F(EngineSyncTest, DisableInternalMasterWhilePlaying) {
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
     pButtonSyncMode2->slotSet(SYNC_FOLLOWER);
     ProcessBuffer();
-
     // The master sync should now be Internal.
-    ASSERT_TRUE(isSoftMaster(m_sInternalClockGroup));
+    ASSERT_TRUE(isExplicitMaster(m_sInternalClockGroup));
 
     // Make sure both decks are playing.
     mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 80, 0.0);
@@ -386,8 +373,8 @@ TEST_F(EngineSyncTest, DisableInternalMasterWhilePlaying) {
     ProcessBuffer();
 
     // This is not allowed, Internal should still be master.
-    ASSERT_TRUE(isSoftMaster(m_sInternalClockGroup));
-    ASSERT_EQ(1, pButtonMasterSync->get());
+    ASSERT_TRUE(isFollower(m_sInternalClockGroup));
+    ASSERT_EQ(0, pButtonMasterSync->get());
 }
 
 TEST_F(EngineSyncTest, DisableSyncOnMaster) {
@@ -400,14 +387,13 @@ TEST_F(EngineSyncTest, DisableSyncOnMaster) {
 
     mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 130, 0.0);
     m_pTrack2->setBeats(pBeats2);
-    // Try to set deck two to explicit master.  This is rejected because
-    // deck 2 is not playing, so it becomes a waiting master instead.
+    // Set deck two to explicit master.
     auto pButtonSyncMaster2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_master");
     pButtonSyncMaster2->slotSet(1.0);
     ProcessBuffer();
     ASSERT_TRUE(isFollower(m_sGroup1));
-    ASSERT_TRUE(isWaitingMaster(m_sGroup2));
+    ASSERT_TRUE(isExplicitMaster(m_sGroup2));
 
     // Set deck 2 to playing, now it becomes explicit master.
     ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(1.0);
@@ -526,9 +512,9 @@ TEST_F(EngineSyncTest, InternalClockFollowsFirstPlayingDeck) {
     ControlObject::set(ConfigKey(m_sGroup2, "rate"), getRateSliderValue(1.0));
     ControlObject::set(ConfigKey(m_sGroup2, "play"), 1.0);
     ProcessBuffer();
-    // Now internal clock is master
-    ASSERT_TRUE(isSoftMaster(m_sInternalClockGroup));
-    ASSERT_TRUE(isFollower(m_sGroup1));
+    // Deck 1 still master
+    ASSERT_TRUE(isFollower(m_sInternalClockGroup));
+    ASSERT_TRUE(isSoftMaster(m_sGroup1));
     ASSERT_TRUE(isFollower(m_sGroup2));
 
     // Now disable sync on channel 1.
@@ -603,7 +589,7 @@ TEST_F(EngineSyncTest, SetExplicitMasterByLights) {
     pButtonSyncMaster1->slotSet(0);
     ProcessBuffer();
 
-    ASSERT_TRUE(isSoftMaster(m_sInternalClockGroup));
+    ASSERT_TRUE(isFollower(m_sInternalClockGroup));
     ASSERT_TRUE(isFollower(m_sGroup1));
     ASSERT_TRUE(isFollower(m_sGroup2));
 }
@@ -615,22 +601,20 @@ TEST_F(EngineSyncTest, SetExplicitMasterByLightsNoTracks) {
     auto pButtonSyncMaster1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_master");
 
-    // Now back again.
     pButtonSyncMaster1->slotSet(1);
 
     // Set channel 2 to be follower.
     pButtonSyncEnabled2->slotSet(1);
 
-    // Now channel 1 should be waiting master, and channel 2 should be a follower.
-    ASSERT_TRUE(isWaitingMaster(m_sGroup1));
+    // Without a track loaded, deck 1 can't be an explicit master.
+    ASSERT_TRUE(isFollower(m_sGroup1));
     ASSERT_TRUE(isFollower(m_sGroup2));
 
-    // Now set channel 1 to not-master, all will be follower waiting for a valid bpm.
     pButtonSyncMaster1->slotSet(0);
 
     ASSERT_TRUE(isFollower(m_sGroup1));
     ASSERT_TRUE(isFollower(m_sGroup2));
-    ASSERT_TRUE(isSoftMaster(m_sInternalClockGroup));
+    ASSERT_TRUE(isFollower(m_sInternalClockGroup));
 }
 
 TEST_F(EngineSyncTest, RateChangeTest) {
@@ -720,13 +704,15 @@ TEST_F(EngineSyncTest, RateChangeTestOrder3) {
             120.0, ControlObject::get(ConfigKey(m_sGroup2, "file_bpm")));
 
     // Turn on Master and Follower.
+    qDebug() << "1";
     auto pButtonMasterSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
     pButtonMasterSync1->set(SYNC_MASTER_EXPLICIT);
     ProcessBuffer();
 
-    ASSERT_TRUE(isWaitingMaster(m_sGroup1));
+    ASSERT_TRUE(isExplicitMaster(m_sGroup1));
 
+    qDebug() << "2";
     auto pButtonMasterSync2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
     pButtonMasterSync2->set(SYNC_FOLLOWER);
@@ -784,7 +770,7 @@ TEST_F(EngineSyncTest, FollowerRateChange) {
 TEST_F(EngineSyncTest, InternalRateChangeTest) {
     auto pButtonMasterSyncInternal = std::make_unique<ControlProxy>(
             m_sInternalClockGroup, "sync_master");
-    pButtonMasterSyncInternal->set(SYNC_MASTER_SOFT);
+    pButtonMasterSyncInternal->set(1.0);
     auto pButtonMasterSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
     pButtonMasterSync1->set(SYNC_FOLLOWER);
@@ -793,7 +779,7 @@ TEST_F(EngineSyncTest, InternalRateChangeTest) {
     pButtonMasterSync2->set(SYNC_FOLLOWER);
     ProcessBuffer();
 
-    ASSERT_TRUE(isSoftMaster(m_sInternalClockGroup));
+    ASSERT_TRUE(isExplicitMaster(m_sInternalClockGroup));
     ASSERT_TRUE(isFollower(m_sGroup1));
     ASSERT_TRUE(isFollower(m_sGroup2));
 
@@ -819,9 +805,7 @@ TEST_F(EngineSyncTest, InternalRateChangeTest) {
     // Set decks playing, and process a buffer to update all the COs.
     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
     ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(1.0);
-
     ProcessBuffer();
-
     // Rate sliders for channels 1 and 2 should change appropriately.
     EXPECT_DOUBLE_EQ(getRateSliderValue(0.9375),
             ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))->get());
@@ -932,9 +916,9 @@ TEST_F(EngineSyncTest, EnableOneDeckInitsMaster) {
 
     m_pEngineSync->requestEnableSync(
             m_pEngineSync->getSyncableForGroup(m_sGroup2), true);
-    // Now master should be Internal Clock because we have two playing decks.
-    ASSERT_TRUE(isSoftMaster(m_sInternalClockGroup));
-    ASSERT_TRUE(isFollower(m_sGroup1));
+    // Deck 1 is still soft master.
+    ASSERT_TRUE(isFollower(m_sInternalClockGroup));
+    ASSERT_TRUE(isSoftMaster(m_sGroup1));
     ASSERT_TRUE(isFollower(m_sGroup2));
 
     EXPECT_DOUBLE_EQ(
@@ -1028,7 +1012,7 @@ TEST_F(EngineSyncTest, LoadTrackInitializesMaster) {
     // initialize to that deck with internal clock master.
     m_pMixerDeck2->loadFakeTrack(false, 110.0);
 
-    ASSERT_TRUE(isSoftMaster(m_sInternalClockGroup));
+    ASSERT_TRUE(isFollower(m_sInternalClockGroup));
     EXPECT_DOUBLE_EQ(128.0,
             ControlObject::getControl(ConfigKey(m_sInternalClockGroup, "bpm"))
                     ->get());
@@ -1352,8 +1336,8 @@ TEST_F(EngineSyncTest, EjectTrackSyncRemains) {
     pButtonSyncEnabled2->set(1.0);
     ProcessBuffer();
 
-    ASSERT_TRUE(isSoftMaster(m_sInternalClockGroup));
-    ASSERT_TRUE(isFollower(m_sGroup1));
+    ASSERT_TRUE(isFollower(m_sInternalClockGroup));
+    ASSERT_TRUE(isSoftMaster(m_sGroup1));
     ASSERT_TRUE(isFollower(m_sGroup2));
 
     pButtonEject1->set(1.0);
@@ -1366,7 +1350,7 @@ TEST_F(EngineSyncTest, EjectTrackSyncRemains) {
 }
 
 TEST_F(EngineSyncTest, FileBpmChangesDontAffectMaster) {
-    // If filebpm changes, don't treat it like a rate change.
+    // If filebpm changes, don't treat it like a rate change unless it's the master.
     mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 100, 0.0);
     m_pTrack1->setBeats(pBeats1);
     auto pButtonSyncEnabled1 =
@@ -1381,10 +1365,17 @@ TEST_F(EngineSyncTest, FileBpmChangesDontAffectMaster) {
     pButtonSyncEnabled2->set(1.0);
     ProcessBuffer();
 
+    // Update the master's beats -- update the internal clock
     pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 160, 0.0);
     m_pTrack1->setBeats(pBeats1);
     EXPECT_DOUBLE_EQ(
-            100.0, ControlObject::get(ConfigKey(m_sInternalClockGroup, "bpm")));
+            160.0, ControlObject::get(ConfigKey(m_sInternalClockGroup, "bpm")));
+
+    // Update follower beats -- don't update internal clock.
+    pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 140, 0.0);
+    m_pTrack2->setBeats(pBeats2);
+    EXPECT_DOUBLE_EQ(
+            160.0, ControlObject::get(ConfigKey(m_sInternalClockGroup, "bpm")));
 }
 
 TEST_F(EngineSyncTest, ExplicitMasterPostProcessed) {
@@ -1756,9 +1747,10 @@ TEST_F(EngineSyncTest, HalfDoubleThenPlay) {
     ControlObject::getControl(ConfigKey(m_sGroup1, "quantize"))->set(1.0);
     ControlObject::getControl(ConfigKey(m_sGroup2, "quantize"))->set(1.0);
 
-    // We Expect that m_sGroup1 has adjusted its own bpm to the second deck and becomes a single master.
-    // When the second deck is synced the master bpm is adopted by the interna clock, which becomes now
-    // the master
+    // We expect that m_sGroup1 has adjusted its own bpm to the second deck and becomes a single master.
+    // When the second deck is synced the master bpm is adopted by the internal clock
+    ASSERT_TRUE(isSoftMaster(m_sGroup1));
+    ASSERT_TRUE(isFollower(m_sGroup2));
     EXPECT_DOUBLE_EQ(87.5,
             ControlObject::getControl(ConfigKey(m_sInternalClockGroup, "bpm"))
                     ->get());
@@ -1904,6 +1896,7 @@ TEST_F(EngineSyncTest, HalfDoubleConsistency) {
 
     ControlObject::getControl(ConfigKey(m_sGroup1, "sync_enabled"))->set(0);
     ProcessBuffer();
+    qDebug() << "~~~~~~~~~~~~~~~~~~~~~~~~1";
     ControlObject::getControl(ConfigKey(m_sGroup1, "sync_enabled"))->set(1);
     ProcessBuffer();
     EXPECT_DOUBLE_EQ(90.0,
@@ -1969,7 +1962,7 @@ TEST_F(EngineSyncTest, SyncPhaseToPlayingNonSyncDeck) {
     EXPECT_NEAR(0.019349962,
             ControlObject::getControl(ConfigKey(m_sGroup1, "beat_distance"))->get(),
             kMaxFloatingPointErrorLowPrecision);
-    EXPECT_NEAR(0.019349962,
+    EXPECT_NEAR(0.038699924,
             ControlObject::getControl(ConfigKey(m_sInternalClockGroup, "beat_distance"))->get(),
             kMaxFloatingPointErrorLowPrecision);
 
@@ -2460,6 +2453,7 @@ TEST_F(EngineSyncTest, ChangeBeatGrid) {
     EXPECT_DOUBLE_EQ(0, ControlObject::get(ConfigKey(m_sGroup2, "bpm")));
     EXPECT_DOUBLE_EQ(130.0, ControlObject::get(ConfigKey(m_sInternalClockGroup, "bpm")));
 
+    qDebug() << "------------ stop deck 1";
     ControlObject::set(ConfigKey(m_sGroup1, "play"), 0.0);
 
     ProcessBuffer();
@@ -2467,6 +2461,7 @@ TEST_F(EngineSyncTest, ChangeBeatGrid) {
     ASSERT_TRUE(isSoftMaster(m_sGroup1));
     ASSERT_TRUE(isFollower(m_sGroup2));
 
+    qDebug() << "--------------------------------------- change the beats";
     // Load a new beatgrid during playing, this happens when the analyser is finished
     mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 140, 0.0);
     m_pTrack2->setBeats(pBeats2);
@@ -2485,9 +2480,9 @@ TEST_F(EngineSyncTest, ChangeBeatGrid) {
     ControlObject::set(ConfigKey(m_sGroup1, "play"), 1.0);
     ProcessBuffer();
 
-    ASSERT_TRUE(isSoftMaster(m_sInternalClockGroup));
+    ASSERT_TRUE(isFollower(m_sInternalClockGroup));
     ASSERT_TRUE(isFollower(m_sGroup1));
-    ASSERT_TRUE(isFollower(m_sGroup2));
+    ASSERT_TRUE(isSoftMaster(m_sGroup2));
 
     // Load a new beatgrid again, this happens when the user adjusts the beatgrid
     mixxx::BeatsPointer pBeats2n = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 75, 0.0);
@@ -2572,6 +2567,6 @@ TEST_F(EngineSyncTest, BpmAdjustFactor) {
     EXPECT_DOUBLE_EQ(40.0, ControlObject::get(ConfigKey(m_sGroup1, "bpm")));
     EXPECT_DOUBLE_EQ(80.0, ControlObject::get(ConfigKey(m_sGroup2, "bpm")));
     ASSERT_TRUE(isFollower(m_sGroup1));
-    ASSERT_TRUE(isFollower(m_sGroup2));
-    ASSERT_TRUE(isSoftMaster(m_sInternalClockGroup));
+    ASSERT_TRUE(isSoftMaster(m_sGroup2));
+    ASSERT_TRUE(isFollower(m_sInternalClockGroup));
 }

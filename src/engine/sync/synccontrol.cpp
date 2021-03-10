@@ -54,7 +54,6 @@ SyncControl::SyncControl(const QString& group, UserSettingsPointer pConfig,
     m_pSyncMasterEnabled.reset(
             new ControlPushButton(ConfigKey(group, "sync_master")));
     m_pSyncMasterEnabled->setButtonMode(ControlPushButton::TOGGLE);
-    m_pSyncMasterEnabled->setStates(3);
     m_pSyncMasterEnabled->connectValueChangeRequest(
             this, &SyncControl::slotSyncMasterEnabledChangeRequest, Qt::DirectConnection);
 
@@ -135,9 +134,6 @@ void SyncControl::setSyncMode(SyncMode mode) {
     case SYNC_NONE:
     case SYNC_FOLLOWER:
         m_pSyncMasterEnabled->setAndConfirm(0);
-        break;
-    case SYNC_FOLLOW_MASTERWAIT:
-        m_pSyncMasterEnabled->setAndConfirm(1);
         break;
     case SYNC_MASTER_SOFT:
     case SYNC_MASTER_EXPLICIT:
@@ -258,17 +254,33 @@ void SyncControl::setMasterBpm(double bpm) {
 
 void SyncControl::setMasterParams(
         double beatDistance, double baseBpm, double bpm) {
+    qDebug() << "SyncControl::setMasterParams" << beatDistance << baseBpm << bpm;
     double masterBpmAdjustFactor = determineBpmMultiplier(fileBpm(), baseBpm);
+    qDebug() << "SyncControl::setMasterParams" << getGroup()
+             << "adjust factor currently" << masterBpmAdjustFactor;
     if (isMaster(getSyncMode())) {
         // In Master mode we adjust the incoming Bpm for the initial sync.
         bpm *= masterBpmAdjustFactor;
         m_masterBpmAdjustFactor = kBpmUnity;
+        qDebug() << "unity!" << bpm;
     } else {
         // in Follower mode we keep the factor when reporting our BPM
         m_masterBpmAdjustFactor = masterBpmAdjustFactor;
+        qDebug() << "using the factor" << masterBpmAdjustFactor;
     }
+    // We've updated the adjustment factor, so we need to alert enginesync that
+    // the base bpm may have changed.
+    //  XXXXXXXXXXX DANGER: I think this causes signal loops
+    // set master params should only absorb changes, never cause them.
+    // so how do we deal with the updated multiplier issue?
+    // what's happening is the new master is syncing against something else,
+    // and that might cause a change in value, which then needs to be reflected
+    // in the master params.  The problem is that enginesync assumes that base bpm
+    // updates from the master are canonical.  But that's not what's happening here.
+    // m_pEngineSync->notifyBaseBpmChanged(this, bpm / m_masterBpmAdjustFactor);
     setMasterBpm(bpm);
     setMasterBeatDistance(beatDistance);
+    qDebug() << "------------------------ done setting psyncable params";
 }
 
 double SyncControl::determineBpmMultiplier(double myBpm, double targetBpm) const {
@@ -322,8 +334,14 @@ void SyncControl::updateTargetBeatDistance() {
 
 double SyncControl::getBpm() const {
     if (kLogger.traceEnabled()) {
-        kLogger.trace() << getGroup() << "SyncControl::getBpm()" << m_pBpm->get();
+        kLogger.trace() << getGroup() << "SyncControl::getBpm()";
     }
+    if (!isPlaying()) {
+        qDebug() << "return local * rateratio" << m_pLocalBpm->get() << m_pRateRatio->get();
+        // return getBaseBpm();
+        return m_pLocalBpm->get() * m_pRateRatio->get();
+    }
+    qDebug() << "return adjusted current" << (m_pBpm->get() / m_masterBpmAdjustFactor);
     return m_pBpm->get() / m_masterBpmAdjustFactor;
 }
 
@@ -336,10 +354,8 @@ void SyncControl::reportTrackPosition(double fractionalPlaypos) {
     // If we're close to the end, and master, disable master so we don't stop
     // the party.
     if (fractionalPlaypos > kTrackPositionMasterHandoff) {
-        if (getSyncMode() == SYNC_MASTER_SOFT) {
+        if (isMaster(getSyncMode())) {
             m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_FOLLOWER);
-        } else if (getSyncMode() == SYNC_MASTER_EXPLICIT) {
-            m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_FOLLOW_MASTERWAIT);
         }
     }
 }
@@ -369,14 +385,17 @@ void SyncControl::trackBeatsUpdated(mixxx::BeatsPointer pBeats) {
     m_masterBpmAdjustFactor = kBpmUnity;
 
     SyncMode syncMode = getSyncMode();
-    // If we change or remove beats while soft master, hand off.
-    // If we were a follower, requesting sync mode refreshes
-    // the soft master.
-    if (syncMode == SYNC_MASTER_SOFT) {
+    // If we change or remove beats while master, hand off to prevent
+    // sudden change in other decks.
+    if (isMaster(syncMode)) {
         m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_FOLLOWER);
     } else if (isFollower(syncMode)) {
+        qDebug() << "rerequesting follower to update";
+        // If we were a follower, requesting sync mode refreshes
+        // the soft master.
         m_pChannel->getEngineBuffer()->requestSyncMode(syncMode);
     }
+    qDebug() << "now setting the local bpm";
     setLocalBpm(m_pLocalBpm->get());
 }
 
@@ -403,7 +422,7 @@ void SyncControl::slotPassthroughChanged(double enabled) {
 
 void SyncControl::slotEjectPushed(double enabled) {
     Q_UNUSED(enabled);
-    // We can't eject tracks if the decks is playing back, so if we are master
+    // We can't eject tracks if the deck is playing back, so if we are master
     // and eject was pushed the deck must be stopped.  Handing off in this case
     // actually causes the other decks to start playing, so not doing anything
     // is preferred.
@@ -470,14 +489,7 @@ void SyncControl::setLocalBpm(double local_bpm) {
 
     double bpm = local_bpm * m_pRateRatio->get();
 
-    // Although masterwait is a follower of sorts, its bpm changes should
-    // drive the master sync.
-    if (getSyncMode() == SYNC_FOLLOW_MASTERWAIT) {
-        qDebug() << "we here I assume? " << local_bpm << bpm;
-        if (bpm != 0.0) {
-            m_pEngineSync->notifyBpmChanged(this, bpm / m_masterBpmAdjustFactor);
-        }
-    } else if (isFollower(syncMode)) {
+    if (isFollower(syncMode)) {
         // In this case we need an update from the current master to adjust
         // the rate that we continue with the master BPM. If there is no
         // master bpm, our bpm value is adopted and the m_masterBpmAdjustFactor
@@ -487,7 +499,7 @@ void SyncControl::setLocalBpm(double local_bpm) {
         DEBUG_ASSERT(isMaster(syncMode));
         // We might have adopted an adjust factor when becoming master.
         // Keep it when reporting our bpm.
-        m_pEngineSync->notifyBpmChanged(this, bpm / m_masterBpmAdjustFactor);
+        m_pEngineSync->notifyBaseBpmChanged(this, bpm / m_masterBpmAdjustFactor);
     }
 }
 
@@ -499,7 +511,7 @@ void SyncControl::slotRateChanged() {
     if (bpm > 0 && isSynchronized()) {
         // When reporting our bpm, remove the multiplier so the masters all
         // think the followers have the same bpm.
-        m_pEngineSync->notifyBpmChanged(this, bpm / m_masterBpmAdjustFactor);
+        m_pEngineSync->notifyRateChanged(this, bpm / m_masterBpmAdjustFactor);
     }
 }
 

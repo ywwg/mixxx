@@ -25,7 +25,8 @@ class EngineSync : public BaseSyncableListener {
     // Syncables notify EngineSync directly about various events. EngineSync
     // does not have a say in whether these succeed or not, they are simply
     // notifications.
-    void notifyBpmChanged(Syncable* pSyncable, double bpm) override;
+    void notifyBaseBpmChanged(Syncable* pSyncable, double bpm) override;
+    void notifyRateChanged(Syncable* pSyncable, double bpm) override;
     void requestBpmUpdate(Syncable* pSyncable, double bpm) override;
 
     // Instantaneous BPM refers to the actual, honest-to-god speed of playback
@@ -67,11 +68,6 @@ class EngineSync : public BaseSyncableListener {
     // Activate a specific channel as Follower. Sets the syncable's bpm and
     // beat_distance to match the master.
     void activateFollower(Syncable* pSyncable);
-
-    // Activate a specific channel as waiting master. This changes the actual master
-    // to be the Internal Clock, and moves any other syncable that is waiting master
-    // or master to be not master.
-    void activateMasterWait(Syncable* pSyncable);
 
     // Activate a specific syncable as master, with the appropriate submode.
     void activateMaster(Syncable* pSyncable, SyncMode masterType);
