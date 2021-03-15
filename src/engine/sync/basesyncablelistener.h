@@ -55,8 +55,10 @@ class BaseSyncableListener : public SyncableListener {
     // pSource.
     void setMasterBeatDistance(Syncable* pSource, double beatDistance);
 
-    // Update the master parameters using the provided syncable as the source.
-    void setMasterParams(Syncable* pSource);
+    // Initialize the master parameters using the provided syncable as the source.
+    // This should only be called for "major" updates, like a new track or change in
+    // master. Should not be called on every buffer callback.
+    void reinitMasterParams(Syncable* pSource);
 
     // Check if there is only one playing syncable deck, and return it if so.
     Syncable* getUniquePlayingSyncable();

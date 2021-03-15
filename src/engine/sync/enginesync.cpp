@@ -90,8 +90,13 @@ void EngineSync::requestSyncMode(Syncable* pSyncable, SyncMode mode) {
 
     // Now that all of the decks have their assignments, reinit master params if needed.
     if (pParamsSyncable) {
-        setMasterParams(pParamsSyncable);
-        pSyncable->setInstantaneousBpm(pParamsSyncable->getBpm());
+        if (kLogger.traceEnabled()) {
+            kLogger.trace()
+                    << "EngineSync::requestSyncMode setting master params from "
+                    << pParamsSyncable->getGroup();
+        }
+        reinitMasterParams(pParamsSyncable);
+        pSyncable->updateInstantaneousBpm(pParamsSyncable->getBpm());
         if (pParamsSyncable != pSyncable) {
             pSyncable->requestSync();
         }
@@ -335,7 +340,7 @@ void EngineSync::notifyPlaying(Syncable* pSyncable, bool playing) {
         // If there is only one remaining syncable, it should reinit the
         // master parameters.
         unique_syncable->notifyOnlyPlayingSyncable();
-        setMasterParams(unique_syncable);
+        reinitMasterParams(unique_syncable);
     }
 
     pSyncable->requestSync();
@@ -380,11 +385,13 @@ void EngineSync::requestBpmUpdate(Syncable* pSyncable, double bpm) {
     }
 
     if (mbaseBpm != 0.0) {
-        // resync to current master
-        pSyncable->setMasterParams(beatDistance, mbaseBpm, mbpm);
+        // update from current master
+        pSyncable->updateMasterBeatDistance(beatDistance);
+        pSyncable->updateMasterBpm(mbpm);
     } else {
-        // There is no other master, adopt this bpm as master
-        pSyncable->setMasterParams(0.0, 0.0, bpm);
+        // There is no master, adopt this bpm as master values
+        pSyncable->updateMasterBeatDistance(0.0);
+        pSyncable->updateMasterBpm(bpm);
     }
 }
 
