@@ -1097,7 +1097,7 @@ void BpmControl::setTargetBeatDistance(double beatDistance) {
     m_dSyncTargetBeatDistance.setValue(beatDistance);
 }
 
-void BpmControl::setInstantaneousBpm(double instantaneousBpm) {
+void BpmControl::updateInstantaneousBpm(double instantaneousBpm) {
     m_dSyncInstantaneousBpm = instantaneousBpm;
 }
 

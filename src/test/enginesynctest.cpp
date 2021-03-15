@@ -1664,6 +1664,9 @@ TEST_F(EngineSyncTest, HalfDoubleBpmTest) {
     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
     ProcessBuffer();
 
+    ASSERT_TRUE(isSoftMaster(m_sGroup2));
+    ASSERT_TRUE(isFollower(m_sGroup1));
+
     EXPECT_EQ(1.0,
             m_pChannel1->getEngineBuffer()
                     ->m_pSyncControl->m_masterBpmAdjustFactor);
@@ -1759,9 +1762,15 @@ TEST_F(EngineSyncTest, HalfDoubleThenPlay) {
     ControlObject::getControl(ConfigKey(m_sGroup2, "quantize"))->set(1.0);
 
     // We expect that m_sGroup1 has adjusted its own bpm to the second deck and becomes a single master.
-    // When the second deck is synced the master bpm is adopted by the internal clock
+    // The internal clock is initialized right away.
     EXPECT_TRUE(isSoftMaster(m_sGroup1));
     EXPECT_TRUE(isFollower(m_sGroup2));
+    EXPECT_DOUBLE_EQ(1.0,
+            m_pChannel1->getEngineBuffer()
+                    ->m_pSyncControl->m_masterBpmAdjustFactor);
+    EXPECT_DOUBLE_EQ(2.0,
+            m_pChannel2->getEngineBuffer()
+                    ->m_pSyncControl->m_masterBpmAdjustFactor);
     EXPECT_DOUBLE_EQ(87.5,
             ControlObject::getControl(ConfigKey(m_sInternalClockGroup, "bpm"))
                     ->get());
@@ -1772,9 +1781,10 @@ TEST_F(EngineSyncTest, HalfDoubleThenPlay) {
     EXPECT_DOUBLE_EQ(87.5 / 80,
             ControlObject::getControl(ConfigKey(m_sGroup1, "rate_ratio"))
                     ->get());
-    EXPECT_DOUBLE_EQ(1,
+    EXPECT_DOUBLE_EQ(1.0,
             ControlObject::getControl(ConfigKey(m_sGroup2, "rate_ratio"))
                     ->get());
+    // Local bpms are not adjusted by the multiplier
     EXPECT_DOUBLE_EQ(80,
             ControlObject::getControl(ConfigKey(m_sGroup1, "local_bpm"))
                     ->get());
@@ -1810,13 +1820,19 @@ TEST_F(EngineSyncTest, HalfDoubleThenPlay) {
     ProcessBuffer();
     pButtonSyncEnabled2->slotSet(1.0);
     pButtonSyncEnabled1->slotSet(1.0);
+    EXPECT_DOUBLE_EQ(1.0,
+            m_pChannel1->getEngineBuffer()
+                    ->m_pSyncControl->m_masterBpmAdjustFactor);
+    EXPECT_DOUBLE_EQ(1.0,
+            m_pChannel2->getEngineBuffer()
+                    ->m_pSyncControl->m_masterBpmAdjustFactor);
     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
     ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(1.0);
 
     EXPECT_DOUBLE_EQ(87.5 / 80,
             ControlObject::getControl(ConfigKey(m_sGroup1, "rate_ratio"))
                     ->get());
-    EXPECT_DOUBLE_EQ(1,
+    EXPECT_DOUBLE_EQ(1.0,
             ControlObject::getControl(ConfigKey(m_sGroup2, "rate_ratio"))
                     ->get());
 
