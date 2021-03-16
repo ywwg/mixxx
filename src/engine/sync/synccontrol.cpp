@@ -13,8 +13,6 @@
 #include "util/logger.h"
 #include "util/math.h"
 
-const double kTrackPositionMasterHandoff = 0.99;
-
 const double SyncControl::kBpmUnity = 1.0;
 const double SyncControl::kBpmHalve = 0.5;
 const double SyncControl::kBpmDouble = 2.0;
@@ -431,11 +429,16 @@ void SyncControl::slotSyncMasterEnabledChangeRequest(double state) {
         m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_MASTER_EXPLICIT);
     } else {
         // Turning off master goes back to follower mode.
-        if (mode == SYNC_FOLLOWER) {
-            // Already not master.
+        switch (mode) {
+        case SYNC_MASTER_EXPLICIT:
+            m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_MASTER_SOFT);
+            break;
+        case SYNC_MASTER_SOFT:
+            m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_FOLLOWER);
+            break;
+        default:
             return;
         }
-        m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_FOLLOWER);
     }
 }
 
