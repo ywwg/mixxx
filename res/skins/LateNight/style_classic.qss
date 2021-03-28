@@ -1019,6 +1019,7 @@ WPushButton#FxSuperLinkInvertButton {
   #Deck1 WStarRating, #DeckCompact1 WStarRating,
 #Deck2 WLabel, #DeckCompact2 WLabel, #DeckMini2 WLabel,
   #Deck2 WStarRating, #DeckCompact2 WStarRating,
+#InternalClockContainer WNumber,
 #MicAuxLabel,
 #SamplerTitle, #SamplerTitleMini,
 #SamplerBpm, #SamplerBpmMini,

@@ -44,6 +44,15 @@
           </Template>
 
           <Template src="skin:/controls/button_2state_persist.xml">
+            <SetVariable name="TooltipId">toggle_internal_clock</SetVariable>
+            <SetVariable name="ObjectName">GuiToggleButton</SetVariable>
+            <SetVariable name="Size">100f,20f</SetVariable>
+            <SetVariable name="state_0_text">INTERNAL CLOCK</SetVariable>
+            <SetVariable name="state_1_text">INTERNAL CLOCK</SetVariable>
+            <SetVariable name="ConfigKey">[Skin],show_internal_clock</SetVariable>
+          </Template>
+
+          <Template src="skin:/controls/button_2state_persist.xml">
             <SetVariable name="TooltipId">show_mixer</SetVariable>
             <SetVariable name="ObjectName">GuiToggleButton</SetVariable>
             <SetVariable name="Size">48f,20f</SetVariable>

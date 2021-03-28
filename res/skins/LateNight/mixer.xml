@@ -44,6 +44,70 @@
     <Children>
 
       <WidgetGroup>
+        <ObjectName>InternalClockContainer</ObjectName>
+        <SizePolicy>min,me</SizePolicy>
+        <Layout>horizontal</Layout>
+        <Children>
+
+          <WidgetGroup>
+            <ObjectName>InternalClockSyncBox</ObjectName>
+            <Layout>vertical</Layout>
+            <SizePolicy>min,min</SizePolicy>
+            <Children>
+                <NumberBpm>
+                    <ObjectName>BpmText</ObjectName>
+                    <TooltipId>bpm</TooltipId>
+                    <Size>56f,22f</Size>
+                    <Group>InternalClock</Group>
+                    <NumberOfDigits>2</NumberOfDigits>
+                    <Connection>
+                      <ConfigKey>[InternalClock],bpm</ConfigKey>
+                    </Connection>
+                  </NumberBpm>
+                <PushButton>
+                    <TooltipId>sync_master</TooltipId>
+                    <ObjectName>SyncLeader</ObjectName>
+                    <Size>48f,22f</Size>
+                    <NumberStates>3</NumberStates>
+                    <State>
+                        <Number>0</Number>
+                        <Unpressed scalemode="STRETCH">skin:/<Variable name="BtnScheme"/>/buttons/btn_<Variable name="BtnType"/>_sync.svg</Unpressed>
+                        <Pressed scalemode="STRETCH">skin:/<Variable name="BtnScheme"/>/buttons/btn_<Variable name="BtnType"/>_sync_active.svg</Pressed>
+                    </State>
+                    <State>
+                        <Number>1</Number>
+                        <Unpressed scalemode="STRETCH">skin:/<Variable name="BtnScheme"/>/buttons/btn_<Variable name="BtnType"/>_sync_active.svg</Unpressed>
+                        <Pressed scalemode="STRETCH">skin:/<Variable name="BtnScheme"/>/buttons/btn_<Variable name="BtnType"/>_sync_active.svg</Pressed>
+                    </State>
+                    <State>
+                        <Number>2</Number>
+                        <Unpressed scalemode="STRETCH">skin:/<Variable name="BtnScheme"/>/buttons/btn_<Variable name="BtnType"/>_sync_active.svg</Unpressed>
+                        <Pressed scalemode="STRETCH">skin:/<Variable name="BtnScheme"/>/buttons/btn_<Variable name="BtnType"/>_sync_active.svg</Pressed>
+                    </State>
+                    <Connection>
+                        <ConfigKey>[InternalClock],sync_master</ConfigKey>
+                        <ButtonState>LeftButton</ButtonState>
+                    </Connection>
+                </PushButton>
+                </Children>
+              </WidgetGroup>
+        </Children>
+      </WidgetGroup>
+    </Children>
+    <Connection>
+      <ConfigKey persist="true">[Skin],show_internal_clock</ConfigKey>
+      <BindProperty>visible</BindProperty>
+    </Connection>
+  </WidgetGroup>
+
+
+
+  <WidgetGroup>
+    <SizePolicy>max,me</SizePolicy>
+    <Layout>horizontal</Layout>
+    <Children>
+
+      <WidgetGroup>
         <ObjectName></ObjectName>
         <SizePolicy>min,me</SizePolicy>
         <Layout>vertical</Layout>

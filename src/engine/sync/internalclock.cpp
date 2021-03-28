@@ -69,25 +69,10 @@ void InternalClock::requestSync() {
 }
 
 void InternalClock::slotSyncMasterEnabledChangeRequest(double state) {
-    SyncMode mode = m_mode;
-    //Note: internal clock is always sync enabled
+    SyncMode mode = getSyncMode();
     if (state > 0.0) {
-        if (mode == SYNC_MASTER_EXPLICIT) {
-            // Already master.
-            return;
-        }
-        if (mode == SYNC_MASTER_SOFT) {
-            // user request: make master explicit
-            m_mode = SYNC_MASTER_EXPLICIT;
-            return;
-        }
         m_pEngineSync->requestSyncMode(this, SYNC_MASTER_EXPLICIT);
     } else {
-        // Turning off master goes back to follower mode.
-        if (mode == SYNC_FOLLOWER) {
-            // Already not master.
-            return;
-        }
         m_pEngineSync->requestSyncMode(this, SYNC_FOLLOWER);
     }
 }
