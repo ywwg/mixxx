@@ -54,6 +54,7 @@ SyncControl::SyncControl(const QString& group,
     m_pSyncMasterEnabled.reset(
             new ControlPushButton(ConfigKey(group, "sync_master")));
     m_pSyncMasterEnabled->setButtonMode(ControlPushButton::TOGGLE);
+    m_pSyncMasterEnabled->setStates(3);
     m_pSyncMasterEnabled->connectValueChangeRequest(
             this, &SyncControl::slotSyncMasterEnabledChangeRequest, Qt::DirectConnection);
 
@@ -129,21 +130,7 @@ void SyncControl::setSyncMode(SyncMode mode) {
     // requires. Bypass confirmation by using setAndConfirm.
     m_pSyncMode->setAndConfirm(mode);
     m_pSyncEnabled->setAndConfirm(mode != SYNC_NONE);
-    switch (mode) {
-    case SYNC_INVALID:
-    case SYNC_NONE:
-    case SYNC_FOLLOWER:
-        m_pSyncMasterEnabled->setAndConfirm(0);
-        break;
-    case SYNC_MASTER_SOFT:
-        m_pSyncMasterEnabled->setAndConfirm(1);
-        break;
-    case SYNC_MASTER_EXPLICIT:
-        m_pSyncMasterEnabled->setAndConfirm(2);
-        break;
-    case SYNC_NUM_MODES:
-        break;
-    }
+    m_pSyncMasterEnabled->setAndConfirm(SyncModeToMasterLight(mode));
     if (mode == SYNC_FOLLOWER) {
         if (m_pVCEnabled && m_pVCEnabled->toBool()) {
             // If follower mode is enabled, disable vinyl control.
@@ -158,9 +145,7 @@ void SyncControl::setSyncMode(SyncMode mode) {
                       "must disable passthrough";
         m_pPassthroughEnabled->set(0.0);
     }
-    if (isMaster(mode)) {
-        m_pBpmControl->resetSyncAdjustment();
-    } else if (mode == SYNC_NONE) {
+    if (mode == SYNC_NONE) {
         m_masterBpmAdjustFactor = kBpmUnity;
     }
 }
