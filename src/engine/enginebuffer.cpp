@@ -1347,6 +1347,16 @@ void EngineBuffer::updateIndicators(double speed, int iBufferSize) {
         speed = 0;
     }
 
+    const bool newInIntro = m_pCueControl->inIntro();
+    const bool newInOutro = m_pCueControl->inOutro();
+    if (newInIntro != m_bInIntro) {
+        m_pEngineSync->notifyIntroOutroChanged(m_pSyncControl, newInIntro);
+    } else if (newInOutro != m_bInOutro) {
+        m_pEngineSync->notifyIntroOutroChanged(m_pSyncControl, newInOutro);
+    }
+    m_bInIntro = newInIntro;
+    m_bInOutro = newInOutro;
+
     // Update indicators that are only updated after every
     // sampleRate/kiUpdateRate samples processed.  (e.g. playposSlider)
     if (m_iSamplesSinceLastIndicatorUpdate >

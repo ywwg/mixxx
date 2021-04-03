@@ -260,6 +260,9 @@ class EngineBuffer : public EngineObject {
     ClockControl* m_pClockControl;
     CueControl* m_pCueControl;
 
+    bool m_bInIntro = false;
+    bool m_bInOutro = false;
+
     QList<EngineControl*> m_engineControls;
 
     // The read ahead manager for EngineBufferScale's that need to read ahead

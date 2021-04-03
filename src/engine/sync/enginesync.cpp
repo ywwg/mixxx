@@ -221,7 +221,7 @@ Syncable* EngineSync::pickMaster(Syncable* enabling_syncable) {
             }
         }
 
-        if (pSyncable->isPlaying()) {
+        if (pSyncable->isPlaying() && !pSyncable->isInIntroOutro()) {
             if (playing_deck_count == 0) {
                 first_playing_deck = pSyncable;
             }
@@ -244,12 +244,14 @@ Syncable* EngineSync::pickMaster(Syncable* enabling_syncable) {
     }
 
     // No valid playing sync decks
-    if (stopped_deck_count >= 1) {
+    if (stopped_deck_count == 1) {
         return first_stopped_deck;
+    } else if (stopped_deck_count > 1) {
+        return m_pInternalClock;
     }
 
     // No valid stopped sync decks
-    return nullptr;
+    return m_pInternalClock;
 }
 
 Syncable* EngineSync::findBpmMatchTarget(Syncable* requester) {
@@ -326,6 +328,27 @@ void EngineSync::notifyPlaying(Syncable* pSyncable, bool playing) {
 
     // similar to enablesync -- we pick a new master and maybe reinit.
     Syncable* newMaster = pickMaster(pSyncable);
+
+    if (newMaster != nullptr && newMaster != m_pMasterSyncable) {
+        activateMaster(newMaster, SYNC_MASTER_SOFT);
+    }
+
+    if (noPlayingFollowers() && m_pMasterSyncable) {
+        m_pMasterSyncable->notifyOnlyPlayingSyncable();
+        setMasterParams(m_pMasterSyncable);
+    }
+
+    pSyncable->requestSync();
+}
+
+void EngineSync::notifyIntroOutroChanged(Syncable* pSyncable, bool inIntroOutro) {
+    qDebug() << "intro/outro change" << pSyncable->getGroup() << inIntroOutro;
+    if (!pSyncable->isSynchronized()) {
+        return;
+    }
+
+    // similar to notifyPlaying -- we pick a new master and maybe reinit.
+    Syncable* newMaster = pickMaster(inIntroOutro ? nullptr : pSyncable);
 
     if (newMaster != nullptr && newMaster != m_pMasterSyncable) {
         activateMaster(newMaster, SYNC_MASTER_SOFT);

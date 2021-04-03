@@ -38,6 +38,8 @@ class EngineSync : public SyncableListener {
 
     /// Notify the engine that a syncable has started or stopped playing
     void notifyPlaying(Syncable* pSyncable, bool playing) override;
+
+    void notifyIntroOutroChanged(Syncable* pSyncable, bool inIntroOutro);
     void notifyScratching(Syncable* pSyncable, bool scratching) override;
 
     /// Used to pick a sync target for cases where master sync mode is not sufficient.

@@ -33,6 +33,7 @@ class SyncControl : public EngineControl, public Syncable {
     void notifyOnlyPlayingSyncable() override;
     void requestSync() override;
     bool isPlaying() const override;
+    bool isInIntroOutro() const override;
 
     double adjustSyncBeatDistance(double beatDistance) const;
     double getBeatDistance() const override;

@@ -44,6 +44,10 @@ class InternalClock : public QObject, public Clock, public Syncable {
         return false;
     }
 
+    bool isInIntroOutro() const override {
+        return false;
+    }
+
     double getBeatDistance() const override;
     void setMasterBeatDistance(double beatDistance) override;
 

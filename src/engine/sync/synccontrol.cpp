@@ -172,6 +172,10 @@ bool SyncControl::isPlaying() const {
     return m_pPlayButton->toBool();
 }
 
+bool SyncControl::isInIntroOutro() const {
+    return m_pChannel->getEngineBuffer()->inIntro() || m_pChannel->getEngineBuffer()->inOutro();
+}
+
 double SyncControl::adjustSyncBeatDistance(double beatDistance) const {
     // Similar to adjusting the target beat distance, when we report our beat
     // distance we need to adjust it by the master bpm adjustment factor.  If
