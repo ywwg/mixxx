@@ -1652,14 +1652,15 @@ TEST_F(EngineSyncTest, HalfDoubleBpmTest) {
     mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 140, 0.0);
     m_pTrack2->trySetBeats(pBeats2);
 
+    // Mixxx will choose the first playing deck to be master.  Let's start deck 2 first.
+    ControlObject::getControl(ConfigKey(m_sGroup1, "volume"))->set(1.0);
+    ControlObject::getControl(ConfigKey(m_sGroup2, "volume"))->set(1.0);
+    ProcessBuffer();
     ControlObject::getControl(ConfigKey(m_sGroup1, "quantize"))->set(1.0);
     ControlObject::getControl(ConfigKey(m_sGroup2, "quantize"))->set(1.0);
-    ControlObject::getControl(ConfigKey(m_sGroup2, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
-    ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
-
-    // Mixxx will choose the first playing deck to be master.  Let's start deck 2 first.
+    ControlObject::getControl(ConfigKey(m_sGroup2, "sync_enabled"))->set(1);
+    ControlObject::getControl(ConfigKey(m_sGroup1, "sync_enabled"))->set(1);
+    ProcessBuffer();
     ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(1.0);
     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
     ProcessBuffer();

@@ -142,7 +142,7 @@ void InternalClock::updateInstantaneousBpm(double bpm) {
 
 void InternalClock::reinitMasterParams(double beatDistance, double baseBpm, double bpm) {
     if (kLogger.traceEnabled()) {
-        kLogger.trace() << "InternalClock::setMasterParams" << beatDistance << baseBpm << bpm;
+        kLogger.trace() << "InternalClock::reinitMasterParams" << beatDistance << baseBpm << bpm;
     }
     if (bpm <= 0.0 || baseBpm <= 0.0) {
         return;

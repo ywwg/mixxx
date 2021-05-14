@@ -195,6 +195,9 @@ void EngineSync::deactivateSync(Syncable* pSyncable) {
 }
 
 Syncable* EngineSync::pickMaster(Syncable* enabling_syncable) {
+    if (kLogger.traceEnabled()) {
+        kLogger.trace() << "EngineSync::pickMaster";
+    }
     if (m_pMasterSyncable &&
             m_pMasterSyncable->getSyncMode() == SYNC_MASTER_EXPLICIT &&
             m_pMasterSyncable->getBaseBpm() != 0.0) {
@@ -359,7 +362,7 @@ void EngineSync::notifyPlayingAudible(Syncable* pSyncable, bool playingAudible) 
 
     if (noPlayingFollowers() && m_pMasterSyncable) {
         m_pMasterSyncable->notifyOnlyPlayingSyncable();
-        setMasterParams(m_pMasterSyncable);
+        reinitMasterParams(m_pMasterSyncable);
     }
 
     pSyncable->requestSync();
