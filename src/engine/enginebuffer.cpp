@@ -1454,6 +1454,10 @@ double EngineBuffer::getUserOffset() const {
     return m_pBpmControl->getUserOffset();
 }
 
+void EngineBuffer::setUserOffset(double offset) {
+    m_pBpmControl->setUserOffset(offset);
+}
+
 double EngineBuffer::getRateRatio() const {
     if (m_pBpmControl != nullptr) {
         return m_pBpmControl->getRateRatio();

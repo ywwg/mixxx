@@ -45,6 +45,9 @@ class BpmControl : public EngineControl {
     double getUserOffset() const {
         return m_dUserOffset.getValue();
     }
+    void setUserOffset(double offset) {
+        m_dUserOffset.setValue(offset);
+    }
 
     void setTargetBeatDistance(double beatDistance);
     void updateInstantaneousBpm(double instantaneousBpm);

@@ -132,6 +132,10 @@ class EngineBuffer : public EngineObject {
     double getTrackSamples() const;
     double getUserOffset() const;
 
+    // Override the user offset immediately. This should be used very sparingly,
+    // currently only for deck cloning
+    void setUserOffset(double offset);
+
     double getRateRatio() const;
 
     void collectFeatures(GroupFeatureState* pGroupFeatures) const;

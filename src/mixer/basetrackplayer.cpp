@@ -509,6 +509,10 @@ void BaseTrackPlayerImpl::slotTrackLoaded(TrackPointer pNewTrack,
             ControlObject::set(ConfigKey(getGroup(), "play"),
                     ControlObject::get(ConfigKey(m_pChannelToCloneFrom->getGroup(), "play")));
 
+            // copy the user offset
+            m_pChannel->getEngineBuffer()->setUserOffset(
+                    m_pChannelToCloneFrom->getEngineBuffer()->getUserOffset());
+
             // copy the play position
             m_pChannel->getEngineBuffer()->requestClonePosition(m_pChannelToCloneFrom);
 
