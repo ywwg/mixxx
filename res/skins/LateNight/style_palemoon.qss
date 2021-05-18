@@ -148,6 +148,8 @@ QAbstractScrollArea::corner {
 
   #LibraryContainer QScrollBar::handle:horizontal,
   #LibraryContainer QScrollBar::handle:vertical,
+  #SkinContainer QScrollBar::handle:horizontal,
+  #SkinContainer QScrollBar::handle:vertical,
   WEffectSelector QAbstractScrollArea QScrollBar::handle:horizontal,
   WEffectSelector QAbstractScrollArea QScrollBar::handle:vertical {
     background-color: #333338;
@@ -2519,6 +2521,8 @@ WColorPicker QPushButton[checked="true"] {
 #LibraryContainer QTextBrowser,
 #LibraryContainer QTreeView,
 #SkinSettings,
+#SkinSettingsScrollable,
+#SkinSettingsContainer,
 WSearchLineEdit,
 WLibrary QLineEdit,
 #spinBoxTransition,
@@ -2656,6 +2660,7 @@ WLibrary QLineEdit,
 
 /*********** scrollbars *********************************/
 #LibraryContainer QScrollBar,
+#SkinContainer QScrollBar,
 WEffectSelector QAbstractScrollArea QScrollBar {
   border: 0px solid #585858;
   background: #000;
@@ -2664,6 +2669,7 @@ WEffectSelector QAbstractScrollArea QScrollBar {
   color: #999;
   }
   #LibraryContainer QScrollBar:horizontal,
+  #SkinContainer QScrollBar:horizontal,
   WEffectSelector QAbstractScrollArea QScrollBar:horizontal {
     min-width: 12px;
     height: 15px;
@@ -2672,6 +2678,7 @@ WEffectSelector QAbstractScrollArea QScrollBar {
     background-color: #000;
   }
   #LibraryContainer QScrollBar:vertical,
+  #SkinContainer QScrollBar:vertical,
   WEffectSelector QAbstractScrollArea QScrollBar:vertical {
     min-height: 12px;
     width: 15px;
@@ -2680,17 +2687,20 @@ WEffectSelector QAbstractScrollArea QScrollBar {
     color: #b3b3b3;
     background-color: #000;
   }
-  #LibraryContainer QScrollBar:vertical {
+  #LibraryContainer QScrollBar:vertical,
+  #SkinContainer QScrollBar:vertical {
     border-top: 1px solid #212123;
   }
   /* catch scroll bar of focused treeview like this:
   #LibraryContainer QTreeView:focus QScrollBar:vertical {
   }*/
   #LibraryContainer QScrollBar::handle:horizontal,
+  #SkinContainer QScrollBar::handle:horizontal,
   WEffectSelector QAbstractScrollArea QScrollBar::handle:horizontal {
     min-width: 25px;
   }
   #LibraryContainer QScrollBar::handle:vertical,
+  #SkinContainer QScrollBar::handle:vertical,
   WEffectSelector QAbstractScrollArea QScrollBar::handle:vertical {
     min-height: 25px;
   }
@@ -2698,6 +2708,8 @@ WEffectSelector QAbstractScrollArea QScrollBar {
 /* "add-page" and "sub-page" are the gutter of the scrollbar */
 #LibraryContainer QScrollBar::add-page,
 #LibraryContainer QScrollBar::sub-page,
+#SkinContainer QScrollBar::add-page,
+#SkinContainer QScrollBar::sub-page,
 WEffectSelector QAbstractScrollArea QScrollBar::add-page,
 WEffectSelector QAbstractScrollArea QScrollBar::sub-page {
   min-width: 15px;
@@ -2708,6 +2720,8 @@ WEffectSelector QAbstractScrollArea QScrollBar::sub-page {
 /* Turn off buttons */
 #LibraryContainer QScrollBar::add-line,
 #LibraryContainer QScrollBar::sub-line,
+#SkinContainer QScrollBar::add-line,
+#SkinContainer QScrollBar::sub-line,
 WEffectSelector QAbstractScrollArea QScrollBar::add-line,
 WEffectSelector QAbstractScrollArea QScrollBar::sub-line {
   width: 0px;
@@ -2717,6 +2731,7 @@ WEffectSelector QAbstractScrollArea QScrollBar::sub-line {
 
 /* Corner in between two scrollbars */
 #LibraryContainer QAbstractScrollArea::corner,
+#SkinContainer QAbstractScrollArea::corner,
 WEffectSelector QAbstractScrollArea QScrollBar::corner {
   background-color: #1e1e1e;
 }

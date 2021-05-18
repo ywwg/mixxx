@@ -4,6 +4,7 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QMutexLocker>
+#include <QScrollArea>
 #include <QSplitter>
 #include <QStackedWidget>
 #include <QVBoxLayout>
@@ -596,6 +597,8 @@ QList<QWidget*> LegacySkinParser::parseNode(const QDomElement& node) {
         result = wrapWidget(parseBattery(node));
     } else if (nodeName == "SetVariable") {
         m_pContext->updateVariable(node);
+    } else if (nodeName == "Scrollable") {
+        result = wrapWidget(parseScrollable(node));
     } else if (nodeName == "Template") {
         result = parseTemplate(node);
     } else if (nodeName == "SingletonDefinition") {
@@ -644,6 +647,34 @@ QWidget* LegacySkinParser::parseSplitter(const QDomElement& node) {
 
     m_pParent = pOldParent;
     return pSplitter;
+}
+
+QWidget* LegacySkinParser::parseScrollable(const QDomElement& node) {
+    QScrollArea* pScrollArea = new QScrollArea(m_pParent);
+    setupWidget(node, pScrollArea);
+
+    QDomNode childrenNode = m_pContext->selectNode(node, "Children");
+    QWidget* pOldParent = m_pParent;
+    m_pParent = pScrollArea;
+
+    if (!childrenNode.isNull()) {
+        QDomNodeList childNodes = childrenNode.childNodes();
+        if (childNodes.count() != 1) {
+            SKIN_WARNING(node, *m_pContext) << "Scrollables must have exactly one child";
+        }
+
+        QDomNode childnode = childNodes.at(0);
+        if (childnode.isElement()) {
+            QList<QWidget*> children = parseNode(childnode.toElement());
+            if (children.count() != 1) {
+                SKIN_WARNING(node, *m_pContext) << "Scrollables must have exactly one child";
+            } else if (children.at(0) != nullptr) {
+                pScrollArea->setWidget(children.at(0));
+            }
+        }
+    }
+    m_pParent = pOldParent;
+    return pScrollArea;
 }
 
 void LegacySkinParser::parseChildren(
