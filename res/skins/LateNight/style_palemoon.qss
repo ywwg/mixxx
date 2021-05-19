@@ -2672,7 +2672,7 @@ WEffectSelector QAbstractScrollArea QScrollBar {
   #SkinContainer QScrollBar:horizontal,
   WEffectSelector QAbstractScrollArea QScrollBar:horizontal {
     min-width: 12px;
-    height: 15px;
+    height: 36px;
     border-top-left-radius: 0px;
     border-top-right-radius: 0px;
     background-color: #000;
@@ -2681,7 +2681,7 @@ WEffectSelector QAbstractScrollArea QScrollBar {
   #SkinContainer QScrollBar:vertical,
   WEffectSelector QAbstractScrollArea QScrollBar:vertical {
     min-height: 12px;
-    width: 15px;
+    width: 36px;
     border-top-left-radius: 0px;
     border-bottom-left-radius: 0px;
     color: #b3b3b3;
@@ -2697,12 +2697,12 @@ WEffectSelector QAbstractScrollArea QScrollBar {
   #LibraryContainer QScrollBar::handle:horizontal,
   #SkinContainer QScrollBar::handle:horizontal,
   WEffectSelector QAbstractScrollArea QScrollBar::handle:horizontal {
-    min-width: 25px;
+    min-width: 36px;
   }
   #LibraryContainer QScrollBar::handle:vertical,
   #SkinContainer QScrollBar::handle:vertical,
   WEffectSelector QAbstractScrollArea QScrollBar::handle:vertical {
-    min-height: 25px;
+    min-height: 36px;
   }
 
 /* "add-page" and "sub-page" are the gutter of the scrollbar */
@@ -2771,7 +2771,7 @@ WSearchLineEdit {
   #WaveformSplitter::handle,
   #SidebarCoverSplitter::handle {
       image: url(skin:/palemoon/style/splitter_handle_horizontal.svg);
-      height: 9px;
+      height: 16px;
     }
     #WaveformSplitter::handle:pressed,
     #SidebarCoverSplitter::handle:pressed
