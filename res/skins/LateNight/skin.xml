@@ -397,8 +397,6 @@
         <Template src="skin:/helpers/skin_helper_mic_ducking.xml"/>
         <Template src="skin:/helpers/skin_helper_spinny-cover.xml"/>
 
-        <Template src="skin:toolbar.xml"/>
-
         <!-- regular/maximized library  |  skin settings menu -->
         <WidgetGroup>
           <Layout>horizontal</Layout>
@@ -461,9 +459,6 @@
                         <Template src="skin:samplers_rack.xml"/>
                         <Template src="skin:mic_aux_rack.xml"/>
 
-                        <SingletonContainer>
-                          <ObjectName>LibrarySingleton</ObjectName>
-                        </SingletonContainer>
                       </Children>
                     </WidgetGroup>
 
@@ -502,7 +497,7 @@
 
           </Children>
         </WidgetGroup><!-- regular/maximized library + skin settings menu -->
-
+        <Template src="skin:toolbar.xml"/>
       </Children>
     </WidgetGroup>
   </Children>

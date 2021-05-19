@@ -8,9 +8,9 @@
       <Template src="skin:/controls/button_2state.xml">
         <SetVariable name="TooltipId">maximize_library</SetVariable>
         <SetVariable name="ObjectName">GuiToggleButton</SetVariable>
-        <SetVariable name="Size">80f,20f</SetVariable>
-        <SetVariable name="state_0_text">BIG LIBRARY</SetVariable>
-        <SetVariable name="state_1_text">BIG LIBRARY</SetVariable>
+        <SetVariable name="Size">80f,48f</SetVariable>
+        <SetVariable name="state_0_text">LIBRARY</SetVariable>
+        <SetVariable name="state_1_text">LIBRARY</SetVariable>
         <SetVariable name="ConfigKey">[Master],maximize_library</SetVariable>
       </Template>
 
@@ -18,6 +18,56 @@
         <ObjectName>ToolbarSeparator</ObjectName>
         <Size>12f,9min</Size>
       </WidgetGroup>
+
+      <WidgetGroup><!-- GUI toggles with regular library -->
+        <ObjectName>ToolBarSection</ObjectName>
+        <SizePolicy>min,min</SizePolicy>
+        <Layout>horizontal</Layout>
+        <Children>
+
+          <Template src="skin:/controls/button_2state_persist.xml">
+            <SetVariable name="TooltipId">show_mixer</SetVariable>
+            <SetVariable name="ObjectName">GuiToggleButton</SetVariable>
+            <SetVariable name="Size">48f,48f</SetVariable>
+            <SetVariable name="state_0_text">MIXER</SetVariable>
+            <SetVariable name="state_1_text">MIXER</SetVariable>
+            <SetVariable name="ConfigKey">[Master],show_mixer</SetVariable>
+          </Template>
+
+          <Template src="skin:/controls/button_2state_persist.xml">
+            <SetVariable name="TooltipId">show_effects</SetVariable>
+            <SetVariable name="ObjectName">GuiToggleButton</SetVariable>
+            <SetVariable name="Size">59f,48f</SetVariable>
+            <SetVariable name="state_0_text">EFFECTS</SetVariable>
+            <SetVariable name="state_1_text">EFFECTS</SetVariable>
+            <SetVariable name="ConfigKey">[EffectRack1],show</SetVariable>
+          </Template>
+
+          <Template src="skin:/controls/button_2state_persist.xml">
+            <SetVariable name="TooltipId">show_samplers</SetVariable>
+            <SetVariable name="ObjectName">GuiToggleButton</SetVariable>
+            <SetVariable name="Size">71f,48f</SetVariable>
+            <SetVariable name="state_0_text">SAMPLERS</SetVariable>
+            <SetVariable name="state_1_text">SAMPLERS</SetVariable>
+            <SetVariable name="ConfigKey">[Samplers],show_samplers</SetVariable>
+          </Template>
+
+          <Template src="skin:/controls/button_2state_persist.xml">
+            <SetVariable name="TooltipId">show_microphone</SetVariable>
+            <SetVariable name="ObjectName">GuiToggleButton</SetVariable>
+            <SetVariable name="Size">61f,48f</SetVariable>
+            <SetVariable name="state_0_text">MIC/AUX</SetVariable>
+            <SetVariable name="state_1_text">MIC/AUX</SetVariable>
+            <SetVariable name="ConfigKey">[Microphone],show_microphone</SetVariable>
+          </Template>
+
+        </Children>
+        <Connection>
+          <ConfigKey>[Master],maximize_library</ConfigKey>
+          <Transform><Not/></Transform>
+          <BindProperty>visible</BindProperty>
+        </Connection>
+      </WidgetGroup><!-- GUI toggles with regular library -->
 
       <WidgetGroup><Size>me,min</Size></WidgetGroup>
 
@@ -126,7 +176,7 @@
       <WidgetGroup><Size>9f,min</Size></WidgetGroup>
 
       <PushButton>
-        <Size>80f,20f</Size>
+        <Size>80f,48f</Size>
         <TooltipId>skin_settings</TooltipId>
         <ObjectName>SkinSettingsToggle</ObjectName>
         <NumberStates>2</NumberStates>
