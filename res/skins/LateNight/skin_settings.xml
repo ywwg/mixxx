@@ -632,11 +632,11 @@ Description:
                 </Children>
             </WidgetGroup><!-- /SkinSettings -->
             </Children>
-            <Connection>
-            <ConfigKey>[Master],skin_settings</ConfigKey>
-            <BindProperty>visible</BindProperty>
-            </Connection>
         </WidgetGroup>
     </Children>
+    <Connection>
+        <ConfigKey>[Master],skin_settings</ConfigKey>
+        <BindProperty>visible</BindProperty>
+    </Connection>
   </Scrollable>
 </Template>
