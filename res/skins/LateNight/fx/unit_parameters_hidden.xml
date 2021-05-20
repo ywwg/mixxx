@@ -84,23 +84,6 @@
             <Children/>
           </WidgetGroup>
 
-          <!-- Fx Slot 3 -->
-          <WidgetGroup>
-            <Layout>horizontal</Layout>
-            <SizePolicy>me,min</SizePolicy>
-            <MaximumSize>190,</MaximumSize>
-            <Children>
-              <SingletonContainer>
-                <ObjectName>FxUnit<Variable name="FxUnit"/>_FxSlotControls3</ObjectName>
-              </SingletonContainer>
-            </Children>
-          </WidgetGroup>
-
-          <WidgetGroup>
-            <ObjectName>FxMixerSeparatorCollapsed</ObjectName>
-            <Layout>horizontal</Layout>
-            <Children/>
-          </WidgetGroup>
         </Children>
       </WidgetGroup><!-- FxSlotsCollapsed -->
 

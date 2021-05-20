@@ -93,27 +93,6 @@
             </Children>
           </WidgetGroup>
 
-          <!-- Fx Slot 3 -->
-          <WidgetGroup>
-            <SizePolicy>me,me</SizePolicy>
-            <Layout>horizontal</Layout>
-            <Children>
-              <Template src="skin:/fx/slot_parameters.xml">
-                <SetVariable name="FxNum">3</SetVariable>
-              </Template>
-              <WidgetGroup>
-                <SizePolicy>min,me</SizePolicy>
-                <MaximumSize>182,</MaximumSize>
-                <Layout>horizontal</Layout>
-                <Children>
-                  <SingletonContainer>
-                    <ObjectName>FxUnit<Variable name="FxUnit"/>_FxSlotControls3</ObjectName>
-                  </SingletonContainer>
-                </Children>
-              </WidgetGroup>
-            </Children>
-          </WidgetGroup>
-
         </Children>
       </WidgetGroup><!-- FxSlotsExpanded -->
 
