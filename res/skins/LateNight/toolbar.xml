@@ -35,6 +35,23 @@
           </Template>
 
           <Template src="skin:/controls/button_2state_persist.xml">
+            <SetVariable name="TooltipId">rate_toggle</SetVariable>
+            <SetVariable name="ObjectName">GuiToggleButton</SetVariable>
+            <SetVariable name="Size">48f,48f</SetVariable>
+            <SetVariable name="state_0_text">RATE</SetVariable>
+            <SetVariable name="state_1_text">RATE</SetVariable>
+            <SetVariable name="ConfigKey">[Skin],show_rate_controls</SetVariable>
+          </Template>
+
+          <Template src="skin:/controls/button_2state_persist.xml">
+            <SetVariable name="ObjectName">GuiToggleButton</SetVariable>
+            <SetVariable name="Size">60f,48f</SetVariable>
+            <SetVariable name="state_0_text">MAIN MIX</SetVariable>
+            <SetVariable name="state_1_text">MAIN MIX</SetVariable>
+            <SetVariable name="ConfigKey">[Skin],show_main_head_mixer</SetVariable>
+          </Template>
+
+          <Template src="skin:/controls/button_2state_persist.xml">
             <SetVariable name="TooltipId">show_effects</SetVariable>
             <SetVariable name="ObjectName">GuiToggleButton</SetVariable>
             <SetVariable name="Size">59f,48f</SetVariable>
