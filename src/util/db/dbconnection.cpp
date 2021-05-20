@@ -373,11 +373,7 @@ void DbConnection::close() {
 
 //static
 QString DbConnection::collateLexicographically(const QString& orderByQuery) {
-#ifdef __SQLITE3__
-    return orderByQuery + QStringLiteral(" COLLATE ") + kLexicographicalCollationFunc;
-#else
         return orderByQuery;
-#endif //  __SQLITE3__
 }
 
 //static
