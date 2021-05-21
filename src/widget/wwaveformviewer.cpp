@@ -69,7 +69,7 @@ void WWaveformViewer::mousePressEvent(QMouseEvent* event) {
 
     m_mouseAnchor = event->pos();
 
-    if (event->button() == Qt::LeftButton) {
+    if (event->button() == Qt::RightButton) {
         // If we are pitch-bending then disable and reset because the two
         // shouldn't be used at once.
         if (m_bBending) {
@@ -83,7 +83,7 @@ void WWaveformViewer::mousePressEvent(QMouseEvent* event) {
         double targetPosition = -1.0 * eventPosValue * audioSamplePerPixel * 2;
         m_pScratchPosition->set(targetPosition);
         m_pScratchPositionEnable->slotSet(1.0);
-    } else if (event->button() == Qt::RightButton) {
+    } else if (event->button() == Qt::LeftButton) {
         const auto currentTrack = m_waveformWidget->getTrackInfo();
         if (!isPlaying() && m_pHoveredMark) {
             auto cueAtClickPos = getCuePointerFromCueMark(m_pHoveredMark);
@@ -134,7 +134,7 @@ void WWaveformViewer::mouseMoveEvent(QMouseEvent* event) {
         // control since we manually connect it in LegacySkinParser regardless
         // of whether the skin specifies it. See ControlTTRotaryBehavior to see
         // where this value is handled.
-        double v = 0.5 + (diffValue / 1270.0);
+        double v = 0.5 + kBendScaleFactor * (diffValue / 1270.0);
         // clamp to [0.0, 1.0]
         v = math_clamp(v, 0.0, 1.0);
         m_pWheel->setParameter(v);
