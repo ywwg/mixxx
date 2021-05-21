@@ -42,27 +42,26 @@
      showgrid="false"
      inkscape:zoom="6.0588544"
      inkscape:cx="-26.573264"
-     inkscape:cy="0.5422341"
+     inkscape:cy="0.29771898"
      inkscape:window-x="0"
      inkscape:window-y="26"
      inkscape:window-maximized="1"
-     inkscape:current-layer="svg10" />
+     inkscape:current-layer="svg10"
+     inkscape:document-rotation="0" />
   <g
-     transform="matrix(1.7036667,0,0,1.7036667,-13.739834,9.2596663)"
-     fill="#000001"
-     id="g8"
-     style="stroke-width:0.58697">
+     id="g53"
+     transform="translate(-3.000167)">
     <path
-       d="m 27,5 h 4 V 17 H 27 V 5"
+       d="m 32.259167,17.778 h 6.814667 V 38.222 H 32.259167 V 17.778"
        id="path2"
-       style="stroke-width:0.58697" />
+       style="fill:#000001;stroke-width:1" />
     <path
-       d="m 34,5 v 12 h 4 V 5 h -4"
+       d="m 44.184834,17.778 v 20.444 h 6.814667 V 17.778 h -6.814667"
        id="path4"
-       style="stroke-width:0.58697" />
-    <path
-       d="M 11,5 19.9995,11 11,17 V 5"
-       id="path6"
-       style="stroke-width:0.58697" />
+       style="fill:#000001;stroke-width:1" />
   </g>
+  <path
+     d="M 8,17.778 23.332148,28 8,38.222 V 17.778"
+     id="path6"
+     style="fill:#000001;stroke-width:1" />
 </svg>
