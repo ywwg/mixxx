@@ -1014,7 +1014,7 @@ if(MSVC)
     target_compile_definitions(mixxx-lib PUBLIC _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING _CRT_SECURE_NO_WARNINGS)
   endif()
 else()
-  target_compile_options(mixxx-lib PUBLIC -Wall -Wextra -Woverloaded-virtual -Wfloat-conversion -Werror=return-type)
+  target_compile_options(mixxx-lib PUBLIC -Wall -Wextra -Woverloaded-virtual -Wfloat-conversion -Werror=return-type -Wformat=2 -Wundef)
   if(WARNINGS_PEDANTIC)
     target_compile_options(mixxx-lib PUBLIC -pedantic)
   endif()
@@ -1135,7 +1135,7 @@ endif()
 # The mixxx executable
 add_executable(mixxx WIN32 src/main.cpp)
 set_target_properties(mixxx-lib PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY}")
-target_link_libraries(mixxx PRIVATE mixxx-lib)
+target_link_libraries(mixxx PRIVATE mixxx-lib mixxx-gitinfostore)
 
 #
 # Installation and Packaging
@@ -1290,7 +1290,7 @@ install(
 # Documentation
 install(
   FILES
-    "${CMAKE_CURRENT_SOURCE_DIR}/README"
+    "${CMAKE_CURRENT_SOURCE_DIR}/README.md"
     "${CMAKE_CURRENT_SOURCE_DIR}/res/Mixxx-Keyboard-Shortcuts.pdf"
   DESTINATION
     "${MIXXX_INSTALL_DOCDIR}"
@@ -1506,7 +1506,7 @@ add_executable(mixxx-test
   src/test/wwidgetstack_test.cpp
 )
 set_target_properties(mixxx-test PROPERTIES AUTOMOC ON)
-target_link_libraries(mixxx-test PRIVATE mixxx-lib gtest gmock)
+target_link_libraries(mixxx-test PRIVATE mixxx-lib mixxx-gitinfostore gtest gmock)
 
 #
 # Benchmark tests
@@ -1613,8 +1613,14 @@ get_target_property(MIXXX_BUILD_FLAGS mixxx-lib COMPILE_OPTIONS)
 # uses CMAKE_PROJECT_VERSION MIXXX_VERSION_PRERELEASE MIXXX_BUILD_FLAGS
 configure_file(src/version.h.in src/version.h @ONLY)
 
+if(GIT_COMMIT_DATE AND NOT GIT_COMMIT_DATE MATCHES "^[0-9]*-[0-9]*-[0-9]*T[0-9]*\\:[0-9]*\\:[0-9]*[+-][0-9]*\\:[0-9]*$")
+  message(FATAL_ERROR "GIT_COMMIT_DATE requires strict ISO 8601 format %Y-%m-%dT%H:%M:%SZ")
+endif()
+
 add_custom_target(mixxx-gitinfo
   COMMAND ${CMAKE_COMMAND}
+    -DGIT_DESCRIBE="${GIT_DESCRIBE}"
+    -DGIT_COMMIT_DATE="${GIT_COMMIT_DATE}"
     -DINPUT_FILE="${CMAKE_CURRENT_SOURCE_DIR}/src/gitinfo.h.in"
     -DOUTPUT_FILE="${CMAKE_CURRENT_BINARY_DIR}/src/gitinfo.h"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/scripts/gitinfo.cmake"
@@ -1622,7 +1628,12 @@ add_custom_target(mixxx-gitinfo
   BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/src/gitinfo.h"
   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 )
-add_dependencies(mixxx-lib mixxx-gitinfo)
+
+add_library(mixxx-gitinfostore STATIC EXCLUDE_FROM_ALL
+    src/util/gitinfostore.cpp
+)
+target_include_directories(mixxx-gitinfostore PUBLIC src ${CMAKE_BINARY_DIR}/src)
+add_dependencies(mixxx-gitinfostore mixxx-gitinfo)
 
 # Windows-only resource file
 if(WIN32)
@@ -1645,8 +1656,8 @@ if(WIN32)
 
   # uses MIXXX_YEAR MIXXX_FILEVERSION MIXXX_PRODUCTVERSION MIXXX_VERSION MIXXX_DEBUG MIXXX_PRERELEASE
   configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/mixxx.rc.include.template"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/mixxx.rc.include"
+    "src/mixxx.rc.include.in"
+    "src/mixxx.rc.include"
     @ONLY
   )
   add_dependencies(mixxx mixxx-gitinfo)
@@ -2723,10 +2734,13 @@ set(CPACK_PACKAGE_EXECUTABLES "mixxx;Mixxx")
 set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/res/images/mixxx_install_logo.bmp")
 set(CPACK_PACKAGE_HOMEPAGE_URL "https://www.mixxx.org/")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
-set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 set(CPACK_STRIP_FILES ON)
 set(CPACK_CREATE_DESKTOP_LINKS "mixxx")
 set(CPACK_MIXXX_VERSION "${MIXXX_VERSION}")
+# Save GIT values just in case they have been set manual via cmake
+set(CPACK_GIT_DESCRIBE "${GIT_DESCRIBE}")
+set(CPACK_GIT_COMMIT_DATE ${GIT_COMMIT_DATE})
 
 # Detailed version information, git info and package file name are set from
 # CPackConfig.cmake, not here.
