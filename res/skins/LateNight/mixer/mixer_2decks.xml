@@ -20,57 +20,21 @@
             <SetVariable name="xfaderRight">warning</SetVariable>
           </Template>
 
-          <WidgetGroup>
-            <ObjectName></ObjectName>
-            <Layout>vertical</Layout>
-            <SizePolicy>max,max</SizePolicy>
+
+        <WidgetGroup>
+            <ObjectName>VuMeterBoxFull</ObjectName>
+            <Layout>horizontal</Layout>
+            <SizePolicy>min,min</SizePolicy>
             <Children>
-
-              <WidgetGroup>
-                <ObjectName></ObjectName>
-                <Layout>horizontal</Layout>
-                <Size>0min,26f</Size>
-                <Children>
-                  <Template src="skin:/controls/button_2state.xml">
-                    <SetVariable name="TooltipId">pfl</SetVariable>
-                    <SetVariable name="ObjectName">PflButton</SetVariable>
-                    <SetVariable name="Size">26f,26f</SetVariable>
-                    <SetVariable name="BtnSize">square</SetVariable>
-                    <SetVariable name="ConfigKey">[Channel1],pfl</SetVariable>
-                  </Template>
-                  <WidgetGroup><Size>3f,0min</Size></WidgetGroup>
-                  <Template src="skin:/controls/button_2state.xml">
-                    <SetVariable name="TooltipId">pfl</SetVariable>
-                    <SetVariable name="ObjectName">PflButton</SetVariable>
-                    <SetVariable name="Size">26f,26f</SetVariable>
-                    <SetVariable name="BtnSize">square</SetVariable>
-                    <SetVariable name="ConfigKey">[Channel2],pfl</SetVariable>
-                  </Template>
-                </Children>
-              </WidgetGroup>
-
-              <WidgetGroup><Size>1min,13f</Size></WidgetGroup>
-
-              <WidgetGroup>
-                <ObjectName>VuMeterBoxFull</ObjectName>
-                <Layout>horizontal</Layout>
-                <SizePolicy>min,min</SizePolicy>
-                <Children>
-                  <SingletonContainer>
+                <SingletonContainer>
                     <ObjectName>VuMeterChannel1</ObjectName>
-                  </SingletonContainer>
-                  <WidgetGroup><Size>7f,0min</Size></WidgetGroup>
-                  <SingletonContainer>
-                    <ObjectName>VuMeterMaster_Dark</ObjectName>
-                  </SingletonContainer>
-                  <WidgetGroup><Size>7f,0min</Size></WidgetGroup>
-                  <SingletonContainer>
+                </SingletonContainer>
+                <WidgetGroup><Size>7f,0min</Size></WidgetGroup>
+                <SingletonContainer>
                     <ObjectName>VuMeterChannel2</ObjectName>
-                  </SingletonContainer>
-                </Children>
-              </WidgetGroup>
+                </SingletonContainer>
             </Children>
-          </WidgetGroup>
+        </WidgetGroup>
 
           <Template src="skin:/mixer/channel_right.xml">
             <SetVariable name="ChanNum">2</SetVariable>

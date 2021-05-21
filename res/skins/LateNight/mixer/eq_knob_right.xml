@@ -3,7 +3,7 @@
 
   <WidgetGroup>
     <Layout>horizontal</Layout>
-    <Size>0min,34f</Size>
+    <Size>0min,41f</Size>
     <Children>
       <WidgetGroup>
         <ObjectName>ChannelMixer_KnobContainer</ObjectName>
@@ -12,12 +12,12 @@
         <Children>
 
           <WidgetGroup><!-- EQ knob + Kill status dot -->
-            <Size>40f,34f</Size>
+            <Size>48f,41f</Size>
             <Children>
               <EffectParameterKnobComposed>
                 <TooltipId>filter<Variable name="EqRange"/></TooltipId>
                 <Pos>0,0</Pos>
-                <Size>40f,34f</Size>
+                <Size>48f,41f</Size>
                 <Knob>skin:/<Variable name="KnobScheme"/>/knobs/knob_indicator_regular_<Variable name="KnobColorEq"/>.svg</Knob>
                 <BackPath>skin:/<Variable name="KnobScheme"/>/knobs/knob_bg_regular.svg</BackPath>
                 <MinAngle><Variable name="PotiMinAngle"/></MinAngle>
@@ -60,7 +60,7 @@
           <WidgetGroup>
             <ObjectName>EQKillButtonBox</ObjectName>
             <Layout>vertical</Layout>
-            <Size>18f,34f</Size>
+            <Size>18f,41f</Size>
             <Children>
 
               <WidgetGroup><Size>0min,5f</Size></WidgetGroup>

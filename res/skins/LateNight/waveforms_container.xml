@@ -88,6 +88,8 @@
             <SetVariable name="ConfigKey">[Skin],show_beatgrid_controls</SetVariable>
           </Template>
 
+          <Template src="skin:/mixer/mixer_main_headphone.xml"/>
+
           <WidgetGroup>
             <Size>2f,1min</Size>
             <Connection>

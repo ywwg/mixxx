@@ -25,7 +25,7 @@ vertical layout and a side-by-side layout for two-deck mode -->
           <!-- Spacer when there's no QuickEffect loaded -->
           <WidgetGroup>
             <Layout>horizontal</Layout>
-            <Size>0min,34f</Size>
+            <Size>0min,41f</Size>
             <Connection>
               <ConfigKey>[QuickEffectRack1_<Variable name="Group"/>_Effect1],loaded</ConfigKey>
               <Transform><Not/></Transform>
@@ -71,7 +71,7 @@ vertical layout and a side-by-side layout for two-deck mode -->
         <SizePolicy>me,min</SizePolicy>
         <Children>
           <Template src="skin:/controls/knob.xml">
-            <SetVariable name="Size">40f,34f</SetVariable>
+            <SetVariable name="Size">48f,41f</SetVariable>
             <SetVariable name="KnobColor">orange</SetVariable>
             <SetVariable name="ArcColor"><Variable name="ArcColorGain"/></SetVariable>
             <SetVariable name="Control">pregain</SetVariable>
@@ -80,22 +80,41 @@ vertical layout and a side-by-side layout for two-deck mode -->
 
           <WidgetGroup><Size>1min,4f</Size></WidgetGroup>
 
-          <SliderComposed><!-- Volume -->
-            <TooltipId>channel_volume</TooltipId>
-            <Size>42f,107f</Size>
-            <Handle scalemode="STRETCH_ASPECT">skin:/<Variable name="SliderScheme"/>/sliders/knob_volume_deck.svg</Handle>
-            <Slider scalemode="STRETCH_ASPECT">skin:/<Variable name="SliderScheme"/>/sliders/slider_volume_deck.svg</Slider>
-            <Horizontal>false</Horizontal>
-            <BarColor><Variable name="BarColorVolume"/></BarColor>
-            <BarWidth><Variable name="BarWidth"/></BarWidth>
-            <BarMargins><Variable name="BarMarginVolume"/></BarMargins>
-            <BarRoundCaps>true</BarRoundCaps>
-            <BarAxisPos>21.0</BarAxisPos>
-            <Connection>
-              <ConfigKey><Variable name="Group"/>,volume</ConfigKey>
-            </Connection>
-          </SliderComposed>
+          <WidgetGroup>
+            <Layout>horizontal</Layout>
+            <SizePolicy>min,min</SizePolicy>
+            <Children>
+                <SliderComposed><!-- Volume -->
+                    <TooltipId>channel_volume</TooltipId>
+                    <Size>42f,107f</Size>
+                    <Handle scalemode="STRETCH_ASPECT">skin:/<Variable name="SliderScheme"/>/sliders/knob_volume_deck.svg</Handle>
+                    <Slider scalemode="STRETCH_ASPECT">skin:/<Variable name="SliderScheme"/>/sliders/slider_volume_deck.svg</Slider>
+                    <Horizontal>false</Horizontal>
+                    <BarColor><Variable name="BarColorVolume"/></BarColor>
+                    <BarWidth><Variable name="BarWidth"/></BarWidth>
+                    <BarMargins><Variable name="BarMarginVolume"/></BarMargins>
+                    <BarRoundCaps>true</BarRoundCaps>
+                    <BarAxisPos>21.0</BarAxisPos>
+                    <Connection>
+                    <ConfigKey><Variable name="Group"/>,volume</ConfigKey>
+                    </Connection>
+                </SliderComposed>
+            </Children>
+          </WidgetGroup>
 
+          <WidgetGroup>
+            <Layout>horizontal</Layout>
+            <SizePolicy>min,min</SizePolicy>
+            <Children>
+                <Template src="skin:/controls/button_2state.xml">
+                    <SetVariable name="TooltipId">pfl</SetVariable>
+                    <SetVariable name="ObjectName">PflButton</SetVariable>
+                    <SetVariable name="Size">32f,32f</SetVariable>
+                    <SetVariable name="BtnSize">square</SetVariable>
+                    <SetVariable name="ConfigKey">[Channel1],pfl</SetVariable>
+                </Template>
+            </Children>
+          </WidgetGroup>
           <WidgetGroup><Size>1min,0me</Size></WidgetGroup>
         </Children>
       </WidgetGroup><!-- VolumeGain2Decks -->

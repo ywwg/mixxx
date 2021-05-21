@@ -17,6 +17,10 @@
         <Children/>
       </WidgetGroup>
 
+      <SingletonContainer>
+        <ObjectName>VuMeterMaster_Dark</ObjectName>
+      </SingletonContainer>
+
       <WidgetGroup>
         <ObjectName>MixerMasterHeadphone</ObjectName>
         <SizePolicy>min,min</SizePolicy>
@@ -47,7 +51,7 @@
                     <Children>
                       <Template src="skin:/controls/knob_with_label.xml">
                         <SetVariable name="TooltipId">master_gain</SetVariable>
-                        <SetVariable name="Size">35f,30f</SetVariable>
+                        <SetVariable name="Size">48f,41f</SetVariable>
                         <SetVariable name="KnobColor">orange</SetVariable>
                         <SetVariable name="ArcColor"><Variable name="ArcColorGainLow"/></SetVariable>
                         <SetVariable name="ArcUnipolar">true</SetVariable>
@@ -63,7 +67,7 @@
                     <Children>
                       <Template src="skin:/controls/knob_with_label.xml">
                         <SetVariable name="TooltipId">balance</SetVariable>
-                        <SetVariable name="Size">35f,30f</SetVariable>
+                        <SetVariable name="Size">48f,41f</SetVariable>
                         <SetVariable name="KnobColor">red</SetVariable>
                         <SetVariable name="ArcColor"><Variable name="ArcColorMstBal"/></SetVariable>
                         <SetVariable name="Control">balance</SetVariable>
@@ -88,7 +92,7 @@
                   <WidgetGroup><Size>5f,0min</Size></WidgetGroup>
                   <Template src="skin:/controls/knob.xml">
                     <SetVariable name="TooltipId">booth_gain</SetVariable>
-                    <SetVariable name="Size">35f,30f</SetVariable>
+                    <SetVariable name="Size">48f,41f</SetVariable>
                     <SetVariable name="KnobColor">orange</SetVariable>
                     <SetVariable name="ArcColor"><Variable name="ArcColorGainLow"/></SetVariable>
                     <SetVariable name="ArcUnipolar">true</SetVariable>
@@ -197,7 +201,7 @@
                     <Children>
                       <Template src="skin:/controls/knob_with_label.xml">
                         <SetVariable name="TooltipId">headphone_gain</SetVariable>
-                        <SetVariable name="Size">35f,30f</SetVariable>
+                        <SetVariable name="Size">48f,41f</SetVariable>
                         <SetVariable name="KnobColor">orange</SetVariable>
                         <SetVariable name="ArcColor"><Variable name="ArcColorGainLow"/></SetVariable>
                         <SetVariable name="ArcUnipolar">true</SetVariable>
@@ -213,7 +217,7 @@
                     <Children>
                       <Template src="skin:/controls/knob_with_label.xml">
                         <SetVariable name="TooltipId">headMix</SetVariable>
-                        <SetVariable name="Size">35f,30f</SetVariable>
+                        <SetVariable name="Size">48f,41f</SetVariable>
                         <SetVariable name="KnobColor">red</SetVariable>
                         <SetVariable name="ArcColor"><Variable name="ArcColorMstBal"/></SetVariable>
                         <SetVariable name="Control">headMix</SetVariable>

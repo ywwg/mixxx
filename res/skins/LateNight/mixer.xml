@@ -26,8 +26,6 @@
             </Connection>
           </WidgetGroup>
 
-          <Template src="skin:/mixer/mixer_main_headphone.xml"/>
-
         </Children>
       </WidgetGroup><!-- MixerContainer -->
 

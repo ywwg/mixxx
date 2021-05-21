@@ -15,7 +15,7 @@
 
           <WidgetGroup>
             <Layout>vertical</Layout>
-            <Size>18f,34f</Size>
+            <Size>18f,41f</Size>
             <Children>
               <WidgetGroup><Size>0min,5f</Size></WidgetGroup>
               <PushButton>
@@ -46,12 +46,12 @@
           </WidgetGroup>
 
           <WidgetGroup><!-- QuickEffect Meta knob + status dot -->
-            <Size>40f,34f</Size>
+            <Size>48f,41f</Size>
             <Children>
               <KnobComposed>
                 <TooltipId>QuickEffectRack_super1</TooltipId>
                 <Pos>0,0</Pos>
-                <Size>40f,34f</Size>
+                <Size>48f,41f</Size>
                 <Knob>skin:/<Variable name="KnobScheme"/>/knobs/knob_indicator_<Variable name="KnobIndicator"/>_<Variable name="KnobColorQuickEffect"/>.svg</Knob>
                 <BackPath>skin:/<Variable name="KnobScheme"/>/knobs/knob_bg_<Variable name="KnobBg"/>.svg</BackPath>
                 <MinAngle><Variable name="PotiMinAngle"/></MinAngle>

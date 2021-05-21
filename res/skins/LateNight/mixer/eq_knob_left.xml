@@ -46,11 +46,11 @@
           </WidgetGroup><!-- EQKillButtonBox -->
 
           <WidgetGroup><!-- EQ knob + Kill status dot -->
-            <Size>40f,34f</Size>
+            <Size>48f,41f</Size>
             <Children>
               <EffectParameterKnobComposed>
                 <Pos>0,0</Pos>
-                <Size>40f,34f</Size>
+                <Size>48f,41f</Size>
                 <TooltipId>filter<Variable name="EqRange"/></TooltipId>
                 <Knob>skin:/<Variable name="KnobScheme"/>/knobs/knob_indicator_regular_<Variable name="KnobColorEq"/>.svg</Knob>
                 <BackPath>skin:/<Variable name="KnobScheme"/>/knobs/knob_bg_regular.svg</BackPath>
