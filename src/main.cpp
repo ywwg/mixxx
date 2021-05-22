@@ -4,7 +4,10 @@
 #include <QStringList>
 #include <QTextCodec>
 #include <QThread>
+#include <QWindow>
 #include <QtDebug>
+
+#include <cstring>
 
 #include "config.h"
 #include "coreservices.h"
@@ -99,6 +102,22 @@ void adjustScaleFactor(CmdlineArgs* pArgs) {
     }
 }
 
+void handleIMVisibleChanged() {
+    if (!QGuiApplication::inputMethod()->isVisible()) {
+        return;
+    }
+    for (QWindow* w : QGuiApplication::allWindows()) {
+        if (std::strcmp(w->metaObject()->className(), "QtVirtualKeyboard::InputView") == 0) {
+            if (QObject* keyboard = w->findChild<QObject*>("keyboard")) {
+                QRect r = w->geometry();
+                r.moveTop(keyboard->property("y").toDouble());
+                w->setMask(r);
+                return;
+            }
+        }
+    }
+}
+
 } // anonymous namespace
 
 int main(int argc, char * argv[]) {
@@ -185,6 +204,9 @@ int main(int argc, char * argv[]) {
 
     // When the last window is closed, terminate the Qt event loop.
     QObject::connect(&app, &MixxxApplication::lastWindowClosed, &app, &MixxxApplication::quit);
+    QObject::connect(QGuiApplication::inputMethod(),
+            &QInputMethod::visibleChanged,
+            &handleIMVisibleChanged);
 
     int exitCode = runMixxx(&app, args);
 
