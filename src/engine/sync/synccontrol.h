@@ -48,10 +48,10 @@ class SyncControl : public EngineControl, public Syncable {
     // Must never result in a call to
     // SyncableListener::notifyBeatDistanceChanged or signal loops could occur.
     void updateMasterBeatDistance(double beatDistance) override;
-
     // Must never result in a call to
     // SyncableListener::notifyBpmChanged or signal loops could occur.
     void updateMasterBpm(double bpm) override;
+    void notifyMasterParamSource() override;
     void reinitMasterParams(double beatDistance, double baseBpm, double bpm) override;
 
     // Must never result in a call to
@@ -61,6 +61,7 @@ class SyncControl : public EngineControl, public Syncable {
 
     void setEngineControls(RateControl* pRateControl, BpmControl* pBpmControl);
 
+    void reportTrackPosition(double fractionalPlaypos);
     void reportPlayerSpeed(double speed, bool scratching);
     void notifySeek(double dNewPlaypos) override;
     void trackLoaded(TrackPointer pNewTrack) override;

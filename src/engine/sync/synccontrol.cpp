@@ -240,19 +240,17 @@ void SyncControl::updateMasterBpm(double bpm) {
     }
 }
 
+void SyncControl::notifyMasterParamSource() {
+    m_masterBpmAdjustFactor = kBpmUnity;
+}
+
 void SyncControl::reinitMasterParams(
         double beatDistance, double baseBpm, double bpm) {
-    // Calculate the factor for the file bpm. That gives the best
-    // result at any rate slider position.
-    double masterBpmAdjustFactor = determineBpmMultiplier(fileBpm(), baseBpm);
-    if (isMaster(getSyncMode())) {
-        // In Master mode we adjust the incoming Bpm for the initial sync.
-        bpm *= masterBpmAdjustFactor;
-        m_masterBpmAdjustFactor = kBpmUnity;
-    } else {
-        // in Follower mode we keep the factor when reporting our BPM
-        m_masterBpmAdjustFactor = masterBpmAdjustFactor;
+    if (kLogger.traceEnabled()) {
+        kLogger.trace() << "SyncControl::setMasterParams" << getGroup()
+                        << beatDistance << baseBpm << bpm;
     }
+    m_masterBpmAdjustFactor = determineBpmMultiplier(fileBpm(), baseBpm);
     updateMasterBpm(bpm);
     updateMasterBeatDistance(beatDistance);
 }
@@ -276,7 +274,10 @@ double SyncControl::determineBpmMultiplier(double myBpm, double targetBpm) const
 void SyncControl::updateTargetBeatDistance() {
     double targetDistance = m_unmultipliedTargetBeatDistance;
     if (kLogger.traceEnabled()) {
-        kLogger.trace() << getGroup() << "SyncControl::updateTargetBeatDistance, unmult distance" << targetDistance;
+        kLogger.trace()
+                << getGroup()
+                << "SyncControl::updateTargetBeatDistance, unmult distance"
+                << targetDistance << m_masterBpmAdjustFactor;
     }
 
     // Determining the target distance is not as simple as x2 or /2.  Since one
@@ -291,7 +292,8 @@ void SyncControl::updateTargetBeatDistance() {
         targetDistance *= kBpmDouble;
     } else if (m_masterBpmAdjustFactor == kBpmHalve) {
         targetDistance *= kBpmHalve;
-        if (m_pBeatDistance->get() >= 0.5) {
+        // Our beat distance CO is still a buffer behind, so take the current value.
+        if (m_pBpmControl->getBeatDistance(getSampleOfTrack().current) >= 0.5) {
             targetDistance += 0.5;
         }
     }
@@ -304,7 +306,7 @@ void SyncControl::updateTargetBeatDistance() {
 double SyncControl::getBpm() const {
     if (kLogger.traceEnabled()) {
         kLogger.trace() << getGroup() << "SyncControl::getBpm()"
-                        << m_pBpm->get() / m_masterBpmAdjustFactor;
+                        << m_pBpm->get() << "/" << m_masterBpmAdjustFactor;
     }
     return m_pBpm->get() / m_masterBpmAdjustFactor;
 }
@@ -312,6 +314,14 @@ double SyncControl::getBpm() const {
 void SyncControl::updateInstantaneousBpm(double bpm) {
     // Adjust the incoming bpm by the multiplier.
     m_pBpmControl->updateInstantaneousBpm(bpm * m_masterBpmAdjustFactor);
+}
+
+void SyncControl::reportTrackPosition(double fractionalPlaypos) {
+    // If we're close to the end, and master, disable master so we don't stop
+    // the party.
+    if (isMaster(getSyncMode()) && fractionalPlaypos >= 1.0) {
+        m_pChannel->getEngineBuffer()->requestSyncMode(SYNC_FOLLOWER);
+    }
 }
 
 // called from an engine worker thread

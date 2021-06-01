@@ -44,8 +44,8 @@
 #include "mixer/playermanager.h"
 #include "preferences/settingsmanager.h"
 #include "recording/recordingmanager.h"
-#include "skin/launchimage.h"
-#include "skin/legacyskinparser.h"
+#include "skin/legacy/launchimage.h"
+#include "skin/legacy/legacyskinparser.h"
 #include "skin/skinloader.h"
 #include "soundio/soundmanager.h"
 #include "sources/soundsourceproxy.h"
@@ -113,7 +113,7 @@ MixxxMainWindow::MixxxMainWindow(
     initializeWindow();
 
     // Show launch image immediately so the user knows Mixxx is starting
-    m_pSkinLoader = std::make_unique<SkinLoader>(m_pCoreServices->getSettings());
+    m_pSkinLoader = std::make_unique<mixxx::skin::SkinLoader>(m_pCoreServices->getSettings());
     m_pLaunchImage = m_pSkinLoader->loadLaunchImage(this);
     m_pCentralWidget = (QWidget*)m_pLaunchImage;
     setCentralWidget(m_pCentralWidget);
@@ -239,7 +239,7 @@ MixxxMainWindow::MixxxMainWindow(
             m_pCoreServices->getEffectsManager(),
             m_pCoreServices->getSettingsManager(),
             m_pCoreServices->getLibrary());
-    m_pPrefDlg->setWindowIcon(QIcon(":/images/mixxx_icon.svg"));
+    m_pPrefDlg->setWindowIcon(QIcon(":/images/icons/mixxx.svg"));
     m_pPrefDlg->setHidden(true);
 
     // Connect signals to the menubar. Should be done before emit newSkinLoaded.
@@ -316,6 +316,11 @@ MixxxMainWindow::MixxxMainWindow(
     // million different variables the first waveform may be horribly
     // corrupted. See bug 521509 -- bkgood ?? -- vrince
     setCentralWidget(m_pCentralWidget);
+
+    // Show the menubar after the launch image is replaced by the skin widget,
+    // otherwise it would shift the launch image shortly before the skin is visible.
+    m_pMenuBar->show();
+
     // The launch image widget is automatically disposed, but we still have a
     // pointer to it.
     m_pLaunchImage = nullptr;
@@ -466,7 +471,7 @@ void MixxxMainWindow::initializeWindow() {
                     ->getValueString(ConfigKey("[MainWindow]", "state"))
                     .toUtf8()));
 
-    setWindowIcon(QIcon(":/images/mixxx_icon.svg"));
+    setWindowIcon(QIcon(":/images/icons/mixxx.svg"));
     slotUpdateWindowTitle(TrackPointer());
 }
 
@@ -1085,18 +1090,11 @@ bool MixxxMainWindow::loadConfiguredSkin() {
     // TODO: use std::shared_ptr throughout skin widgets instead of these hacky get() calls
     m_pCentralWidget = m_pSkinLoader->loadConfiguredSkin(this,
             &m_skinCreatedControls,
-            m_pCoreServices->getKeyboardEventFilter().get(),
-            m_pCoreServices->getPlayerManager().get(),
-            m_pCoreServices->getControllerManager().get(),
-            m_pCoreServices->getLibrary().get(),
-            m_pCoreServices->getVinylControlManager().get(),
-            m_pCoreServices->getEffectsManager().get(),
-            m_pCoreServices->getRecordingManager().get());
+            m_pCoreServices.get());
     if (centralWidget() == m_pLaunchImage) {
         initializationProgressUpdate(100, "");
     }
     emit skinLoaded();
-    m_pMenuBar->show();
     return m_pCentralWidget != nullptr;
 }
 

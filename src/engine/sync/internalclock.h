@@ -52,6 +52,7 @@ class InternalClock : public QObject, public Clock, public Syncable {
 
     double getBaseBpm() const override;
     void updateMasterBpm(double bpm) override;
+    void notifyMasterParamSource() override;
     double getBpm() const override;
     void updateInstantaneousBpm(double bpm) override;
     void reinitMasterParams(double beatDistance, double baseBpm, double bpm) override;
