@@ -103,17 +103,20 @@ class EngineSync : public SyncableListener {
     double leaderBaseBpm() const;
 
     /// Set the BPM on every sync-enabled Syncable except pSource.
-    void setLeaderBpm(Syncable* pSource, double bpm);
+    void updateLeaderBpm(Syncable* pSource, double bpm);
 
     /// Set the Leader instantaneous BPM on every sync-enabled Syncable except
     /// pSource.
-    void setLeaderInstantaneousBpm(Syncable* pSource, double bpm);
+    void updateLeaderInstantaneousBpm(Syncable* pSource, double bpm);
 
     /// Set the Leader beat distance on every sync-enabled Syncable except
     /// pSource.
-    void setLeaderBeatDistance(Syncable* pSource, double beatDistance);
+    void updateLeaderBeatDistance(Syncable* pSource, double beatDistance);
 
-    void setLeaderParams(Syncable* pSource);
+    /// Initialize the leader parameters using the provided syncable as the source.
+    /// This should only be called for "major" updates, like a new track or change in
+    /// leader. Should not be called on every buffer callback.
+    void reinitLeaderParams(Syncable* pSource);
 
     /// Iff there is a single playing syncable in sync mode, return it.
     /// This is used to initialize leader params.

@@ -105,7 +105,7 @@ double InternalClock::getBeatDistance() const {
     return m_dClockPosition / m_dBeatLength;
 }
 
-void InternalClock::setLeaderBeatDistance(double beatDistance) {
+void InternalClock::updateLeaderBeatDistance(double beatDistance) {
     if (kLogger.traceEnabled()) {
         kLogger.trace() << "InternalClock::setLeaderBeatDistance" << beatDistance;
     }
@@ -134,7 +134,7 @@ void InternalClock::setLeaderBpm(double bpm) {
     updateBeatLength(m_iOldSampleRate, bpm);
 }
 
-void InternalClock::setInstantaneousBpm(double bpm) {
+void InternalClock::updateInstantaneousBpm(double bpm) {
     if (kLogger.traceEnabled()) {
         kLogger.trace() << "InternalClock::setInstantaneousBpm" << bpm;
     }
@@ -145,16 +145,16 @@ void InternalClock::setInstantaneousBpm(double bpm) {
 void InternalClock::notifyLeaderParamSource() {
 }
 
-void InternalClock::setLeaderParams(double beatDistance, double baseBpm, double bpm) {
+void InternalClock::reinitLeaderParams(double beatDistance, double baseBpm, double bpm) {
     if (kLogger.traceEnabled()) {
-        kLogger.trace() << "InternalClock::setLeaderParams" << beatDistance << baseBpm << bpm;
+        kLogger.trace() << "InternalClock::reinitLeaderParams" << beatDistance << baseBpm << bpm;
     }
     if (bpm <= 0.0 || baseBpm <= 0.0) {
         return;
     }
     m_dBaseBpm = baseBpm;
-    setLeaderBpm(bpm);
-    setLeaderBeatDistance(beatDistance);
+    updateLeaderBpm(bpm);
+    updateLeaderBeatDistance(beatDistance);
 }
 
 void InternalClock::slotBaseBpmChanged(double baseBpm) {
@@ -170,7 +170,7 @@ void InternalClock::slotBeatDistanceChanged(double beatDistance) {
     if (beatDistance < 0.0 || beatDistance > 1.0) {
         return;
     }
-    setLeaderBeatDistance(beatDistance);
+    updateLeaderBeatDistance(beatDistance);
 }
 
 void InternalClock::updateBeatLength(int sampleRate, double bpm) {
@@ -206,7 +206,7 @@ void InternalClock::updateBeatLength(int sampleRate, double bpm) {
     m_iOldSampleRate = sampleRate;
 
     // Restore the old beat distance.
-    setLeaderBeatDistance(oldBeatDistance);
+    updateLeaderBeatDistance(oldBeatDistance);
 }
 
 void InternalClock::onCallbackStart(int sampleRate, int bufferSize) {

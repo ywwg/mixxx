@@ -47,17 +47,17 @@ class SyncControl : public EngineControl, public Syncable {
 
     // Must never result in a call to
     // SyncableListener::notifyBeatDistanceChanged or signal loops could occur.
-    void setLeaderBeatDistance(double beatDistance) override;
+    void updateLeaderBeatDistance(double beatDistance) override;
     // Must never result in a call to
     // SyncableListener::notifyBpmChanged or signal loops could occur.
-    void setLeaderBpm(double bpm) override;
+    void updateLeaderBpm(double bpm) override;
     void notifyLeaderParamSource() override;
-    void setLeaderParams(double beatDistance, double baseBpm, double bpm) override;
+    void reinitLeaderParams(double beatDistance, double baseBpm, double bpm) override;
 
     // Must never result in a call to
     // SyncableListener::notifyInstantaneousBpmChanged or signal loops could
     // occur.
-    void setInstantaneousBpm(double bpm) override;
+    void updateInstantaneousBpm(double bpm) override;
 
     void setEngineControls(RateControl* pRateControl, BpmControl* pBpmControl);
 
@@ -107,7 +107,8 @@ class SyncControl : public EngineControl, public Syncable {
     // When syncing, sometimes it's better to match half or double the
     // leader bpm.
     FRIEND_TEST(EngineSyncTest, HalfDoubleBpmTest);
-    // The amount we should multiply the leader BPM to find a good sync match.
+    FRIEND_TEST(EngineSyncTest, HalfDoubleThenPlay);
+    // The amount we should multiply the leader BPM by to find a good sync match.
     // Sometimes this is 2 or 0.5.
     double m_leaderBpmAdjustFactor;
     // It is handy to store the raw reported target beat distance in case the

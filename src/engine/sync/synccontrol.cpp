@@ -163,7 +163,7 @@ void SyncControl::requestSync() {
     if (isPlaying() && m_pQuantize->toBool()) {
         // only sync phase if the deck is playing and if quantize is enabled.
         // this way the it is up to the user to decide if a seek is desired or not.
-        // This is helpful if the beatgrid of the track doe not fit at the current
+        // This is helpful if the beatgrid of the track does not fit at the current
         // playposition
         m_pChannel->getEngineBuffer()->requestSyncPhase();
     }
@@ -181,7 +181,7 @@ double SyncControl::adjustSyncBeatDistance(double beatDistance) const {
     // Similar to adjusting the target beat distance, when we report our beat
     // distance we need to adjust it by the leader bpm adjustment factor.  If
     // we've been doubling the leader bpm, we need to divide it in half.  If
-    // we'be been halving the leader bpm, we need to double it.  Both operations
+    // we've been halving the leader bpm, we need to double it.  Both operations
     // also need to account for if the longer beat is past its halfway point.
     //
     // This is the inverse of the updateTargetBeatDistance function below.
@@ -208,7 +208,7 @@ double SyncControl::getBaseBpm() const {
     return m_pLocalBpm->get() / m_leaderBpmAdjustFactor;
 }
 
-void SyncControl::setLeaderBeatDistance(double beatDistance) {
+void SyncControl::updateLeaderBeatDistance(double beatDistance) {
     if (kLogger.traceEnabled()) {
         kLogger.trace() << getGroup() << "SyncControl::setLeaderBeatDistance"
                         << beatDistance;
@@ -221,7 +221,7 @@ void SyncControl::setLeaderBeatDistance(double beatDistance) {
     updateTargetBeatDistance();
 }
 
-void SyncControl::setLeaderBpm(double bpm) {
+void SyncControl::updateLeaderBpm(double bpm) {
     if (kLogger.traceEnabled()) {
         kLogger.trace() << getGroup() << "SyncControl::setLeaderBpm" << bpm;
     }
@@ -246,15 +246,15 @@ void SyncControl::notifyLeaderParamSource() {
     m_leaderBpmAdjustFactor = kBpmUnity;
 }
 
-void SyncControl::setLeaderParams(
+void SyncControl::reinitLeaderParams(
         double beatDistance, double baseBpm, double bpm) {
     if (kLogger.traceEnabled()) {
         kLogger.trace() << "SyncControl::setLeaderParams" << getGroup()
                         << beatDistance << baseBpm << bpm;
     }
     m_leaderBpmAdjustFactor = determineBpmMultiplier(fileBpm(), baseBpm);
-    setLeaderBpm(bpm);
-    setLeaderBeatDistance(beatDistance);
+    updateLeaderBpm(bpm);
+    updateLeaderBeatDistance(beatDistance);
 }
 
 double SyncControl::determineBpmMultiplier(double myBpm, double targetBpm) const {
@@ -313,9 +313,9 @@ double SyncControl::getBpm() const {
     return m_pBpm->get() / m_leaderBpmAdjustFactor;
 }
 
-void SyncControl::setInstantaneousBpm(double bpm) {
+void SyncControl::updateInstantaneousBpm(double bpm) {
     // Adjust the incoming bpm by the multiplier.
-    m_pBpmControl->setInstantaneousBpm(bpm * m_leaderBpmAdjustFactor);
+    m_pBpmControl->updateInstantaneousBpm(bpm * m_leaderBpmAdjustFactor);
 }
 
 void SyncControl::reportTrackPosition(double fractionalPlaypos) {

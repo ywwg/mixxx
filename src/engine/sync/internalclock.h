@@ -48,14 +48,14 @@ class InternalClock : public QObject, public Clock, public Syncable {
     }
 
     double getBeatDistance() const override;
-    void setLeaderBeatDistance(double beatDistance) override;
+    void updateLeaderBeatDistance(double beatDistance) override;
 
     double getBaseBpm() const override;
-    void setLeaderBpm(double bpm) override;
+    void updateLeaderBpm(double bpm) override;
     void notifyLeaderParamSource() override;
     double getBpm() const override;
-    void setInstantaneousBpm(double bpm) override;
-    void setLeaderParams(double beatDistance, double baseBpm, double bpm) override;
+    void updateInstantaneousBpm(double bpm) override;
+    void reinitLeaderParams(double beatDistance, double baseBpm, double bpm) override;
 
     void onCallbackStart(int sampleRate, int bufferSize);
     void onCallbackEnd(int sampleRate, int bufferSize);
