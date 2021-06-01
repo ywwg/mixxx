@@ -107,7 +107,7 @@ double InternalClock::getBeatDistance() const {
 
 void InternalClock::updateLeaderBeatDistance(double beatDistance) {
     if (kLogger.traceEnabled()) {
-        kLogger.trace() << "InternalClock::setLeaderBeatDistance" << beatDistance;
+        kLogger.trace() << "InternalClock::updateLeaderBeatDistance" << beatDistance;
     }
     m_dClockPosition = beatDistance * m_dBeatLength;
     m_pClockBeatDistance->set(beatDistance);
@@ -123,7 +123,7 @@ double InternalClock::getBpm() const {
     return m_pClockBpm->get();
 }
 
-void InternalClock::setLeaderBpm(double bpm) {
+void InternalClock::updateLeaderBpm(double bpm) {
     if (kLogger.traceEnabled()) {
         kLogger.trace() << "InternalClock::setBpm" << bpm;
     }

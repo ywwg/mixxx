@@ -1669,7 +1669,7 @@ TEST_F(EngineSyncTest, HalfDoubleBpmTest) {
     mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 140, 0.0);
     m_pTrack2->trySetBeats(pBeats2);
 
-    // Mixxx will choose the first playing deck to be master.  Let's start deck 2 first.
+    // Mixxx will choose the first playing deck to be leader.  Let's start deck 2 first.
     ControlObject::getControl(ConfigKey(m_sGroup1, "volume"))->set(1.0);
     ControlObject::getControl(ConfigKey(m_sGroup2, "volume"))->set(1.0);
     ProcessBuffer();
@@ -1682,7 +1682,7 @@ TEST_F(EngineSyncTest, HalfDoubleBpmTest) {
     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
     ProcessBuffer();
 
-    ASSERT_TRUE(isSoftMaster(m_sGroup2));
+    ASSERT_TRUE(isSoftLeader(m_sGroup2));
     ASSERT_TRUE(isFollower(m_sGroup1));
 
     EXPECT_EQ(0.5,
@@ -1785,10 +1785,10 @@ TEST_F(EngineSyncTest, HalfDoubleThenPlay) {
     EXPECT_TRUE(isFollower(m_sGroup2));
     EXPECT_DOUBLE_EQ(1.0,
             m_pChannel1->getEngineBuffer()
-                    ->m_pSyncControl->m_masterBpmAdjustFactor);
+                    ->m_pSyncControl->m_leaderBpmAdjustFactor);
     EXPECT_DOUBLE_EQ(2.0,
             m_pChannel2->getEngineBuffer()
-                    ->m_pSyncControl->m_masterBpmAdjustFactor);
+                    ->m_pSyncControl->m_leaderBpmAdjustFactor);
     EXPECT_DOUBLE_EQ(87.5,
             ControlObject::getControl(ConfigKey(m_sInternalClockGroup, "bpm"))
                     ->get());
@@ -1840,10 +1840,10 @@ TEST_F(EngineSyncTest, HalfDoubleThenPlay) {
     pButtonSyncEnabled1->slotSet(1.0);
     EXPECT_DOUBLE_EQ(0.5,
             m_pChannel1->getEngineBuffer()
-                    ->m_pSyncControl->m_masterBpmAdjustFactor);
+                    ->m_pSyncControl->m_leaderBpmAdjustFactor);
     EXPECT_DOUBLE_EQ(1.0,
             m_pChannel2->getEngineBuffer()
-                    ->m_pSyncControl->m_masterBpmAdjustFactor);
+                    ->m_pSyncControl->m_leaderBpmAdjustFactor);
     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
     ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(1.0);
 
