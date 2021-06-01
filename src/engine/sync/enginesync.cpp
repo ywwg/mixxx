@@ -75,6 +75,13 @@ void EngineSync::requestSyncMode(Syncable* pSyncable, SyncMode mode) {
     default:;
     }
 
+    Syncable* pOnlyPlayer = getUniquePlayingSyncedDeck();
+    if (pOnlyPlayer) {
+        // This resets the user offset, so that if this deck gets used as the params syncable
+        // it will have that offset removed.
+        pOnlyPlayer->notifyOnlyPlayingSyncable();
+    }
+
     // Second, figure out what Syncable should be used to initialize the leader
     // parameters, if any. Usually this is the new leader. (Note, that pointer might be null!)
     Syncable* pParamsSyncable = m_pLeaderSyncable;
@@ -96,9 +103,6 @@ void EngineSync::requestSyncMode(Syncable* pSyncable, SyncMode mode) {
         }
     }
 
-    if (auto onlyPlayer = getOnlyPlayingSyncable(); onlyPlayer != nullptr) {
-        onlyPlayer->notifyOnlyPlayingSyncable();
-    }
 }
 
 void EngineSync::activateFollower(Syncable* pSyncable) {
@@ -351,11 +355,14 @@ void EngineSync::notifyPlayingAudible(Syncable* pSyncable, bool playingAudible) 
     if (newLeader != nullptr && newLeader != m_pLeaderSyncable) {
         activateLeader(newLeader, SYNC_LEADER_SOFT);
         setLeaderParams(newLeader);
-    } else if (auto onlyPlayer = getOnlyPlayingSyncable(); onlyPlayer != nullptr) {
-        // Even if we didn't change leader, if there is only one player (us), then we should
-        // reinit the beat distance.
-        onlyPlayer->notifyOnlyPlayingSyncable();
-        setLeaderBeatDistance(onlyPlayer, onlyPlayer->getBeatDistance());
+    } else {
+        Syncable* pOnlyPlayer = getUniquePlayingSyncedDeck();
+        if (pOnlyPlayer) {
+            // Even if we didn't change leader, if there is only one player (us), then we should
+            // reinit the beat distance.
+            pOnlyPlayer->notifyOnlyPlayingSyncable();
+            setLeaderBeatDistance(pOnlyPlayer, pOnlyPlayer->getBeatDistance());
+        }
     }
 
     pSyncable->requestSync();
@@ -651,7 +658,7 @@ void EngineSync::setLeaderParams(Syncable* pSource) {
     }
 }
 
-Syncable* EngineSync::getOnlyPlayingSyncable() const {
+Syncable* EngineSync::getUniquePlayingSyncedDeck() const {
     Syncable* onlyPlaying = nullptr;
     for (Syncable* pSyncable : m_syncables) {
         if (!pSyncable->isSynchronized()) {

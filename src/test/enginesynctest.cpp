@@ -1447,7 +1447,7 @@ TEST_F(EngineSyncTest, ZeroBPMRateAdjustIgnored) {
 
 TEST_F(EngineSyncTest, DISABLED_BeatDistanceBeforeStart) {
     // If the start position is before zero, we should still initialize the beat distance
-    // corretly.  Unfortunately, this currently doesn't work.
+    // correctly.  Unfortunately, this currently doesn't work.
 
     mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 128, 0.0);
     m_pTrack1->trySetBeats(pBeats1);
