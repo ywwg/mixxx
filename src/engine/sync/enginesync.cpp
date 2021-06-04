@@ -83,10 +83,10 @@ void EngineSync::requestSyncMode(Syncable* pSyncable, SyncMode mode) {
     }
 
     // Second, figure out what Syncable should be used to initialize the leader
-    // parameters, if any. Usually this is the new leader. (Note, that pointer might be null!)
+    // parameters, if any. Usually this is the leader. (Note, that pointer might be null!)
     Syncable* pParamsSyncable = m_pLeaderSyncable;
-    // But If we are newly soft leader, we need to match to some other deck.
-    if (pSyncable == m_pLeaderSyncable && pSyncable != oldLeader && mode != SYNC_LEADER_EXPLICIT) {
+    // But if we are newly leader, we need to match to some other deck.
+    if (pSyncable == m_pLeaderSyncable && pSyncable != oldLeader) {
         pParamsSyncable = findBpmMatchTarget(pSyncable);
         if (!pParamsSyncable) {
             // We weren't able to find anything to match to, so set ourselves as the
@@ -107,7 +107,6 @@ void EngineSync::requestSyncMode(Syncable* pSyncable, SyncMode mode) {
             pSyncable->requestSync();
         }
     }
-
 }
 
 void EngineSync::activateFollower(Syncable* pSyncable) {
@@ -208,7 +207,7 @@ Syncable* EngineSync::pickLeader(Syncable* enabling_syncable) {
         return m_pLeaderSyncable;
     }
 
-    // First preference: some other sync deck that is not playing.
+    // First preference: some other sync deck that is playing.
     // Note, if we are using PREFER_LOCK_BPM we don't use this option.
     Syncable* first_other_playing_deck = nullptr;
     // Second preference: whatever the first playing sync deck is, even if it's us.
@@ -531,7 +530,7 @@ void EngineSync::onCallbackEnd(int sampleRate, int bufferSize) {
     m_pInternalClock->onCallbackEnd(sampleRate, bufferSize);
 }
 
-EngineChannel* EngineSync::getLeader() const {
+EngineChannel* EngineSync::getLeaderChannel() const {
     return m_pLeaderSyncable ? m_pLeaderSyncable->getChannel() : nullptr;
 }
 

@@ -302,9 +302,6 @@ void BpmControl::slotControlBeatSync(double value) {
 }
 
 bool BpmControl::syncTempo() {
-    if (getSyncMode() == SYNC_LEADER_EXPLICIT) {
-        return false;
-    }
     EngineBuffer* pOtherEngineBuffer = pickSyncTarget();
 
     if (!pOtherEngineBuffer) {
