@@ -62,7 +62,7 @@ void InternalClock::setSyncMode(SyncMode mode) {
     m_pSyncLeaderEnabled->setAndConfirm(SyncModeToLeaderLight(mode));
 }
 
-void InternalClock::notifyOnlyPlayingSyncable() {
+void InternalClock::notifyUniquePlaying() {
     // No action necessary.
 }
 
