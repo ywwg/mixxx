@@ -725,16 +725,21 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/preferences/settingsmanager.cpp
   src/preferences/upgrade.cpp
   src/recording/recordingmanager.cpp
-  src/skin/colorschemeparser.cpp
-  src/skin/imgcolor.cpp
-  src/skin/imginvert.cpp
-  src/skin/imgloader.cpp
-  src/skin/launchimage.cpp
-  src/skin/legacyskinparser.cpp
-  src/skin/pixmapsource.cpp
-  src/skin/skincontext.cpp
+  src/skin/legacy/colorschemeparser.cpp
+  src/skin/legacy/imgcolor.cpp
+  src/skin/legacy/imginvert.cpp
+  src/skin/legacy/imgloader.cpp
+  src/skin/legacy/launchimage.cpp
+  src/skin/legacy/legacyskinparser.cpp
+  src/skin/legacy/pixmapsource.cpp
+  src/skin/legacy/legacyskin.cpp
+  src/skin/qml/qmlcontrolproxy.cpp
+  src/skin/qml/qmlplayermanagerproxy.cpp
+  src/skin/qml/qmlplayerproxy.cpp
+  src/skin/qml/qmlskin.cpp
+  src/skin/legacy/skincontext.cpp
+  src/skin/legacy/tooltips.cpp
   src/skin/skinloader.cpp
-  src/skin/tooltips.cpp
   src/soundio/sounddevice.cpp
   src/soundio/sounddevicenetwork.cpp
   src/soundio/sounddeviceportaudio.cpp
@@ -1314,12 +1319,18 @@ if(UNIX AND NOT APPLE)
       "${CMAKE_INSTALL_DATADIR}/applications"
   )
 
-  # Icon file for menu entry
+  # Icon files for menu entry
   install(
     FILES
-      "${CMAKE_CURRENT_SOURCE_DIR}/res/images/mixxx_icon.svg"
+      "${CMAKE_CURRENT_SOURCE_DIR}/res/images/icons/mixxx.svg"
     DESTINATION
-      "${CMAKE_INSTALL_DATADIR}/pixmaps"
+      "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps"
+  )
+  install(
+    FILES
+      "${CMAKE_CURRENT_SOURCE_DIR}/res/images/icons/mixxx.png"
+    DESTINATION
+      "${CMAKE_INSTALL_DATADIR}/icons/hicolor/32x32/apps"
   )
 
   # .metainfo.xml file for KDE/GNOME AppStream initiative
@@ -1403,8 +1414,8 @@ set(INSTALL_GTEST OFF CACHE BOOL "Disable installation of GoogleTest" FORCE)
 # Add googletest directly to our build. This adds the following targets:
 # gtest, gtest_main, gmock and gmock_main
 add_subdirectory(
-  "${CMAKE_CURRENT_SOURCE_DIR}/lib/googletest-1.10.x"
-  "${CMAKE_CURRENT_BINARY_DIR}/lib/googletest-1.10.x"
+  "${CMAKE_CURRENT_SOURCE_DIR}/lib/googletest"
+  "${CMAKE_CURRENT_BINARY_DIR}/lib/googletest"
 )
 
 add_executable(mixxx-test
@@ -1972,6 +1983,7 @@ find_package(Qt5
     Network
     OpenGL
     Qml
+    QuickWidgets
     Sql
     Svg
     Test
@@ -1986,6 +1998,7 @@ target_link_libraries(mixxx-lib PUBLIC
   Qt5::Network
   Qt5::OpenGL
   Qt5::Qml
+  Qt5::QuickWidgets
   Qt5::Sql
   Qt5::Svg
   Qt5::Test
@@ -2619,7 +2632,7 @@ option(HID "USB HID controller support" ON)
 if(HID)
   find_package(hidapi)
   # hidapi_VERSION is only available starting with 0.10.0
-  if(NOT hidapi_FOUND OR NOT hidapi_VERSION OR hidapi_VERSION VERSION_LESS 0.10.0)
+  if(NOT hidapi_FOUND OR NOT hidapi_VERSION OR hidapi_VERSION VERSION_LESS 0.10.1)
     message(STATUS "Linking internal libhidapi statically")
     add_library(mixxx-hidapi STATIC EXCLUDE_FROM_ALL)
     target_include_directories(mixxx-hidapi SYSTEM PUBLIC lib/hidapi/hidapi)
@@ -2775,14 +2788,14 @@ if (NOT CPACK_DEBIAN_PACKAGE_RELEASE)
    set(CPACK_DEBIAN_PACKAGE_RELEASE 1)
 endif()
 
-set(CPACK_DEBIAN_DISTRIBUTION_RELEASES bionic focal groovy hirsute)
+set(CPACK_DEBIAN_DISTRIBUTION_RELEASES focal groovy hirsute impish)
 set(CPACK_DEBIAN_SOURCE_DIR ${CMAKE_SOURCE_DIR})
 set(CPACK_DEBIAN_UPLOAD_PPA_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/packaging/CPackDebUploadPPA.cmake")
 set(CPACK_DEBIAN_INSTALL_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/packaging/CPackDebInstall.cmake")
 
 set(CPACK_WIX_UPGRADE_GUID "921DC99C-4DCF-478D-B950-50685CB9E6BE")
 set(CPACK_WIX_LICENSE_RTF "${CMAKE_CURRENT_SOURCE_DIR}/packaging/wix/LICENSE.rtf")
-set(CPACK_WIX_PRODUCT_ICON "${CMAKE_SOURCE_DIR}/res/images/ic_mixxx.ico")
+set(CPACK_WIX_PRODUCT_ICON "${CMAKE_SOURCE_DIR}/res/images/icons/ic_mixxx.ico")
 set(CPACK_WIX_PROPERTY_ARPHELPLINK "${CPACK_PACKAGE_HOMEPAGE_URL}")
 set(CPACK_WIX_UI_BANNER "${CMAKE_CURRENT_SOURCE_DIR}/packaging/wix/images/banner.bmp")
 set(CPACK_WIX_UI_DIALOG "${CMAKE_CURRENT_SOURCE_DIR}/packaging/wix/images/dialog.bmp")

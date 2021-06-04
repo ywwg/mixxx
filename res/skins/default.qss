@@ -68,8 +68,8 @@ WOverview #PassthroughLabel {
   border: 0px solid #fff;
 }
 #SearchClearButton:!focus {
-  image: url(:/images/library/ic_library_cross_grey.svg)
+  image: url(:/images/library/ic_library_cross_grey.svg);
 }
 #SearchClearButton:focus {
-  image: url(:/images/library/ic_library_cross_orange.svg)
+  image: url(:/images/library/ic_library_cross_orange.svg);
 }
