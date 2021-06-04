@@ -76,7 +76,7 @@ class Syncable {
     virtual void setSyncMode(SyncMode mode) = 0;
 
     // Notify a Syncable that it is now the only currently-playing syncable.
-    virtual void notifyOnlyPlayingSyncable() = 0;
+    virtual void notifyUniquePlaying() = 0;
 
     // Notify a Syncable that they should sync phase.
     virtual void requestSync() = 0;
@@ -113,6 +113,11 @@ class Syncable {
     // Must never result in a call to SyncableListener::notifyBpmChanged or
     // signal loops could occur.
     virtual void updateMasterBpm(double bpm) = 0;
+
+    // Tells a Syncable that it's going to be used as a source for master
+    // params. This is a gross hack so that the SyncControl can undo its
+    // half/double adjustment so bpms are initialized correctly.
+    virtual void notifyMasterParamSource() = 0;
 
     // Tells a Syncable that it's going to be used as a source for master
     // params. This is a gross hack so that the SyncControl can undo its

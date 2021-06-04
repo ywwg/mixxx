@@ -60,7 +60,7 @@ void InternalClock::setSyncMode(SyncMode mode) {
     m_pSyncMasterEnabled->setAndConfirm(SyncModeToMasterLight(mode));
 }
 
-void InternalClock::notifyOnlyPlayingSyncable() {
+void InternalClock::notifyUniquePlaying() {
     // No action necessary.
 }
 
@@ -138,6 +138,9 @@ void InternalClock::updateInstantaneousBpm(double bpm) {
     }
     // Do nothing.
     Q_UNUSED(bpm);
+}
+
+void InternalClock::notifyMasterParamSource() {
 }
 
 void InternalClock::notifyMasterParamSource() {

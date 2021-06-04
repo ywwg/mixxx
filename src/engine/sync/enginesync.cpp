@@ -79,7 +79,7 @@ void EngineSync::requestSyncMode(Syncable* pSyncable, SyncMode mode) {
     if (pOnlyPlayer) {
         // This resets the user offset, so that if this deck gets used as the params syncable
         // it will have that offset removed.
-        pOnlyPlayer->notifyOnlyPlayingSyncable();
+        pOnlyPlayer->notifyUniquePlaying();
     }
 
     // Second, figure out what Syncable should be used to initialize the master
@@ -368,7 +368,7 @@ void EngineSync::notifyPlayingAudible(Syncable* pSyncable, bool playingAudible) 
         if (pOnlyPlayer) {
             // Even if we didn't change master, if there is only one player (us), then we should
             // reinit the beat distance.
-            pOnlyPlayer->notifyOnlyPlayingSyncable();
+            pOnlyPlayer->notifyUniquePlaying();
             updateMasterBeatDistance(pOnlyPlayer, pOnlyPlayer->getBeatDistance());
         }
     }
@@ -603,7 +603,7 @@ void EngineSync::updateMasterInstantaneousBpm(Syncable* pSource, double bpm) {
 
 void EngineSync::updateMasterBeatDistance(Syncable* pSource, double beatDistance) {
     if (kLogger.traceEnabled()) {
-        kLogger.trace() << "EngineSync::setMasterBeatDistance"
+        kLogger.trace() << "EngineSync::updateMasterBeatDistance"
                         << (pSource ? pSource->getGroup() : "null")
                         << beatDistance;
     }
