@@ -651,6 +651,37 @@ QWidget* LegacySkinParser::parseSplitter(const QDomElement& node) {
     return pSplitter;
 }
 
+QWidget* LegacySkinParser::parseScrollable(const QDomElement& node) {
+    WScrollable* pScrollable = new WScrollable(m_pParent);
+    commonWidgetSetup(node, pScrollable);
+
+    QDomNode childrenNode = m_pContext->selectNode(node, "Children");
+    QWidget* pOldParent = m_pParent;
+    m_pParent = pScrollable;
+
+    if (!childrenNode.isNull()) {
+        QDomNodeList childNodes = childrenNode.childNodes();
+        if (childNodes.count() != 1) {
+            SKIN_WARNING(node, *m_pContext) << "Scrollables must have exactly one child";
+        }
+
+        QDomNode childnode = childNodes.at(0);
+        if (childnode.isElement()) {
+            QList<QWidget*> children = parseNode(childnode.toElement());
+            if (children.count() != 1) {
+                SKIN_WARNING(node, *m_pContext) << "Scrollables must have exactly one child";
+            } else if (children.at(0) != nullptr) {
+                pScrollable->setWidget(children.at(0));
+            }
+        }
+    }
+    pScrollable->setup(node, *m_pContext);
+    pScrollable->Init();
+
+    m_pParent = pOldParent;
+    return pScrollable;
+}
+
 void LegacySkinParser::parseChildren(
         const QDomElement& node,
         WWidgetGroup* pGroup) {
