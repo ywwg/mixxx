@@ -454,6 +454,7 @@ Syncable* EngineSync::pickNonSyncSyncTarget(EngineChannel* pDontPick) const {
     if (m_pLeaderSyncable &&
             m_pLeaderSyncable->getChannel() &&
             m_pLeaderSyncable->getChannel() != pDontPick) {
+        qDebug() << "pickNonSyncSyncTarget: the leader " << m_pLeaderSyncable->getGroup();
         return m_pLeaderSyncable;
     }
 
@@ -474,6 +475,9 @@ Syncable* EngineSync::pickNonSyncSyncTarget(EngineChannel* pDontPick) const {
                 if (pBuffer->getSpeed() != 0.0) {
                     if (pSyncable->getSyncMode() != SYNC_NONE) {
                         // Second choice: first playing sync deck
+                        qDebug() << "pickNonSyncSyncTarget: first playing sync "
+                                    "deck "
+                                 << pSyncable->getGroup();
                         return pSyncable;
                     }
                     if (pFirstPlayingDeck == nullptr) {
@@ -487,11 +491,18 @@ Syncable* EngineSync::pickNonSyncSyncTarget(EngineChannel* pDontPick) const {
     }
     if (pFirstPlayingDeck) {
         // Third choice: first playing non-sync deck
+        qDebug() << "pickNonSyncSyncTarget: first playing deck " << pFirstPlayingDeck->getGroup();
         return pFirstPlayingDeck;
     }
 
     // No playing decks have a BPM. Go with the first deck that was stopped but
     // had a BPM.
+    if (pFirstNonplayingDeck) {
+        qDebug() << "pickNonSyncSyncTarget: first nonplaying deck "
+                 << pFirstNonplayingDeck->getGroup();
+    } else {
+        qDebug() << "pickNonSyncSyncTarget: nullptr";
+    }
     return pFirstNonplayingDeck;
 }
 

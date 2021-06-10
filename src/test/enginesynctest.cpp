@@ -2560,6 +2560,32 @@ TEST_F(EngineSyncTest, SeekStayInPhase) {
     EXPECT_DOUBLE_EQ(0.18925937554508981, ControlObject::get(ConfigKey(m_sGroup1, "playposition")));
 }
 
+TEST_F(EngineSyncTest, SeekStayInPhaseSingleDeck) {
+    ControlObject::set(ConfigKey(m_sGroup1, "quantize"), 1.0);
+    ControlObject::set(ConfigKey(m_sGroup1, "sync_enabled"), 1);
+
+    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 130, 0.0);
+    m_pTrack1->trySetBeats(pBeats1);
+
+    ControlObject::set(ConfigKey(m_sGroup1, "play"), 1.0);
+    ProcessBuffer();
+
+    EXPECT_DOUBLE_EQ(ControlObject::get(ConfigKey(m_sInternalClockGroup, "beat_distance")),
+            ControlObject::get(ConfigKey(m_sGroup1, "beat_distance")));
+
+    ControlObject::set(ConfigKey(m_sGroup1, "playposition"), 0.2);
+    ProcessBuffer();
+
+    EXPECT_DOUBLE_EQ(ControlObject::get(ConfigKey(m_sInternalClockGroup, "beat_distance")),
+            ControlObject::get(ConfigKey(m_sGroup1, "beat_distance")));
+
+    ControlObject::set(ConfigKey(m_sGroup1, "playposition"), 0.4);
+    ProcessBuffer();
+
+    EXPECT_DOUBLE_EQ(ControlObject::get(ConfigKey(m_sInternalClockGroup, "beat_distance")),
+            ControlObject::get(ConfigKey(m_sGroup1, "beat_distance")));
+}
+
 TEST_F(EngineSyncTest, SyncWithoutBeatgrid) {
     // this tests bug lp1783020, notresetting rate when other deck has no beatgrid
     mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 128, 0.0);

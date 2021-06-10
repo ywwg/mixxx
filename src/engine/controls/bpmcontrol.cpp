@@ -473,12 +473,13 @@ double BpmControl::calcSyncAdjustment(bool userTweakingSync) {
     const double error = shortestPercentageChange(syncTargetBeatDistance, thisBeatDistance);
     const double curUserOffset = m_dUserOffset.getValue();
 
-    if (kLogger.traceEnabled()) {
-        kLogger.trace() << m_group << "****************";
-        kLogger.trace() << "master beat distance:" << syncTargetBeatDistance;
-        kLogger.trace() << "my     beat distance:" << thisBeatDistance;
-        kLogger.trace() << "user offset distance:" << curUserOffset;
-        kLogger.trace() << "error               :" << error;
+    // if (kLogger.traceEnabled()) {
+    if (fabs(error) > .001) {
+        qDebug() << m_group << "****************";
+        qDebug() << "master beat distance:" << syncTargetBeatDistance;
+        qDebug() << "my     beat distance:" << thisBeatDistance;
+        qDebug() << "user offset distance:" << curUserOffset;
+        qDebug() << "error               :" << error;
     }
 
     double adjustment = 1.0;
@@ -811,6 +812,7 @@ double BpmControl::getBeatMatchPosition(
             pOtherEngineBuffer = getEngineBuffer();
         }
     } else if (!pOtherEngineBuffer) {
+        qDebug() << "nothing to sync against, abort beat match";
         return dThisPosition;
     }
 
