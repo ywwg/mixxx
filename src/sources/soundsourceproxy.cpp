@@ -175,6 +175,7 @@ bool SoundSourceProxy::registerProviders() {
     // only matters among providers with equal priority.
     kLogger.debug()
             << "Registering SoundSource providers";
+    s_soundSourceProviders = mixxx::SoundSourceProviderRegistry();
     // Register the platform and fallback providers BEFORE all other
     // providers to prioritize them by their order of registration,
     // preceding any other provider that is registered with the same
