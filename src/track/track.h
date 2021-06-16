@@ -142,6 +142,9 @@ class Track : public QObject {
     void setBpmLocked(bool bpmLocked);
     bool isBpmLocked() const;
 
+    // Updates the ReplayGain ratio value, preserving the other properties of the
+    // existing ReplayGain.
+    void setReplayGainRatio(double ratio);
     // Set ReplayGain
     void setReplayGain(const mixxx::ReplayGain&);
     // Returns ReplayGain
