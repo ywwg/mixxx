@@ -80,7 +80,7 @@ int WTrackMenu::getTrackCount() const {
     if (m_pTrackModel) {
         return m_trackIndexList.size();
     } else {
-        return m_trackPointerList.size();
+        return m_pTrack ? 1 : 0;
     }
 }
 
@@ -340,6 +340,15 @@ void WTrackMenu::createActions() {
                 &WTrackMenu::slotClearBeats);
     }
 
+    if (featureIsEnabled(Feature::UpdateReplayGain)) {
+        m_pUpdateReplayGain =
+                new QAction(tr("Update ReplayGain from Deck Gain"), m_pClearMetadataMenu);
+        connect(m_pUpdateReplayGain,
+                &QAction::triggered,
+                this,
+                &WTrackMenu::slotUpdateReplaygain);
+    }
+
     if (featureIsEnabled(Feature::Color)) {
         ColorPaletteSettings colorPaletteSettings(m_pConfig);
         m_pColorPickerAction = new WColorPickerAction(WColorPicker::Option::AllowNoColor,
@@ -473,6 +482,10 @@ void WTrackMenu::setupActions() {
         addMenu(m_pClearMetadataMenu);
     }
 
+    if (featureIsEnabled(Feature::UpdateReplayGain)) {
+        addAction(m_pUpdateReplayGain);
+    }
+
     addSeparator();
     if (featureIsEnabled(Feature::HideUnhidePurge)) {
         if (m_pTrackModel->hasCapabilities(TrackModel::Capability::Hide)) {
@@ -508,10 +521,8 @@ bool WTrackMenu::isAnyTrackBpmLocked() const {
             }
         }
     } else {
-        for (const auto& pTrack : m_trackPointerList) {
-            if (pTrack->isBpmLocked()) {
-                return true;
-            }
+        if (m_pTrack && m_pTrack->isBpmLocked()) {
+            return true;
         }
     }
     return false;
@@ -536,13 +547,10 @@ std::optional<std::optional<mixxx::RgbColor>> WTrackMenu::getCommonTrackColor() 
             }
         }
     } else {
-        commonColor = m_trackPointerList.first()->getColor();
-        for (const auto& pTrack : m_trackPointerList) {
-            if (commonColor != pTrack->getColor()) {
-                // Multiple, different colors
-                return std::nullopt;
-            }
+        if (!m_pTrack) {
+            return std::nullopt;
         }
+        commonColor = m_pTrack->getColor();
     }
     return make_optional(commonColor);
 }
@@ -605,7 +613,7 @@ CoverInfo WTrackMenu::getCoverInfoOfLastTrack() const {
                         .toString();
         return coverInfo;
     } else {
-        return m_trackPointerList.last()->getCoverInfoWithLocation();
+        return m_pTrack->getCoverInfoWithLocation();
     }
 }
 
@@ -706,6 +714,10 @@ void WTrackMenu::updateMenus() {
         }
     }
 
+    if (featureIsEnabled(Feature::UpdateReplayGain)) {
+        m_pUpdateReplayGain->setEnabled(!m_deckGroup.isEmpty());
+    }
+
     if (featureIsEnabled(Feature::Color)) {
         m_pColorPickerAction->setColorPalette(
                 ColorPaletteSettings(m_pConfig).getTrackColorPalette());
@@ -741,7 +753,7 @@ void WTrackMenu::updateMenus() {
 }
 
 void WTrackMenu::loadTrack(
-        const TrackPointer& pTrack) {
+        const TrackPointer& pTrack, const QString& deckGroup) {
     // This asserts that this function is only accessible when a track model is not set,
     // thus maintaining only the TrackPointerList in state and avoiding storing
     // duplicate state with TrackIdList and QModelIndexList.
@@ -755,7 +767,8 @@ void WTrackMenu::loadTrack(
     if (!pTrack) {
         return;
     }
-    m_trackPointerList = TrackPointerList{pTrack};
+    m_pTrack = pTrack;
+    m_deckGroup = deckGroup;
     updateMenus();
 }
 
@@ -788,9 +801,8 @@ TrackIdList WTrackMenu::getTrackIds() const {
             trackIds.push_back(trackId);
         }
     } else {
-        trackIds.reserve(m_trackPointerList.size());
-        for (const auto& pTrack : m_trackPointerList) {
-            const auto trackId = pTrack->getId();
+        if (m_pTrack) {
+            const auto trackId = m_pTrack->getId();
             DEBUG_ASSERT(trackId.isValid());
             trackIds.push_back(trackId);
         }
@@ -813,14 +825,10 @@ QList<TrackRef> WTrackMenu::getTrackRefs() const {
             trackRefs.push_back(std::move(trackRef));
         }
     } else {
-        trackRefs.reserve(m_trackPointerList.size());
-        for (const auto& pTrack : m_trackPointerList) {
-            DEBUG_ASSERT(pTrack);
-            auto trackRef = TrackRef::fromFileInfo(
-                    pTrack->getFileInfo(),
-                    pTrack->getId());
-            trackRefs.push_back(std::move(trackRef));
-        }
+        auto trackRef = TrackRef::fromFileInfo(
+                m_pTrack->getFileInfo(),
+                m_pTrack->getId());
+        trackRefs.push_back(std::move(trackRef));
     }
     return trackRefs;
 }
@@ -835,13 +843,10 @@ TrackPointer WTrackMenu::getFirstTrackPointer() const {
             // Skip unavailable tracks
         }
         return TrackPointer();
-    } else {
-        if (m_trackPointerList.isEmpty()) {
-            return TrackPointer();
-        }
-        DEBUG_ASSERT(m_trackPointerList.first());
-        return m_trackPointerList.first();
+    } else if (m_pTrack) {
+        return m_pTrack;
     }
+    return TrackPointer();
 }
 
 std::unique_ptr<mixxx::TrackPointerIterator> WTrackMenu::newTrackPointerIterator() const {
@@ -854,13 +859,11 @@ std::unique_ptr<mixxx::TrackPointerIterator> WTrackMenu::newTrackPointerIterator
         return std::make_unique<mixxx::TrackPointerModelIterator>(
                 m_pTrackModel,
                 m_trackIndexList);
-    } else {
-        if (m_trackPointerList.isEmpty()) {
-            return nullptr;
-        }
+    } else if (m_pTrack) {
         return std::make_unique<mixxx::TrackPointerListIterator>(
-                m_trackPointerList);
+                TrackPointerList{m_pTrack});
     }
+    return nullptr;
 }
 
 int WTrackMenu::applyTrackPointerOperation(
@@ -913,6 +916,17 @@ class ImportMetadataFromFileTagsTrackPointerOperation : public mixxx::TrackPoint
 };
 
 } // anonymous namespace
+
+void WTrackMenu::slotUpdateReplaygain() {
+    if (!m_pTrack) {
+        qDebug() << "track pointer nullptr, returning";
+        return;
+    }
+    if (m_deckGroup.isEmpty()) {
+        qDebug() << "deck group not set";
+    }
+    m_pTrack->adjustReplayGainFromDeckGain(m_deckGroup);
+}
 
 void WTrackMenu::slotImportMetadataFromFileTags() {
     const auto progressLabelText =
@@ -1598,7 +1612,7 @@ void WTrackMenu::slotShowDlgTrackInfo() {
     if (m_pTrackModel) {
         m_pDlgTrackInfo->loadTrack(m_trackIndexList.at(0));
     } else {
-        m_pDlgTrackInfo->loadTrack(m_trackPointerList.at(0));
+        m_pDlgTrackInfo->loadTrack(m_pTrack);
     }
     m_pDlgTrackInfo->show();
 }
@@ -1622,7 +1636,7 @@ void WTrackMenu::slotShowDlgTagFetcher() {
     if (m_pTrackModel) {
         m_pDlgTagFetcher->loadTrack(m_trackIndexList.at(0));
     } else {
-        m_pDlgTagFetcher->loadTrack(m_trackPointerList.at(0));
+        m_pDlgTagFetcher->loadTrack(m_pTrack);
     }
     m_pDlgTagFetcher->show();
 }
@@ -1738,7 +1752,8 @@ void WTrackMenu::slotPurge() {
 }
 
 void WTrackMenu::clearTrackSelection() {
-    m_trackPointerList.clear();
+    m_pTrack = nullptr;
+    m_deckGroup.clear();
     m_trackIndexList.clear();
 }
 

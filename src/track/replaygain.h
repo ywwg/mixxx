@@ -98,7 +98,12 @@ public:
         m_peak = normalizePeak(m_peak);
     }
 
-private:
+    enum ReplayGainUpdateMode {
+        UpdateWhenStopped,
+        UpdateAndAdjustGain
+    };
+
+  private:
     double m_ratio;
     CSAMPLE m_peak;
 };
@@ -118,7 +123,7 @@ QDebug operator<<(QDebug dbg, const ReplayGain& arg) {
     return dbg << "ratio =" << arg.getRatio() << "/" << "peak =" << arg.getPeak();
 }
 
-}
+} // namespace mixxx
 
 Q_DECLARE_TYPEINFO(mixxx::ReplayGain, Q_MOVABLE_TYPE);
 Q_DECLARE_METATYPE(mixxx::ReplayGain)
