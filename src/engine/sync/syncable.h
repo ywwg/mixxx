@@ -141,7 +141,7 @@ class SyncableListener {
     // Syncable::notifySyncModeChanged.
     virtual void requestSyncMode(Syncable* pSyncable, SyncMode mode) = 0;
 
-    // A Syncable must never call notifyBpmChanged in response to a setLeaderBpm()
+    // A Syncable must never call notifyBpmChanged in response to a updateLeaderBpm()
     // call.
     virtual void notifyBaseBpmChanged(Syncable* pSyncable, double bpm) = 0;
     virtual void notifyRateChanged(Syncable* pSyncable, double bpm) = 0;

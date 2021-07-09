@@ -210,7 +210,7 @@ double SyncControl::getBaseBpm() const {
 
 void SyncControl::updateLeaderBeatDistance(double beatDistance) {
     if (kLogger.traceEnabled()) {
-        kLogger.trace() << getGroup() << "SyncControl::setLeaderBeatDistance"
+        kLogger.trace() << getGroup() << "SyncControl::updateLeaderBeatDistance"
                         << beatDistance;
     }
     // Set the BpmControl target beat distance to beatDistance, adjusted by
@@ -223,7 +223,7 @@ void SyncControl::updateLeaderBeatDistance(double beatDistance) {
 
 void SyncControl::updateLeaderBpm(double bpm) {
     if (kLogger.traceEnabled()) {
-        kLogger.trace() << getGroup() << "SyncControl::setLeaderBpm" << bpm;
+        kLogger.trace() << getGroup() << "SyncControl::updateLeaderBpm" << bpm;
     }
 
     VERIFY_OR_DEBUG_ASSERT(isSynchronized()) {
@@ -249,7 +249,7 @@ void SyncControl::notifyLeaderParamSource() {
 void SyncControl::reinitLeaderParams(
         double beatDistance, double baseBpm, double bpm) {
     if (kLogger.traceEnabled()) {
-        kLogger.trace() << "SyncControl::setLeaderParams" << getGroup()
+        kLogger.trace() << "SyncControl::reinitLeaderParams" << getGroup()
                         << beatDistance << baseBpm << bpm;
     }
     m_leaderBpmAdjustFactor = determineBpmMultiplier(fileBpm(), baseBpm);
@@ -546,7 +546,7 @@ void SyncControl::notifySeek(double dNewPlaypos) {
 double SyncControl::fileBpm() const {
     mixxx::BeatsPointer pBeats = m_pBeats;
     if (pBeats) {
-        return pBeats->getBpm();
+        return pBeats->getBpm().value();
     }
-    return 0.0;
+    return mixxx::Bpm::kValueUndefined;
 }

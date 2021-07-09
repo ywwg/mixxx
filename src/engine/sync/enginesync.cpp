@@ -90,7 +90,7 @@ void EngineSync::requestSyncMode(Syncable* pSyncable, SyncMode mode) {
         pParamsSyncable = findBpmMatchTarget(pSyncable);
         if (!pParamsSyncable) {
             // We weren't able to find anything to match to, so set ourselves as the
-            // target.  That way we'll use our own params when we updateLeaderBpm below.
+            // target.  That way we'll use our own params when we updateLeaderParams below.
             pParamsSyncable = pSyncable;
         }
     }
@@ -98,7 +98,7 @@ void EngineSync::requestSyncMode(Syncable* pSyncable, SyncMode mode) {
     if (pParamsSyncable) {
         if (kLogger.traceEnabled()) {
             kLogger.trace()
-                    << "EngineSync::requestSyncMode setting master params from "
+                    << "EngineSync::requestSyncMode setting leader params from "
                     << pParamsSyncable->getGroup();
         }
         reinitLeaderParams(pParamsSyncable);
@@ -366,7 +366,7 @@ void EngineSync::notifyPlayingAudible(Syncable* pSyncable, bool playingAudible) 
         Syncable* pOnlyPlayer = getUniquePlayingSyncedDeck();
         if (pOnlyPlayer) {
             // Even if we didn't change leader, if there is only one player (us), then we should
-            // reinit the beat distance.
+            // update the beat distance.
             pOnlyPlayer->notifyUniquePlaying();
             updateLeaderBeatDistance(pOnlyPlayer, pOnlyPlayer->getBeatDistance());
         }
@@ -414,11 +414,11 @@ void EngineSync::requestBpmUpdate(Syncable* pSyncable, double bpm) {
     }
 
     if (mbaseBpm != 0.0) {
-        // update from current master
+        // update from current leader
         pSyncable->updateLeaderBeatDistance(beatDistance);
         pSyncable->updateLeaderBpm(mbpm);
     } else {
-        // There is no leader, adopt this bpm as leader values
+        // There is no leader, adopt this bpm as leader value
         pSyncable->updateLeaderBeatDistance(0.0);
         pSyncable->updateLeaderBpm(bpm);
     }
@@ -454,7 +454,6 @@ Syncable* EngineSync::pickNonSyncSyncTarget(EngineChannel* pDontPick) const {
     if (m_pLeaderSyncable &&
             m_pLeaderSyncable->getChannel() &&
             m_pLeaderSyncable->getChannel() != pDontPick) {
-        qDebug() << "pickNonSyncSyncTarget: the leader " << m_pLeaderSyncable->getGroup();
         return m_pLeaderSyncable;
     }
 
@@ -471,7 +470,7 @@ Syncable* EngineSync::pickNonSyncSyncTarget(EngineChannel* pDontPick) const {
         // mix, and are primary decks.
         if (pChannel->isActive() && pChannel->isMasterEnabled() && pChannel->isPrimaryDeck()) {
             EngineBuffer* pBuffer = pChannel->getEngineBuffer();
-            if (pBuffer && pBuffer->getBpm() > 0) {
+            if (pBuffer && pBuffer->getBpm().isValid()) {
                 if (pBuffer->getSpeed() != 0.0) {
                     if (pSyncable->getSyncMode() != SYNC_NONE) {
                         // Second choice: first playing sync deck
@@ -640,7 +639,7 @@ void EngineSync::reinitLeaderParams(Syncable* pSource) {
     if (!pSource->isPlaying()) {
         // If the params source is not playing, but other syncables are, then we are a stopped
         // explicit Leader and we should not initialize the beat distance.  Take it from the
-        // internal clock instead.
+        // internal clock instead, because that will be up to date with the playing deck(s).
         bool playingSyncables = false;
         for (Syncable* pSyncable : qAsConst(m_syncables)) {
             if (pSyncable == pSource) {

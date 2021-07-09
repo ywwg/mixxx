@@ -1,4 +1,5 @@
 import "." as Skin
+import Mixxx 0.1 as Mixxx
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import "Theme"
@@ -8,42 +9,100 @@ Item {
 
     property real crossfaderWidth // required
 
-    implicitHeight: crossfaderSlider.width
+    implicitHeight: crossfader.height
 
-    Item {
-        id: effectUnitLeftPlaceholder
-
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.bottom: parent.bottom
+    Skin.SectionBackground {
+        anchors.fill: microphoneRow
     }
 
-    Skin.Slider {
-        id: crossfaderSlider
+    Row {
+        id: microphoneRow
 
-        anchors.centerIn: parent
-        height: root.crossfaderWidth
-        group: "[Master]"
-        key: "crossfader"
-        barColor: Theme.crossfaderBarColor
-        barStart: 0.5
-        fg: "images/slider_handle_crossfader.svg"
-        bg: "images/slider_crossfader.svg"
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: crossfader.left
+        layoutDirection: Qt.RightToLeft
+        padding: 5
+        spacing: 10
 
-        transform: Rotation {
-            origin.x: crossfaderSlider.width / 2
-            origin.y: crossfaderSlider.height / 2
-            angle: 90
+        Skin.MicrophoneUnit {
+            unitNumber: 1
+        }
+
+        Skin.MicrophoneUnit {
+            unitNumber: 2
+        }
+
+        Skin.MicrophoneUnit {
+            unitNumber: 3
+        }
+
+        Skin.MicrophoneUnit {
+            unitNumber: 4
+        }
+
+        Skin.MicrophoneDuckingPanel {
         }
 
     }
 
-    Item {
-        id: effectUnitRightPlaceholder
+    Skin.SectionBackground {
+        id: crossfader
 
+        anchors.centerIn: parent
+        width: root.crossfaderWidth
+        height: crossfaderSlider.height + 20
+
+        Skin.ControlSlider {
+            id: crossfaderSlider
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: 5
+            anchors.rightMargin: 5
+            anchors.verticalCenter: parent.verticalCenter
+            orientation: Qt.Horizontal
+            group: "[Master]"
+            key: "crossfader"
+            barColor: Theme.crossfaderBarColor
+            barStart: 0.5
+            fg: Theme.imgCrossfaderHandle
+            bg: Theme.imgCrossfaderBackground
+        }
+
+    }
+
+    Row {
+        id: auxiliaryRow
+
+        anchors.left: crossfader.right
         anchors.top: parent.top
-        anchors.right: parent.right
         anchors.bottom: parent.bottom
+        anchors.right: parent.right
+        padding: 5
+        spacing: 10
+
+        Skin.AuxiliaryUnit {
+            layoutDirection: Qt.RightToLeft
+            unitNumber: 1
+        }
+
+        Skin.AuxiliaryUnit {
+            layoutDirection: Qt.RightToLeft
+            unitNumber: 2
+        }
+
+        Skin.AuxiliaryUnit {
+            layoutDirection: Qt.RightToLeft
+            unitNumber: 3
+        }
+
+        Skin.AuxiliaryUnit {
+            layoutDirection: Qt.RightToLeft
+            unitNumber: 4
+        }
+
     }
 
 }
