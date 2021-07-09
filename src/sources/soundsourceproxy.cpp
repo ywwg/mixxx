@@ -540,9 +540,9 @@ bool SoundSourceProxy::updateTrackFromSource(
     // values if the corresponding file tags are missing. Depending
     // on the file type some kind of tags might even not be supported
     // at all and this information would get lost entirely otherwise!
-    bool metadataSynchronized = false;
+    bool headerParsed = false;
     mixxx::TrackMetadata trackMetadata =
-            m_pTrack->getMetadata(&metadataSynchronized);
+            m_pTrack->getMetadata(&headerParsed);
 
     // Save for later to replace the unreliable and imprecise audio
     // properties imported from file tags (see below).
@@ -560,7 +560,7 @@ bool SoundSourceProxy::updateTrackFromSource(
     // if the user did not explicitly choose to (re-)import metadata
     // explicitly from this file.
     bool mergeExtraMetadataFromSource = false;
-    if (metadataSynchronized && mode == UpdateTrackFromSourceMode::Once) {
+    if (headerParsed && mode == UpdateTrackFromSourceMode::Once) {
         // No (re-)import needed or desired, only merge missing properties
         mergeExtraMetadataFromSource = true;
     } else {
@@ -593,7 +593,7 @@ bool SoundSourceProxy::updateTrackFromSource(
                 << "from file"
                 << getUrl().toString();
         // make sure that the trackMetadata was not messed up due to the failure
-        trackMetadata = m_pTrack->getMetadata(&metadataSynchronized);
+        trackMetadata = m_pTrack->getMetadata(&headerParsed);
     }
 
     // Partial import
@@ -611,7 +611,7 @@ bool SoundSourceProxy::updateTrackFromSource(
     }
 
     // Full import
-    if (metadataSynchronized) {
+    if (headerParsed) {
         // Metadata has been synchronized successfully at least
         // once in the past. Only overwrite this information if
         // new data has actually been imported, otherwise abort
