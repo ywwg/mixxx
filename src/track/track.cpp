@@ -171,12 +171,12 @@ void Track::replaceMetadataFromSource(
         // Need to set BPM after sample rate since beat grid creation depends on
         // knowing the sample rate. Bug #1020438.
         auto beatsAndBpmModified = false;
-        if (!m_pBeats || !mixxx::Bpm::isValidValue(m_pBeats->getBpm())) {
+        if (importedBpm.isValid() && (!m_pBeats || !m_pBeats->getBpm().isValid())) {
             // Only use the imported BPM if the current beat grid is either
             // missing or not valid! The BPM value in the metadata might be
             // imprecise (normalized or rounded), e.g. ID3v2 only supports
             // integer values.
-            beatsAndBpmModified = trySetBpmWhileLocked(importedBpm.getValue());
+            beatsAndBpmModified = trySetBpmWhileLocked(importedBpm.value());
         }
         modified |= beatsAndBpmModified;
 
@@ -288,7 +288,7 @@ bool Track::replaceRecord(
     } else {
         // Setting the bpm manually may in turn update the beat grid
         bpmUpdatedFlag = trySetBpmWhileLocked(
-                newRecord.getMetadata().getTrackInfo().getBpm().getValue());
+                newRecord.getMetadata().getTrackInfo().getBpm().value());
     }
     // The bpm in m_record has already been updated. Read it and copy it into
     // the new record to ensure it will be consistent with the new beat grid.
@@ -356,29 +356,36 @@ mixxx::Bpm Track::getBpmWhileLocked() const {
 }
 
 bool Track::trySetBpmWhileLocked(double bpmValue) {
-    if (!mixxx::Bpm::isValidValue(bpmValue)) {
+    const auto bpm = mixxx::Bpm(bpmValue);
+    if (!bpm.isValid()) {
         // If the user sets the BPM to an invalid value, we assume
         // they want to clear the beatgrid.
         return trySetBeatsWhileLocked(nullptr);
     } else if (!m_pBeats) {
         // No beat grid available -> create and initialize
-        double cue = m_record.getCuePoint().getPosition();
-        auto pBeats = BeatFactory::makeBeatGrid(getSampleRate(), bpmValue, cue);
+        mixxx::audio::FramePos cuePosition = m_record.getMainCuePosition();
+        if (!cuePosition.isValid()) {
+            cuePosition = mixxx::audio::kStartFramePos;
+        }
+        auto pBeats = BeatFactory::makeBeatGrid(getSampleRate(),
+                bpm,
+                cuePosition);
         return trySetBeatsWhileLocked(std::move(pBeats));
     } else if ((m_pBeats->getCapabilities() & mixxx::Beats::BEATSCAP_SETBPM) &&
-            m_pBeats->getBpm() != bpmValue) {
+            m_pBeats->getBpm() != bpm) {
         // Continue with the regular cases
         if (kLogger.debugEnabled()) {
             kLogger.debug() << "Updating BPM:" << getLocation();
         }
-        return trySetBeatsWhileLocked(m_pBeats->setBpm(bpmValue));
+        return trySetBeatsWhileLocked(m_pBeats->setBpm(bpm));
     }
     return false;
 }
 
 double Track::getBpm() const {
     const QMutexLocker lock(&m_qMutex);
-    return getBpmWhileLocked().getValue();
+    const mixxx::Bpm bpm = getBpmWhileLocked();
+    return bpm.isValid() ? bpm.value() : mixxx::Bpm::kValueUndefined;
 }
 
 bool Track::trySetBpm(double bpmValue) {
@@ -413,7 +420,7 @@ bool Track::trySetBeatsWhileLocked(
         mixxx::BeatsPointer pBeats,
         bool lockBpmAfterSet) {
     if (m_pBeats && m_record.getBpmLocked()) {
-        // Track has already a valid and locked beats object, abbort.
+        // Track has already a valid and locked beats object, abort.
         qDebug() << "Track beats is already set and BPM-locked. Discard the new beats";
         return false;
     }
@@ -876,18 +883,17 @@ void Track::setWaveformSummary(ConstWaveformPointer pWaveform) {
     emit waveformSummaryUpdated();
 }
 
-void Track::setCuePoint(CuePosition cue) {
+void Track::setMainCuePosition(mixxx::audio::FramePos position) {
     QMutexLocker lock(&m_qMutex);
 
-    if (!compareAndSet(m_record.ptrCuePoint(), cue)) {
+    if (!compareAndSet(m_record.ptrMainCuePosition(), position)) {
         // Nothing changed.
         return;
     }
 
     // Store the cue point as main cue
     CuePointer pLoadCue = findCueByType(mixxx::CueType::MainCue);
-    double position = cue.getPosition();
-    if (position != -1.0) {
+    if (position.isValid()) {
         if (pLoadCue) {
             pLoadCue->setStartPosition(position);
         } else {
@@ -895,7 +901,7 @@ void Track::setCuePoint(CuePosition cue) {
                     mixxx::CueType::MainCue,
                     Cue::kNoHotCue,
                     position,
-                    Cue::kNoPosition));
+                    mixxx::audio::kInvalidFramePos));
             // While this method could be called from any thread,
             // associated Cue objects should always live on the
             // same thread as their host, namely this->thread().
@@ -933,9 +939,9 @@ void Track::analysisFinished() {
     emit analyzed();
 }
 
-CuePosition Track::getCuePoint() const {
+mixxx::audio::FramePos Track::getMainCuePosition() const {
     QMutexLocker lock(&m_qMutex);
-    return m_record.getCuePoint();
+    return m_record.getMainCuePosition();
 }
 
 void Track::slotCueUpdated() {
@@ -946,13 +952,13 @@ void Track::slotCueUpdated() {
 CuePointer Track::createAndAddCue(
         mixxx::CueType type,
         int hotCueIndex,
-        double sampleStartPosition,
-        double sampleEndPosition) {
+        mixxx::audio::FramePos startPosition,
+        mixxx::audio::FramePos endPosition) {
     CuePointer pCue(new Cue(
             type,
             hotCueIndex,
-            sampleStartPosition,
-            sampleEndPosition));
+            startPosition,
+            endPosition));
     // While this method could be called from any thread,
     // associated Cue objects should always live on the
     // same thread as their host, namely this->thread().
@@ -1002,7 +1008,7 @@ void Track::removeCue(const CuePointer& pCue) {
     disconnect(pCue.get(), nullptr, this, nullptr);
     m_cuePoints.removeOne(pCue);
     if (pCue->getType() == mixxx::CueType::MainCue) {
-        m_record.setCuePoint(CuePosition());
+        m_record.setMainCuePosition(mixxx::audio::kStartFramePos);
     }
     markDirtyAndUnlock(&lock);
     emit cuesUpdated();
@@ -1021,7 +1027,7 @@ void Track::removeCuesOfType(mixxx::CueType type) {
             dirty = true;
         }
     }
-    if (compareAndSet(m_record.ptrCuePoint(), CuePosition())) {
+    if (compareAndSet(m_record.ptrMainCuePosition(), mixxx::audio::kStartFramePos)) {
         dirty = true;
     }
     if (dirty) {
@@ -1201,7 +1207,7 @@ bool Track::setCuePointsWhileLocked(const QList<CuePointer>& cuePoints) {
                 this,
                 &Track::slotCueUpdated);
         if (pCue->getType() == mixxx::CueType::MainCue) {
-            m_record.setCuePoint(CuePosition(pCue->getPosition()));
+            m_record.setMainCuePosition(pCue->getPosition());
         }
     }
     return true;
@@ -1640,7 +1646,7 @@ void Track::setAudioProperties(
     QMutexLocker lock(&m_qMutex);
     // These properties are stored separately in the database
     // and are also imported from file tags. They will be
-    // overriden by the actual properties from the audio
+    // overridden by the actual properties from the audio
     // source later.
     DEBUG_ASSERT(!m_record.hasStreamInfoFromSource());
     if (compareAndSet(
