@@ -106,7 +106,7 @@ class WTrackMenu : public QMenu {
     void slotScaleBpm(int);
 
     // Info and metadata
-    void slotUpdateReplaygain();
+    void slotUpdateReplaygainFromDeckGain();
     void slotShowDlgTagFetcher();
     void slotImportMetadataFromFileTags();
     void slotExportMetadataIntoFileTags();

@@ -98,11 +98,6 @@ public:
         m_peak = normalizePeak(m_peak);
     }
 
-    enum ReplayGainUpdateMode {
-        UpdateWhenStopped,
-        UpdateAndAdjustGain
-    };
-
   private:
     double m_ratio;
     CSAMPLE m_peak;
