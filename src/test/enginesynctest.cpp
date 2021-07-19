@@ -36,11 +36,11 @@ class EngineSyncTest : public MockedEngineBackendTest {
     }
 
     bool isExplicitLeader(const QString& group) {
-        return isLeader(group, SYNC_LEADER_EXPLICIT);
+        return isLeader(group, SyncMode::LeaderExplicit);
     }
 
     bool isSoftLeader(const QString& group) {
-        return isLeader(group, SYNC_LEADER_SOFT);
+        return isLeader(group, SyncMode::LeaderSoft);
     }
 
     bool isFollower(const QString& group) {
@@ -51,8 +51,8 @@ class EngineSyncTest : public MockedEngineBackendTest {
         }
         if (auto mode = ControlObject::getControl(ConfigKey(group, "sync_mode"))
                                 ->get();
-                mode != SYNC_FOLLOWER) {
-            qWarning() << "expected mode SYNC_FOLLOWER, got" << mode;
+                static_cast<SyncMode>(mode) != SyncMode::Follower) {
+            qWarning() << "expected mode Follower, got" << mode;
             return false;
         }
         if (!ControlObject::getControl(ConfigKey(group, "sync_enabled"))->toBool()) {
@@ -76,9 +76,9 @@ class EngineSyncTest : public MockedEngineBackendTest {
                             ConfigKey(m_sInternalClockGroup, "sync_leader"))
                             ->get());
         } else {
-            EXPECT_EQ(SYNC_NONE,
-                    ControlObject::getControl(ConfigKey(group, "sync_mode"))
-                            ->get());
+            EXPECT_EQ(SyncMode::None,
+                    static_cast<SyncMode>(ControlObject::getControl(ConfigKey(group, "sync_mode"))
+                                                  ->get()));
             EXPECT_EQ(0,
                     ControlObject::getControl(ConfigKey(group, "sync_enabled"))
                             ->get());
@@ -99,10 +99,10 @@ class EngineSyncTest : public MockedEngineBackendTest {
             double leader = ControlObject::getControl(ConfigKey(m_sInternalClockGroup,
                                                               "sync_leader"))
                                     ->get();
-            if (leaderType == SYNC_LEADER_SOFT && leader != 1.0) {
+            if (leaderType == SyncMode::LeaderSoft && leader != 1.0) {
                 qWarning() << "internal clock sync_leader should be 1.0, is" << leader;
                 return false;
-            } else if (leaderType == SYNC_LEADER_EXPLICIT && leader != 2.0) {
+            } else if (leaderType == SyncMode::LeaderExplicit && leader != 2.0) {
                 qWarning() << "internal clock sync_leader should be 2.0, is" << leader;
                 return false;
             }
@@ -151,7 +151,7 @@ class EngineSyncTest : public MockedEngineBackendTest {
 
         if (auto mode = ControlObject::getControl(ConfigKey(group, "sync_mode"))
                                 ->get();
-                mode != leaderType) {
+                static_cast<SyncMode>(mode) != leaderType) {
             qWarning() << "mode should be" << leaderType << ", is" << mode;
             return false;
         }
@@ -160,7 +160,7 @@ class EngineSyncTest : public MockedEngineBackendTest {
             return false;
         }
         switch (leaderType) {
-        case SYNC_LEADER_SOFT: {
+        case SyncMode::LeaderSoft: {
             if (double leader = ControlObject::getControl(
                         ConfigKey(group, "sync_leader"))
                                         ->get();
@@ -170,7 +170,7 @@ class EngineSyncTest : public MockedEngineBackendTest {
             }
             break;
         }
-        case SYNC_LEADER_EXPLICIT: {
+        case SyncMode::LeaderExplicit: {
             if (double leader = ControlObject::getControl(
                         ConfigKey(group, "sync_leader"))
                                         ->get();
@@ -199,10 +199,10 @@ TEST_F(EngineSyncTest, SetLeaderSuccess) {
 
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->slotSet(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync1->slotSet(static_cast<double>(SyncMode::LeaderExplicit));
     ProcessBuffer();
 
-    // No tracks are playing and we have no beats, SYNC_leader_EXPLICIT state is in stand-by
+    // No tracks are playing and we have no beats, LeaderExplicit state is in stand-by
     EXPECT_DOUBLE_EQ(
             0.0, ControlObject::getControl(ConfigKey(m_sGroup1, "bpm"))->get());
     // The sync lock should now be internal clock, with group 1 waiting for play.
@@ -211,13 +211,13 @@ TEST_F(EngineSyncTest, SetLeaderSuccess) {
 
     auto pButtonLeaderSync2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
-    pButtonLeaderSync2->set(SYNC_FOLLOWER);
+    pButtonLeaderSync2->set(static_cast<double>(SyncMode::Follower));
     ProcessBuffer();
 
     EXPECT_TRUE(isFollower(m_sGroup2));
 
     // Now set channel 2 to be leader.
-    pButtonLeaderSync2->set(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync2->set(static_cast<double>(SyncMode::LeaderExplicit));
     ProcessBuffer();
 
     // Now channel 2 should be waiting leader, and channel 1 should be a follower.
@@ -225,7 +225,7 @@ TEST_F(EngineSyncTest, SetLeaderSuccess) {
     EXPECT_TRUE(isFollower(m_sGroup1));
 
     // Now back again.
-    pButtonLeaderSync1->set(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync1->set(static_cast<double>(SyncMode::LeaderExplicit));
     ProcessBuffer();
 
     // Now channel 1 should be waiting leader, and channel 2 should be a follower.
@@ -233,7 +233,7 @@ TEST_F(EngineSyncTest, SetLeaderSuccess) {
     EXPECT_TRUE(isFollower(m_sGroup2));
 
     // Now set channel 1 to follower, now all are followers, waiting for a tempo to adopt.
-    pButtonLeaderSync1->slotSet(SYNC_FOLLOWER);
+    pButtonLeaderSync1->slotSet(static_cast<double>(SyncMode::Follower));
     ProcessBuffer();
 
     EXPECT_TRUE(isFollower(m_sInternalClockGroup));
@@ -254,7 +254,7 @@ TEST_F(EngineSyncTest, ExplicitLeaderPersists) {
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
-    pButtonLeaderSync1->slotSet(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync1->slotSet(static_cast<double>(SyncMode::LeaderExplicit));
     ProcessBuffer();
     // The sync lock should now be channel 1.
     EXPECT_TRUE(isExplicitLeader(m_sGroup1));
@@ -290,13 +290,13 @@ TEST_F(EngineSyncTest, SetLeaderWhilePlaying) {
 
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->set(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync1->set(static_cast<double>(SyncMode::LeaderExplicit));
     auto pButtonLeaderSync2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
-    pButtonLeaderSync2->slotSet(SYNC_FOLLOWER);
+    pButtonLeaderSync2->slotSet(static_cast<double>(SyncMode::Follower));
     auto pButtonLeaderSync3 =
             std::make_unique<ControlProxy>(m_sGroup3, "sync_mode");
-    pButtonLeaderSync3->slotSet(SYNC_FOLLOWER);
+    pButtonLeaderSync3->slotSet(static_cast<double>(SyncMode::Follower));
 
     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
     ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(1.0);
@@ -304,7 +304,7 @@ TEST_F(EngineSyncTest, SetLeaderWhilePlaying) {
 
     ProcessBuffer();
 
-    pButtonLeaderSync3->slotSet(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync3->slotSet(static_cast<double>(SyncMode::LeaderExplicit));
 
     ProcessBuffer();
 
@@ -320,7 +320,7 @@ TEST_F(EngineSyncTest, SetEnabledBecomesLeader) {
     m_pTrack1->trySetBeats(pBeats1);
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->slotSet(SYNC_FOLLOWER);
+    pButtonLeaderSync1->slotSet(static_cast<double>(SyncMode::Follower));
     ProcessBuffer();
 
     EXPECT_TRUE(isSoftLeader(m_sGroup1));
@@ -333,10 +333,10 @@ TEST_F(EngineSyncTest, DisableInternalLeaderWhilePlaying) {
     pButtonLeaderSync->slotSet(1.0);
     auto pButtonSyncMode1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonSyncMode1->slotSet(SYNC_FOLLOWER);
+    pButtonSyncMode1->slotSet(static_cast<double>(SyncMode::Follower));
     auto pButtonSyncMode2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
-    pButtonSyncMode2->slotSet(SYNC_FOLLOWER);
+    pButtonSyncMode2->slotSet(static_cast<double>(SyncMode::Follower));
     ProcessBuffer();
     // The sync lock should now be Internal.
     EXPECT_TRUE(isExplicitLeader(m_sInternalClockGroup));
@@ -368,7 +368,7 @@ TEST_F(EngineSyncTest, DisableSyncOnLeader) {
     m_pTrack1->trySetBeats(pBeats1);
     auto pButtonSyncMode1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonSyncMode1->slotSet(SYNC_FOLLOWER);
+    pButtonSyncMode1->slotSet(static_cast<double>(SyncMode::Follower));
 
     mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(
             m_pTrack2->getSampleRate(), mixxx::Bpm(130), mixxx::audio::kStartFramePos);
@@ -415,7 +415,7 @@ TEST_F(EngineSyncTest, InternalLeaderSetFollowerSliderMoves) {
 
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->slotSet(SYNC_FOLLOWER);
+    pButtonLeaderSync1->slotSet(static_cast<double>(SyncMode::Follower));
     ProcessBuffer();
 
     EXPECT_DOUBLE_EQ(getRateSliderValue(1.25),
@@ -613,10 +613,10 @@ TEST_F(EngineSyncTest, SetExplicitLeaderByLightsNoTracks) {
 TEST_F(EngineSyncTest, RateChangeTest) {
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->set(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync1->set(static_cast<double>(SyncMode::LeaderExplicit));
     auto pButtonLeaderSync2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
-    pButtonLeaderSync2->set(SYNC_FOLLOWER);
+    pButtonLeaderSync2->set(static_cast<double>(SyncMode::Follower));
     ProcessBuffer();
 
     // Set the file bpm of channel 1 to 160bpm.
@@ -656,10 +656,10 @@ TEST_F(EngineSyncTest, RateChangeTestWeirdOrder) {
     // This is like the test above, but the user loads the track after the slider has been tweaked.
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->slotSet(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync1->slotSet(static_cast<double>(SyncMode::LeaderExplicit));
     auto pButtonLeaderSync2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
-    pButtonLeaderSync2->slotSet(SYNC_FOLLOWER);
+    pButtonLeaderSync2->slotSet(static_cast<double>(SyncMode::Follower));
     ProcessBuffer();
 
     // Set the file bpm of channel 1 to 160bpm.
@@ -705,7 +705,7 @@ TEST_F(EngineSyncTest, RateChangeTestOrder3) {
     // Turn on Leader. Even though it is explict leader, it still matches the other deck.
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->set(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync1->set(static_cast<double>(SyncMode::LeaderExplicit));
     ProcessBuffer();
     EXPECT_TRUE(isExplicitLeader(m_sGroup1));
     EXPECT_DOUBLE_EQ(120.0, ControlObject::get(ConfigKey(m_sGroup1, "bpm")));
@@ -713,7 +713,7 @@ TEST_F(EngineSyncTest, RateChangeTestOrder3) {
     // Turn on follower.
     auto pButtonLeaderSync2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
-    pButtonLeaderSync2->set(SYNC_FOLLOWER);
+    pButtonLeaderSync2->set(static_cast<double>(SyncMode::Follower));
     ProcessBuffer();
 
     // Follower should immediately set its slider.
@@ -729,10 +729,10 @@ TEST_F(EngineSyncTest, FollowerRateChange) {
     // Confirm that followers can change sync lock rate as well.
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->set(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync1->set(static_cast<double>(SyncMode::LeaderExplicit));
     auto pButtonLeaderSync2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
-    pButtonLeaderSync2->set(SYNC_FOLLOWER);
+    pButtonLeaderSync2->set(static_cast<double>(SyncMode::Follower));
     ProcessBuffer();
 
     // Set the file bpm of channel 1 to 160bpm.
@@ -773,10 +773,10 @@ TEST_F(EngineSyncTest, InternalRateChangeTest) {
     pButtonLeaderSyncInternal->set(1.0);
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->set(SYNC_FOLLOWER);
+    pButtonLeaderSync1->set(static_cast<double>(SyncMode::Follower));
     auto pButtonLeaderSync2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
-    pButtonLeaderSync2->set(SYNC_FOLLOWER);
+    pButtonLeaderSync2->set(static_cast<double>(SyncMode::Follower));
     ProcessBuffer();
 
     EXPECT_TRUE(isExplicitLeader(m_sInternalClockGroup));
@@ -847,10 +847,10 @@ TEST_F(EngineSyncTest, LeaderStopSliderCheck) {
 
     auto pButtonLeaderSync2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
-    pButtonLeaderSync2->slotSet(SYNC_FOLLOWER);
+    pButtonLeaderSync2->slotSet(static_cast<double>(SyncMode::Follower));
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->slotSet(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync1->slotSet(static_cast<double>(SyncMode::LeaderExplicit));
     ProcessBuffer();
 
     //EXPECT_TRUE(isExplicitLeader(m_sGroup1));
@@ -895,7 +895,7 @@ TEST_F(EngineSyncTest, EnableOneDeckInitsLeader) {
     // Enable Sync.  We have to call requestEnableSync directly
     // because calling ProcessBuffer() tries to advance the beat_distance values.
     m_pEngineSync->requestSyncMode(
-            m_pEngineSync->getSyncableForGroup(m_sGroup1), SYNC_FOLLOWER);
+            m_pEngineSync->getSyncableForGroup(m_sGroup1), SyncMode::Follower);
 
     // Internal is no longer leader because there is exactly one playing deck.
     EXPECT_TRUE(isSoftLeader(m_sGroup1));
@@ -921,7 +921,7 @@ TEST_F(EngineSyncTest, EnableOneDeckInitsLeader) {
     ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(1.0);
 
     m_pEngineSync->requestSyncMode(
-            m_pEngineSync->getSyncableForGroup(m_sGroup2), SYNC_FOLLOWER);
+            m_pEngineSync->getSyncableForGroup(m_sGroup2), SyncMode::Follower);
     // Deck 1 is still soft leader.
     EXPECT_TRUE(isFollower(m_sInternalClockGroup));
     EXPECT_TRUE(isSoftLeader(m_sGroup1));
@@ -974,7 +974,7 @@ TEST_F(EngineSyncTest, EnableOneDeckInitializesLeader) {
     // Set the deck to follower.
     // As above, use direct call to avoid advancing beat distance.
     m_pEngineSync->requestSyncMode(
-            m_pEngineSync->getSyncableForGroup(m_sGroup1), SYNC_FOLLOWER);
+            m_pEngineSync->getSyncableForGroup(m_sGroup1), SyncMode::Follower);
 
     // That first deck is now leader
     EXPECT_TRUE(isSoftLeader(m_sGroup1));
@@ -1227,7 +1227,8 @@ TEST_F(EngineSyncTest, SyncToNonSyncDeck) {
             100.0, ControlObject::get(ConfigKey(m_sInternalClockGroup, "bpm")));
     EXPECT_EQ(NULL, m_pEngineSync->getLeaderChannel());
     EXPECT_EQ(NULL, m_pEngineSync->getLeaderSyncable());
-    EXPECT_EQ(SYNC_NONE, ControlObject::get(ConfigKey(m_sGroup1, "sync_mode")));
+    EXPECT_EQ(static_cast<double>(SyncMode::None),
+            ControlObject::get(ConfigKey(m_sGroup1, "sync_mode")));
     EXPECT_EQ(0, ControlObject::get(ConfigKey(m_sGroup1, "sync_enabled")));
     EXPECT_EQ(0, ControlObject::get(ConfigKey(m_sGroup1, "sync_leader")));
     EXPECT_DOUBLE_EQ(getRateSliderValue(100.0 / 130.0),
@@ -1252,7 +1253,8 @@ TEST_F(EngineSyncTest, SyncToNonSyncDeck) {
             100.0, ControlObject::get(ConfigKey(m_sInternalClockGroup, "bpm")));
     EXPECT_EQ(NULL, m_pEngineSync->getLeaderChannel());
     EXPECT_EQ(NULL, m_pEngineSync->getLeaderSyncable());
-    EXPECT_EQ(SYNC_NONE, ControlObject::get(ConfigKey(m_sGroup2, "sync_mode")));
+    EXPECT_EQ(static_cast<double>(SyncMode::None),
+            ControlObject::get(ConfigKey(m_sGroup2, "sync_mode")));
     EXPECT_EQ(0, ControlObject::get(ConfigKey(m_sGroup2, "sync_enabled")));
     EXPECT_EQ(0, ControlObject::get(ConfigKey(m_sGroup2, "sync_leader")));
     EXPECT_DOUBLE_EQ(getRateSliderValue(1.0),
@@ -1435,7 +1437,7 @@ TEST_F(EngineSyncTest, ExplicitLeaderPostProcessed) {
     // channel gets post-processed.
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->slotSet(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync1->slotSet(static_cast<double>(SyncMode::LeaderExplicit));
     mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(
             m_pTrack1->getSampleRate(), mixxx::Bpm(160), mixxx::audio::kStartFramePos);
     m_pTrack1->trySetBeats(pBeats1);
@@ -1478,7 +1480,7 @@ TEST_F(EngineSyncTest, ZeroBPMRateAdjustIgnored) {
     // Also try with explicit leader/follower setting
     pButtonSyncEnabled1->set(0.0);
     ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))
-            ->set(SYNC_LEADER_EXPLICIT);
+            ->set(static_cast<double>(SyncMode::LeaderExplicit));
 
     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))
             ->set(getRateSliderValue(1.4));
@@ -1487,7 +1489,7 @@ TEST_F(EngineSyncTest, ZeroBPMRateAdjustIgnored) {
 
     pButtonSyncEnabled1->set(0.0);
     ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
 
     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))
             ->set(getRateSliderValue(0.9));
@@ -1527,9 +1529,9 @@ TEST_F(EngineSyncTest, ZeroLatencyRateChangeNoQuant) {
 
     // Make Channel2 leader to weed out any channel ordering issues.
     ControlObject::getControl(ConfigKey(m_sGroup2, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
     ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
     // Exaggerate the effect with a high rate.
     ControlObject::set(ConfigKey(m_sGroup2, "rate_ratio"), 10.0);
 
@@ -1580,9 +1582,9 @@ TEST_F(EngineSyncTest, ZeroLatencyRateChangeQuant) {
 
     // Make Channel2 leader to weed out any channel ordering issues.
     ControlObject::getControl(ConfigKey(m_sGroup2, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
     ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
     // Exaggerate the effect with a high rate.
     ControlObject::set(ConfigKey(m_sGroup2, "rate_ratio"), 10.0);
 
@@ -1634,9 +1636,9 @@ TEST_F(EngineSyncTest, ZeroLatencyRateDiffQuant) {
 
     // Make Channel2 leader to weed out any channel ordering issues.
     ControlObject::getControl(ConfigKey(m_sGroup2, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
     ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
     // Exaggerate the effect with a high rate.
     ControlObject::set(ConfigKey(m_sGroup2, "rate_ratio"), 10.0);
 
@@ -1702,11 +1704,11 @@ TEST_F(EngineSyncTest, ActivatingSyncDoesNotCauseDrifting) {
 
     // engage first sync-leader
     ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
 
     // engage second Sync-leader
     ControlObject::getControl(ConfigKey(m_sGroup2, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
 
     // Run for a number of buffers
     for (int i = 0; i < 25; ++i) {
@@ -1777,9 +1779,9 @@ TEST_F(EngineSyncTest, HalfDoubleBpmTest) {
     ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(0.0);
 
     ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))
-            ->set(SYNC_NONE);
+            ->set(static_cast<double>(SyncMode::None));
     ControlObject::getControl(ConfigKey(m_sGroup2, "sync_mode"))
-            ->set(SYNC_NONE);
+            ->set(static_cast<double>(SyncMode::None));
 
     EXPECT_EQ(1.0,
             m_pChannel1->getEngineBuffer()
@@ -1789,9 +1791,9 @@ TEST_F(EngineSyncTest, HalfDoubleBpmTest) {
                     ->m_pSyncControl->m_leaderBpmAdjustFactor);
 
     ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
     ControlObject::getControl(ConfigKey(m_sGroup2, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))
             ->set(getRateSliderValue(1.0));
 
@@ -2644,6 +2646,75 @@ TEST_F(EngineSyncTest, SeekStayInPhase) {
     EXPECT_DOUBLE_EQ(0.18925937554508981, ControlObject::get(ConfigKey(m_sGroup1, "playposition")));
 }
 
+TEST_F(EngineSyncTest, ScratchEndOtherPlayingTrackStayInPhase) {
+    // After scratching, confirm that we are still in phase.
+    // This version tests with a stopped other track.
+    mixxx::BeatsPointer pBeats1 =
+            BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(),
+                    mixxx::Bpm(130),
+                    mixxx::audio::kStartFramePos);
+    m_pTrack1->trySetBeats(pBeats1);
+    ControlObject::set(ConfigKey(m_sGroup1, "quantize"), 1.0);
+    ControlObject::set(ConfigKey(m_sGroup1, "sync_enabled"), 1);
+
+    mixxx::BeatsPointer pBeats2 =
+            BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(),
+                    mixxx::Bpm(125),
+                    mixxx::audio::kStartFramePos);
+    m_pTrack2->trySetBeats(pBeats2);
+    ControlObject::set(ConfigKey(m_sGroup2, "quantize"), 1.0);
+    ControlObject::set(ConfigKey(m_sGroup2, "sync_enabled"), 1);
+
+    ControlObject::set(ConfigKey(m_sGroup1, "play"), 1.0);
+    ProcessBuffer();
+    ProcessBuffer();
+    ControlObject::set(ConfigKey(m_sGroup1, "scratch2_enable"), 1.0);
+    ControlObject::set(ConfigKey(m_sGroup1, "scratch2"), 20.0);
+    ProcessBuffer();
+    ControlObject::set(ConfigKey(m_sGroup1, "scratch2_enable"), 0.0);
+    ProcessBuffer();
+    ProcessBuffer();
+
+    EXPECT_NEAR(ControlObject::get(ConfigKey(m_sInternalClockGroup, "beat_distance")),
+            ControlObject::get(ConfigKey(m_sGroup1, "beat_distance")),
+            1e-8);
+}
+
+TEST_F(EngineSyncTest, ScratchEndOtherStoppedTrackStayInPhase) {
+    // After scratching, confirm that we are still in phase.
+    // This version tests with a playing other track.
+    mixxx::BeatsPointer pBeats1 =
+            BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(),
+                    mixxx::Bpm(130),
+                    mixxx::audio::kStartFramePos);
+    m_pTrack1->trySetBeats(pBeats1);
+    ControlObject::set(ConfigKey(m_sGroup1, "quantize"), 1.0);
+    ControlObject::set(ConfigKey(m_sGroup1, "sync_enabled"), 1);
+
+    mixxx::BeatsPointer pBeats2 =
+            BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(),
+                    mixxx::Bpm(125),
+                    mixxx::audio::kStartFramePos);
+    m_pTrack2->trySetBeats(pBeats2);
+    ControlObject::set(ConfigKey(m_sGroup2, "quantize"), 1.0);
+    ControlObject::set(ConfigKey(m_sGroup2, "sync_enabled"), 1);
+
+    ControlObject::set(ConfigKey(m_sGroup1, "play"), 1.0);
+    ControlObject::set(ConfigKey(m_sGroup2, "play"), 1.0);
+    ProcessBuffer();
+    ProcessBuffer();
+    ControlObject::set(ConfigKey(m_sGroup1, "scratch2_enable"), 1.0);
+    ControlObject::set(ConfigKey(m_sGroup1, "scratch2"), 20.0);
+    ProcessBuffer();
+    ControlObject::set(ConfigKey(m_sGroup1, "scratch2_enable"), 0.0);
+    ProcessBuffer();
+    ProcessBuffer();
+
+    EXPECT_NEAR(ControlObject::get(ConfigKey(m_sInternalClockGroup, "beat_distance")),
+            ControlObject::get(ConfigKey(m_sGroup1, "beat_distance")),
+            1e-8);
+}
+
 TEST_F(EngineSyncTest, SyncWithoutBeatgrid) {
     // this tests bug lp1783020, notresetting rate when other deck has no beatgrid
     mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(
@@ -2826,8 +2897,10 @@ TEST_F(EngineSyncTest, BeatMapQuantizePlay) {
     ControlObject::set(ConfigKey(m_sGroup1, "quantize"), 1.0);
     ControlObject::set(ConfigKey(m_sGroup2, "quantize"), 1.0);
 
-    ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))->set(SYNC_LEADER_EXPLICIT);
-    ControlObject::getControl(ConfigKey(m_sGroup2, "sync_mode"))->set(SYNC_FOLLOWER);
+    ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))
+            ->set(static_cast<double>(SyncMode::LeaderExplicit));
+    ControlObject::getControl(ConfigKey(m_sGroup2, "sync_mode"))
+            ->set(static_cast<double>(SyncMode::Follower));
 
     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
 
