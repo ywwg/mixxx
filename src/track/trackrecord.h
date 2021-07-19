@@ -52,7 +52,7 @@ class TrackRecord final {
     MIXXX_DECL_PROPERTY(QString, url, Url)
     MIXXX_DECL_PROPERTY(PlayCounter, playCounter, PlayCounter)
     MIXXX_DECL_PROPERTY(RgbColor::optional_t, color, Color)
-    MIXXX_DECL_PROPERTY(CuePosition, cuePoint, CuePoint)
+    MIXXX_DECL_PROPERTY(mixxx::audio::FramePos, mainCuePosition, MainCuePosition)
     MIXXX_DECL_PROPERTY(int, rating, Rating)
     MIXXX_DECL_PROPERTY(bool, bpmLocked, BpmLocked)
 
@@ -154,7 +154,7 @@ class TrackRecord final {
     // TODO: Use TrackMetadata as single source of truth and do not
     // store this information redundantly.
     //
-    // PROPOSAL (as implememted by https://gitlab.com/uklotzde/aoide-rs):
+    // PROPOSAL (as implemented by https://gitlab.com/uklotzde/aoide-rs):
     // This redesign requires to track the status of some or all track
     // metadata (which includes the stream info properties) by a set of
     // bitflags:

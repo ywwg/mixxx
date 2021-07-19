@@ -1,8 +1,6 @@
 #pragma once
 
 #include <QList>
-#include <QMutex>
-#include <QMutexLocker>
 #include <QObject>
 #include <QUrl>
 
@@ -15,6 +13,7 @@
 #include "track/trackrecord.h"
 #include "util/fileaccess.h"
 #include "util/memory.h"
+#include "util/qtmutex.h"
 #include "waveform/waveform.h"
 
 class Track : public QObject {
@@ -264,12 +263,12 @@ class Track : public QObject {
     ConstWaveformPointer getWaveformSummary() const;
     void setWaveformSummary(ConstWaveformPointer pWaveform);
 
-    // Get the track's main cue point
-    CuePosition getCuePoint() const;
+    /// Get the track's main cue point
+    mixxx::audio::FramePos getMainCuePosition() const;
     // Set the track's main cue point
-    void setCuePoint(CuePosition cue);
+    void setMainCuePosition(mixxx::audio::FramePos position);
     /// Shift all cues by a constant offset
-    void shiftCuePositionsMillis(double milliseconds);
+    void shiftCuePositionsMillis(mixxx::audio::FrameDiff_t milliseconds);
     // Call when analysis is done.
     void analysisFinished();
 
@@ -277,8 +276,20 @@ class Track : public QObject {
     CuePointer createAndAddCue(
             mixxx::CueType type,
             int hotCueIndex,
-            double sampleStartPosition,
-            double sampleEndPosition);
+            mixxx::audio::FramePos startPosition,
+            mixxx::audio::FramePos endPosition);
+    CuePointer createAndAddCue(
+            mixxx::CueType type,
+            int hotCueIndex,
+            double startPositionSamples,
+            double endPositionSamples) {
+        return createAndAddCue(type,
+                hotCueIndex,
+                mixxx::audio::FramePos::fromEngineSamplePosMaybeInvalid(
+                        startPositionSamples),
+                mixxx::audio::FramePos::fromEngineSamplePosMaybeInvalid(
+                        endPositionSamples));
+    }
     CuePointer findCueByType(mixxx::CueType type) const; // NOTE: Cannot be used for hotcues.
     CuePointer findCueById(DbId id) const;
     void removeCue(const CuePointer& pCue);
@@ -428,14 +439,14 @@ class Track : public QObject {
     // Set whether the TIO is dirty or not and unlock before emitting
     // any signals. This must only be called from member functions
     // while the TIO is locked.
-    void markDirtyAndUnlock(QMutexLocker* pLock) {
+    void markDirtyAndUnlock(QT_RECURSIVE_MUTEX_LOCKER* pLock) {
         setDirtyAndUnlock(pLock, true);
     }
-    void setDirtyAndUnlock(QMutexLocker* pLock, bool bDirty);
+    void setDirtyAndUnlock(QT_RECURSIVE_MUTEX_LOCKER* pLock, bool bDirty);
 
-    void afterKeysUpdated(QMutexLocker* pLock);
+    void afterKeysUpdated(QT_RECURSIVE_MUTEX_LOCKER* pLock);
 
-    void afterBeatsAndBpmUpdated(QMutexLocker* pLock);
+    void afterBeatsAndBpmUpdated(QT_RECURSIVE_MUTEX_LOCKER* pLock);
     void emitBeatsAndBpmUpdated();
 
     /// Emits a changed signal for each Q_PROPERTY
@@ -466,18 +477,18 @@ class Track : public QObject {
             bool lockBpmAfterSet = false);
 
     bool trySetBeatsMarkDirtyAndUnlock(
-            QMutexLocker* pLock,
+            QT_RECURSIVE_MUTEX_LOCKER* pLock,
             mixxx::BeatsPointer pBeats,
             bool lockBpmAfterSet);
     bool tryImportPendingBeatsMarkDirtyAndUnlock(
-            QMutexLocker* pLock,
+            QT_RECURSIVE_MUTEX_LOCKER* pLock,
             bool lockBpmAfterSet);
 
     void setCuePointsMarkDirtyAndUnlock(
-            QMutexLocker* pLock,
+            QT_RECURSIVE_MUTEX_LOCKER* pLock,
             const QList<CuePointer>& cuePoints);
     void importPendingCueInfosMarkDirtyAndUnlock(
-            QMutexLocker* pLock);
+            QT_RECURSIVE_MUTEX_LOCKER* pLock);
 
     /// Merge additional metadata that is not (yet) stored in the database
     /// and only available from file tags.
@@ -496,18 +507,14 @@ class Track : public QObject {
     // stream info of the track need to be updated to reflect
     // these values.
     bool hasStreamInfoFromSource() const {
-        QMutexLocker lock(&m_qMutex);
+        const auto locked = lockMutex(&m_qMutex);
         return m_record.hasStreamInfoFromSource();
     }
     void updateStreamInfoFromSource(
             mixxx::audio::StreamInfo&& streamInfo);
 
     // Mutex protecting access to object
-#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-    mutable QRecursiveMutex m_qMutex;
-#else
-    mutable QMutex m_qMutex;
-#endif
+    mutable QT_RECURSIVE_MUTEX m_qMutex;
 
     // The file
     mixxx::FileAccess m_fileAccess;
