@@ -1308,7 +1308,7 @@ void EngineBuffer::postProcess(const int iBufferSize) {
     if (isLeader(mode)) {
         m_pEngineSync->notifyBeatDistanceChanged(m_pSyncControl, beatDistance);
     } else if (isFollower(mode)) {
-        // Report our speed to SyncControl.  If we are master, we already did this.
+        // Report our speed to SyncControl.  If we are leader, we already did this.
         m_pSyncControl->updateTargetBeatDistance();
     }
 
