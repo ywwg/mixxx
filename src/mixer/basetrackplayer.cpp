@@ -515,6 +515,10 @@ void BaseTrackPlayerImpl::slotTrackLoaded(TrackPointer pNewTrack,
             // perform a clone of the given channel
 
             // copy rate
+            qDebug() << "COPYING RATE????"
+                     << ControlObject::get(
+                                ConfigKey(m_pChannelToCloneFrom->getGroup(),
+                                        "rate_ratio"));
             m_pRateRatio->set(ControlObject::get(ConfigKey(
                     m_pChannelToCloneFrom->getGroup(), "rate_ratio")));
 

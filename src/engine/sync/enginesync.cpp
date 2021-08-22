@@ -33,8 +33,8 @@ EngineSync::~EngineSync() {
 }
 
 void EngineSync::requestSyncMode(Syncable* pSyncable, SyncMode mode) {
-    if (kLogger.traceEnabled()) {
-        kLogger.trace() << "EngineSync::requestSyncMode" << pSyncable->getGroup() << mode;
+    if (true) {
+        qDebug() << "EngineSync::requestSyncMode" << pSyncable->getGroup() << mode;
     }
     // Based on the call hierarchy I don't think this is possible. (Famous last words.)
     VERIFY_OR_DEBUG_ASSERT(pSyncable) {
@@ -100,8 +100,8 @@ void EngineSync::requestSyncMode(Syncable* pSyncable, SyncMode mode) {
     }
     // Now that all of the decks have their assignments, reinit leader params if needed.
     if (pParamsSyncable) {
-        if (kLogger.traceEnabled()) {
-            kLogger.trace()
+        if (true) {
+            qDebug()
                     << "EngineSync::requestSyncMode setting leader params from "
                     << pParamsSyncable->getGroup();
         }
@@ -118,9 +118,9 @@ void EngineSync::activateFollower(Syncable* pSyncable) {
         qWarning() << "WARNING: Logic Error: Called activateFollower on a nullptr Syncable.";
         return;
     }
-    if (kLogger.traceEnabled()) {
-        kLogger.trace() << "EngineSync::activateFollower: "
-                        << pSyncable->getGroup();
+    if (true) {
+        qDebug() << "EngineSync::activateFollower: "
+                 << pSyncable->getGroup();
     }
 
     if (m_pLeaderSyncable == pSyncable) {
@@ -139,10 +139,10 @@ void EngineSync::activateLeader(Syncable* pSyncable, SyncMode leaderType) {
             leaderType == SyncMode::LeaderExplicit) {
         qWarning() << "WARNING: Logic Error: Called activateLeader with non-leader mode";
     }
-    if (kLogger.traceEnabled()) {
-        kLogger.trace() << "EngineSync::activateLeader: "
-                        << pSyncable->getGroup() << "type: "
-                        << leaderType;
+    if (true) {
+        qDebug() << "EngineSync::activateLeader: "
+                 << pSyncable->getGroup() << "type: "
+                 << leaderType;
     }
 
     if (m_pLeaderSyncable == pSyncable) {
@@ -175,8 +175,8 @@ void EngineSync::activateLeader(Syncable* pSyncable, SyncMode leaderType) {
 }
 
 void EngineSync::deactivateSync(Syncable* pSyncable) {
-    if (kLogger.traceEnabled()) {
-        kLogger.trace() << "EngineSync::deactivateSync" << pSyncable->getGroup();
+    if (true) {
+        qDebug() << "EngineSync::deactivateSync" << pSyncable->getGroup();
     }
     bool wasLeader = isSyncLeader(pSyncable);
     if (wasLeader) {
@@ -203,8 +203,8 @@ void EngineSync::deactivateSync(Syncable* pSyncable) {
 }
 
 Syncable* EngineSync::pickLeader(Syncable* enabling_syncable) {
-    if (kLogger.traceEnabled()) {
-        kLogger.trace() << "EngineSync::pickLeader";
+    if (true) {
+        qDebug() << "EngineSync::pickLeader";
     }
     if (m_pLeaderSyncable &&
             m_pLeaderSyncable->getSyncMode() == SyncMode::LeaderExplicit &&
@@ -352,9 +352,9 @@ Syncable* EngineSync::findBpmMatchTarget(Syncable* requester) {
 }
 
 void EngineSync::notifyPlayingAudible(Syncable* pSyncable, bool playingAudible) {
-    if (kLogger.traceEnabled()) {
-        kLogger.trace() << "EngineSync::notifyPlayingAudible"
-                        << pSyncable->getGroup() << playingAudible;
+    if (true) {
+        qDebug() << "EngineSync::notifyPlayingAudible"
+                 << pSyncable->getGroup() << playingAudible;
     }
     // For now we don't care if the deck is now playing or stopping.
     if (!pSyncable->isSynchronized()) {
@@ -385,8 +385,8 @@ void EngineSync::notifyScratching(Syncable* pSyncable, bool scratching) {
 }
 
 void EngineSync::notifyBaseBpmChanged(Syncable* pSyncable, mixxx::Bpm bpm) {
-    if (kLogger.traceEnabled()) {
-        kLogger.trace() << "EngineSync::notifyBaseBpmChanged" << pSyncable->getGroup() << bpm;
+    if (true) {
+        qDebug() << "EngineSync::notifyBaseBpmChanged" << pSyncable->getGroup() << bpm;
     }
 
     if (isSyncLeader(pSyncable)) {
@@ -395,16 +395,16 @@ void EngineSync::notifyBaseBpmChanged(Syncable* pSyncable, mixxx::Bpm bpm) {
 }
 
 void EngineSync::notifyRateChanged(Syncable* pSyncable, mixxx::Bpm bpm) {
-    if (kLogger.traceEnabled()) {
-        kLogger.trace() << "EngineSync::notifyRateChanged" << pSyncable->getGroup() << bpm;
+    if (true) {
+        qDebug() << "EngineSync::notifyRateChanged" << pSyncable->getGroup() << bpm;
     }
 
     updateLeaderBpm(pSyncable, bpm);
 }
 
 void EngineSync::requestBpmUpdate(Syncable* pSyncable, mixxx::Bpm bpm) {
-    if (kLogger.traceEnabled()) {
-        kLogger.trace() << "EngineSync::requestBpmUpdate" << pSyncable->getGroup() << bpm;
+    if (true) {
+        qDebug() << "EngineSync::requestBpmUpdate" << pSyncable->getGroup() << bpm;
     }
 
     mixxx::Bpm leaderBaseBpm;
@@ -428,9 +428,9 @@ void EngineSync::requestBpmUpdate(Syncable* pSyncable, mixxx::Bpm bpm) {
 }
 
 void EngineSync::notifyInstantaneousBpmChanged(Syncable* pSyncable, mixxx::Bpm bpm) {
-    if (kLogger.traceEnabled()) {
-        kLogger.trace() << "EngineSync::notifyInstantaneousBpmChanged" << pSyncable->getGroup() << bpm;
-    }
+    // if (true) {
+    //     qDebug() << "EngineSync::notifyInstantaneousBpmChanged" << pSyncable->getGroup() << bpm;
+    // }
     if (pSyncable != m_pInternalClock) {
         return;
     }
@@ -441,10 +441,10 @@ void EngineSync::notifyInstantaneousBpmChanged(Syncable* pSyncable, mixxx::Bpm b
 }
 
 void EngineSync::notifyBeatDistanceChanged(Syncable* pSyncable, double beatDistance) {
-    if (kLogger.traceEnabled()) {
-        kLogger.trace() << "EngineSync::notifyBeatDistanceChanged"
-                        << pSyncable->getGroup() << beatDistance;
-    }
+    // if (true) {
+    //     qDebug() << "EngineSync::notifyBeatDistanceChanged"
+    //                     << pSyncable->getGroup() << beatDistance;
+    // }
     if (pSyncable != m_pInternalClock) {
         return;
     }
@@ -604,11 +604,11 @@ void EngineSync::updateLeaderInstantaneousBpm(Syncable* pSource, mixxx::Bpm bpm)
 }
 
 void EngineSync::updateLeaderBeatDistance(Syncable* pSource, double beatDistance) {
-    if (kLogger.traceEnabled()) {
-        kLogger.trace() << "EngineSync::updateLeaderBeatDistance"
-                        << (pSource ? pSource->getGroup() : "null")
-                        << beatDistance;
-    }
+    // if (true) {
+    //     qDebug() << "EngineSync::updateLeaderBeatDistance"
+    //                     << (pSource ? pSource->getGroup() : "null")
+    //                     << beatDistance;
+    // }
     if (pSource != m_pInternalClock) {
         m_pInternalClock->updateLeaderBeatDistance(beatDistance);
     }
@@ -655,9 +655,9 @@ void EngineSync::reinitLeaderParams(Syncable* pSource) {
     if (!bpm.isValid()) {
         bpm = baseBpm;
     }
-    if (kLogger.traceEnabled()) {
-        kLogger.trace() << "BaseSyncableListener::reinitLeaderParams, source is"
-                        << pSource->getGroup() << beatDistance << baseBpm << bpm;
+    if (true) {
+        qDebug() << "BaseSyncableListener::reinitLeaderParams, source is"
+                 << pSource->getGroup() << beatDistance << baseBpm << bpm;
     }
     if (pSource != m_pInternalClock) {
         m_pInternalClock->reinitLeaderParams(beatDistance, baseBpm, bpm);
