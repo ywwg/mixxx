@@ -1288,6 +1288,7 @@ void EngineBuffer::processSeek(bool paused) {
             kLogger.trace() << "EngineBuffer::processSeek" << getGroup() << "Seek to" << position;
         }
         setNewPlaypos(position);
+        m_pBpmControl->updateBeatDistance(position);
         m_previousBufferSeek = true;
     }
     // Reset the m_queuedSeek value after it has been processed in
