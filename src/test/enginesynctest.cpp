@@ -2677,17 +2677,17 @@ TEST_F(EngineSyncTest, ScratchEndOtherPlayingTrackStayInPhase) {
     // After scratching, confirm that we are still in phase.
     // This version tests with a stopped other track.
     mixxx::BeatsPointer pBeats1 =
-            BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(),
-                    mixxx::Bpm(130),
-                    mixxx::audio::kStartFramePos);
+            mixxx::Beats::fromConstTempo(m_pTrack1->getSampleRate(),
+                    mixxx::audio::kStartFramePos,
+                    mixxx::Bpm(130));
     m_pTrack1->trySetBeats(pBeats1);
     ControlObject::set(ConfigKey(m_sGroup1, "quantize"), 1.0);
     ControlObject::set(ConfigKey(m_sGroup1, "sync_enabled"), 1);
 
     mixxx::BeatsPointer pBeats2 =
-            BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(),
-                    mixxx::Bpm(125),
-                    mixxx::audio::kStartFramePos);
+            mixxx::Beats::fromConstTempo(m_pTrack2->getSampleRate(),
+                    mixxx::audio::kStartFramePos,
+                    mixxx::Bpm(125));
     m_pTrack2->trySetBeats(pBeats2);
     ControlObject::set(ConfigKey(m_sGroup2, "quantize"), 1.0);
     ControlObject::set(ConfigKey(m_sGroup2, "sync_enabled"), 1);
@@ -2711,17 +2711,17 @@ TEST_F(EngineSyncTest, ScratchEndOtherStoppedTrackStayInPhase) {
     // After scratching, confirm that we are still in phase.
     // This version tests with a playing other track.
     mixxx::BeatsPointer pBeats1 =
-            BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(),
-                    mixxx::Bpm(130),
-                    mixxx::audio::kStartFramePos);
+            mixxx::Beats::fromConstTempo(m_pTrack1->getSampleRate(),
+                    mixxx::audio::kStartFramePos,
+                    mixxx::Bpm(130));
     m_pTrack1->trySetBeats(pBeats1);
     ControlObject::set(ConfigKey(m_sGroup1, "quantize"), 1.0);
     ControlObject::set(ConfigKey(m_sGroup1, "sync_enabled"), 1);
 
     mixxx::BeatsPointer pBeats2 =
-            BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(),
-                    mixxx::Bpm(125),
-                    mixxx::audio::kStartFramePos);
+            mixxx::Beats::fromConstTempo(m_pTrack2->getSampleRate(),
+                    mixxx::audio::kStartFramePos,
+                    mixxx::Bpm(125));
     m_pTrack2->trySetBeats(pBeats2);
     ControlObject::set(ConfigKey(m_sGroup2, "quantize"), 1.0);
     ControlObject::set(ConfigKey(m_sGroup2, "sync_enabled"), 1);
