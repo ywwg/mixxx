@@ -765,6 +765,9 @@ MiniMixxx.ButtonModeLayer.prototype.handlePress = function (value) {
 }
 MiniMixxx.ButtonModeLayer.prototype.setActive = function (active) {
     this.layerActive = active;
+    if (this.modeName == "LIBRARYLAYER") {
+        engine.setValue("[Master]", "maximize_library", this.layerActive);
+    }
     this.indicator(this.layerActive);
 }
 MiniMixxx.ButtonModeLayer.prototype.indicator = function (value, _group, _control) {
