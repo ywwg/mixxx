@@ -9,6 +9,7 @@
 #include "control/controlobject.h"
 #include "library/dao/trackschema.h"
 #include "library/library.h"
+#include "library/library_prefs.h"
 #include "library/librarytablemodel.h"
 #include "library/trackcollection.h"
 #include "library/trackcollectionmanager.h"
@@ -27,10 +28,21 @@
 
 namespace {
 
-const ConfigKey kConfigKeyAllowTrackLoadToPlayingDeck("[Controls]", "AllowTrackLoadToPlayingDeck");
+// ConfigValue key for QTable vertical scrollbar position
+const ConfigKey kVScrollBarPosConfigKey{
+        // mixxx::library::prefs::kConfigGroup is defined in another
+        // unit of compilation and cannot be reused here!
+        QStringLiteral("[Library]"),
+        QStringLiteral("VScrollBarPos")};
+
+const ConfigKey kConfigKeyAllowTrackLoadToPlayingDeck{
+        QStringLiteral("[Controls]"),
+        QStringLiteral("AllowTrackLoadToPlayingDeck")};
+
 // Default color for the focus border of TableItemDelegates
 const QColor kDefaultFocusBorderColor = Qt::white;
-} // namespace
+
+} // anonymous namespace
 
 WTrackTableView::WTrackTableView(QWidget* parent,
         UserSettingsPointer pConfig,
@@ -39,8 +51,7 @@ WTrackTableView::WTrackTableView(QWidget* parent,
         bool sorting)
         : WLibraryTableView(parent,
                   pConfig,
-                  ConfigKey(LIBRARY_CONFIGVALUE,
-                          WTRACKTABLEVIEW_VSCROLLBARPOS_KEY)),
+                  kVScrollBarPosConfigKey),
           m_pConfig(pConfig),
           m_pLibrary(pLibrary),
           m_backgroundColorOpacity(backgroundColorOpacity),
@@ -54,7 +65,7 @@ WTrackTableView::WTrackTableView(QWidget* parent,
     m_pCOTGuiTick = new ControlProxy("[Master]", "guiTick50ms", this);
     m_pCOTGuiTick->connectValueChanged(this, &WTrackTableView::slotGuiTick50ms);
 
-    m_pKeyNotation = new ControlProxy("[Library]", "key_notation", this);
+    m_pKeyNotation = new ControlProxy(mixxx::library::prefs::kKeyNotationConfigKey, this);
     m_pKeyNotation->connectValueChanged(this, &WTrackTableView::keyNotationChanged);
 
     m_pSortColumn = new ControlProxy("[Library]", "sort_column", this);
@@ -151,24 +162,20 @@ void WTrackTableView::loadTrackModel(QAbstractItemModel* model) {
         return;
     }
 
-    TrackModel* newModel = nullptr;
-
-    /* If the model has not changed
-     * there's no need to exchange the headers
-     * this will cause a small GUI freeze
-     */
+    // If the model has not changed
+    // there's no need to exchange the headers
+    // this will cause a small GUI freeze
     if (getTrackModel() == trackModel) {
         // Re-sort the table even if the track model is the same. This triggers
         // a select() if the table is dirty.
         doSortByColumn(horizontalHeader()->sortIndicatorSection(),
                 horizontalHeader()->sortIndicatorOrder());
         return;
-    } else {
-        newModel = trackModel;
-        saveVScrollBarPos(getTrackModel());
-        //saving current vertical bar position
-        //using address of track model as key
     }
+
+    // saving current vertical bar position
+    // using address of track model as key
+    saveVScrollBarPos(getTrackModel());
 
     setVisible(false);
 
@@ -263,28 +270,32 @@ void WTrackTableView::loadTrackModel(QAbstractItemModel* model) {
                 &WTrackTableView::slotSortingChanged,
                 Qt::AutoConnection);
 
-        int sortColumn;
         Qt::SortOrder sortOrder;
-
-        // Stupid hack that assumes column 0 is never visible, but this is a weak
-        // proxy for "there was a saved column sort order"
-        if (horizontalHeader()->sortIndicatorSection() > 0) {
+        TrackModel::SortColumnId sortColumn =
+                trackModel->sortColumnIdFromColumnIndex(
+                        horizontalHeader()->sortIndicatorSection());
+        if (sortColumn != TrackModel::SortColumnId::Invalid) {
             // Sort by the saved sort section and order.
-            sortColumn = horizontalHeader()->sortIndicatorSection();
             sortOrder = horizontalHeader()->sortIndicatorOrder();
         } else {
             // No saved order is present. Use the TrackModel's default sort order.
-            sortColumn = trackModel->defaultSortColumn();
+            sortColumn = trackModel->sortColumnIdFromColumnIndex(trackModel->defaultSortColumn());
             sortOrder = trackModel->defaultSortOrder();
 
-            // If the TrackModel has an invalid or internal column as its default
-            // sort, find the first non-internal column and sort by that.
-            while (sortColumn < 0 || trackModel->isColumnInternal(sortColumn)) {
-                sortColumn++;
+            if (sortColumn == TrackModel::SortColumnId::Invalid) {
+                // If the TrackModel has an invalid or internal column as its default
+                // sort, find the first valid sort column and sort by that.
+                const int columnCount = model->columnCount(); // just to avoid an endless while loop
+                for (int sortColumnIndex = 0; sortColumnIndex < columnCount; sortColumnIndex++) {
+                    sortColumn = trackModel->sortColumnIdFromColumnIndex(sortColumnIndex);
+                    if (sortColumn != TrackModel::SortColumnId::Invalid) {
+                        break;
+                    }
+                }
             }
         }
 
-        m_pSortColumn->set(static_cast<int>(trackModel->sortColumnIdFromColumnIndex(sortColumn)));
+        m_pSortColumn->set(static_cast<double>(sortColumn));
         m_pSortOrder->set(sortOrder);
         applySorting();
     }
@@ -314,7 +325,7 @@ void WTrackTableView::loadTrackModel(QAbstractItemModel* model) {
 
     setVisible(true);
 
-    restoreVScrollBarPos(newModel);
+    restoreVScrollBarPos(trackModel);
     // restoring scrollBar position using model pointer as key
     // scrollbar positions with respect to different models are backed by map
     initTrackMenu();
@@ -481,7 +492,7 @@ void WTrackTableView::onShow() {
 void WTrackTableView::mouseMoveEvent(QMouseEvent* pEvent) {
     // Only use this for drag and drop if the LeftButton is pressed we need to
     // check for this because mousetracking is activated and this function is
-    // called everytime the mouse is moved -- kain88 May 2012
+    // called every time the mouse is moved -- kain88 May 2012
     if (pEvent->buttons() != Qt::LeftButton) {
         // Needed for mouse-tracking to fire entered() events. If we call this
         // outside of this if statement then we get 'ghost' drags. See Bug

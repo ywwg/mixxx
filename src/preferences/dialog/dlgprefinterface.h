@@ -18,6 +18,7 @@ class MixxxMainWindow;
 class ControlObject;
 
 namespace mixxx {
+class ScreensaverManager;
 namespace skin {
 class SkinLoader;
 }
@@ -28,7 +29,7 @@ class DlgPrefInterface : public DlgPreferencePage, public Ui::DlgPrefControlsDlg
   public:
     DlgPrefInterface(
             QWidget* parent,
-            MixxxMainWindow* mixxx,
+            std::shared_ptr<mixxx::ScreensaverManager> pScreensaverManager,
             std::shared_ptr<mixxx::skin::SkinLoader> pSkinLoader,
             UserSettingsPointer pConfig);
     ~DlgPrefInterface() override = default;
@@ -40,12 +41,15 @@ class DlgPrefInterface : public DlgPreferencePage, public Ui::DlgPrefControlsDlg
 
   private slots:
     void slotSetTooltips();
-    void slotSetSkinDescription();
     void slotSetSkin(int);
     void slotSetScheme(int);
+    void slotSetSkinDescription();
+    void slotSetSkinPreview();
     void slotUpdateSchemes();
-    void slotSetScaleFactor(double newValue);
-    void slotSetScaleFactorAuto(bool checked);
+
+  signals:
+    void reloadUserInterface();
+    void tooltipModeChanged(mixxx::TooltipsPreference tooltipMode);
 
   private:
     void notifyRebootNecessary();
@@ -60,7 +64,7 @@ class DlgPrefInterface : public DlgPreferencePage, public Ui::DlgPrefControlsDlg
 
     UserSettingsPointer m_pConfig;
     ControlObject* m_pControlTrackTimeDisplay;
-    MixxxMainWindow *m_mixxx;
+    std::shared_ptr<mixxx::ScreensaverManager> m_pScreensaverManager;
     std::shared_ptr<mixxx::skin::SkinLoader> m_pSkinLoader;
 
     QMap<QString, mixxx::skin::SkinPointer> m_skins;
@@ -69,9 +73,9 @@ class DlgPrefInterface : public DlgPreferencePage, public Ui::DlgPrefControlsDlg
     QString m_colorScheme;
     QString m_localeOnUpdate;
     mixxx::TooltipsPreference m_tooltipMode;
-    double m_dScaleFactorAuto;
-    bool m_bUseAutoScaleFactor;
     double m_dScaleFactor;
+    double m_minScaleFactor;
+    double m_dDevicePixelRatio;
     bool m_bStartWithFullScreen;
     mixxx::ScreenSaverPreference m_screensaverMode;
 
