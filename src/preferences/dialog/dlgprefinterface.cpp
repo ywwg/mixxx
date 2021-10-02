@@ -11,38 +11,61 @@
 #include "control/controlobject.h"
 #include "control/controlproxy.h"
 #include "defs_urls.h"
-#include "mixxx.h"
+#include "mixxxmainwindow.h"
 #include "moc_dlgprefinterface.cpp"
 #include "preferences/usersettings.h"
 #include "skin/legacy/legacyskinparser.h"
 #include "skin/skin.h"
 #include "skin/skinloader.h"
 #include "util/screensaver.h"
+#include "util/screensavermanager.h"
 #include "util/widgethelper.h"
 
 using mixxx::skin::SkinManifest;
 using mixxx::skin::SkinPointer;
 
+namespace {
+
+const QString kConfigGroup = QStringLiteral("[Config]");
+const QString kControlsGroup = QStringLiteral("[Controls]");
+const QString kScaleFactorKey = QStringLiteral("ScaleFactor");
+const QString kStartInFullscreenKey = QStringLiteral("StartInFullscreen");
+const QString kSchemeKey = QStringLiteral("Scheme");
+const QString kResizableSkinKey = QStringLiteral("ResizableSkin");
+const QString kLocaleKey = QStringLiteral("Locale");
+const QString kTooltipsKey = QStringLiteral("Tooltips");
+
+} // namespace
+
 DlgPrefInterface::DlgPrefInterface(
         QWidget* parent,
-        MixxxMainWindow* mixxx,
+        std::shared_ptr<mixxx::ScreensaverManager> pScreensaverManager,
         std::shared_ptr<mixxx::skin::SkinLoader> pSkinLoader,
         UserSettingsPointer pConfig)
         : DlgPreferencePage(parent),
           m_pConfig(pConfig),
-          m_mixxx(mixxx),
+          m_pScreensaverManager(pScreensaverManager),
           m_pSkinLoader(pSkinLoader),
           m_pSkin(pSkinLoader->getConfiguredSkin()),
-          m_dScaleFactorAuto(1.0),
-          m_bUseAutoScaleFactor(false),
           m_dScaleFactor(1.0),
+          m_minScaleFactor(1.0),
           m_dDevicePixelRatio(1.0),
           m_bStartWithFullScreen(false),
           m_bRebootMixxxView(false) {
     setupUi(this);
 
     // get the pixel ratio to display a crisp skin preview when Mixxx is scaled
-    m_dDevicePixelRatio = getDevicePixelRatioF(this);
+    m_dDevicePixelRatio = devicePixelRatioF();
+
+    // Calculate the minimum scale factor that leads to a device pixel ratio of 1.0
+    // m_dDevicePixelRatio must not drop below 1.0 because this creates an
+    // unusable GUI with visual artefacts
+    double initialScaleFactor = CmdlineArgs::Instance().getScaleFactor();
+    if (initialScaleFactor <= 0) {
+        initialScaleFactor = 1.0;
+    }
+    double unscaledDevicePixelRatio = m_dDevicePixelRatio / initialScaleFactor;
+    m_minScaleFactor = 1 / unscaledDevicePixelRatio;
 
     VERIFY_OR_DEBUG_ASSERT(m_pSkin != nullptr) {
         qWarning() << "Skipping creation of DlgPrefInterface because there is no skin available.";
@@ -148,13 +171,9 @@ DlgPrefInterface::DlgPrefInterface(
             this,
             &DlgPrefInterface::slotSetScheme);
 
-    checkBoxScaleFactorAuto->hide();
-    spinBoxScaleFactor->hide();
-    labelScaleFactor->hide();
-
     // Start in fullscreen mode
-    checkBoxStartFullScreen->setChecked(m_pConfig->getValueString(
-                    ConfigKey("[Config]", "StartInFullscreen")).toInt()==1);
+    checkBoxStartFullScreen->setChecked(
+            m_pConfig->getValue(ConfigKey(kConfigGroup, kStartInFullscreenKey), 0) == 1);
 
     // Screensaver mode
     comboBoxScreensaver->clear();
@@ -165,7 +184,7 @@ DlgPrefInterface::DlgPrefInterface(
     comboBoxScreensaver->addItem(tr("Prevent screensaver while playing"),
             static_cast<int>(mixxx::ScreenSaverPreference::PREVENT_ON_PLAY));
 
-    int inhibitsettings = static_cast<int>(mixxx->getInhibitScreensaver());
+    int inhibitsettings = static_cast<int>(m_pScreensaverManager->status());
     comboBoxScreensaver->setCurrentIndex(comboBoxScreensaver->findData(inhibitsettings));
 
     // Tooltip configuration
@@ -187,10 +206,9 @@ QScreen* DlgPrefInterface::getScreen() const {
     auto* pScreen =
             mixxx::widgethelper::getScreen(*this);
     if (!pScreen) {
-        // Obtain the screen from the main widget as a fallback. This
-        // is necessary if no window is available before the widget
-        // is displayed.
-        pScreen = mixxx::widgethelper::getScreen(*m_mixxx);
+        // Obtain the primary screen. This is necessary if no window is
+        // available before the widget is displayed.
+        pScreen = qGuiApp->primaryScreen();
     }
     DEBUG_ASSERT(pScreen);
     return pScreen;
@@ -211,7 +229,7 @@ void DlgPrefInterface::slotUpdateSchemes() {
         m_colorScheme = QString();
     } else {
         ComboBoxSchemeconf->setEnabled(true);
-        QString configScheme = m_pConfig->getValueString(ConfigKey("[Config]", "Scheme"));
+        QString configScheme = m_pConfig->getValue(ConfigKey(kConfigGroup, kSchemeKey));
         bool foundConfigScheme = false;
         for (int i = 0; i < schlist.size(); i++) {
             ComboBoxSchemeconf->addItem(schlist[i]);
@@ -234,7 +252,7 @@ void DlgPrefInterface::slotUpdateSchemes() {
 
 void DlgPrefInterface::slotUpdate() {
     const QString skinNameOnUpdate =
-            m_pConfig->getValueString(ConfigKey("[Config]", "ResizableSkin"));
+            m_pConfig->getValue(ConfigKey(kConfigGroup, kResizableSkinKey));
     const SkinPointer pSkinOnUpdate = m_skins[skinNameOnUpdate];
     if (pSkinOnUpdate != nullptr && pSkinOnUpdate->isValid()) {
         m_skinNameOnUpdate = pSkinOnUpdate->name();
@@ -245,23 +263,22 @@ void DlgPrefInterface::slotUpdate() {
     slotUpdateSchemes();
     m_bRebootMixxxView = false;
 
-    m_localeOnUpdate = m_pConfig->getValueString(ConfigKey("[Config]", "Locale"));
+    m_localeOnUpdate = m_pConfig->getValue(ConfigKey(kConfigGroup, kLocaleKey));
     ComboBoxLocale->setCurrentIndex(ComboBoxLocale->findData(m_localeOnUpdate));
-
-    checkBoxScaleFactorAuto->setChecked(m_pConfig->getValue(
-            ConfigKey("[Config]", "ScaleFactorAuto"), m_bUseAutoScaleFactor));
 
     // The spinbox shows a percentage but Mixxx stores a multiplication factor
     // with 1.00 as no scaling, so multiply the stored value by 100.
-    spinBoxScaleFactor->setValue(m_pConfig->getValue(
-                    ConfigKey("[Config]", "ScaleFactor"), m_dScaleFactor) * 100);
+    double configScaleFactor = m_pConfig->getValue(
+            ConfigKey(kConfigGroup, kScaleFactorKey), m_dScaleFactor);
+    spinBoxScaleFactor->setValue(configScaleFactor * 100);
+    spinBoxScaleFactor->setMinimum(m_minScaleFactor * 100);
 
     checkBoxStartFullScreen->setChecked(m_pConfig->getValue(
-            ConfigKey("[Config]", "StartInFullscreen"), m_bStartWithFullScreen));
+            ConfigKey(kConfigGroup, kStartInFullscreenKey), m_bStartWithFullScreen));
 
     loadTooltipPreferenceFromConfig();
 
-    int inhibitsettings = static_cast<int>(m_mixxx->getInhibitScreensaver());
+    int inhibitsettings = static_cast<int>(m_pScreensaverManager->status());
     comboBoxScreensaver->setCurrentIndex(comboBoxScreensaver->findData(inhibitsettings));
 }
 
@@ -276,9 +293,6 @@ void DlgPrefInterface::slotResetToDefaults() {
     // Default to normal size widgets
     // The spinbox shows a percentage with 100% as no scaling.
     spinBoxScaleFactor->setValue(100);
-    if (m_dScaleFactorAuto > 0) {
-        checkBoxScaleFactorAuto->setChecked(true);
-    }
 
     // Don't start in full screen.
     checkBoxStartFullScreen->setChecked(false);
@@ -289,29 +303,6 @@ void DlgPrefInterface::slotResetToDefaults() {
 
     // Tooltips on everywhere.
     radioButtonTooltipsLibraryAndSkin->setChecked(true);
-}
-
-void DlgPrefInterface::slotSetScaleFactor(double newValue) {
-    // The spinbox shows a percentage, but Mixxx stores a multiplication factor
-    // with 1.00 as no change.
-    newValue /= 100.0;
-    if (m_dScaleFactor != newValue) {
-        m_dScaleFactor = newValue;
-        m_bRebootMixxxView = true;
-    }
-}
-
-void DlgPrefInterface::slotSetScaleFactorAuto(bool newValue) {
-    if (newValue) {
-        if (!m_bUseAutoScaleFactor) {
-            m_bRebootMixxxView = true;
-        }
-    } else {
-        slotSetScaleFactor(newValue);
-    }
-
-    m_bUseAutoScaleFactor = newValue;
-    spinBoxScaleFactor->setEnabled(!newValue);
 }
 
 void DlgPrefInterface::slotSetTooltips() {
@@ -325,9 +316,10 @@ void DlgPrefInterface::slotSetTooltips() {
 
 void DlgPrefInterface::notifyRebootNecessary() {
     // make the fact that you have to restart mixxx more obvious
-    QMessageBox::information(
-        this, tr("Information"),
-        tr("Mixxx must be restarted before the new locale setting will take effect."));
+    QMessageBox::information(this,
+            tr("Information"),
+            tr("Mixxx must be restarted before the new locale or scaling "
+               "settings will take effect."));
 }
 
 void DlgPrefInterface::slotSetScheme(int) {
@@ -389,44 +381,41 @@ void DlgPrefInterface::slotSetSkin(int) {
 }
 
 void DlgPrefInterface::slotApply() {
-    m_pConfig->set(ConfigKey("[Config]", "ResizableSkin"), m_pSkin->name());
-    m_pConfig->set(ConfigKey("[Config]", "Scheme"), m_colorScheme);
+    m_pConfig->set(ConfigKey(kConfigGroup, kResizableSkinKey), m_pSkin->name());
+    m_pConfig->set(ConfigKey(kConfigGroup, kSchemeKey), m_colorScheme);
 
     QString locale = ComboBoxLocale->itemData(
             ComboBoxLocale->currentIndex()).toString();
-    m_pConfig->set(ConfigKey("[Config]", "Locale"), locale);
+    m_pConfig->set(ConfigKey(kConfigGroup, kLocaleKey), locale);
 
-    m_pConfig->setValue(
-            ConfigKey("[Config]", "ScaleFactorAuto"), m_bUseAutoScaleFactor);
-    if (m_bUseAutoScaleFactor) {
-        m_pConfig->setValue(
-                ConfigKey("[Config]", "ScaleFactor"), m_dScaleFactorAuto);
-    } else {
-        m_pConfig->setValue(ConfigKey("[Config]", "ScaleFactor"), m_dScaleFactor);
-    }
+    double scaleFactor = spinBoxScaleFactor->value() / 100;
+    m_pConfig->setValue(ConfigKey(kConfigGroup, kScaleFactorKey), scaleFactor);
 
-    m_pConfig->set(ConfigKey("[Config]", "StartInFullscreen"),
+    m_pConfig->set(ConfigKey(kConfigGroup, kStartInFullscreenKey),
             ConfigValue(checkBoxStartFullScreen->isChecked()));
 
-    m_mixxx->setToolTipsCfg(m_tooltipMode);
+    m_pConfig->set(ConfigKey(kControlsGroup, kTooltipsKey),
+            ConfigValue(static_cast<int>(m_tooltipMode)));
+    emit tooltipModeChanged(m_tooltipMode);
 
     // screensaver mode update
     int screensaverComboBoxState = comboBoxScreensaver->itemData(
             comboBoxScreensaver->currentIndex()).toInt();
-    int screensaverConfiguredState = static_cast<int>(m_mixxx->getInhibitScreensaver());
+    int screensaverConfiguredState = static_cast<int>(m_pScreensaverManager->status());
     if (screensaverComboBoxState != screensaverConfiguredState) {
-        m_mixxx->setInhibitScreensaver(
+        m_pScreensaverManager->setStatus(
                 static_cast<mixxx::ScreenSaverPreference>(screensaverComboBoxState));
     }
 
-    if (locale != m_localeOnUpdate) {
+    if (locale != m_localeOnUpdate || scaleFactor != m_dScaleFactor) {
         notifyRebootNecessary();
         // hack to prevent showing the notification when pressing "Okay" after "Apply"
         m_localeOnUpdate = locale;
+        m_dScaleFactor = scaleFactor;
     }
 
     if (m_bRebootMixxxView) {
-        m_mixxx->rebootMixxxView();
+        emit reloadUserInterface();
         // Allow switching skins multiple times without closing the dialog
         m_skinNameOnUpdate = m_pSkin->name();
     }
@@ -434,17 +423,20 @@ void DlgPrefInterface::slotApply() {
 }
 
 void DlgPrefInterface::loadTooltipPreferenceFromConfig() {
-    mixxx::TooltipsPreference configTooltips = m_mixxx->getToolTipsCfg();
-    switch (configTooltips) {
-        case mixxx::TooltipsPreference::TOOLTIPS_OFF:
-            radioButtonTooltipsOff->setChecked(true);
-            break;
-        case mixxx::TooltipsPreference::TOOLTIPS_ON:
-            radioButtonTooltipsLibraryAndSkin->setChecked(true);
-            break;
-        case mixxx::TooltipsPreference::TOOLTIPS_ONLY_IN_LIBRARY:
-            radioButtonTooltipsLibrary->setChecked(true);
-            break;
+    const auto tooltipMode = static_cast<mixxx::TooltipsPreference>(
+            m_pConfig->getValue(ConfigKey(kControlsGroup, kTooltipsKey),
+                    static_cast<int>(mixxx::TooltipsPreference::TOOLTIPS_ON)));
+    switch (tooltipMode) {
+    case mixxx::TooltipsPreference::TOOLTIPS_OFF:
+        radioButtonTooltipsOff->setChecked(true);
+        break;
+    case mixxx::TooltipsPreference::TOOLTIPS_ONLY_IN_LIBRARY:
+        radioButtonTooltipsLibrary->setChecked(true);
+        break;
+    case mixxx::TooltipsPreference::TOOLTIPS_ON:
+    default:
+        radioButtonTooltipsLibraryAndSkin->setChecked(true);
+        break;
     }
-    m_tooltipMode = configTooltips;
+    m_tooltipMode = tooltipMode;
 }

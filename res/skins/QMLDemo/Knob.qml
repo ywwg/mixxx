@@ -6,30 +6,50 @@ MixxxControls.Knob {
     id: root
 
     property color color // required
+    property url shadowSource: Theme.imgKnobShadow
+    property url backgroundSource: Theme.imgKnob
 
-    implicitWidth: 56
+    implicitWidth: background.width
     implicitHeight: implicitWidth
     arc: true
-    arcRadius: 20
+    arcRadius: width * 0.45
+    arcOffsetY: width * 0.01
     arcColor: root.color
     arcWidth: 2
-    angle: 117
+    angle: 116
+
+    Image {
+        id: shadow
+
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: width * 7 / 6
+        fillMode: Image.PreserveAspectFit
+        source: root.shadowSource
+    }
 
     background: Image {
-        anchors.left: parent.left
+        id: background
+
         anchors.top: parent.top
+        anchors.left: parent.left
         anchors.right: parent.right
-        source: "images/knob.svg"
+        height: width
+        source: root.backgroundSource
     }
 
     foreground: Item {
-        anchors.fill: parent
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: width
 
         Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
-            width: root.width / 30
-            height: root.width / 7
-            y: parent.height / 4
+            width: 2
+            height: root.width / 5
+            y: height
             color: root.color
         }
 

@@ -10,8 +10,7 @@
 #include "preferences/usersettings.h"
 #include "test/mixxxtest.h"
 #include "test/mockedenginebackendtest.h"
-#include "track/beatfactory.h"
-#include "track/beatmap.h"
+#include "track/beats.h"
 #include "util/memory.h"
 
 namespace {
@@ -36,11 +35,11 @@ class EngineSyncTest : public MockedEngineBackendTest {
     }
 
     bool isExplicitLeader(const QString& group) {
-        return isLeader(group, SYNC_LEADER_EXPLICIT);
+        return isLeader(group, SyncMode::LeaderExplicit);
     }
 
     bool isSoftLeader(const QString& group) {
-        return isLeader(group, SYNC_LEADER_SOFT);
+        return isLeader(group, SyncMode::LeaderSoft);
     }
 
     bool isFollower(const QString& group) {
@@ -51,8 +50,8 @@ class EngineSyncTest : public MockedEngineBackendTest {
         }
         if (auto mode = ControlObject::getControl(ConfigKey(group, "sync_mode"))
                                 ->get();
-                mode != SYNC_FOLLOWER) {
-            qWarning() << "expected mode SYNC_FOLLOWER, got" << mode;
+                static_cast<SyncMode>(mode) != SyncMode::Follower) {
+            qWarning() << "expected mode Follower, got" << mode;
             return false;
         }
         if (!ControlObject::getControl(ConfigKey(group, "sync_enabled"))->toBool()) {
@@ -76,9 +75,9 @@ class EngineSyncTest : public MockedEngineBackendTest {
                             ConfigKey(m_sInternalClockGroup, "sync_leader"))
                             ->get());
         } else {
-            EXPECT_EQ(SYNC_NONE,
-                    ControlObject::getControl(ConfigKey(group, "sync_mode"))
-                            ->get());
+            EXPECT_EQ(SyncMode::None,
+                    static_cast<SyncMode>(ControlObject::getControl(ConfigKey(group, "sync_mode"))
+                                                  ->get()));
             EXPECT_EQ(0,
                     ControlObject::getControl(ConfigKey(group, "sync_enabled"))
                             ->get());
@@ -99,10 +98,10 @@ class EngineSyncTest : public MockedEngineBackendTest {
             double leader = ControlObject::getControl(ConfigKey(m_sInternalClockGroup,
                                                               "sync_leader"))
                                     ->get();
-            if (leaderType == SYNC_LEADER_SOFT && leader != 1.0) {
+            if (leaderType == SyncMode::LeaderSoft && leader != 1.0) {
                 qWarning() << "internal clock sync_leader should be 1.0, is" << leader;
                 return false;
-            } else if (leaderType == SYNC_LEADER_EXPLICIT && leader != 2.0) {
+            } else if (leaderType == SyncMode::LeaderExplicit && leader != 2.0) {
                 qWarning() << "internal clock sync_leader should be 2.0, is" << leader;
                 return false;
             }
@@ -151,7 +150,7 @@ class EngineSyncTest : public MockedEngineBackendTest {
 
         if (auto mode = ControlObject::getControl(ConfigKey(group, "sync_mode"))
                                 ->get();
-                mode != leaderType) {
+                static_cast<SyncMode>(mode) != leaderType) {
             qWarning() << "mode should be" << leaderType << ", is" << mode;
             return false;
         }
@@ -160,7 +159,7 @@ class EngineSyncTest : public MockedEngineBackendTest {
             return false;
         }
         switch (leaderType) {
-        case SYNC_LEADER_SOFT: {
+        case SyncMode::LeaderSoft: {
             if (double leader = ControlObject::getControl(
                         ConfigKey(group, "sync_leader"))
                                         ->get();
@@ -170,7 +169,7 @@ class EngineSyncTest : public MockedEngineBackendTest {
             }
             break;
         }
-        case SYNC_LEADER_EXPLICIT: {
+        case SyncMode::LeaderExplicit: {
             if (double leader = ControlObject::getControl(
                         ConfigKey(group, "sync_leader"))
                                         ->get();
@@ -199,10 +198,10 @@ TEST_F(EngineSyncTest, SetLeaderSuccess) {
 
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->slotSet(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync1->set(static_cast<double>(SyncMode::LeaderExplicit));
     ProcessBuffer();
 
-    // No tracks are playing and we have no beats, SYNC_leader_EXPLICIT state is in stand-by
+    // No tracks are playing and we have no beats, LeaderExplicit state is in stand-by
     EXPECT_DOUBLE_EQ(
             0.0, ControlObject::getControl(ConfigKey(m_sGroup1, "bpm"))->get());
     // The sync lock should now be internal clock, with group 1 waiting for play.
@@ -211,13 +210,13 @@ TEST_F(EngineSyncTest, SetLeaderSuccess) {
 
     auto pButtonLeaderSync2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
-    pButtonLeaderSync2->set(SYNC_FOLLOWER);
+    pButtonLeaderSync2->set(static_cast<double>(SyncMode::Follower));
     ProcessBuffer();
 
     EXPECT_TRUE(isFollower(m_sGroup2));
 
     // Now set channel 2 to be leader.
-    pButtonLeaderSync2->set(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync2->set(static_cast<double>(SyncMode::LeaderExplicit));
     ProcessBuffer();
 
     // Now channel 2 should be waiting leader, and channel 1 should be a follower.
@@ -225,7 +224,7 @@ TEST_F(EngineSyncTest, SetLeaderSuccess) {
     EXPECT_TRUE(isFollower(m_sGroup1));
 
     // Now back again.
-    pButtonLeaderSync1->set(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync1->set(static_cast<double>(SyncMode::LeaderExplicit));
     ProcessBuffer();
 
     // Now channel 1 should be waiting leader, and channel 2 should be a follower.
@@ -233,7 +232,7 @@ TEST_F(EngineSyncTest, SetLeaderSuccess) {
     EXPECT_TRUE(isFollower(m_sGroup2));
 
     // Now set channel 1 to follower, now all are followers, waiting for a tempo to adopt.
-    pButtonLeaderSync1->slotSet(SYNC_FOLLOWER);
+    pButtonLeaderSync1->set(static_cast<double>(SyncMode::Follower));
     ProcessBuffer();
 
     EXPECT_TRUE(isFollower(m_sInternalClockGroup));
@@ -244,15 +243,17 @@ TEST_F(EngineSyncTest, SetLeaderSuccess) {
 TEST_F(EngineSyncTest, ExplicitLeaderPersists) {
     // If we set an explicit leader, enabling sync or pressing play on other decks
     // doesn't cause the leader to move around.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 120, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(120));
     m_pTrack1->trySetBeats(pBeats1);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 124, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(124));
     m_pTrack2->trySetBeats(pBeats2);
 
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
-    pButtonLeaderSync1->slotSet(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync1->set(static_cast<double>(SyncMode::LeaderExplicit));
     ProcessBuffer();
     // The sync lock should now be channel 1.
     EXPECT_TRUE(isExplicitLeader(m_sGroup1));
@@ -276,22 +277,25 @@ TEST_F(EngineSyncTest, ExplicitLeaderPersists) {
 
 TEST_F(EngineSyncTest, SetLeaderWhilePlaying) {
     // Make sure we don't get two leader lights if we change leaders while playing.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 120, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(120));
     m_pTrack1->trySetBeats(pBeats1);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 124, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(124));
     m_pTrack2->trySetBeats(pBeats2);
-    mixxx::BeatsPointer pBeats3 = BeatFactory::makeBeatGrid(m_pTrack3->getSampleRate(), 128, 0.0);
+    mixxx::BeatsPointer pBeats3 = mixxx::Beats::fromConstTempo(
+            m_pTrack3->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(128));
     m_pTrack3->trySetBeats(pBeats3);
 
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->set(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync1->set(static_cast<double>(SyncMode::LeaderExplicit));
     auto pButtonLeaderSync2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
-    pButtonLeaderSync2->slotSet(SYNC_FOLLOWER);
+    pButtonLeaderSync2->set(static_cast<double>(SyncMode::Follower));
     auto pButtonLeaderSync3 =
             std::make_unique<ControlProxy>(m_sGroup3, "sync_mode");
-    pButtonLeaderSync3->slotSet(SYNC_FOLLOWER);
+    pButtonLeaderSync3->set(static_cast<double>(SyncMode::Follower));
 
     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
     ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(1.0);
@@ -299,7 +303,7 @@ TEST_F(EngineSyncTest, SetLeaderWhilePlaying) {
 
     ProcessBuffer();
 
-    pButtonLeaderSync3->slotSet(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync3->set(static_cast<double>(SyncMode::LeaderExplicit));
 
     ProcessBuffer();
 
@@ -310,11 +314,12 @@ TEST_F(EngineSyncTest, SetLeaderWhilePlaying) {
 
 TEST_F(EngineSyncTest, SetEnabledBecomesLeader) {
     // If we set the first channel with a valid tempo to follower, it should be leader.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 80, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(80));
     m_pTrack1->trySetBeats(pBeats1);
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->slotSet(SYNC_FOLLOWER);
+    pButtonLeaderSync1->set(static_cast<double>(SyncMode::Follower));
     ProcessBuffer();
 
     EXPECT_TRUE(isSoftLeader(m_sGroup1));
@@ -324,28 +329,30 @@ TEST_F(EngineSyncTest, SetEnabledBecomesLeader) {
 TEST_F(EngineSyncTest, DisableInternalLeaderWhilePlaying) {
     auto pButtonLeaderSync = std::make_unique<ControlProxy>(
             m_sInternalClockGroup, "sync_leader");
-    pButtonLeaderSync->slotSet(1.0);
+    pButtonLeaderSync->set(1.0);
     auto pButtonSyncMode1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonSyncMode1->slotSet(SYNC_FOLLOWER);
+    pButtonSyncMode1->set(static_cast<double>(SyncMode::Follower));
     auto pButtonSyncMode2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
-    pButtonSyncMode2->slotSet(SYNC_FOLLOWER);
+    pButtonSyncMode2->set(static_cast<double>(SyncMode::Follower));
     ProcessBuffer();
     // The sync lock should now be Internal.
     EXPECT_TRUE(isExplicitLeader(m_sInternalClockGroup));
 
     // Make sure both decks are playing.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 80, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(80));
     m_pTrack1->trySetBeats(pBeats1);
     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 80, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(80));
     m_pTrack2->trySetBeats(pBeats2);
     ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(1.0);
     ProcessBuffer();
 
     // Now unset Internal leader.
-    pButtonLeaderSync->slotSet(0.0);
+    pButtonLeaderSync->set(0.0);
     ProcessBuffer();
 
     // This is not allowed, Internal should still be leader.
@@ -355,18 +362,20 @@ TEST_F(EngineSyncTest, DisableInternalLeaderWhilePlaying) {
 
 TEST_F(EngineSyncTest, DisableSyncOnLeader) {
     // Channel 1 follower, channel 2 leader.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 130, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(130));
     m_pTrack1->trySetBeats(pBeats1);
     auto pButtonSyncMode1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonSyncMode1->slotSet(SYNC_FOLLOWER);
+    pButtonSyncMode1->set(static_cast<double>(SyncMode::Follower));
 
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 130, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(130));
     m_pTrack2->trySetBeats(pBeats2);
     // Set deck two to explicit leader.
     auto pButtonSyncLeader2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_leader");
-    pButtonSyncLeader2->slotSet(1.0);
+    pButtonSyncLeader2->set(1.0);
     ProcessBuffer();
     EXPECT_TRUE(isFollower(m_sGroup1));
     EXPECT_TRUE(isExplicitLeader(m_sGroup2));
@@ -381,7 +390,7 @@ TEST_F(EngineSyncTest, DisableSyncOnLeader) {
     // Unset enabled on channel2, it should work.
     auto pButtonSyncEnabled2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_enabled");
-    pButtonSyncEnabled2->slotSet(0.0);
+    pButtonSyncEnabled2->set(0.0);
     ProcessBuffer();
     EXPECT_TRUE(isSoftLeader(m_sGroup1));
     EXPECT_EQ(0, ControlObject::getControl(ConfigKey(m_sGroup2, "sync_enabled"))->get());
@@ -396,15 +405,16 @@ TEST_F(EngineSyncTest, InternalLeaderSetFollowerSliderMoves) {
             std::make_unique<ControlProxy>(m_sInternalClockGroup, "bpm");
 
     pLeaderSyncSlider->set(100.0);
-    pButtonLeaderSyncInternal->slotSet(1);
+    pButtonLeaderSyncInternal->set(1);
 
     // Set the file bpm of channel 1 to 80 bpm.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 80, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(80));
     m_pTrack1->trySetBeats(pBeats1);
 
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->slotSet(SYNC_FOLLOWER);
+    pButtonLeaderSync1->set(static_cast<double>(SyncMode::Follower));
     ProcessBuffer();
 
     EXPECT_DOUBLE_EQ(getRateSliderValue(1.25),
@@ -417,7 +427,8 @@ TEST_F(EngineSyncTest, AnySyncDeckSliderStays) {
     // If there exists a sync deck, even if it's not playing, don't change the
     // leader BPM if a new deck enables sync.
 
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 80, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(80));
     m_pTrack1->trySetBeats(pBeats1);
     auto pButtonSyncEnabled1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_enabled");
@@ -428,7 +439,8 @@ TEST_F(EngineSyncTest, AnySyncDeckSliderStays) {
             ControlObject::getControl(ConfigKey(m_sInternalClockGroup, "bpm"))
                     ->get());
 
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 100, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(100));
     m_pTrack2->trySetBeats(pBeats2);
     auto pButtonSyncEnabled2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_enabled");
@@ -452,11 +464,13 @@ TEST_F(EngineSyncTest, InternalClockFollowsFirstPlayingDeck) {
             std::make_unique<ControlProxy>(m_sGroup2, "sync_enabled");
 
     // Set up decks so they can be playing, and start deck 1.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 100, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(100));
     m_pTrack1->trySetBeats(pBeats1);
     ControlObject::set(ConfigKey(m_sGroup1, "rate"), getRateSliderValue(1.0));
     ControlObject::set(ConfigKey(m_sGroup1, "play"), 1.0);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 130, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(130));
     m_pTrack2->trySetBeats(pBeats2);
     ControlObject::set(ConfigKey(m_sGroup2, "rate"), getRateSliderValue(1.0));
     ControlObject::set(ConfigKey(m_sGroup2, "play"), 0.0);
@@ -522,30 +536,32 @@ TEST_F(EngineSyncTest, SetExplicitLeaderByLights) {
             std::make_unique<ControlProxy>(m_sGroup2, "sync_leader");
 
     // Set the file bpm of channel 1 to 160bpm.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 160, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(160));
     m_pTrack1->trySetBeats(pBeats1);
     // Set the file bpm of channel 2 to 150bpm.
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 150, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(150));
     m_pTrack2->trySetBeats(pBeats2);
 
     ControlObject::set(ConfigKey(m_sGroup1, "play"), 1.0);
     ControlObject::set(ConfigKey(m_sGroup2, "play"), 1.0);
 
     // Set channel 1 to be explicit leader.
-    pButtonSyncLeader1->slotSet(1.0);
+    pButtonSyncLeader1->set(1.0);
     ProcessBuffer();
 
     // The sync lock should now be channel 1.
     EXPECT_TRUE(isExplicitLeader(m_sGroup1));
 
     // Set channel 2 to be follower.
-    pButtonSyncEnabled2->slotSet(1);
+    pButtonSyncEnabled2->set(1);
     ProcessBuffer();
 
     EXPECT_TRUE(isFollower(m_sGroup2));
 
     // Now set channel 2 to be leader.
-    pButtonSyncLeader2->slotSet(1);
+    pButtonSyncLeader2->set(1);
     ProcessBuffer();
 
     // Now channel 2 should be leader, and channel 1 should be a follower.
@@ -553,7 +569,7 @@ TEST_F(EngineSyncTest, SetExplicitLeaderByLights) {
     EXPECT_TRUE(isExplicitLeader(m_sGroup2));
 
     // Now back again.
-    pButtonSyncLeader1->slotSet(1);
+    pButtonSyncLeader1->set(1);
     ProcessBuffer();
 
     // Now channel 1 should be leader, and channel 2 should be a follower.
@@ -562,7 +578,7 @@ TEST_F(EngineSyncTest, SetExplicitLeaderByLights) {
 
     // Now set channel 1 to not-leader. The system will choose deck 2 as the next best
     // option for soft leader
-    pButtonSyncLeader1->slotSet(0);
+    pButtonSyncLeader1->set(0);
     ProcessBuffer();
 
     EXPECT_TRUE(isFollower(m_sInternalClockGroup));
@@ -577,16 +593,16 @@ TEST_F(EngineSyncTest, SetExplicitLeaderByLightsNoTracks) {
     auto pButtonSyncLeader1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_leader");
 
-    pButtonSyncLeader1->slotSet(1);
+    pButtonSyncLeader1->set(1);
 
     // Set channel 2 to be follower.
-    pButtonSyncEnabled2->slotSet(1);
+    pButtonSyncEnabled2->set(1);
 
     // Without a track loaded, deck 1 can't be an explicit leader.
     EXPECT_TRUE(isFollower(m_sGroup1));
     EXPECT_TRUE(isFollower(m_sGroup2));
 
-    pButtonSyncLeader1->slotSet(0);
+    pButtonSyncLeader1->set(0);
 
     EXPECT_TRUE(isFollower(m_sGroup1));
     EXPECT_TRUE(isFollower(m_sGroup2));
@@ -596,14 +612,15 @@ TEST_F(EngineSyncTest, SetExplicitLeaderByLightsNoTracks) {
 TEST_F(EngineSyncTest, RateChangeTest) {
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->set(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync1->set(static_cast<double>(SyncMode::LeaderExplicit));
     auto pButtonLeaderSync2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
-    pButtonLeaderSync2->set(SYNC_FOLLOWER);
+    pButtonLeaderSync2->set(static_cast<double>(SyncMode::Follower));
     ProcessBuffer();
 
     // Set the file bpm of channel 1 to 160bpm.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 160, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(160));
     m_pTrack1->trySetBeats(pBeats1);
     EXPECT_DOUBLE_EQ(
             160.0, ControlObject::get(ConfigKey(m_sGroup1, "file_bpm")));
@@ -622,7 +639,8 @@ TEST_F(EngineSyncTest, RateChangeTest) {
             192.0, ControlObject::get(ConfigKey(m_sInternalClockGroup, "bpm")));
 
     // Set the file bpm of channel 2 to 120bpm.
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 120, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(120));
     m_pTrack2->trySetBeats(pBeats2);
     EXPECT_DOUBLE_EQ(
             120.0, ControlObject::get(ConfigKey(m_sGroup2, "file_bpm")));
@@ -637,20 +655,22 @@ TEST_F(EngineSyncTest, RateChangeTestWeirdOrder) {
     // This is like the test above, but the user loads the track after the slider has been tweaked.
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->slotSet(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync1->set(static_cast<double>(SyncMode::LeaderExplicit));
     auto pButtonLeaderSync2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
-    pButtonLeaderSync2->slotSet(SYNC_FOLLOWER);
+    pButtonLeaderSync2->set(static_cast<double>(SyncMode::Follower));
     ProcessBuffer();
 
     // Set the file bpm of channel 1 to 160bpm.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 160, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(160));
     m_pTrack1->trySetBeats(pBeats1);
     EXPECT_DOUBLE_EQ(
             160.0, ControlObject::get(ConfigKey(m_sInternalClockGroup, "bpm")));
 
     // Set the file bpm of channel 2 to 120bpm.
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 120, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(120));
     m_pTrack2->trySetBeats(pBeats2);
 
     // Set the rate slider of channel 1 to 1.2.
@@ -668,21 +688,23 @@ TEST_F(EngineSyncTest, RateChangeTestWeirdOrder) {
 
 TEST_F(EngineSyncTest, RateChangeTestOrder3) {
     // Set the file bpm of channel 1 to 160bpm.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 160, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(160));
     m_pTrack1->trySetBeats(pBeats1);
     EXPECT_DOUBLE_EQ(
             160.0, ControlObject::get(ConfigKey(m_sGroup1, "file_bpm")));
 
     // Set the file bpm of channel 2 to 120bpm.
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 120, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(120));
     m_pTrack2->trySetBeats(pBeats2);
     EXPECT_DOUBLE_EQ(
             120.0, ControlObject::get(ConfigKey(m_sGroup2, "file_bpm")));
 
-    // Turn on Leader. Even though it is explict leader, it still matches the other deck.
+    // Turn on Leader. Even though it is explicit leader, it still matches the other deck.
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->set(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync1->set(static_cast<double>(SyncMode::LeaderExplicit));
     ProcessBuffer();
     EXPECT_TRUE(isExplicitLeader(m_sGroup1));
     EXPECT_DOUBLE_EQ(120.0, ControlObject::get(ConfigKey(m_sGroup1, "bpm")));
@@ -690,7 +712,7 @@ TEST_F(EngineSyncTest, RateChangeTestOrder3) {
     // Turn on follower.
     auto pButtonLeaderSync2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
-    pButtonLeaderSync2->set(SYNC_FOLLOWER);
+    pButtonLeaderSync2->set(static_cast<double>(SyncMode::Follower));
     ProcessBuffer();
 
     // Follower should immediately set its slider.
@@ -706,18 +728,20 @@ TEST_F(EngineSyncTest, FollowerRateChange) {
     // Confirm that followers can change sync lock rate as well.
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->set(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync1->set(static_cast<double>(SyncMode::LeaderExplicit));
     auto pButtonLeaderSync2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
-    pButtonLeaderSync2->set(SYNC_FOLLOWER);
+    pButtonLeaderSync2->set(static_cast<double>(SyncMode::Follower));
     ProcessBuffer();
 
     // Set the file bpm of channel 1 to 160bpm.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 160, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(160));
     m_pTrack1->trySetBeats(pBeats1);
 
     // Set the file bpm of channel 2 to 120bpm.
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 120, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(120));
     m_pTrack2->trySetBeats(pBeats2);
 
     // Set the rate slider of channel 1 to 1.2.
@@ -748,10 +772,10 @@ TEST_F(EngineSyncTest, InternalRateChangeTest) {
     pButtonLeaderSyncInternal->set(1.0);
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->set(SYNC_FOLLOWER);
+    pButtonLeaderSync1->set(static_cast<double>(SyncMode::Follower));
     auto pButtonLeaderSync2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
-    pButtonLeaderSync2->set(SYNC_FOLLOWER);
+    pButtonLeaderSync2->set(static_cast<double>(SyncMode::Follower));
     ProcessBuffer();
 
     EXPECT_TRUE(isExplicitLeader(m_sInternalClockGroup));
@@ -759,13 +783,15 @@ TEST_F(EngineSyncTest, InternalRateChangeTest) {
     EXPECT_TRUE(isFollower(m_sGroup2));
 
     // Set the file bpm of channel 1 to 160bpm.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 160, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(160));
     m_pTrack1->trySetBeats(pBeats1);
     EXPECT_DOUBLE_EQ(160.0,
             ControlObject::getControl(ConfigKey(m_sGroup1, "file_bpm"))->get());
 
     // Set the file bpm of channel 2 to 120bpm.
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 120, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(120));
     m_pTrack2->trySetBeats(pBeats2);
     EXPECT_DOUBLE_EQ(120.0,
             ControlObject::getControl(ConfigKey(m_sGroup2, "file_bpm"))->get());
@@ -811,17 +837,19 @@ TEST_F(EngineSyncTest, InternalRateChangeTest) {
 
 TEST_F(EngineSyncTest, LeaderStopSliderCheck) {
     // If the leader is playing, and stop is pushed, the sliders should stay the same.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 120, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(120));
     m_pTrack1->trySetBeats(pBeats1);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 128, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(128));
     m_pTrack2->trySetBeats(pBeats2);
 
     auto pButtonLeaderSync2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_mode");
-    pButtonLeaderSync2->slotSet(SYNC_FOLLOWER);
+    pButtonLeaderSync2->set(static_cast<double>(SyncMode::Follower));
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->slotSet(SYNC_LEADER_EXPLICIT);
+    pButtonLeaderSync1->set(static_cast<double>(SyncMode::LeaderExplicit));
     ProcessBuffer();
 
     //EXPECT_TRUE(isExplicitLeader(m_sGroup1));
@@ -855,7 +883,8 @@ TEST_F(EngineSyncTest, EnableOneDeckInitsLeader) {
     ProcessBuffer();
 
     // Set up the deck to play.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 130, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(130));
     m_pTrack1->trySetBeats(pBeats1);
     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))
             ->set(getRateSliderValue(1.0));
@@ -865,7 +894,7 @@ TEST_F(EngineSyncTest, EnableOneDeckInitsLeader) {
     // Enable Sync.  We have to call requestEnableSync directly
     // because calling ProcessBuffer() tries to advance the beat_distance values.
     m_pEngineSync->requestSyncMode(
-            m_pEngineSync->getSyncableForGroup(m_sGroup1), SYNC_FOLLOWER);
+            m_pEngineSync->getSyncableForGroup(m_sGroup1), SyncMode::Follower);
 
     // Internal is no longer leader because there is exactly one playing deck.
     EXPECT_TRUE(isSoftLeader(m_sGroup1));
@@ -882,7 +911,8 @@ TEST_F(EngineSyncTest, EnableOneDeckInitsLeader) {
                     ConfigKey(m_sInternalClockGroup, "beat_distance")));
 
     // Enable second deck, bpm and beat distance should still match original setting.
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 140, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(140));
     m_pTrack2->trySetBeats(pBeats2);
     ControlObject::getControl(ConfigKey(m_sGroup2, "rate"))
             ->set(getRateSliderValue(1.0));
@@ -890,7 +920,7 @@ TEST_F(EngineSyncTest, EnableOneDeckInitsLeader) {
     ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(1.0);
 
     m_pEngineSync->requestSyncMode(
-            m_pEngineSync->getSyncableForGroup(m_sGroup2), SYNC_FOLLOWER);
+            m_pEngineSync->getSyncableForGroup(m_sGroup2), SyncMode::Follower);
     // Deck 1 is still soft leader.
     EXPECT_TRUE(isFollower(m_sInternalClockGroup));
     EXPECT_TRUE(isSoftLeader(m_sGroup1));
@@ -910,17 +940,19 @@ TEST_F(EngineSyncTest, MomentarySyncAlgorithmTwo) {
     m_pConfig->set(ConfigKey("[BPM]", "sync_lock_algorithm"),
             ConfigValue(EngineSync::PREFER_LOCK_BPM));
 
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 120, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(120));
     m_pTrack1->trySetBeats(pBeats1);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 128, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(128));
     m_pTrack2->trySetBeats(pBeats2);
 
     ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(1.0);
 
     auto pButtonSyncEnabled1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_enabled");
-    pButtonSyncEnabled1->slotSet(1.0);
-    pButtonSyncEnabled1->slotSet(0.0);
+    pButtonSyncEnabled1->set(1.0);
+    pButtonSyncEnabled1->set(0.0);
 
     ProcessBuffer();
 
@@ -930,7 +962,8 @@ TEST_F(EngineSyncTest, MomentarySyncAlgorithmTwo) {
 TEST_F(EngineSyncTest, EnableOneDeckInitializesLeader) {
     // Enabling sync on a deck causes it to be leader, and sets bpm and clock.
     // Set the deck to play.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 130, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(130));
     m_pTrack1->trySetBeats(pBeats1);
     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))
             ->set(getRateSliderValue(1.0));
@@ -940,7 +973,7 @@ TEST_F(EngineSyncTest, EnableOneDeckInitializesLeader) {
     // Set the deck to follower.
     // As above, use direct call to avoid advancing beat distance.
     m_pEngineSync->requestSyncMode(
-            m_pEngineSync->getSyncableForGroup(m_sGroup1), SYNC_FOLLOWER);
+            m_pEngineSync->getSyncableForGroup(m_sGroup1), SyncMode::Follower);
 
     // That first deck is now leader
     EXPECT_TRUE(isSoftLeader(m_sGroup1));
@@ -968,10 +1001,10 @@ TEST_F(EngineSyncTest, LoadTrackInitializesLeader) {
 
     auto pButtonSyncEnabled1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_enabled");
-    pButtonSyncEnabled1->slotSet(1.0);
+    pButtonSyncEnabled1->set(1.0);
 
     // No leader because this deck has no track.
-    EXPECT_EQ(NULL, m_pEngineSync->getLeaderChannel());
+    EXPECT_EQ(nullptr, m_pEngineSync->getLeaderChannel());
     EXPECT_DOUBLE_EQ(
             0.0, ControlObject::getControl(ConfigKey(m_sGroup1, "bpm"))->get());
 
@@ -994,7 +1027,7 @@ TEST_F(EngineSyncTest, LoadTrackInitializesLeader) {
 
     auto pButtonSyncEnabled2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_enabled");
-    pButtonSyncEnabled2->slotSet(1.0);
+    pButtonSyncEnabled2->set(1.0);
 
     m_pMixerDeck1->loadFakeTrack(false, 128.0);
 
@@ -1066,20 +1099,20 @@ TEST_F(EngineSyncTest, LoadTrackResetTempoOption) {
     EXPECT_DOUBLE_EQ(140.0, ControlObject::get(ConfigKey(m_sGroup1, "bpm")));
     EXPECT_DOUBLE_EQ(140.0, ControlObject::get(ConfigKey(m_sGroup2, "bpm")));
 
-    // Repeat with RESET_NONE
+    // Even when RESET_NONE is on, sync lock is more important -- do not change
+    // the speed of the playing deck.
     EXPECT_TRUE(isSoftLeader(m_sGroup1));
     m_pConfig->set(ConfigKey("[Controls]", "SpeedAutoReset"),
             ConfigValue(BaseTrackPlayer::RESET_NONE));
     ControlObject::set(ConfigKey(m_sGroup1, "play"), 0.0);
-    ControlObject::set(ConfigKey(m_sGroup1, "rate"), getRateSliderValue(1.0));
-    ControlObject::set(ConfigKey(m_sGroup2, "rate"), getRateSliderValue(1.0));
     track1 = m_pMixerDeck1->loadFakeTrack(false, 124.0);
+    ControlObject::set(ConfigKey(m_sGroup1, "rate"), getRateSliderValue(1.0));
     ControlObject::set(ConfigKey(m_sGroup1, "play"), 1.0);
     track2 = m_pMixerDeck2->loadFakeTrack(false, 128.0);
     EXPECT_DOUBLE_EQ(
-            128.0, ControlObject::get(ConfigKey(m_sInternalClockGroup, "bpm")));
-    EXPECT_DOUBLE_EQ(128.0, ControlObject::get(ConfigKey(m_sGroup1, "bpm")));
-    EXPECT_DOUBLE_EQ(128.0, ControlObject::get(ConfigKey(m_sGroup2, "bpm")));
+            124.0, ControlObject::get(ConfigKey(m_sInternalClockGroup, "bpm")));
+    EXPECT_DOUBLE_EQ(124.0, ControlObject::get(ConfigKey(m_sGroup1, "bpm")));
+    EXPECT_DOUBLE_EQ(124.0, ControlObject::get(ConfigKey(m_sGroup2, "bpm")));
 
     // Load two tracks with sync off and RESET_SPEED
     m_pConfig->set(ConfigKey("[Controls]", "SpeedAutoReset"),
@@ -1105,8 +1138,8 @@ TEST_F(EngineSyncTest, LoadTrackResetTempoOption) {
             ->set(getRateSliderValue(1.5));
     ControlObject::getControl(ConfigKey(m_sGroup2, "rate"))
             ->set(getRateSliderValue(1.5));
-    pButtonSyncEnabled1->slotSet(0.0);
-    pButtonSyncEnabled2->slotSet(0.0);
+    pButtonSyncEnabled1->set(0.0);
+    pButtonSyncEnabled2->set(0.0);
     track1 = m_pMixerDeck1->loadFakeTrack(false, 140.0);
     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
     track2 = m_pMixerDeck2->loadFakeTrack(false, 128.0);
@@ -1121,13 +1154,14 @@ TEST_F(EngineSyncTest, EnableOneDeckSliderUpdates) {
     auto pButtonSyncEnabled1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_enabled");
 
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 130, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(130));
     m_pTrack1->trySetBeats(pBeats1);
     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))
             ->set(getRateSliderValue(1.0));
 
     // Set the deck to sync enabled.
-    pButtonSyncEnabled1->slotSet(1.0);
+    pButtonSyncEnabled1->set(1.0);
     ProcessBuffer();
 
     // Group 1 should now be leader (only one sync deck).
@@ -1148,11 +1182,13 @@ TEST_F(EngineSyncTest, SyncToNonSyncDeck) {
     auto pButtonSyncEnabled2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_enabled");
 
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 130, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(130));
     m_pTrack1->trySetBeats(pBeats1);
     ProcessBuffer();
     ControlObject::set(ConfigKey(m_sGroup1, "rate"), getRateSliderValue(1.0));
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 100, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(100));
     m_pTrack2->trySetBeats(pBeats2);
     ControlObject::getControl(ConfigKey(m_sGroup2, "rate"))
             ->set(getRateSliderValue(1.0));
@@ -1188,9 +1224,10 @@ TEST_F(EngineSyncTest, SyncToNonSyncDeck) {
                     ConfigKey(m_sInternalClockGroup, "sync_leader")));
     EXPECT_DOUBLE_EQ(
             100.0, ControlObject::get(ConfigKey(m_sInternalClockGroup, "bpm")));
-    EXPECT_EQ(NULL, m_pEngineSync->getLeaderChannel());
+    EXPECT_EQ(nullptr, m_pEngineSync->getLeaderChannel());
     EXPECT_EQ(NULL, m_pEngineSync->getLeaderSyncable());
-    EXPECT_EQ(SYNC_NONE, ControlObject::get(ConfigKey(m_sGroup1, "sync_mode")));
+    EXPECT_EQ(static_cast<double>(SyncMode::None),
+            ControlObject::get(ConfigKey(m_sGroup1, "sync_mode")));
     EXPECT_EQ(0, ControlObject::get(ConfigKey(m_sGroup1, "sync_enabled")));
     EXPECT_EQ(0, ControlObject::get(ConfigKey(m_sGroup1, "sync_leader")));
     EXPECT_DOUBLE_EQ(getRateSliderValue(100.0 / 130.0),
@@ -1213,9 +1250,10 @@ TEST_F(EngineSyncTest, SyncToNonSyncDeck) {
                     ConfigKey(m_sInternalClockGroup, "sync_leader")));
     EXPECT_DOUBLE_EQ(
             100.0, ControlObject::get(ConfigKey(m_sInternalClockGroup, "bpm")));
-    EXPECT_EQ(NULL, m_pEngineSync->getLeaderChannel());
+    EXPECT_EQ(nullptr, m_pEngineSync->getLeaderChannel());
     EXPECT_EQ(NULL, m_pEngineSync->getLeaderSyncable());
-    EXPECT_EQ(SYNC_NONE, ControlObject::get(ConfigKey(m_sGroup2, "sync_mode")));
+    EXPECT_EQ(static_cast<double>(SyncMode::None),
+            ControlObject::get(ConfigKey(m_sGroup2, "sync_mode")));
     EXPECT_EQ(0, ControlObject::get(ConfigKey(m_sGroup2, "sync_enabled")));
     EXPECT_EQ(0, ControlObject::get(ConfigKey(m_sGroup2, "sync_leader")));
     EXPECT_DOUBLE_EQ(getRateSliderValue(1.0),
@@ -1232,11 +1270,13 @@ TEST_F(EngineSyncTest, MomentarySyncDependsOnPlayingStates) {
             std::make_unique<ControlProxy>(m_sGroup2, "sync_enabled");
 
     // Set up decks so they can be playing, and start deck 1.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 100, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(100));
     m_pTrack1->trySetBeats(pBeats1);
     ControlObject::set(ConfigKey(m_sGroup1, "rate"), getRateSliderValue(1.0));
     ControlObject::set(ConfigKey(m_sGroup1, "play"), 1.0);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 130, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(130));
     m_pTrack2->trySetBeats(pBeats2);
     ControlObject::set(ConfigKey(m_sGroup2, "rate"), getRateSliderValue(1.0));
     ControlObject::set(ConfigKey(m_sGroup2, "play"), 1.0);
@@ -1306,7 +1346,8 @@ TEST_F(EngineSyncTest, EjectTrackSyncRemains) {
             std::make_unique<ControlProxy>(m_sGroup2, "sync_enabled");
     auto pButtonEject1 = std::make_unique<ControlProxy>(m_sGroup1, "eject");
 
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 120, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(120));
     m_pTrack1->trySetBeats(pBeats1);
     pButtonSyncEnabled1->set(1.0);
     ProcessBuffer();
@@ -1331,7 +1372,8 @@ TEST_F(EngineSyncTest, EjectTrackSyncRemains) {
     m_pMixerDeck1->loadFakeTrack(false, 128.0);
     EXPECT_DOUBLE_EQ(128.0,
             ControlObject::getControl(ConfigKey(m_sGroup1, "bpm"))->get());
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 135, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(135));
     m_pTrack2->trySetBeats(pBeats2);
     pButtonSyncEnabled2->set(1.0);
     ProcessBuffer();
@@ -1351,14 +1393,16 @@ TEST_F(EngineSyncTest, EjectTrackSyncRemains) {
 
 TEST_F(EngineSyncTest, FileBpmChangesDontAffectLeader) {
     // If filebpm changes, don't treat it like a rate change.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 100, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(100));
     m_pTrack1->trySetBeats(pBeats1);
     auto pButtonSyncEnabled1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_enabled");
     pButtonSyncEnabled1->set(1.0);
     ProcessBuffer();
 
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 120, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(120));
     m_pTrack2->trySetBeats(pBeats2);
     auto pButtonSyncEnabled2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_enabled");
@@ -1369,7 +1413,8 @@ TEST_F(EngineSyncTest, FileBpmChangesDontAffectLeader) {
     EXPECT_TRUE(isFollower(m_sGroup2));
 
     // Update the leader's beats -- update the internal clock
-    pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 160, 0.0);
+    pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(160));
     m_pTrack1->trySetBeats(pBeats1);
     EXPECT_DOUBLE_EQ(
             160.0, ControlObject::get(ConfigKey(m_sGroup1, "bpm")));
@@ -1379,7 +1424,8 @@ TEST_F(EngineSyncTest, FileBpmChangesDontAffectLeader) {
     EXPECT_TRUE(isSoftLeader(m_sGroup1));
 
     // Update follower beats -- don't update internal clock.
-    pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 140, 0.0);
+    pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(140));
     m_pTrack2->trySetBeats(pBeats2);
     EXPECT_DOUBLE_EQ(
             160.0, ControlObject::get(ConfigKey(m_sInternalClockGroup, "bpm")));
@@ -1390,8 +1436,9 @@ TEST_F(EngineSyncTest, ExplicitLeaderPostProcessed) {
     // channel gets post-processed.
     auto pButtonLeaderSync1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_mode");
-    pButtonLeaderSync1->slotSet(SYNC_LEADER_EXPLICIT);
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 160, 0.0);
+    pButtonLeaderSync1->set(static_cast<double>(SyncMode::LeaderExplicit));
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(160));
     m_pTrack1->trySetBeats(pBeats1);
     ProcessBuffer();
     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
@@ -1405,8 +1452,7 @@ TEST_F(EngineSyncTest, ExplicitLeaderPostProcessed) {
 TEST_F(EngineSyncTest, ZeroBPMRateAdjustIgnored) {
     // If a track isn't loaded (0 bpm), but the deck has sync enabled,
     // don't pay attention to rate changes.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 0, 0.0);
-    m_pTrack1->trySetBeats(pBeats1);
+    m_pTrack1->trySetBeats(nullptr);
     auto pButtonSyncEnabled1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_enabled");
     pButtonSyncEnabled1->set(1.0);
@@ -1414,7 +1460,8 @@ TEST_F(EngineSyncTest, ZeroBPMRateAdjustIgnored) {
             ->set(getRateSliderValue(1.0));
     ProcessBuffer();
 
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 120, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(120));
     m_pTrack2->trySetBeats(pBeats2);
     auto pButtonSyncEnabled2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_enabled");
@@ -1430,7 +1477,7 @@ TEST_F(EngineSyncTest, ZeroBPMRateAdjustIgnored) {
     // Also try with explicit leader/follower setting
     pButtonSyncEnabled1->set(0.0);
     ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))
-            ->set(SYNC_LEADER_EXPLICIT);
+            ->set(static_cast<double>(SyncMode::LeaderExplicit));
 
     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))
             ->set(getRateSliderValue(1.4));
@@ -1439,7 +1486,7 @@ TEST_F(EngineSyncTest, ZeroBPMRateAdjustIgnored) {
 
     pButtonSyncEnabled1->set(0.0);
     ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
 
     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))
             ->set(getRateSliderValue(0.9));
@@ -1447,36 +1494,41 @@ TEST_F(EngineSyncTest, ZeroBPMRateAdjustIgnored) {
             ControlObject::getControl(ConfigKey(m_sGroup2, "rate"))->get());
 }
 
-TEST_F(EngineSyncTest, DISABLED_BeatDistanceBeforeStart) {
+TEST_F(EngineSyncTest, BeatDistanceBeforeStart) {
+    // https://bugs.launchpad.net/mixxx/+bug/1930143
     // If the start position is before zero, we should still initialize the beat distance
     // correctly.  Unfortunately, this currently doesn't work.
 
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 128, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(128));
     m_pTrack1->trySetBeats(pBeats1);
+    ControlObject::getControl(ConfigKey(m_sGroup1, "quantize"))->set(1.0);
     ControlObject::set(ConfigKey(m_sGroup1, "playposition"), -.05);
-    ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))
-            ->set(SYNC_LEADER_SOFT);
+    ProcessBuffer();
     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
     ProcessBuffer();
-    EXPECT_NEAR(
+    // This fraction is one buffer beyond the seek position -- indicating that
+    // we seeked correctly.
+    EXPECT_NEAR(0.49143461829176116,
             ControlObject::getControl(ConfigKey(m_sGroup1, "beat_distance"))->get(),
-            ControlObject::getControl(ConfigKey(m_sInternalClockGroup, "beat_distance"))->get(),
             kMaxBeatDistanceEpsilon);
 }
 
 TEST_F(EngineSyncTest, ZeroLatencyRateChangeNoQuant) {
     // Confirm that a rate change in an explicit leader is instantly communicated
     // to followers.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 128, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(128));
     m_pTrack1->trySetBeats(pBeats1);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 160, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(160));
     m_pTrack2->trySetBeats(pBeats2);
 
     // Make Channel2 leader to weed out any channel ordering issues.
     ControlObject::getControl(ConfigKey(m_sGroup2, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
     ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
     // Exaggerate the effect with a high rate.
     ControlObject::set(ConfigKey(m_sGroup2, "rate_ratio"), 10.0);
 
@@ -1515,9 +1567,11 @@ TEST_F(EngineSyncTest, ZeroLatencyRateChangeNoQuant) {
 TEST_F(EngineSyncTest, ZeroLatencyRateChangeQuant) {
     // Confirm that a rate change in an explicit leader is instantly communicated
     // to followers.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 128, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(128));
     m_pTrack1->trySetBeats(pBeats1);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 160, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(160));
     m_pTrack2->trySetBeats(pBeats2);
 
     ControlObject::getControl(ConfigKey(m_sGroup1, "quantize"))->set(1.0);
@@ -1525,9 +1579,9 @@ TEST_F(EngineSyncTest, ZeroLatencyRateChangeQuant) {
 
     // Make Channel2 leader to weed out any channel ordering issues.
     ControlObject::getControl(ConfigKey(m_sGroup2, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
     ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
     // Exaggerate the effect with a high rate.
     ControlObject::set(ConfigKey(m_sGroup2, "rate_ratio"), 10.0);
 
@@ -1568,18 +1622,20 @@ TEST_F(EngineSyncTest, ZeroLatencyRateChangeQuant) {
 TEST_F(EngineSyncTest, ZeroLatencyRateDiffQuant) {
     // Confirm that a rate change in an explicit leader is instantly communicated
     // to followers.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 128, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(128));
     m_pTrack1->trySetBeats(pBeats1);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 160, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(160));
     m_pTrack2->trySetBeats(pBeats2);
 
     ControlObject::getControl(ConfigKey(m_sGroup2, "quantize"))->set(1.0);
 
     // Make Channel2 leader to weed out any channel ordering issues.
     ControlObject::getControl(ConfigKey(m_sGroup2, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
     ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
     // Exaggerate the effect with a high rate.
     ControlObject::set(ConfigKey(m_sGroup2, "rate_ratio"), 10.0);
 
@@ -1622,9 +1678,11 @@ TEST_F(EngineSyncTest, ZeroLatencyRateDiffQuant) {
 // need to check. The Sync feature is unfortunately brittle.
 // This test exercises https://bugs.launchpad.net/mixxx/+bug/1884324
 TEST_F(EngineSyncTest, ActivatingSyncDoesNotCauseDrifting) {
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 150, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(150));
     m_pTrack1->trySetBeats(pBeats1);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 150, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(150));
     m_pTrack2->trySetBeats(pBeats2);
 
     ControlObject::getControl(ConfigKey(m_sGroup1, "quantize"))->set(0.0);
@@ -1643,11 +1701,11 @@ TEST_F(EngineSyncTest, ActivatingSyncDoesNotCauseDrifting) {
 
     // engage first sync-leader
     ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
 
     // engage second Sync-leader
     ControlObject::getControl(ConfigKey(m_sGroup2, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
 
     // Run for a number of buffers
     for (int i = 0; i < 25; ++i) {
@@ -1666,9 +1724,11 @@ TEST_F(EngineSyncTest, ActivatingSyncDoesNotCauseDrifting) {
 }
 
 TEST_F(EngineSyncTest, HalfDoubleBpmTest) {
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 70, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(70));
     m_pTrack1->trySetBeats(pBeats1);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 140, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(140));
     m_pTrack2->trySetBeats(pBeats2);
 
     // Mixxx will choose the first playing deck to be leader.  Let's start deck 2 first.
@@ -1716,9 +1776,9 @@ TEST_F(EngineSyncTest, HalfDoubleBpmTest) {
     ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(0.0);
 
     ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))
-            ->set(SYNC_NONE);
+            ->set(static_cast<double>(SyncMode::None));
     ControlObject::getControl(ConfigKey(m_sGroup2, "sync_mode"))
-            ->set(SYNC_NONE);
+            ->set(static_cast<double>(SyncMode::None));
 
     EXPECT_EQ(1.0,
             m_pChannel1->getEngineBuffer()
@@ -1728,9 +1788,9 @@ TEST_F(EngineSyncTest, HalfDoubleBpmTest) {
                     ->m_pSyncControl->m_leaderBpmAdjustFactor);
 
     ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
     ControlObject::getControl(ConfigKey(m_sGroup2, "sync_mode"))
-            ->set(SYNC_FOLLOWER);
+            ->set(static_cast<double>(SyncMode::Follower));
     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))
             ->set(getRateSliderValue(1.0));
 
@@ -1763,9 +1823,11 @@ TEST_F(EngineSyncTest, HalfDoubleBpmTest) {
 TEST_F(EngineSyncTest, HalfDoubleThenPlay) {
     // If a deck plays that had its multiplier set, we need to reset the
     // internal clock.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 80, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(80));
     m_pTrack1->trySetBeats(pBeats1);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 175, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(175));
     m_pTrack2->trySetBeats(pBeats2);
     ControlObject::getControl(ConfigKey(m_sGroup1, "rate"))
             ->set(getRateSliderValue(1.0));
@@ -1774,10 +1836,10 @@ TEST_F(EngineSyncTest, HalfDoubleThenPlay) {
 
     auto pButtonSyncEnabled1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_enabled");
-    pButtonSyncEnabled1->slotSet(1.0);
+    pButtonSyncEnabled1->set(1.0);
     auto pButtonSyncEnabled2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_enabled");
-    pButtonSyncEnabled2->slotSet(1.0);
+    pButtonSyncEnabled2->set(1.0);
     ControlObject::getControl(ConfigKey(m_sGroup1, "quantize"))->set(1.0);
     ControlObject::getControl(ConfigKey(m_sGroup2, "quantize"))->set(1.0);
 
@@ -1835,11 +1897,11 @@ TEST_F(EngineSyncTest, HalfDoubleThenPlay) {
     // Sync only cares about which deck plays first now, enable order is irrelevant.
     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(0.0);
     ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(0.0);
-    pButtonSyncEnabled1->slotSet(0.0);
-    pButtonSyncEnabled2->slotSet(0.0);
+    pButtonSyncEnabled1->set(0.0);
+    pButtonSyncEnabled2->set(0.0);
     ProcessBuffer();
-    pButtonSyncEnabled2->slotSet(1.0);
-    pButtonSyncEnabled1->slotSet(1.0);
+    pButtonSyncEnabled2->set(1.0);
+    pButtonSyncEnabled1->set(1.0);
     EXPECT_DOUBLE_EQ(0.5,
             m_pChannel1->getEngineBuffer()
                     ->m_pSyncControl->m_leaderBpmAdjustFactor);
@@ -1886,9 +1948,11 @@ TEST_F(EngineSyncTest, HalfDoubleThenPlay) {
 
 TEST_F(EngineSyncTest, HalfDoubleInternalClockTest) {
     // If we set the file_bpm CO's directly, the correct signals aren't fired.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 70, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(70));
     m_pTrack1->trySetBeats(pBeats1);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 140, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(140));
     m_pTrack2->trySetBeats(pBeats2);
 
     ControlObject::getControl(ConfigKey(m_sGroup1, "quantize"))->set(1.0);
@@ -1907,9 +1971,11 @@ TEST_F(EngineSyncTest, HalfDoubleInternalClockTest) {
 }
 
 namespace {
-QVector<double> createBeatVector(
-        double first_beat, unsigned int num_beats, double beat_length) {
-    QVector<double> beats;
+QVector<mixxx::audio::FramePos> createBeatVector(
+        mixxx::audio::FramePos first_beat,
+        unsigned int num_beats,
+        mixxx::audio::FrameDiff_t beat_length) {
+    QVector<mixxx::audio::FramePos> beats;
     for (unsigned int i = 0; i < num_beats; ++i) {
         beats.append(first_beat + i * beat_length);
     }
@@ -1919,18 +1985,18 @@ QVector<double> createBeatVector(
 
 TEST_F(EngineSyncTest, HalfDoubleConsistency) {
     // half-double matching should be consistent
-    double beatLengthFrames = 60.0 * 44100 / 90.0;
-    double startOffsetFrames = 0;
-    const int numBeats = 100;
-    QVector<double> beats1 =
+    mixxx::audio::FrameDiff_t beatLengthFrames = 60.0 * 44100 / 90.0;
+    constexpr auto startOffsetFrames = mixxx::audio::kStartFramePos;
+    constexpr int numBeats = 100;
+    QVector<mixxx::audio::FramePos> beats1 =
             createBeatVector(startOffsetFrames, numBeats, beatLengthFrames);
-    auto pBeats1 = mixxx::BeatMap::makeBeatMap(m_pTrack1->getSampleRate(), QString(), beats1);
+    auto pBeats1 = mixxx::Beats::fromBeatPositions(m_pTrack1->getSampleRate(), beats1);
     m_pTrack1->trySetBeats(pBeats1);
 
     beatLengthFrames = 60.0 * 44100 / 145.0;
-    QVector<double> beats2 =
+    QVector<mixxx::audio::FramePos> beats2 =
             createBeatVector(startOffsetFrames, numBeats, beatLengthFrames);
-    auto pBeats2 = mixxx::BeatMap::makeBeatMap(m_pTrack2->getSampleRate(), QString(), beats2);
+    auto pBeats2 = mixxx::Beats::fromBeatPositions(m_pTrack2->getSampleRate(), beats2);
     m_pTrack2->trySetBeats(pBeats2);
 
     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
@@ -1959,9 +2025,11 @@ TEST_F(EngineSyncTest, HalfDoubleEachOther) {
     // Confirm that repeated sync with both decks leads to the same
     // Half/Double decision.
     // This test demonstrates https://bugs.launchpad.net/mixxx/+bug/1921962
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 144, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(144));
     m_pTrack1->trySetBeats(pBeats1);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 105, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(105));
     m_pTrack2->trySetBeats(pBeats2);
 
     // Threshold 1.414 sqrt(2);
@@ -1986,7 +2054,8 @@ TEST_F(EngineSyncTest, HalfDoubleEachOther) {
     // 105 / 75 = 1.40
     // expect 75 BPM
 
-    mixxx::BeatsPointer pBeats1b = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 150, 0.0);
+    mixxx::BeatsPointer pBeats1b = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(150));
     m_pTrack1->trySetBeats(pBeats1b);
 
     EXPECT_DOUBLE_EQ(150.0,
@@ -2007,10 +2076,11 @@ TEST_F(EngineSyncTest, HalfDoubleEachOther) {
 
 TEST_F(EngineSyncTest, SetFileBpmUpdatesLocalBpm) {
     ControlObject::getControl(ConfigKey(m_sGroup1, "beat_distance"))->set(0.2);
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 130, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(130));
     m_pTrack1->trySetBeats(pBeats1);
     EXPECT_EQ(
-            130.0, m_pEngineSync->getSyncableForGroup(m_sGroup1)->getBaseBpm());
+            mixxx::Bpm(130.0), m_pEngineSync->getSyncableForGroup(m_sGroup1)->getBaseBpm());
 }
 
 TEST_F(EngineSyncTest, SyncPhaseToPlayingNonSyncDeck) {
@@ -2019,14 +2089,16 @@ TEST_F(EngineSyncTest, SyncPhaseToPlayingNonSyncDeck) {
 
     auto pButtonSyncEnabled1 =
             std::make_unique<ControlProxy>(m_sGroup1, "sync_enabled");
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 130, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(130));
     m_pTrack1->trySetBeats(pBeats1);
     ControlObject::getControl(ConfigKey(m_sGroup1, "quantize"))->set(1.0);
 
     auto pButtonSyncEnabled2 =
             std::make_unique<ControlProxy>(m_sGroup2, "sync_enabled");
     ControlObject::set(ConfigKey(m_sGroup2, "rate_ratio"), 1.0);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 100, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(100));
     m_pTrack2->trySetBeats(pBeats2);
 
     // Set the sync deck playing with nothing else active.
@@ -2109,7 +2181,8 @@ TEST_F(EngineSyncTest, SyncPhaseToPlayingNonSyncDeck) {
             std::make_unique<ControlProxy>(m_sGroup3, "sync_enabled");
     ControlObject::set(ConfigKey(m_sGroup3, "beat_distance"), 0.6);
     ControlObject::set(ConfigKey(m_sGroup2, "rate_ratio"), 1.0);
-    mixxx::BeatsPointer pBeats3 = BeatFactory::makeBeatGrid(m_pTrack3->getSampleRate(), 140, 0.0);
+    mixxx::BeatsPointer pBeats3 = mixxx::Beats::fromConstTempo(
+            m_pTrack3->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(140));
     m_pTrack3->trySetBeats(pBeats3);
     // This will sync to the first deck here and not the second (lp1784185)
     pButtonSyncEnabled3->set(1.0);
@@ -2154,9 +2227,11 @@ TEST_F(EngineSyncTest, UserTweakBeatDistance) {
     // If a deck has a user tweak, and another deck stops such that the first
     // is used to reseed the leader beat distance, make sure the user offset
     // is reset.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 128, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(128));
     m_pTrack1->trySetBeats(pBeats1);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 128, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(128));
     m_pTrack2->trySetBeats(pBeats2);
 
     ControlObject::getControl(ConfigKey(m_sGroup1, "quantize"))->set(1.0);
@@ -2190,11 +2265,9 @@ TEST_F(EngineSyncTest, UserTweakBeatDistance) {
     // Play a buffer, which is enough to see if the beat distances align.
     ProcessBuffer();
 
-    EXPECT_NEAR(ControlObject::getControl(ConfigKey(m_sGroup1, "beat_distance"))
-                        ->get(),
-            ControlObject::getControl(
-                    ConfigKey(m_sInternalClockGroup, "beat_distance"))
-                    ->get(),
+    EXPECT_NEAR(
+            ControlObject::getControl(ConfigKey(m_sGroup1, "beat_distance"))->get(),
+            ControlObject::getControl(ConfigKey(m_sInternalClockGroup, "beat_distance"))->get(),
             .00001);
 
     EXPECT_DOUBLE_EQ(0.0,
@@ -2206,11 +2279,12 @@ TEST_F(EngineSyncTest, UserTweakPreservedInSeek) {
     // Ensure that when we do a seek during sync lock, the user offset is maintained.
 
     // This is about 128 bpm, but results in nice round numbers of samples.
-    const double kDivisibleBpm = 44100.0 / 344.0;
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(
-            m_pTrack1->getSampleRate(), kDivisibleBpm, 0.0);
+    constexpr double kDivisibleBpm = 44100.0 / 344.0;
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(kDivisibleBpm));
     m_pTrack1->trySetBeats(pBeats1);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 130, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(130));
     m_pTrack2->trySetBeats(pBeats2);
 
     ControlObject::getControl(ConfigKey(m_sGroup2, "sync_enabled"))->set(1);
@@ -2286,12 +2360,12 @@ TEST_F(EngineSyncTest, FollowerUserTweakPreservedInLeaderChange) {
     // reinitializing the leader parameters..
 
     // This is about 128 bpm, but results in nice round numbers of samples.
-    const double kDivisibleBpm = 44100.0 / 344.0;
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(
-            m_pTrack1->getSampleRate(), 130, 0.0);
+    constexpr double kDivisibleBpm = 44100.0 / 344.0;
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(130));
     m_pTrack1->trySetBeats(pBeats1);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(
-            m_pTrack2->getSampleRate(), kDivisibleBpm, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(kDivisibleBpm));
     m_pTrack2->trySetBeats(pBeats2);
 
     ControlObject::getControl(ConfigKey(m_sGroup1, "sync_leader"))->set(1);
@@ -2334,16 +2408,51 @@ TEST_F(EngineSyncTest, FollowerUserTweakPreservedInLeaderChange) {
     }
 }
 
+TEST_F(EngineSyncTest, FollowerUserTweakPreservedInSyncDisable) {
+    // Ensure that when a follower disables sync, a phase seek is not performed.
+    // This is about 128 bpm, but results in nice round numbers of samples.
+    constexpr double kDivisibleBpm = 44100.0 / 344.0;
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(kDivisibleBpm));
+    m_pTrack1->trySetBeats(pBeats1);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(130));
+    m_pTrack2->trySetBeats(pBeats2);
+
+    ControlObject::getControl(ConfigKey(m_sGroup1, "sync_leader"))->set(1);
+    ControlObject::getControl(ConfigKey(m_sGroup2, "sync_enabled"))->set(1);
+    ControlObject::set(ConfigKey(m_sGroup1, "quantize"), 1.0);
+    ControlObject::set(ConfigKey(m_sGroup2, "quantize"), 1.0);
+    ControlObject::set(ConfigKey(m_sGroup1, "play"), 1.0);
+    ControlObject::set(ConfigKey(m_sGroup2, "play"), 1.0);
+    ProcessBuffer();
+
+    // Apply user tweak offset to follower
+    m_pChannel2->getEngineBuffer()
+            ->m_pBpmControl->m_dUserOffset.setValue(0.3);
+
+    EXPECT_TRUE(isExplicitLeader(m_sGroup1));
+    EXPECT_TRUE(isFollower(m_sGroup2));
+
+    ProcessBuffer();
+
+    // Disable sync, no seek should occur
+    ControlObject::getControl(ConfigKey(m_sGroup2, "sync_enabled"))->set(0);
+    ProcessBuffer();
+    EXPECT_FALSE(m_pChannel2->getEngineBuffer()->previousBufferSeek());
+}
+
 TEST_F(EngineSyncTest, LeaderUserTweakPreservedInLeaderChange) {
     // Ensure that when the leader deck changes, the user offset is accounted for when
     // reinitializing the leader parameters..
 
     // This is about 128 bpm, but results in nice round numbers of samples.
-    const double kDivisibleBpm = 44100.0 / 344.0;
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(
-            m_pTrack1->getSampleRate(), kDivisibleBpm, 0.0);
+    constexpr double kDivisibleBpm = 44100.0 / 344.0;
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(kDivisibleBpm));
     m_pTrack1->trySetBeats(pBeats1);
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 130, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(130));
     m_pTrack2->trySetBeats(pBeats2);
 
     ControlObject::getControl(ConfigKey(m_sGroup2, "sync_enabled"))->set(1);
@@ -2388,7 +2497,8 @@ TEST_F(EngineSyncTest, LeaderUserTweakPreservedInLeaderChange) {
 }
 
 TEST_F(EngineSyncTest, LeaderBpmNeverZero) {
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 128, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(128));
     m_pTrack1->trySetBeats(pBeats1);
 
     auto pButtonSyncEnabled1 = std::make_unique<ControlProxy>(m_sGroup1, "sync_enabled");
@@ -2403,8 +2513,7 @@ TEST_F(EngineSyncTest, ZeroBpmNaturalRate) {
     // If a track has a zero bpm and a bad beatgrid, make sure the rate
     // doesn't end up something crazy when sync is enabled..
     // Maybe the beatgrid ended up at zero also.
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 0.0, 0.0);
-    m_pTrack1->trySetBeats(pBeats1);
+    m_pTrack1->trySetBeats(nullptr);
 
     auto pButtonSyncEnabled1 = std::make_unique<ControlProxy>(m_sGroup1, "sync_enabled");
     pButtonSyncEnabled1->set(1.0);
@@ -2422,11 +2531,13 @@ TEST_F(EngineSyncTest, QuantizeImpliesSyncPhase) {
     auto pButtonBeatsync1 = std::make_unique<ControlProxy>(m_sGroup1, "beatsync");
     auto pButtonBeatsyncPhase1 = std::make_unique<ControlProxy>(m_sGroup1, "beatsync_phase");
 
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 130, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(130));
     m_pTrack1->trySetBeats(pBeats1);
 
     ControlObject::set(ConfigKey(m_sGroup2, "rate"), getRateSliderValue(1.0));
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 100, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(100));
     m_pTrack2->trySetBeats(pBeats2);
 
     ProcessBuffer();
@@ -2518,7 +2629,8 @@ TEST_F(EngineSyncTest, QuantizeImpliesSyncPhase) {
 TEST_F(EngineSyncTest, SeekStayInPhase) {
     ControlObject::set(ConfigKey(m_sGroup1, "quantize"), 1.0);
 
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 130, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(130));
     m_pTrack1->trySetBeats(pBeats1);
 
     ControlObject::set(ConfigKey(m_sGroup1, "play"), 1.0);
@@ -2540,7 +2652,8 @@ TEST_F(EngineSyncTest, SeekStayInPhase) {
     ControlObject::set(ConfigKey(m_sGroup1, "play"), 0.0);
     ProcessBuffer();
 
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 130, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(130));
     m_pTrack2->trySetBeats(pBeats2);
 
     ControlObject::set(ConfigKey(m_sGroup1, "play"), 1.0);
@@ -2560,9 +2673,79 @@ TEST_F(EngineSyncTest, SeekStayInPhase) {
     EXPECT_DOUBLE_EQ(0.18925937554508981, ControlObject::get(ConfigKey(m_sGroup1, "playposition")));
 }
 
+TEST_F(EngineSyncTest, ScratchEndOtherStoppedTrackStayInPhase) {
+    // After scratching, confirm that we are still in phase.
+    // This version tests with a stopped other track.
+    mixxx::BeatsPointer pBeats1 =
+            mixxx::Beats::fromConstTempo(m_pTrack1->getSampleRate(),
+                    mixxx::audio::kStartFramePos,
+                    mixxx::Bpm(130));
+    m_pTrack1->trySetBeats(pBeats1);
+    ControlObject::set(ConfigKey(m_sGroup1, "quantize"), 1.0);
+    ControlObject::set(ConfigKey(m_sGroup1, "sync_enabled"), 1);
+
+    mixxx::BeatsPointer pBeats2 =
+            mixxx::Beats::fromConstTempo(m_pTrack2->getSampleRate(),
+                    mixxx::audio::kStartFramePos,
+                    mixxx::Bpm(125));
+    m_pTrack2->trySetBeats(pBeats2);
+    ControlObject::set(ConfigKey(m_sGroup2, "quantize"), 1.0);
+    ControlObject::set(ConfigKey(m_sGroup2, "sync_enabled"), 1);
+
+    ControlObject::set(ConfigKey(m_sGroup1, "play"), 1.0);
+    ProcessBuffer();
+    ProcessBuffer();
+    ControlObject::set(ConfigKey(m_sGroup1, "scratch2_enable"), 1.0);
+    ControlObject::set(ConfigKey(m_sGroup1, "scratch2"), 20.0);
+    ProcessBuffer();
+    ControlObject::set(ConfigKey(m_sGroup1, "scratch2_enable"), 0.0);
+    ProcessBuffer();
+    ProcessBuffer();
+
+    EXPECT_NEAR(ControlObject::get(ConfigKey(m_sInternalClockGroup, "beat_distance")),
+            ControlObject::get(ConfigKey(m_sGroup1, "beat_distance")),
+            1e-8);
+}
+
+TEST_F(EngineSyncTest, ScratchEndOtherPlayingTrackStayInPhase) {
+    // After scratching, confirm that we are still in phase.
+    // This version tests with a playing other track.
+    mixxx::BeatsPointer pBeats1 =
+            mixxx::Beats::fromConstTempo(m_pTrack1->getSampleRate(),
+                    mixxx::audio::kStartFramePos,
+                    mixxx::Bpm(130));
+    m_pTrack1->trySetBeats(pBeats1);
+    ControlObject::set(ConfigKey(m_sGroup1, "quantize"), 1.0);
+    ControlObject::set(ConfigKey(m_sGroup1, "sync_enabled"), 1);
+
+    mixxx::BeatsPointer pBeats2 =
+            mixxx::Beats::fromConstTempo(m_pTrack2->getSampleRate(),
+                    mixxx::audio::kStartFramePos,
+                    mixxx::Bpm(125));
+    m_pTrack2->trySetBeats(pBeats2);
+    ControlObject::set(ConfigKey(m_sGroup2, "quantize"), 1.0);
+    ControlObject::set(ConfigKey(m_sGroup2, "sync_enabled"), 1);
+
+    ControlObject::set(ConfigKey(m_sGroup1, "play"), 1.0);
+    ControlObject::set(ConfigKey(m_sGroup2, "play"), 1.0);
+    ProcessBuffer();
+    ProcessBuffer();
+    ControlObject::set(ConfigKey(m_sGroup1, "scratch2_enable"), 1.0);
+    ControlObject::set(ConfigKey(m_sGroup1, "scratch2"), 20.0);
+    ProcessBuffer();
+    ControlObject::set(ConfigKey(m_sGroup1, "scratch2_enable"), 0.0);
+    ProcessBuffer();
+    ProcessBuffer();
+
+    EXPECT_NEAR(ControlObject::get(ConfigKey(m_sInternalClockGroup, "beat_distance")),
+            ControlObject::get(ConfigKey(m_sGroup1, "beat_distance")),
+            1e-8);
+}
+
 TEST_F(EngineSyncTest, SyncWithoutBeatgrid) {
     // this tests bug lp1783020, notresetting rate when other deck has no beatgrid
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 128, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(128));
     m_pTrack1->trySetBeats(pBeats1);
     m_pTrack2->trySetBeats(mixxx::BeatsPointer());
 
@@ -2580,11 +2763,13 @@ TEST_F(EngineSyncTest, SyncWithoutBeatgrid) {
 }
 
 TEST_F(EngineSyncTest, QuantizeHotCueActivate) {
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 130, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(130));
     m_pTrack1->trySetBeats(pBeats1);
 
     auto pHotCue2Activate = std::make_unique<ControlProxy>(m_sGroup2, "hotcue_1_activate");
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 100, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(100));
 
     m_pTrack2->trySetBeats(pBeats2);
 
@@ -2620,7 +2805,7 @@ TEST_F(EngineSyncTest, QuantizeHotCueActivate) {
     pHotCue2Activate->set(1.0);
     ProcessBuffer();
 
-    // Beat_distance is the distance to the previous beat wich has already passed.
+    // Beat_distance is the distance to the previous beat which has already passed.
     // We compare here the distance to the next beat (1 - beat_distance) and
     // scale it by the different tempos.
     EXPECT_NEAR(
@@ -2645,7 +2830,8 @@ TEST_F(EngineSyncTest, ChangeBeatGrid) {
     auto pButtonSyncEnabled2 = std::make_unique<ControlProxy>(m_sGroup2, "sync_enabled");
 
     // set beatgrid for deck 1
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 130, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(130));
     m_pTrack1->trySetBeats(pBeats1);
     pButtonSyncEnabled1->set(1.0);
     ControlObject::set(ConfigKey(m_sGroup1, "play"), 1.0);
@@ -2678,7 +2864,8 @@ TEST_F(EngineSyncTest, ChangeBeatGrid) {
     EXPECT_TRUE(isFollower(m_sGroup2));
 
     // Load a new beatgrid during playing, this happens when the analyser is finished.
-    mixxx::BeatsPointer pBeats2 = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 140, 0.0);
+    mixxx::BeatsPointer pBeats2 = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(140));
     m_pTrack2->trySetBeats(pBeats2);
 
     ProcessBuffer();
@@ -2702,7 +2889,8 @@ TEST_F(EngineSyncTest, ChangeBeatGrid) {
     EXPECT_TRUE(isSoftLeader(m_sGroup2));
 
     // Load a new beatgrid again, this happens when the user adjusts the beatgrid
-    mixxx::BeatsPointer pBeats2n = BeatFactory::makeBeatGrid(m_pTrack2->getSampleRate(), 75, 0.0);
+    mixxx::BeatsPointer pBeats2n = mixxx::Beats::fromConstTempo(
+            m_pTrack2->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(75));
     m_pTrack2->trySetBeats(pBeats2n);
 
     ProcessBuffer();
@@ -2717,31 +2905,31 @@ TEST_F(EngineSyncTest, ChangeBeatGrid) {
 
 TEST_F(EngineSyncTest, BeatMapQuantizePlay) {
     // This test demonstates https://bugs.launchpad.net/mixxx/+bug/1874918
-    mixxx::BeatsPointer pBeats1 = BeatFactory::makeBeatGrid(m_pTrack1->getSampleRate(), 120, 0.0);
+    mixxx::BeatsPointer pBeats1 = mixxx::Beats::fromConstTempo(
+            m_pTrack1->getSampleRate(), mixxx::audio::kStartFramePos, mixxx::Bpm(120));
     m_pTrack1->trySetBeats(pBeats1);
 
     constexpr auto kSampleRate = mixxx::audio::SampleRate(44100);
 
-    auto pBeats2 = mixxx::BeatMap::makeBeatMap(kSampleRate,
-            QString(),
+    auto pBeats2 = mixxx::Beats::fromBeatPositions(kSampleRate,
             // Add two beats at 120 Bpm
-            QVector<double>({static_cast<double>(kSampleRate) / 2,
-                    static_cast<double>(kSampleRate)}));
+            QVector<mixxx::audio::FramePos>(
+                    {mixxx::audio::FramePos(
+                             static_cast<double>(kSampleRate) / 2),
+                            mixxx::audio::FramePos(
+                                    static_cast<double>(kSampleRate))}));
     m_pTrack2->trySetBeats(pBeats2);
 
     ControlObject::set(ConfigKey(m_sGroup1, "quantize"), 1.0);
     ControlObject::set(ConfigKey(m_sGroup2, "quantize"), 1.0);
 
-    ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))->set(SYNC_LEADER_EXPLICIT);
-    ControlObject::getControl(ConfigKey(m_sGroup2, "sync_mode"))->set(SYNC_FOLLOWER);
+    ControlObject::getControl(ConfigKey(m_sGroup1, "sync_mode"))
+            ->set(static_cast<double>(SyncMode::LeaderExplicit));
+    ControlObject::getControl(ConfigKey(m_sGroup2, "sync_mode"))
+            ->set(static_cast<double>(SyncMode::Follower));
 
     ControlObject::getControl(ConfigKey(m_sGroup1, "play"))->set(1.0);
-
-    ProcessBuffer();
-
     ControlObject::getControl(ConfigKey(m_sGroup2, "play"))->set(1.0);
-
-    ProcessBuffer();
 
     // Beat Distance shall be still 0, because we are before the first beat.
     // This was fixed in https://bugs.launchpad.net/mixxx/+bug/1920084
@@ -2777,7 +2965,7 @@ TEST_F(EngineSyncTest, BpmAdjustFactor) {
     ProcessBuffer();
     EXPECT_TRUE(isSoftLeader(m_sGroup2));
     // Pretend a changing beatgrid
-    static_cast<SyncControl*>(m_pEngineSync->getLeaderSyncable())->setLocalBpm(152);
+    static_cast<SyncControl*>(m_pEngineSync->getLeaderSyncable())->setLocalBpm(mixxx::Bpm{152});
     ProcessBuffer();
 
     ControlObject::set(ConfigKey(m_sGroup1, "sync_enabled"), 1.0);

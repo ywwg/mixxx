@@ -4,7 +4,7 @@
 #include <gtest/gtest_prod.h>
 
 #include "engine/controls/enginecontrol.h"
-#include "engine/sync/syncable.h"
+#include "engine/sync/enginesync.h"
 
 class EngineChannel;
 class BpmControl;
@@ -21,12 +21,12 @@ class SyncControl : public EngineControl, public Syncable {
     static const double kBpmHalve;
     static const double kBpmDouble;
     SyncControl(const QString& group, UserSettingsPointer pConfig,
-                EngineChannel* pChannel, SyncableListener* pEngineSync);
+                EngineChannel* pChannel, EngineSync* pEngineSync);
     ~SyncControl() override;
 
     const QString& getGroup() const override { return m_sGroup; }
     EngineChannel* getChannel() const override { return m_pChannel; }
-    double getBpm() const override;
+    mixxx::Bpm getBpm() const override;
 
     SyncMode getSyncMode() const override;
     void setSyncMode(SyncMode mode) override;
@@ -34,15 +34,16 @@ class SyncControl : public EngineControl, public Syncable {
     void requestSync() override;
     bool isPlaying() const override;
     bool isAudible() const override;
+    bool isQuantized() const override;
 
     double adjustSyncBeatDistance(double beatDistance) const;
     double getBeatDistance() const override;
     void updateTargetBeatDistance();
-    double getBaseBpm() const override;
+    mixxx::Bpm getBaseBpm() const override;
 
     // The local bpm is the base bpm of the track around the current position.
     // For beatmap tracks, this can change with every beat.
-    void setLocalBpm(double local_bpm);
+    void setLocalBpm(mixxx::Bpm localBpm);
     void updateAudible();
 
     // Must never result in a call to
@@ -50,24 +51,27 @@ class SyncControl : public EngineControl, public Syncable {
     void updateLeaderBeatDistance(double beatDistance) override;
     // Must never result in a call to
     // SyncableListener::notifyBpmChanged or signal loops could occur.
-    void updateLeaderBpm(double bpm) override;
+    void updateLeaderBpm(mixxx::Bpm bpm) override;
     void notifyLeaderParamSource() override;
-    void reinitLeaderParams(double beatDistance, double baseBpm, double bpm) override;
+    void reinitLeaderParams(double beatDistance, mixxx::Bpm baseBpm, mixxx::Bpm bpm) override;
 
     // Must never result in a call to
     // SyncableListener::notifyInstantaneousBpmChanged or signal loops could
     // occur.
-    void updateInstantaneousBpm(double bpm) override;
+    void updateInstantaneousBpm(mixxx::Bpm bpm) override;
 
     void setEngineControls(RateControl* pRateControl, BpmControl* pBpmControl);
 
     void reportTrackPosition(double fractionalPlaypos);
     void reportPlayerSpeed(double speed, bool scratching);
-    void notifySeek(double dNewPlaypos) override;
     void trackLoaded(TrackPointer pNewTrack) override;
     void trackBeatsUpdated(mixxx::BeatsPointer pBeats) override;
 
   private slots:
+    void slotControlBeatSync(double);
+    void slotControlBeatSyncPhase(double);
+    void slotControlBeatSyncTempo(double);
+
     // Fired by changes in play.
     void slotControlPlay(double v);
 
@@ -91,15 +95,16 @@ class SyncControl : public EngineControl, public Syncable {
     // bpm.  e.g. 70 matches better with 140/2.  This function returns the
     // best factor for multiplying the leader bpm to get a bpm this syncable
     // should match against.
-    double determineBpmMultiplier(double myBpm, double targetBpm) const;
-    double fileBpm() const;
+    double determineBpmMultiplier(mixxx::Bpm myBpm, mixxx::Bpm targetBpm) const;
+    mixxx::Bpm fileBpm() const;
+    mixxx::Bpm getLocalBpm() const;
 
     QString m_sGroup;
     // The only reason we have this pointer is an optimzation so that the
     // EngineSync can ask us what our EngineChannel is. EngineMaster in turn
     // asks EngineSync what EngineChannel is the "leader" channel.
     EngineChannel* m_pChannel;
-    SyncableListener* m_pEngineSync;
+    EngineSync* m_pEngineSync;
     BpmControl* m_pBpmControl;
     RateControl* m_pRateControl;
     bool m_bOldScratching;
@@ -114,13 +119,18 @@ class SyncControl : public EngineControl, public Syncable {
     // It is handy to store the raw reported target beat distance in case the
     // multiplier changes and we need to recalculate the target distance.
     double m_unmultipliedTargetBeatDistance;
-    ControlValueAtomic<double> m_prevLocalBpm;
+    ControlValueAtomic<mixxx::Bpm> m_prevLocalBpm;
     QAtomicInt m_audible;
 
     QScopedPointer<ControlPushButton> m_pSyncMode;
     QScopedPointer<ControlPushButton> m_pSyncLeaderEnabled;
     QScopedPointer<ControlPushButton> m_pSyncEnabled;
     QScopedPointer<ControlObject> m_pBeatDistance;
+
+    // Button for sync'ing with the other EngineBuffer
+    ControlPushButton* m_pButtonSync;
+    ControlPushButton* m_pButtonSyncPhase;
+    ControlPushButton* m_pButtonSyncTempo;
 
     // These ControlProxys are created as parent to this and deleted by
     // the Qt object tree. This helps that they are deleted by the creating

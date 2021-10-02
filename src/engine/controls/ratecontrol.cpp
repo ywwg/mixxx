@@ -364,7 +364,7 @@ double RateControl::getWheelFactor() const {
 
 double RateControl::getJogFactor() const {
     // FIXME: Sensitivity should be configurable separately?
-    const double jogSensitivity = 0.1;  // Nudges during playback
+    constexpr double jogSensitivity = 0.1; // Nudges during playback
     double jogValue = m_pJog->get();
 
     // Since m_pJog is an accumulator, reset it since we've used its value.
@@ -453,7 +453,7 @@ double RateControl::calculateSpeed(double baserate, double speed, bool paused,
             }
         }
 
-        double currentSample = getSampleOfTrack().current;
+        double currentSample = frameInfo().currentPosition.toEngineSamplePos();
         m_pScratchController->process(currentSample, rate, iSamplesPerBuffer, baserate);
 
         // If waveform scratch is enabled, override all other controls
@@ -535,26 +535,24 @@ void RateControl::processTempRate(const int bufferSamples) {
                 }
             }
         } else if (m_eRateRampMode == RampMode::Linear) {
-            if (rampDirection != RampDirection::None) {
-                if (!m_bTempStarted) {
-                    m_bTempStarted = true;
-                    double latrate = ((double)bufferSamples / (double)m_pSampleRate->get());
-                    m_dRateTempRampChange = (latrate / ((double)m_iRateRampSensitivity / 100.));
-                }
+            if (!m_bTempStarted) {
+                m_bTempStarted = true;
+                double latrate = bufferSamples / m_pSampleRate->get();
+                m_dRateTempRampChange = latrate / (m_iRateRampSensitivity / 100.0);
+            }
 
-                switch (rampDirection) {
-                case RampDirection::Up:
-                case RampDirection::UpSmall:
-                    addRateTemp(m_dRateTempRampChange * m_pRateRange->get());
-                    break;
-                case RampDirection::Down:
-                case RampDirection::DownSmall:
-                    subRateTemp(m_dRateTempRampChange * m_pRateRange->get());
-                    break;
-                case RampDirection::None:
-                default:
-                    DEBUG_ASSERT(false);
-                }
+            switch (rampDirection) {
+            case RampDirection::Up:
+            case RampDirection::UpSmall:
+                addRateTemp(m_dRateTempRampChange * m_pRateRange->get());
+                break;
+            case RampDirection::Down:
+            case RampDirection::DownSmall:
+                subRateTemp(m_dRateTempRampChange * m_pRateRange->get());
+                break;
+            case RampDirection::None:
+            default:
+                DEBUG_ASSERT(false);
             }
         }
     } else if (m_bTempStarted) {
@@ -592,11 +590,6 @@ void RateControl::subRateTemp(double v)
 void RateControl::resetRateTemp(void)
 {
     setRateTemp(0.0);
-}
-
-void RateControl::notifySeek(double playPos) {
-    m_pScratchController->notifySeek(playPos);
-    EngineControl::notifySeek(playPos);
 }
 
 bool RateControl::isReverseButtonPressed() {

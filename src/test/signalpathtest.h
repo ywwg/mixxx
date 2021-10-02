@@ -6,6 +6,7 @@
 #include <QTest>
 #include <QtDebug>
 
+#include "control/controlindicatortimer.h"
 #include "control/controlobject.h"
 #include "effects/effectsmanager.h"
 #include "engine/bufferscalers/enginebufferscale.h"
@@ -21,15 +22,29 @@
 #include "mixer/sampler.h"
 #include "preferences/usersettings.h"
 #include "test/mixxxtest.h"
+#include "test/soundsourceproviderregistration.h"
 #include "track/track.h"
 #include "util/defs.h"
 #include "util/memory.h"
 #include "util/sample.h"
 #include "util/types.h"
-#include "waveform/guitick.h"
 
 using ::testing::Return;
 using ::testing::_;
+
+#define EXPECT_FRAMEPOS_EQ(pos1, pos2)                    \
+    EXPECT_EQ((pos1).isValid(), (pos2).isValid());        \
+    if ((pos1).isValid()) {                               \
+        EXPECT_DOUBLE_EQ((pos1).value(), (pos2).value()); \
+    }
+
+#define EXPECT_FRAMEPOS_EQ_CONTROL(position, control)                    \
+    {                                                                    \
+        const auto controlPos =                                          \
+                mixxx::audio::FramePos::fromEngineSamplePosMaybeInvalid( \
+                        control->get());                                 \
+        EXPECT_FRAMEPOS_EQ(position, controlPos);                        \
+    }
 
 // Subclass of EngineMaster that provides access to the master buffer object
 // for comparison.
@@ -55,10 +70,10 @@ class TestEngineMaster : public EngineMaster {
     }
 };
 
-class BaseSignalPathTest : public MixxxTest {
+class BaseSignalPathTest : public MixxxTest, SoundSourceProviderRegistration {
   protected:
     BaseSignalPathTest() {
-        m_pGuiTick = std::make_unique<GuiTick>();
+        m_pControlIndicatorTimer = std::make_unique<mixxx::ControlIndicatorTimer>();
         m_pChannelHandleFactory = std::make_shared<ChannelHandleFactory>();
         m_pNumDecks = new ControlObject(ConfigKey(m_sMasterGroup, "num_decks"));
         m_pEffectsManager = new EffectsManager(NULL, config(), m_pChannelHandleFactory);
@@ -224,7 +239,7 @@ class BaseSignalPathTest : public MixxxTest {
 
     ChannelHandleFactoryPointer m_pChannelHandleFactory;
     ControlObject* m_pNumDecks;
-    std::unique_ptr<GuiTick> m_pGuiTick;
+    std::unique_ptr<mixxx::ControlIndicatorTimer> m_pControlIndicatorTimer;
     EffectsManager* m_pEffectsManager;
     EngineSync* m_pEngineSync;
     TestEngineMaster* m_pEngineMaster;
