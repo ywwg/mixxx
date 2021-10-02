@@ -7,6 +7,8 @@
 #include <QWindow>
 #include <QtDebug>
 
+#include <cstring>
+
 #include "config.h"
 #include "coreservices.h"
 #include "errordialoghandler.h"
@@ -100,9 +102,10 @@ void adjustScaleFactor(CmdlineArgs* pArgs) {
     }
 }
 
-void handleVisibleChanged() {
-    if (!QGuiApplication::inputMethod()->isVisible())
+void handleIMVisibleChanged() {
+    if (!QGuiApplication::inputMethod()->isVisible()) {
         return;
+    }
     for (QWindow* w : QGuiApplication::allWindows()) {
         if (std::strcmp(w->metaObject()->className(), "QtVirtualKeyboard::InputView") == 0) {
             if (QObject* keyboard = w->findChild<QObject*>("keyboard")) {
@@ -118,7 +121,6 @@ void handleVisibleChanged() {
 } // anonymous namespace
 
 int main(int argc, char * argv[]) {
-    qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
     Console console;
 
     // These need to be set early on (not sure how early) in order to trigger
@@ -204,7 +206,7 @@ int main(int argc, char * argv[]) {
     QObject::connect(&app, &MixxxApplication::lastWindowClosed, &app, &MixxxApplication::quit);
     QObject::connect(QGuiApplication::inputMethod(),
             &QInputMethod::visibleChanged,
-            &handleVisibleChanged);
+            &handleIMVisibleChanged);
 
     int exitCode = runMixxx(&app, args);
 
