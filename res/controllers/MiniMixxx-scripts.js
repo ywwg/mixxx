@@ -9,7 +9,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-const MiniMixxx = {};
+var MiniMixxx = {};
 
 MiniMixxx.FXColor = 61;           // Cyan
 MiniMixxx.LoopColor = 46;         // Green
