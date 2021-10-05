@@ -121,7 +121,6 @@ void handleIMVisibleChanged() {
 } // anonymous namespace
 
 int main(int argc, char * argv[]) {
-    qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
     Console console;
 
     // These need to be set early on (not sure how early) in order to trigger
