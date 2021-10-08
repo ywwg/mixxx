@@ -1094,6 +1094,8 @@ void EngineBuffer::processTrackLocked(
         }
     }
 
+    m_pSyncControl->updateAudible();
+
     // Give the Reader hints as to which chunks of the current song we
     // really care about. It will try very hard to keep these in memory
     hintReader(rate);
@@ -1299,7 +1301,9 @@ void EngineBuffer::processSeek(bool paused) {
 void EngineBuffer::postProcess(const int iBufferSize) {
     // The order of events here is very delicate.  It's necessary to update
     // some values before others, because the later updates may require
-    // values from the first update.
+    // values from the first update. Do not make calls here that could affect
+    // which Syncable is leader or could cause Syncables to try to match
+    // beat distances. During these calls those values are inconsistent.
     if (kLogger.traceEnabled()) {
         kLogger.trace() << getGroup() << "EngineBuffer::postProcess";
     }
@@ -1311,7 +1315,6 @@ void EngineBuffer::postProcess(const int iBufferSize) {
         newLocalBpm = localBpm;
     }
     m_pSyncControl->setLocalBpm(newLocalBpm);
-    m_pSyncControl->updateAudible();
     SyncMode mode = m_pSyncControl->getSyncMode();
     m_pSyncControl->reportPlayerSpeed(m_speed_old, m_scratching_old);
     if (isLeader(mode)) {
