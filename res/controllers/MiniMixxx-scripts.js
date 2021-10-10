@@ -27,7 +27,7 @@ MiniMixxx.HeadOutColor = 26;      // Kind of a light yellow
 // Set to true to output debug messages and debug light outputs.
 MiniMixxx.DebugMode = false;
 
-MiniMixxx.ShiftPitch = false;
+MiniMixxx.ShiftPitch = true;
 
 // An Encoder represents a single encoder knob and tracks the active mode.
 MiniMixxx.Encoder = class {
