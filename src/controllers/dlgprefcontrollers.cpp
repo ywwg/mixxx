@@ -195,6 +195,9 @@ void DlgPrefControllers::setupControllerWidgets() {
 }
 
 void DlgPrefControllers::slotHighlightDevice(DlgPrefController* pControllerDlg, bool enabled) {
+    if (pControllerDlg == nullptr) {
+        return;
+    }
     int controllerPageIndex = m_controllerPages.indexOf(pControllerDlg);
     if (controllerPageIndex < 0) {
         return;
