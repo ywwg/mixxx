@@ -465,7 +465,7 @@ MiniMixxx.EncoderModeLibrary = class extends MiniMixxx.Mode {
 // Input:
 //   * Spin: move focus forward / back
 //   * Shift + Spin: scroll through track
-//   * Press: Load selected track
+//   * Press: show/hide library sidebar
 //   * Shift + Press: search history select
 // Output: Switch on.
 MiniMixxx.EncoderModeLibraryFocus = class extends MiniMixxx.Mode {
@@ -489,9 +489,11 @@ MiniMixxx.EncoderModeLibraryFocus = class extends MiniMixxx.Mode {
     }
     handlePress(value) {
         if (MiniMixxx.kontrol.shiftActive()) {
-            engine.setValue("[Library]", "search_history_selector", value);
+            if (value > 0) {
+                script.toggleControl("[Library]", "show_sidebar", value);
+            }
         } else {
-            engine.setValue(this.channel, "LoadSelectedTrack", value);
+            engine.setValue("[Library]", "GoToItem", value);
         }
     }
     setLights() {

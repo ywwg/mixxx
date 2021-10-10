@@ -49,8 +49,6 @@
 
                   <Template src="skin:/decks/preview_deck.xml"/>
 
-
-
                   <WidgetGroup>
                     <ObjectName>SearchTreeSpacer</ObjectName>
                     <Layout>horizontal</Layout>
@@ -92,6 +90,10 @@
                   </Splitter><!-- SidebarCoverSplitter -->
 
                 </Children>
+                 <Connection>
+                    <ConfigKey persist="true">[Library],show_sidebar</ConfigKey>
+                    <BindProperty>visible</BindProperty>
+                </Connection>
               </WidgetGroup><!-- LibSidebarContainer -->
 
               <!-- Library Table-->
