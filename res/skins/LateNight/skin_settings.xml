@@ -597,6 +597,12 @@ Description:
                         <SetVariable name="Setting">[Library],show_coverart</SetVariable>
                     </Template>
 
+                     <Template src="skin:/helpers/skin_settings_button_2state.xml">
+                        <SetVariable name="TooltipId">show_sidebar</SetVariable>
+                        <SetVariable name="Text">Sidebar</SetVariable>
+                        <SetVariable name="Setting">[Library],show_sidebar</SetVariable>
+                    </Template>
+
                     </Children>
                 </WidgetGroup><!-- /Library -->
 
