@@ -41,6 +41,16 @@
         </Connection>
       </WidgetGroup>
 
+      <Number>
+        <ObjectName>BpmText</ObjectName>
+        <TooltipId>visual_bpm</TooltipId>
+        <Size>57f,22f</Size>
+        <NumberOfDigits>2</NumberOfDigits>
+        <Connection>
+            <ConfigKey><Variable name="Group"/>,visual_bpm</ConfigKey>
+        </Connection>
+      </Number>
+
     </Children>
   </WidgetGroup><!-- DeckRow_1_KeyVinylFx -->
 </Template>
