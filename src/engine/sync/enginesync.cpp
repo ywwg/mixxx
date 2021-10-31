@@ -369,18 +369,49 @@ void EngineSync::notifyPlayingAudible(Syncable* pSyncable, bool playingAudible) 
     } else {
         Syncable* pOnlyPlayer = getUniquePlayingSyncedDeck();
         if (pOnlyPlayer) {
-            // Even if we didn't change leader, if there is only one player (us), then we should
-            // update the beat distance.
+            // Even if we didn't change leader, if there is only one player, then we should
+            // reinit leader params.
             pOnlyPlayer->notifyUniquePlaying();
-            updateLeaderBeatDistance(pOnlyPlayer, pOnlyPlayer->getBeatDistance());
+            reinitLeaderParams(pOnlyPlayer);
         }
     }
 }
 
 void EngineSync::notifyScratching(Syncable* pSyncable, bool scratching) {
-    // No special behavior for now.
-    Q_UNUSED(pSyncable);
-    Q_UNUSED(scratching);
+    if (!pSyncable->isPlaying() || !pSyncable->isQuantized()) {
+        return;
+    }
+    // Only take action if scratching is turning off.
+    if (scratching) {
+        return;
+    }
+    if (isFollower(pSyncable->getSyncMode())) {
+        pSyncable->getChannel()->getEngineBuffer()->requestSyncPhase();
+        return;
+    }
+    if (isLeader(pSyncable->getSyncMode())) {
+        Syncable* pOnlyPlayer = getUniquePlayingSyncedDeck();
+        if (pOnlyPlayer) {
+            // Even if we didn't change leader, if there is only one player (us), then we should
+            // reinit the beat distance.
+            pOnlyPlayer->notifyUniquePlaying();
+            updateLeaderBeatDistance(pOnlyPlayer, pOnlyPlayer->getBeatDistance());
+        } else {
+            // If the Leader isn't the only player, then it will need to sync
+            // phase like followers do.
+            pSyncable->getChannel()->getEngineBuffer()->requestSyncPhase();
+        }
+    }
+}
+
+void EngineSync::notifySeek(Syncable* pSyncable, mixxx::audio::FramePos position) {
+    Q_UNUSED(position);
+    if (isLeader(pSyncable->getSyncMode())) {
+        // This relies on the bpmcontrol being notified about the seek before
+        // the sync control, but that's ok because that's intrinsic to how the
+        // controls are constructed (see the constructor of enginebuffer).
+        updateLeaderBeatDistance(pSyncable, pSyncable->getBeatDistance());
+    }
 }
 
 void EngineSync::notifyBaseBpmChanged(Syncable* pSyncable, mixxx::Bpm bpm) {
@@ -446,6 +477,9 @@ void EngineSync::notifyBeatDistanceChanged(Syncable* pSyncable, double beatDista
                         << pSyncable->getGroup() << beatDistance;
     }
     if (pSyncable != m_pInternalClock) {
+        if (getUniquePlayingSyncedDeck() == pSyncable) {
+            updateLeaderBeatDistance(pSyncable, beatDistance);
+        }
         return;
     }
 
@@ -654,6 +688,10 @@ void EngineSync::reinitLeaderParams(Syncable* pSource) {
     mixxx::Bpm bpm = pSource->getBpm();
     if (!bpm.isValid()) {
         bpm = baseBpm;
+        if (!bpm.isValid()) {
+            // This happens if the deck is the only playing one but the track has no beats
+            return;
+        }
     }
     if (kLogger.traceEnabled()) {
         kLogger.trace() << "BaseSyncableListener::reinitLeaderParams, source is"
