@@ -1094,8 +1094,6 @@ void EngineBuffer::processTrackLocked(
         }
     }
 
-    m_pSyncControl->updateAudible();
-
     // Give the Reader hints as to which chunks of the current song we
     // really care about. It will try very hard to keep these in memory
     hintReader(rate);
