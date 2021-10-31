@@ -1161,6 +1161,8 @@ void EngineBuffer::process(CSAMPLE* pOutput, const int iBufferSize) {
     }
 #endif
 
+    m_pSyncControl->updateAudible();
+
     m_iLastBufferSize = iBufferSize;
     m_bCrossfadeReady = false;
 }
