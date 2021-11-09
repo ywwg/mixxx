@@ -69,7 +69,7 @@
                   </EffectChainPresetSelector>
                 </Children>
                 <Connection>
-                  <ConfigKey persist="true">[Skin],show_eq_knobs</ConfigKey>
+                  <ConfigKey persist="true">[Skin],show_xfader</ConfigKey>
                   <BindProperty>visible</BindProperty>
                 </Connection>
               </WidgetGroup>
@@ -199,7 +199,7 @@
                   </EffectChainPresetSelector>
                 </Children>
                 <Connection>
-                  <ConfigKey persist="true">[Skin],show_eq_knobs</ConfigKey>
+                  <ConfigKey persist="true">[Skin],show_xfader</ConfigKey>
                   <BindProperty>visible</BindProperty>
                 </Connection>
               </WidgetGroup>
