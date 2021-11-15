@@ -16,13 +16,24 @@
         <Layout>horizontal</Layout>
         <SizePolicy>min,max</SizePolicy>
         <Children>
+             <WidgetGroup>
+                <ObjectName>LibExpandBox</ObjectName>
+                <Layout>vertical</Layout>
+                <Children>
+                    <Template src="skin:/controls/button_2state.xml">
+                        <SetVariable name="ObjectName">LibExpand</SetVariable>
+                        <SetVariable name="Size">18f,16me</SetVariable>
+                        <SetVariable name="ConfigKey">[Library],show_sidebar</SetVariable>
+                    </Template>
+                </Children>
+            </WidgetGroup><!-- LibExpandBox -->
             <WidgetGroup>
-            <ObjectName>SearchLineBox</ObjectName>
-            <Layout>horizontal</Layout>
-            <SizePolicy>min,max</SizePolicy>
-            <Children>
-                <SearchBox></SearchBox>
-            </Children>
+                <ObjectName>SearchLineBox</ObjectName>
+                <Layout>horizontal</Layout>
+                <SizePolicy>min,max</SizePolicy>
+                <Children>
+                    <SearchBox></SearchBox>
+                </Children>
             </WidgetGroup>
         </Children>
       </WidgetGroup><!--SearchBox + Library expand toggle -->
