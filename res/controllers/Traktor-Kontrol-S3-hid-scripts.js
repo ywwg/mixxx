@@ -35,7 +35,7 @@ TraktorS3.PitchSliderRelativeMode = true;
 // sample playing.  Pressing the button again will stop playback.
 // With SamplerModePressAndHold = true, a Sample will play while you hold the
 // button down.  Letting go will stop playback.
-TraktorS3.SamplerModePressAndHold = false;
+TraktorS3.SamplerModePressAndHold = true;
 
 // When this option is true, start up with the jog button lit, which means touching the job wheel
 // enables scratch mode.
