@@ -394,7 +394,8 @@ void EffectChain::enableForInputChannel(const ChannelHandleAndGroup& handleGroup
     EffectsRequest* request = new EffectsRequest();
     request->type = EffectsRequest::ENABLE_EFFECT_CHAIN_FOR_INPUT_CHANNEL;
     request->pTargetChain = m_pEngineEffectChain;
-    request->EnableInputChannelForChain.pChannelHandle = &handleGroup.handle();
+    qDebug() << "enable!!!!!!!!!!!!!!!!!!!!!!!!!! " << handleGroup.handle();
+    request->EnableInputChannelForChain.pChannelHandle = new ChannelHandle(handleGroup.handle());
 
     // Allocate EffectStates here in the main thread to avoid allocating
     // memory in the realtime audio callback thread. Pointers to the

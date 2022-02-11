@@ -34,6 +34,7 @@ class ChannelHandle {
     }
 
     inline bool valid() const {
+        qDebug() << "valid? " << m_iHandle;
         return m_iHandle >= 0;
     }
 
@@ -199,6 +200,7 @@ class ChannelHandleMap {
             return m_dummy;
         }
         int iHandle = handle.handle();
+        qDebug() << "iHandle value " << iHandle;
         maybeExpand(iHandle + 1);
         return m_data[iHandle];
     }
@@ -228,6 +230,7 @@ class ChannelHandleMap {
         if (QTypeInfo<T>::isComplex) {
             // The value for complex types is initialized by QVarLengthArray
             if (m_data.size() < iSize) {
+                qDebug() << "want to resize to" << iSize;
                 m_data.resize(iSize);
             }
         } else {

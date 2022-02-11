@@ -151,6 +151,7 @@ bool EngineEffectChain::enableForInputChannel(const ChannelHandle* inputHandle,
     if (kEffectDebugOutput) {
         qDebug() << "EngineEffectChain::enableForInputChannel" << this << inputHandle;
     }
+    qDebug() << "inputhandle? " << *inputHandle;
     auto& outputMap = m_chainStatusForChannelMatrix[*inputHandle];
     for (auto&& outputChannelStatus : outputMap) {
         VERIFY_OR_DEBUG_ASSERT(outputChannelStatus.enableState !=
