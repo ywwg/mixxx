@@ -34,6 +34,8 @@ struct EffectsRequest {
         NUM_REQUEST_TYPES
     };
 
+    // Creates a new uninitialized EffectsRequest.  Callers are responsible for making sure that
+    // they initialize all the values of the struct corresponding to the type they select.
     EffectsRequest()
             : type(NUM_REQUEST_TYPES),
               request_id(-1),
@@ -41,9 +43,6 @@ struct EffectsRequest {
         qDebug() << "CREATING AN EFFECT REQUEST" << type;
         pTargetChain = nullptr;
         pTargetEffect = nullptr;
-        // zero out the struct with the largest size to ensure the entire union memory is set to
-        // zero.
-        memset(&SetEffectChainParameters, 0, sizeof(SetEffectChainParameters));
     }
 
     // This is called from the main thread by EffectsManager after receiving a
@@ -85,7 +84,6 @@ struct EffectsRequest {
         } AddEffectChain;
         struct {
             EngineEffectChain* pChain;
-            int iIndex;
             SignalProcessingStage signalProcessingStage;
         } RemoveEffectChain;
         struct {
