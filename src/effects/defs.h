@@ -43,7 +43,7 @@ const QString kNoEffectString = QStringLiteral("---");
 // NOTE: Setting this to true will enable string manipulation and calls to
 // qDebug() in the audio engine thread. That may cause audio dropouts, so only
 // enable this when debugging the effects system.
-constexpr bool kEffectDebugOutput = false;
+constexpr bool kEffectDebugOutput = true;
 
 class EffectsBackend;
 typedef QSharedPointer<EffectsBackend> EffectsBackendPointer;

@@ -38,6 +38,7 @@ struct EffectsRequest {
             : type(NUM_REQUEST_TYPES),
               request_id(-1),
               value(0.0) {
+        qDebug() << "CREATING AN EFFECT REQUEST" << type;
         pTargetChain = nullptr;
         pTargetEffect = nullptr;
         // zero out the struct with the largest size to ensure the entire union memory is set to
