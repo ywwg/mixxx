@@ -39,7 +39,7 @@ TraktorS3.SamplerModePressAndHold = true;
 
 // When this option is true, start up with the jog button lit, which means touching the job wheel
 // enables scratch mode.
-TraktorS3.JogDefaultOn = true;
+TraktorS3.JogDefaultOn = false;
 
 // If true, the sampler buttons on Deck 1 are samplers 1-8 and the sampler buttons on Deck 2 are
 // 9-16.  If false, both decks are samplers 1-8.
@@ -1816,8 +1816,8 @@ TraktorS3.Controller.prototype.deckSwitchHandler = function(field) {
     } else {
         // If a different deck switch is already pressed, do an instant double and do not select the
         // deck.
-        var cloneFrom = this.Channels[this.deckSwitchPressed];
-        var cloneFromNum = cloneFrom.parentDeck.deckNumber;
+        const cloneFrom = this.Channels[this.deckSwitchPressed];
+        const cloneFromNum = cloneFrom.parentDeck.deckNumber;
         engine.setValue(field.group, "CloneFromDeck", cloneFromNum);
         return;
     }
