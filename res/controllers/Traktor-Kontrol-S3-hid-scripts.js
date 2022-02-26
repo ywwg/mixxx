@@ -1212,23 +1212,12 @@ TraktorS3.FXControl = function(controller) {
     this.focusBlinkTimer = 0;
 
 
-    // HIDDebug("SET ALL ENABLED???");
-    // Make sure units are enabled so that when the user changes the routing, the effects will
-    // engage.
+    // Make sure all the Mix values are at max so effects are audible.
     for (let unit = 1; unit <= 4; unit++) {
         const fxGroup = "[EffectRack1_EffectUnit" + unit + "]";
         const fxKey = "group_[Channel" + unit + "]_enable";
         engine.setValue(fxGroup, fxKey, 1);
-
-
-        // for (let effect = 1; effect <= 3; effect++) {
-        //     let group = "[EffectRack1_EffectUnit" + unit + "_Effect" + effect + "]";
-        //     HIDDebug("well?? " + group);
-        //     if (engine.getValue(group, "loaded")) {
-        //         HIDDebug("loaded");
-        //         engine.setValue(group, "enabled", 1);
-        //     }
-        // }
+        engine.setValue(fxGroup, "mix", 1);
     }
 };
 
@@ -1267,6 +1256,14 @@ TraktorS3.FXControl.prototype.channelToIndex = function(group) {
         return 1;
     case "4":
         return 4;
+    }
+    return undefined;
+};
+
+TraktorS3.FXControl.prototype.channelNumber = function(group) {
+    const channelNumberMatch = group.match(script.channelRegEx);
+    if (channelNumberMatch !== undefined) {
+        return channelNumberMatch[1];
     }
     return undefined;
 };
@@ -1345,16 +1342,29 @@ TraktorS3.FXControl.prototype.changeState = function(newState) {
     }
 };
 
+
+// Returns the number of the preset that is loaded, or 0 if none is loaded.
+TraktorS3.FXControl.prototype.getLoadedPreset = function(channelNumber) {
+    const unitGroup = "[EffectRack1_EffectUnit" + channelNumber + "]";
+    return engine.getValue(unitGroup, "loaded_chain_preset");
+};
+
 TraktorS3.FXControl.prototype.loadEffectPreset = function(channelNumber, presetNumber) {
     const unitGroup = "[EffectRack1_EffectUnit" + channelNumber + "]";
     engine.setValue(unitGroup, "loaded_chain_preset", presetNumber);
-    // engine.setValue(unitGroup, "mix_set_one", 1);
-    // engine.setValue(unitGroup, "mix_set_one", 0);
+    this.setEffectUnitEnabled(channelNumber, true);
+};
 
-    // Make sure effects are all enabled
+TraktorS3.FXControl.prototype.getEffectUnitEnabled = function(channelNumber) {
+    // Since we enable/disable all the effects at once, use the first one to indicate status.
+    const group = "[EffectRack1_EffectUnit" + channelNumber + "_Effect1]";
+    return engine.getValue(group, "enabled");
+};
+
+TraktorS3.FXControl.prototype.setEffectUnitEnabled = function(channelNumber, enable) {
     for (let effect = 1; effect <= 3; effect++) {
         const group = "[EffectRack1_EffectUnit" + channelNumber + "_Effect" + effect + "]";
-        if (engine.getValue(group, "loaded")) {
+        if (enable && engine.getValue(group, "loaded")) {
             engine.setValue(group, "enabled", 1);
         } else {
             engine.setValue(group, "enabled", 0);
@@ -1381,21 +1391,23 @@ TraktorS3.FXControl.prototype.fxSelectHandler = function(field) {
 
     switch (this.currentState) {
     case this.STATE_FILTER:
-        // If any fxEnable button is pressed, we are toggling fx unit assignment.
-
-        //  XXXXXXXXXXX instead this would load the effect chain for the pushed button
+        // If any fxEnable button is pressed, we are loading an fx preset
         if (this.anyEnablePressed()) {
+            HIDDebug("enable pressed");
             for (const key in this.enablePressed) {
                 if (this.enablePressed[key]) {
+                    this.selectPressed = true;
                     if (fxNumber === 0) {
                         const fxGroup = "[QuickEffectRack1_" + key + "_Effect1]";
                         const fxKey = "enabled";
                         script.toggleControl(fxGroup, fxKey);
                     } else {
-                        const channelNumber = key.match(script.channelRegEx);
-                        if (channelNumber !== undefined) {
-                            HIDDebug("CHANNEL NUMBER " + channelNumber);
-                            this.loadEffectPreset(channelNumber[1], fxNumber);
+                        HIDDebug("ok this one");
+                        const channelNumber = this.channelNumber(key);
+                        if (this.getLoadedPreset(channelNumber) !== fxNumber) {
+                            this.loadEffectPreset(channelNumber, fxNumber);
+                        } else {
+                            this.setEffectUnitEnabled(channelNumber, !this.getEffectUnitEnabled(channelNumber));
                         }
                     }
                 }
@@ -1439,6 +1451,7 @@ TraktorS3.FXControl.prototype.fxEnableHandler = function(field) {
 
     if (!field.value) {
         this.lightFX();
+        this.chainLoaded = false;
         return;
     }
 
@@ -1474,6 +1487,7 @@ TraktorS3.FXControl.prototype.fxKnobHandler = function(field) {
     const value = field.value / 4095.;
     const fxGroupPrefix = "[EffectRack1_EffectUnit" + this.activeFX;
     const knobIdx = this.channelToIndex(field.group);
+    const channelNumber = this.channelNumber(field.group);
 
     switch (this.currentState) {
     case this.STATE_FILTER:
@@ -1482,7 +1496,14 @@ TraktorS3.FXControl.prototype.fxKnobHandler = function(field) {
             return;
         }
         engine.setParameter("[QuickEffectRack1_" + field.group + "]", "super1", value);
-        // XXXX this would also adjust metaknob for the unit for this deck
+        // Effects Superknob values increase in both directions.
+        var superknobValue;
+        if (value >= 0.5) {
+            superknobValue = (value - 0.5) * 2.0;
+        } else {
+            superknobValue = 1.0 - (value * 2.0);
+        }
+        engine.setParameter("[EffectRack1_EffectUnit" + channelNumber + "]", "super1", superknobValue);
         break;
     case this.STATE_EFFECT_INIT:
         // Fallthrough intended
@@ -1555,24 +1576,26 @@ TraktorS3.FXControl.prototype.lightSelect = function(idx) {
         if (this.selectPressed[idx]) {
             status = this.LIGHT_BRIGHT;
         } else {
-            // select buttons on if fx unit enabled for the pressed channel,
+            // select buttons on if fx preset loaded and enabled for the pressed channel,
             // otherwise disabled.
-            // XXXXXX this would have to light up only if the chain is loaded for this channel?
-            // loaded_chain_preset phew
             status = this.LIGHT_DIM;
             const pressed = this.firstPressedEnable();
             if (pressed) {
                 if (idx === 0) {
-                    var fxGroup = "[QuickEffectRack1_" + pressed + "_Effect1]";
-                    var fxKey = "enabled";
+                    const fxGroup = "[QuickEffectRack1_" + pressed + "_Effect1]";
+                    const fxKey = "enabled";
+                    if (engine.getParameter(fxGroup, fxKey)) {
+                        status = this.LIGHT_BRIGHT;
+                    } else {
+                        status = this.LIGHT_OFF;
+                    }
                 } else {
-                    fxGroup = "[EffectRack1_EffectUnit" + idx + "]";
-                    fxKey = "group_" + pressed + "_enable";
-                }
-                if (engine.getParameter(fxGroup, fxKey)) {
-                    status = this.LIGHT_BRIGHT;
-                } else {
-                    status = this.LIGHT_OFF;
+                    const channelNumber = this.channelNumber(pressed);
+                    if (this.getEffectUnitEnabled(channelNumber) && this.getLoadedPreset(channelNumber) === idx) {
+                        status = this.LIGHT_BRIGHT;
+                    } else {
+                        status = this.LIGHT_OFF;
+                    }
                 }
             }
             ledValue = this.getFXSelectLEDValue(idx, status);
@@ -1617,21 +1640,14 @@ TraktorS3.FXControl.prototype.lightEnable = function(channel) {
     let status = this.LIGHT_OFF;
     let ledValue = 0x00;
     const buttonNumber = this.channelToIndex(channel);
+    const channelNumber = this.channelNumber(channel);
     switch (this.currentState) {
     case this.STATE_FILTER:
         // enable buttons highlighted if pressed or if any fx unit enabled for channel.
         // Highlight if pressed.
         status = this.LIGHT_DIM;
-        if (this.enablePressed[channel]) {
+        if (this.enablePressed[channel] || this.getEffectUnitEnabled(channelNumber)) {
             status = this.LIGHT_BRIGHT;
-        } else {
-            for (let idx = 1; idx <= 4 && status === this.LIGHT_OFF; idx++) {
-                var group = "[EffectRack1_EffectUnit" + idx + "]";
-                var key = "group_" + channel + "_enable";
-                if (engine.getParameter(group, key)) {
-                    status = this.LIGHT_DIM;
-                }
-            }
         }
         // Enable buttons have regular deck colors
         ledValue = this.getChannelColor(channel, status);
@@ -1643,7 +1659,7 @@ TraktorS3.FXControl.prototype.lightEnable = function(channel) {
             status = this.LIGHT_BRIGHT;
         } else {
             // off if nothing loaded, dim if loaded, bright if enabled.
-            group = "[EffectRack1_EffectUnit" + this.activeFX + "_Effect" + buttonNumber + "]";
+            var group = "[EffectRack1_EffectUnit" + this.activeFX + "_Effect" + buttonNumber + "]";
             if (engine.getParameter(group, "loaded")) {
                 status = this.LIGHT_DIM;
             }
@@ -1661,7 +1677,7 @@ TraktorS3.FXControl.prototype.lightEnable = function(channel) {
             const fxGroupPrefix = "[EffectRack1_EffectUnit" + this.activeFX;
             const focusedEffect = engine.getValue(fxGroupPrefix + "]", "focused_effect");
             group = fxGroupPrefix + "_Effect" + focusedEffect + "]";
-            key = "button_parameter" + buttonNumber;
+            const key = "button_parameter" + buttonNumber;
             // Off if not loaded, dim if loaded, bright if enabled.
             if (engine.getParameter(group, key + "_loaded")) {
                 status = this.LIGHT_DIM;
