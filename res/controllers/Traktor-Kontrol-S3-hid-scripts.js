@@ -1210,6 +1210,26 @@ TraktorS3.FXControl = function(controller) {
 
     this.focusBlinkState = false;
     this.focusBlinkTimer = 0;
+
+
+    // HIDDebug("SET ALL ENABLED???");
+    // Make sure units are enabled so that when the user changes the routing, the effects will
+    // engage.
+    for (let unit = 1; unit <= 4; unit++) {
+        const fxGroup = "[EffectRack1_EffectUnit" + unit + "]";
+        const fxKey = "group_[Channel" + unit + "]_enable";
+        engine.setValue(fxGroup, fxKey, 1);
+
+
+        // for (let effect = 1; effect <= 3; effect++) {
+        //     let group = "[EffectRack1_EffectUnit" + unit + "_Effect" + effect + "]";
+        //     HIDDebug("well?? " + group);
+        //     if (engine.getValue(group, "loaded")) {
+        //         HIDDebug("loaded");
+        //         engine.setValue(group, "enabled", 1);
+        //     }
+        // }
+    }
 };
 
 TraktorS3.FXControl.prototype.registerInputs = function(messageShort, messageLong) {
@@ -1325,6 +1345,23 @@ TraktorS3.FXControl.prototype.changeState = function(newState) {
     }
 };
 
+TraktorS3.FXControl.prototype.loadEffectPreset = function(channelNumber, presetNumber) {
+    const unitGroup = "[EffectRack1_EffectUnit" + channelNumber + "]";
+    engine.setValue(unitGroup, "loaded_chain_preset", presetNumber);
+    // engine.setValue(unitGroup, "mix_set_one", 1);
+    // engine.setValue(unitGroup, "mix_set_one", 0);
+
+    // Make sure effects are all enabled
+    for (let effect = 1; effect <= 3; effect++) {
+        const group = "[EffectRack1_EffectUnit" + channelNumber + "_Effect" + effect + "]";
+        if (engine.getValue(group, "loaded")) {
+            engine.setValue(group, "enabled", 1);
+        } else {
+            engine.setValue(group, "enabled", 0);
+        }
+    }
+};
+
 TraktorS3.FXControl.prototype.fxSelectHandler = function(field) {
     const fxNumber = parseInt(field.name[field.name.length - 1]);
     // Coerce to boolean
@@ -1345,17 +1382,22 @@ TraktorS3.FXControl.prototype.fxSelectHandler = function(field) {
     switch (this.currentState) {
     case this.STATE_FILTER:
         // If any fxEnable button is pressed, we are toggling fx unit assignment.
+
+        //  XXXXXXXXXXX instead this would load the effect chain for the pushed button
         if (this.anyEnablePressed()) {
             for (const key in this.enablePressed) {
                 if (this.enablePressed[key]) {
                     if (fxNumber === 0) {
-                        var fxGroup = "[QuickEffectRack1_" + key + "_Effect1]";
-                        var fxKey = "enabled";
+                        const fxGroup = "[QuickEffectRack1_" + key + "_Effect1]";
+                        const fxKey = "enabled";
+                        script.toggleControl(fxGroup, fxKey);
                     } else {
-                        fxGroup = "[EffectRack1_EffectUnit" + fxNumber + "]";
-                        fxKey = "group_" + key + "_enable";
+                        const channelNumber = key.match(script.channelRegEx);
+                        if (channelNumber !== undefined) {
+                            HIDDebug("CHANNEL NUMBER " + channelNumber);
+                            this.loadEffectPreset(channelNumber[1], fxNumber);
+                        }
                     }
-                    script.toggleControl(fxGroup, fxKey);
                 }
             }
         } else {
@@ -1370,6 +1412,8 @@ TraktorS3.FXControl.prototype.fxSelectHandler = function(field) {
     case this.STATE_EFFECT_INIT:
         // Fallthrough intended
     case this.STATE_EFFECT:
+        //  This is all messed up because now we have different effect units for each deck --
+        // which one does the user mean to edit?
         if (fxNumber === 0) {
             this.changeState(this.STATE_FILTER);
         } else if (fxNumber !== this.activeFX) {
@@ -1438,6 +1482,7 @@ TraktorS3.FXControl.prototype.fxKnobHandler = function(field) {
             return;
         }
         engine.setParameter("[QuickEffectRack1_" + field.group + "]", "super1", value);
+        // XXXX this would also adjust metaknob for the unit for this deck
         break;
     case this.STATE_EFFECT_INIT:
         // Fallthrough intended
@@ -1512,6 +1557,8 @@ TraktorS3.FXControl.prototype.lightSelect = function(idx) {
         } else {
             // select buttons on if fx unit enabled for the pressed channel,
             // otherwise disabled.
+            // XXXXXX this would have to light up only if the chain is loaded for this channel?
+            // loaded_chain_preset phew
             status = this.LIGHT_DIM;
             const pressed = this.firstPressedEnable();
             if (pressed) {
