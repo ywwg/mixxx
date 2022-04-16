@@ -49,11 +49,11 @@ class WTrackMenu : public QMenu {
         FileBrowser = 1 << 11,
         Properties = 1 << 12,
         SearchRelated = 1 << 13,
-        UpdateReplayGain = 1 << 14,
+        UpdateReplayGainFromPregain = 1 << 14,
         TrackModelFeatures = Remove | HideUnhidePurge,
         All = AutoDJ | LoadTo | Playlist | Crate | Remove | Metadata | Reset |
                 BPM | Color | HideUnhidePurge | RemoveFromDisk | FileBrowser |
-                Properties | SearchRelated | UpdateReplayGain
+                Properties | SearchRelated | UpdateReplayGainFromPregain
     };
     Q_DECLARE_FLAGS(Features, Feature)
 
@@ -96,6 +96,7 @@ class WTrackMenu : public QMenu {
     void slotClearBeats();
     void slotClearPlayCount();
     void slotClearRating();
+    void slotClearComment();
     void slotClearMainCue();
     void slotClearHotCues();
     void slotClearIntroCue();
@@ -220,7 +221,7 @@ class WTrackMenu : public QMenu {
     QMenu* m_pRemoveFromDiskMenu{};
 
     // Update ReplayGain from Track
-    QAction* m_pUpdateReplayGain{};
+    QAction* m_pUpdateReplayGainAct{};
 
     // Reload Track Metadata Action:
     QAction* m_pImportMetadataFromFileAct{};
@@ -276,6 +277,7 @@ class WTrackMenu : public QMenu {
     QAction* m_pClearOutroCueAction{};
     QAction* m_pClearLoopAction{};
     QAction* m_pClearWaveformAction{};
+    QAction* m_pClearCommentAction{};
     QAction* m_pClearKeyAction{};
     QAction* m_pClearReplayGainAction{};
     QAction* m_pClearAllMetadataAction{};
@@ -289,14 +291,15 @@ class WTrackMenu : public QMenu {
     struct UpdateExternalTrackCollection {
         QPointer<ExternalTrackCollection> externalTrackCollection;
         QAction* action{};
-        };
-        QList<UpdateExternalTrackCollection> m_updateInExternalTrackCollections;
-
-        bool m_bPlaylistMenuLoaded;
-        bool m_bCrateMenuLoaded;
-
-        Features m_eActiveFeatures;
-        const Features m_eTrackModelFeatures;
     };
+
+    QList<UpdateExternalTrackCollection> m_updateInExternalTrackCollections;
+
+    bool m_bPlaylistMenuLoaded;
+    bool m_bCrateMenuLoaded;
+
+    Features m_eActiveFeatures;
+    const Features m_eTrackModelFeatures;
+};
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(WTrackMenu::Features)
