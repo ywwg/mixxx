@@ -1,5 +1,6 @@
 #include "engine/cachingreader/cachingreaderworker.h"
 
+#include <QAtomicInt>
 #include <QFileInfo>
 #include <QtDebug>
 
@@ -83,8 +84,11 @@ void CachingReaderWorker::newTrack(TrackPointer pTrack) {
 }
 
 void CachingReaderWorker::run() {
-    unsigned static id = 0; //the id of this thread, for debugging purposes
-    QThread::currentThread()->setObjectName(QString("CachingReaderWorker %1").arg(++id));
+    // the id of this thread, for debugging purposes
+    static auto lastId = QAtomicInt(0);
+    const auto id = lastId.fetchAndAddRelaxed(1) + 1;
+    QThread::currentThread()->setObjectName(
+            QStringLiteral("CachingReaderWorker ") + QString::number(id));
 
     Event::start(m_tag);
     while (!m_stop.loadAcquire()) {
@@ -127,8 +131,12 @@ void CachingReaderWorker::discardAllPendingRequests() {
 
 void CachingReaderWorker::closeAudioSource() {
     discardAllPendingRequests();
-    // Closes open file handles of the old track.
-    m_pAudioSource.reset();
+
+    if (m_pAudioSource) {
+        // Closes open file handles of the old track.
+        m_pAudioSource->close();
+        m_pAudioSource.reset();
+    }
 
     // This function has to be called with the engine stopped only
     // to avoid collecting new requests for the old track

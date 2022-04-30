@@ -7,6 +7,7 @@
 
 #include "effects/defs.h"
 #include "util/assert.h"
+#include "util/compatibility/qhash.h"
 
 class EffectManifestParameter;
 typedef QSharedPointer<EffectManifestParameter> EffectManifestParameterPointer;
@@ -235,7 +236,7 @@ class EffectManifestParameter {
     void appendStep(const QPair<QString, double>& step) {
         m_steps.append(step);
     }
-    const QList<QPair<QString, double> >& getSteps() const {
+    const QList<QPair<QString, double>>& getSteps() const {
         return m_steps;
     }
 
@@ -270,13 +271,13 @@ class EffectManifestParameter {
     /// effect parameters
     /// Each pair has the following form:
     /// name - value
-    QList<QPair<QString, double> > m_steps;
+    QList<QPair<QString, double>> m_steps;
 };
 
 QDebug operator<<(QDebug dbg, const EffectManifestParameter& parameter);
 
 typedef EffectManifestParameter::ParameterType EffectParameterType;
 
-inline uint qHash(const EffectParameterType& parameterType) {
-    return static_cast<uint>(parameterType);
+inline qhash_seed_t qHash(const EffectParameterType& parameterType) {
+    return static_cast<qhash_seed_t>(parameterType);
 }

@@ -159,8 +159,8 @@ BrowseTableModel::BrowseTableModel(QObject* parent,
 
     setHorizontalHeaderLabels(headerLabels);
     // register the QList<T> as a metatype since we use QueuedConnection below
-    qRegisterMetaType<QList<QList<QStandardItem*> > >(
-            "QList< QList<QStandardItem*> >");
+    qRegisterMetaType<QList<QList<QStandardItem*>>>(
+            "QList< QList<QStandardItem*>>");
     qRegisterMetaType<BrowseTableModel*>("BrowseTableModel*");
 
     m_pBrowseThread = BrowseThread::getInstanceRef();
@@ -210,6 +210,11 @@ void BrowseTableModel::addSearchColumn(int index) {
 }
 
 void BrowseTableModel::setPath(mixxx::FileAccess path) {
+    if (path.info().hasLocation() && path.info().isDir()) {
+        m_currentDirectory = path.info().location();
+    } else {
+        m_currentDirectory = QString();
+    }
     m_pBrowseThread->executePopulation(std::move(path), this);
 }
 
@@ -349,7 +354,7 @@ void BrowseTableModel::slotClear(BrowseTableModel* caller_object) {
     }
 }
 
-void BrowseTableModel::slotInsert(const QList<QList<QStandardItem*> >& rows,
+void BrowseTableModel::slotInsert(const QList<QList<QStandardItem*>>& rows,
         BrowseTableModel* caller_object) {
     // There exists more than one BrowseTableModel in Mixxx We only want to
     // receive items here, this object has 'ordered' by the BrowserThread
@@ -359,6 +364,7 @@ void BrowseTableModel::slotInsert(const QList<QList<QStandardItem*> >& rows,
         for (int i = 0; i < rows.size(); ++i) {
             appendRow(rows.at(i));
         }
+        emit restoreModelState();
     }
 }
 
@@ -367,7 +373,14 @@ TrackModel::Capabilities BrowseTableModel::getCapabilities() const {
             Capability::AddToAutoDJ |
             Capability::LoadToDeck |
             Capability::LoadToPreviewDeck |
-            Capability::LoadToSampler;
+            Capability::LoadToSampler |
+            Capability::RemoveFromDisk;
+}
+
+QString BrowseTableModel::modelKey(bool noSearch) const {
+    // Browse feature does currently not support searching.
+    Q_UNUSED(noSearch);
+    return QStringLiteral("browse:") + m_currentDirectory;
 }
 
 Qt::ItemFlags BrowseTableModel::flags(const QModelIndex& index) const {

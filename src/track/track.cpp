@@ -67,6 +67,16 @@ inline mixxx::Bpm getBeatsPointerBpm(
 //static
 const QString Track::kArtistTitleSeparator = QStringLiteral(" - ");
 
+//static
+SyncTrackMetadataParams SyncTrackMetadataParams::readFromUserSettings(
+        const UserSettings& userSettings) {
+    const auto syncSeratoMetadata =
+            userSettings.getValue<bool>(mixxx::library::prefs::kSyncSeratoMetadataConfigKey);
+    return SyncTrackMetadataParams{
+            syncSeratoMetadata,
+    };
+}
+
 Track::Track(
         mixxx::FileAccess fileAccess,
         TrackId trackId)
@@ -763,11 +773,13 @@ QString Track::getType() const {
     return m_record.getFileType();
 }
 
-void Track::setType(const QString& sType) {
+QString Track::setType(const QString& newType) {
     auto locked = lockMutex(&m_qMutex);
-    if (compareAndSet(m_record.ptrFileType(), sType)) {
+    const QString oldType = m_record.getFileType();
+    if (compareAndSet(m_record.ptrFileType(), newType)) {
         markDirtyAndUnlock(&locked);
     }
+    return oldType;
 }
 
 mixxx::audio::SampleRate Track::getSampleRate() const {
@@ -1188,7 +1200,7 @@ bool Track::setCuePointsWhileLocked(const QList<CuePointer>& cuePoints) {
     // connect new cue points
     for (const auto& pCue : qAsConst(m_cuePoints)) {
         DEBUG_ASSERT(pCue->thread() == thread());
-        // Start listening to cue point updatess AFTER setting
+        // Start listening to cue point updates AFTER setting
         // the track id. Otherwise we would receive unwanted
         // signals about changed cue points that may cause all
         // sorts of issues, e.g. when adding new tracks during
@@ -1311,11 +1323,10 @@ void Track::setDirtyAndUnlock(QT_RECURSIVE_MUTEX_LOCKER* pLock, bool bDirty) {
     }
 }
 
-bool Track::isDirty() {
+bool Track::isDirty() const {
     const auto locked = lockMutex(&m_qMutex);
     return m_bDirty;
 }
-
 
 void Track::markForMetadataExport() {
     const auto locked = lockMutex(&m_qMutex);
@@ -1447,31 +1458,70 @@ CoverInfo Track::getCoverInfoWithLocation() const {
 
 ExportTrackMetadataResult Track::exportMetadata(
         const mixxx::MetadataSource& metadataSource,
-        const UserSettingsPointer& pConfig) {
+        const SyncTrackMetadataParams& syncParams) {
     // Locking shouldn't be necessary here, because this function will
     // be called after all references to the object have been dropped.
     // But it doesn't hurt much, so let's play it safe ;)
     auto locked = lockMutex(&m_qMutex);
-    // TODO(XXX): Use sourceSynchronizedAt to decide if metadata
-    // should be (re-)imported before exporting it. The file might
-    // have been updated by external applications. Overwriting
-    // this modified metadata is probably not be intended if not
-    // explicitly requested by m_bMarkedForMetadataExport.
-    if (!m_bMarkedForMetadataExport &&
-            m_record.checkSourceSyncStatus(m_fileAccess.info()) !=
-                    mixxx::TrackRecord::SourceSyncStatus::Synchronized) {
-        // If the metadata has never been imported from file tags it
-        // must be exported explicitly once. This ensures that we don't
-        // overwrite existing file tags with completely different
-        // information.
-        kLogger.info()
-                << "Skip exporting of unsynchronized track metadata:"
-                << getLocation();
-        // abort
+    const auto sourceSyncStatus = m_record.checkSourceSyncStatus(m_fileAccess.info());
+    switch (sourceSyncStatus) {
+    case mixxx::TrackRecord::SourceSyncStatus::Void:
+        kLogger.warning() << "Skipping export of metadata into untagged file"
+                          << getLocation();
         return ExportTrackMetadataResult::Skipped;
+    case mixxx::TrackRecord::SourceSyncStatus::Outdated: {
+        // Exporting metadata of metadata might cause data losss. But if we
+        // don't export the metadata now then it might be considered as outdated
+        // during the next load operation and would implicitly be re-imported
+        // from the file, thereby losing all edits in Mixxx. Since the user
+        // has decided to let Mixxx update the file tags we consider Mixxx
+        // as the primary source for metadata.
+        // Moreover the file could only have been modified by an external
+        // application during the short time frame since the track has been
+        // loaded from the database. Otherwise the metadata would have been
+        // detected as outdated when loading the track which in turn would
+        // have triggered a re-import.
+        const auto fileSynchronizedAt =
+                mixxx::MetadataSource::getFileSynchronizedAt(m_fileAccess.info().toQFile());
+        DEBUG_ASSERT(fileSynchronizedAt.isValid());
+        const auto sourceSynchronizedAt = m_record.getSourceSynchronizedAt();
+        DEBUG_ASSERT(sourceSynchronizedAt.isValid());
+        DEBUG_ASSERT(fileSynchronizedAt > sourceSynchronizedAt);
+        kLogger.warning()
+                << "Exporting and overwriting metadata into file"
+                << getLocation()
+                << "even though the file has been modified at"
+                << fileSynchronizedAt
+                << "after the last library synchronization at"
+                << sourceSynchronizedAt;
+        break;
+    }
+    case mixxx::TrackRecord::SourceSyncStatus::Synchronized:
+        // If the metadata is still synchronized with the source exporting
+        // modified metadata from Mixxx is perfectly safe.
+        kLogger.debug() << "Exporting metadata into file"
+                        << getLocation();
+        break;
+    case mixxx::TrackRecord::SourceSyncStatus::Unknown:
+        // After the migration from version 2.3 to version 2.4 the sync status
+        // of all existing tracks in the library is unknown. In this case we
+        // assume that exporting metadata is desired independent of the last
+        // modification time of the file. During this export the track will
+        // receive a valid synchronization time stamp.
+        kLogger.debug() << "Exporting metadata into file"
+                        << getLocation()
+                        << "with unknown synchronization status";
+        break;
+    case mixxx::TrackRecord::SourceSyncStatus::Undefined:
+        kLogger.warning() << "Failed to export metadata into missing or inaccessible file"
+                          << getLocation();
+        return ExportTrackMetadataResult::Failed;
+    default:
+        DEBUG_ASSERT(!"unreachable");
+        return ExportTrackMetadataResult::Failed;
     }
 
-    if (pConfig->getValue<bool>(mixxx::library::prefs::kSyncSeratoMetadataConfigKey)) {
+    if (syncParams.syncSeratoMetadata) {
         const auto streamInfo = m_record.getStreamInfoFromSource();
         VERIFY_OR_DEBUG_ASSERT(streamInfo &&
                 streamInfo->getSignalInfo().isValid() &&

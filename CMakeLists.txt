@@ -25,6 +25,15 @@ if(POLICY CMP0071)
   cmake_policy(SET CMP0071 NEW)
 endif()
 
+# Propagate interface link properties
+if(POLICY CMP0099)
+  # This avoids a warning when qt deals with different behaviours controlled by this policy
+  # in its cmake functions. See
+  # https://github.com/qt/qtbase/commit/e3e1007f9778d8fc629a06f7d3d216bb7f81351b
+  cmake_policy(SET CMP0099 NEW)
+endif()
+
+
 # Set up vcpkg
 if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED VCPKG_ROOT)
     set(VCPKG_ROOT "$ENV{VCPKG_ROOT}")
@@ -80,7 +89,7 @@ option(QT6 "Build with Qt6" OFF)
 if(APPLE)
   if(QT6)
     # Minimum macOS version supported by Qt 6
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.14 CACHE STRING "Minimum macOS version the build will be able to run on" FORCE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15 CACHE STRING "Minimum macOS version the build will be able to run on" FORCE)
   else()
     # Minimum macOS version supported by Qt 5.12
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.12 CACHE STRING "Minimum macOS version the build will be able to run on" FORCE)
@@ -98,8 +107,6 @@ set(CMAKE_PROJECT_DESCRIPTION "Mixxx is Free DJ software that gives you everythi
 
 # Used for force control of color output
 set(BUILD_COLORS "auto" CACHE STRING "Try to use colors auto/always/no")
-# Option to disable symlinks
-set(USE_SYMLINKS ON CACHE BOOL "Use symlinks in build directory when possible")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 include(CMakeDependentOption)
@@ -461,6 +468,7 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/control/control.cpp
   src/control/controlaudiotaperpot.cpp
   src/control/controlbehavior.cpp
+  src/control/controlcompressingproxy.cpp
   src/control/controleffectknob.cpp
   src/control/controlencoder.cpp
   src/control/controlindicator.cpp
@@ -468,6 +476,7 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/control/controllinpotmeter.cpp
   src/control/controllogpotmeter.cpp
   src/control/controlmodel.cpp
+  src/control/controlsortfiltermodel.cpp
   src/control/controlobject.cpp
   src/control/controlobjectscript.cpp
   src/control/controlpotmeter.cpp
@@ -475,7 +484,6 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/control/controlpushbutton.cpp
   src/control/controlttrotary.cpp
   src/controllers/controller.cpp
-  src/controllers/controllerdebug.cpp
   src/controllers/controllerenumerator.cpp
   src/controllers/controllerinputmappingtablemodel.cpp
   src/controllers/controllerlearningeventfilter.cpp
@@ -590,7 +598,7 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/engine/cachingreader/cachingreader.cpp
   src/engine/cachingreader/cachingreaderchunk.cpp
   src/engine/cachingreader/cachingreaderworker.cpp
-  src/engine/channelmixer_autogen.cpp
+  src/engine/channelmixer.cpp
   src/engine/channels/engineaux.cpp
   src/engine/channels/enginechannel.cpp
   src/engine/channels/enginedeck.cpp
@@ -644,10 +652,20 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/library/autodj/autodjprocessor.cpp
   src/library/autodj/dlgautodj.cpp
   src/library/autodj/dlgautodj.ui
+  src/library/banshee/bansheedbconnection.cpp
+  src/library/banshee/bansheefeature.cpp
+  src/library/banshee/bansheeplaylistmodel.cpp
+  src/library/baseexternallibraryfeature.cpp
+  src/library/baseexternalplaylistmodel.cpp
+  src/library/baseexternaltrackmodel.cpp
   src/library/basesqltablemodel.cpp
   src/library/basetrackcache.cpp
   src/library/basetracktablemodel.cpp
   src/library/bpmdelegate.cpp
+  src/library/browse/browsefeature.cpp
+  src/library/browse/browsetablemodel.cpp
+  src/library/browse/browsethread.cpp
+  src/library/browse/foldertreemodel.cpp
   src/library/colordelegate.cpp
   src/library/columncache.cpp
   src/library/coverart.cpp
@@ -680,21 +698,31 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/library/export/trackexportdlg.cpp
   src/library/export/trackexportwizard.cpp
   src/library/export/trackexportworker.cpp
+  src/library/externaltrackcollection.cpp
+  src/library/hiddentablemodel.cpp
+  src/library/itunes/itunesfeature.cpp
   src/library/library_prefs.cpp
   src/library/library.cpp
   src/library/librarycontrol.cpp
   src/library/libraryfeature.cpp
   src/library/librarytablemodel.cpp
   src/library/locationdelegate.cpp
+  src/library/missingtablemodel.cpp
   src/library/mixxxlibraryfeature.cpp
   src/library/parser.cpp
   src/library/parsercsv.cpp
   src/library/parserm3u.cpp
   src/library/parserpls.cpp
+  src/library/playlisttablemodel.cpp
   src/library/previewbuttondelegate.cpp
   src/library/proxytrackmodel.cpp
+  src/library/recording/dlgrecording.cpp
+  src/library/recording/dlgrecording.ui
+  src/library/recording/recordingfeature.cpp
   src/library/rekordbox/rekordbox_anlz.cpp
   src/library/rekordbox/rekordbox_pdb.cpp
+  src/library/rekordbox/rekordboxfeature.cpp
+  src/library/rhythmbox/rhythmboxfeature.cpp
   src/library/scanner/importfilestask.cpp
   src/library/scanner/libraryscanner.cpp
   src/library/scanner/libraryscannerdlg.cpp
@@ -702,6 +730,8 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/library/scanner/scannertask.cpp
   src/library/searchquery.cpp
   src/library/searchqueryparser.cpp
+  src/library/serato/seratofeature.cpp
+  src/library/serato/seratoplaylistmodel.cpp
   src/library/sidebarmodel.cpp
   src/library/stardelegate.cpp
   src/library/stareditor.cpp
@@ -713,9 +743,16 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/library/trackloader.cpp
   src/library/trackmodeliterator.cpp
   src/library/trackprocessing.cpp
+  src/library/trackset/baseplaylistfeature.cpp
   src/library/trackset/basetracksetfeature.cpp
+  src/library/trackset/crate/cratefeature.cpp
+  src/library/trackset/crate/cratefeaturehelper.cpp
   src/library/trackset/crate/cratestorage.cpp
+  src/library/trackset/crate/cratetablemodel.cpp
+  src/library/trackset/playlistfeature.cpp
+  src/library/trackset/setlogfeature.cpp
   src/library/trackset/tracksettablemodel.cpp
+  src/library/traktor/traktorfeature.cpp
   src/library/treeitem.cpp
   src/library/treeitemmodel.cpp
   src/mixer/auxiliary.cpp
@@ -741,6 +778,9 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/network/jsonwebtask.cpp
   src/network/networktask.cpp
   src/network/webtask.cpp
+  src/preferences/colorpaletteeditor.cpp
+  src/preferences/colorpaletteeditormodel.cpp
+  src/preferences/colorpalettesettings.cpp
   src/preferences/configobject.cpp
   src/preferences/dialog/dlgprefautodj.cpp
   src/preferences/dialog/dlgprefautodjdlg.ui
@@ -785,20 +825,14 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/preferences/settingsmanager.cpp
   src/preferences/upgrade.cpp
   src/recording/recordingmanager.cpp
-  src/qml/asyncimageprovider.cpp
-  src/qml/qmlapplication.cpp
-  src/qml/qmlcontrolproxy.cpp
-  src/qml/qmlconfigproxy.cpp
-  src/qml/qmldlgpreferencesproxy.cpp
-  src/qml/qmleffectmanifestparametersmodel.cpp
-  src/qml/qmleffectsmanagerproxy.cpp
-  src/qml/qmleffectslotproxy.cpp
-  src/qml/qmllibraryproxy.cpp
-  src/qml/qmllibrarytracklistmodel.cpp
-  src/qml/qmlplayermanagerproxy.cpp
-  src/qml/qmlplayerproxy.cpp
-  src/qml/qmlvisibleeffectsmodel.cpp
-  src/qml/qmlwaveformoverview.cpp
+  src/skin/legacy/colorschemeparser.cpp
+  src/skin/legacy/imgcolor.cpp
+  src/skin/legacy/imginvert.cpp
+  src/skin/legacy/imgloader.cpp
+  src/skin/legacy/launchimage.cpp
+  src/skin/legacy/legacyskin.cpp
+  src/skin/legacy/legacyskinparser.cpp
+  src/skin/legacy/pixmapsource.cpp
   src/skin/legacy/skincontext.cpp
   src/skin/legacy/tooltips.cpp
   src/skin/skinloader.cpp
@@ -875,6 +909,7 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/util/dnd.cpp
   src/util/duration.cpp
   src/util/experiment.cpp
+  src/util/file.cpp
   src/util/fileaccess.cpp
   src/util/fileinfo.cpp
   src/util/filename.cpp
@@ -887,15 +922,14 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/util/performancetimer.cpp
   src/util/rangelist.cpp
   src/util/readaheadsamplebuffer.cpp
-  src/util/rlimit.cpp
   src/util/rotary.cpp
+  src/util/runtimeloggingcategory.cpp
   src/util/sample.cpp
   src/util/samplebuffer.cpp
   src/util/sandbox.cpp
   src/util/semanticversion.cpp
   src/util/screensaver.cpp
   src/util/screensavermanager.cpp
-  src/util/sleepableqthread.cpp
   src/util/stat.cpp
   src/util/statmodel.cpp
   src/util/statsmanager.cpp
@@ -912,49 +946,96 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/util/workerthread.cpp
   src/util/workerthreadscheduler.cpp
   src/util/xml.cpp
+  src/waveform/visualplayposition.cpp
   src/waveform/waveform.cpp
   src/waveform/waveformfactory.cpp
+  src/widget/controlwidgetconnection.cpp
+  src/widget/hexspinbox.cpp
+  src/widget/paintable.cpp
+  src/widget/wanalysislibrarytableview.cpp
+  src/widget/wbasewidget.cpp
+  src/widget/wbattery.cpp
+  src/widget/wbeatspinbox.cpp
+  src/widget/wcolorpicker.cpp
+  src/widget/wcolorpickeraction.cpp
+  src/widget/wcombobox.cpp
+  src/widget/wcoverart.cpp
+  src/widget/wcoverartlabel.cpp
+  src/widget/wcoverartmenu.cpp
+  src/widget/wcuemenupopup.cpp
+  src/widget/wdisplay.cpp
+  src/widget/weffectbuttonparametername.cpp
+  src/widget/weffectchain.cpp
+  src/widget/weffectchainpresetbutton.cpp
+  src/widget/weffectchainpresetselector.cpp
+  src/widget/weffectknobparametername.cpp
+  src/widget/weffectname.cpp
+  src/widget/weffectparameterknob.cpp
+  src/widget/weffectparameterknobcomposed.cpp
+  src/widget/weffectparameternamebase.cpp
+  src/widget/weffectpushbutton.cpp
+  src/widget/weffectselector.cpp
+  src/widget/whotcuebutton.cpp
+  src/widget/wimagestore.cpp
+  src/widget/wkey.cpp
+  src/widget/wknob.cpp
+  src/widget/wknobcomposed.cpp
+  src/widget/wlabel.cpp
+  src/widget/wlibrary.cpp
+  src/widget/wlibrarysidebar.cpp
+  src/widget/wlibrarytableview.cpp
+  src/widget/wlibrarytextbrowser.cpp
+  src/widget/wmainmenubar.cpp
+  src/widget/wnumber.cpp
+  src/widget/wnumberdb.cpp
+  src/widget/wnumberpos.cpp
+  src/widget/wnumberrate.cpp
+  src/widget/wpixmapstore.cpp
+  src/widget/wpushbutton.cpp
+  src/widget/wraterange.cpp
+  src/widget/wrecordingduration.cpp
+  src/widget/wscrollable.cpp
+  src/widget/wsearchlineedit.cpp
+  src/widget/wsearchrelatedtracksmenu.cpp
+  src/widget/wsingletoncontainer.cpp
+  src/widget/wsizeawarestack.cpp
+  src/widget/wskincolor.cpp
+  src/widget/wslidercomposed.cpp
+  src/widget/wsplitter.cpp
+  src/widget/wstarrating.cpp
+  src/widget/wstatuslight.cpp
+  src/widget/wtime.cpp
+  src/widget/wtrackmenu.cpp
+  src/widget/wtrackproperty.cpp
+  src/widget/wtracktableview.cpp
+  src/widget/wtracktableviewheader.cpp
+  src/widget/wtracktext.cpp
+  src/widget/wtrackwidgetgroup.cpp
+  src/widget/wvumeter.cpp
+  src/widget/wwidget.cpp
+  src/widget/wwidgetgroup.cpp
+  src/widget/wwidgetstack.cpp
 )
-if(NOT QT6)
+if(QT6)
   target_sources(mixxx-lib PRIVATE
-    src/library/banshee/bansheedbconnection.cpp
-    src/library/banshee/bansheefeature.cpp
-    src/library/banshee/bansheeplaylistmodel.cpp
-    src/library/browse/browsefeature.cpp
-    src/library/browse/browsetablemodel.cpp
-    src/library/browse/browsethread.cpp
-    src/library/browse/foldertreemodel.cpp
-    src/library/baseexternallibraryfeature.cpp
-    src/library/baseexternalplaylistmodel.cpp
-    src/library/baseexternaltrackmodel.cpp
-    src/library/externaltrackcollection.cpp
-    src/library/hiddentablemodel.cpp
-    src/library/itunes/itunesfeature.cpp
-    src/library/missingtablemodel.cpp
-    src/library/playlisttablemodel.cpp
-    src/library/recording/dlgrecording.cpp
-    src/library/recording/dlgrecording.ui
-    src/library/recording/recordingfeature.cpp
-    src/library/rekordbox/rekordboxfeature.cpp
-    src/library/rhythmbox/rhythmboxfeature.cpp
-    src/library/serato/seratofeature.cpp
-    src/library/serato/seratoplaylistmodel.cpp
-    src/library/trackset/baseplaylistfeature.cpp
-    src/library/trackset/crate/cratefeature.cpp
-    src/library/trackset/crate/cratefeaturehelper.cpp
-    src/library/trackset/crate/cratetablemodel.cpp
-    src/library/trackset/playlistfeature.cpp
-    src/library/trackset/setlogfeature.cpp
-    src/library/traktor/traktorfeature.cpp
+    src/qml/asyncimageprovider.cpp
+    src/qml/qmlapplication.cpp
+    src/qml/qmlcontrolproxy.cpp
+    src/qml/qmlconfigproxy.cpp
+    src/qml/qmldlgpreferencesproxy.cpp
+    src/qml/qmleffectmanifestparametersmodel.cpp
+    src/qml/qmleffectsmanagerproxy.cpp
+    src/qml/qmleffectslotproxy.cpp
+    src/qml/qmllibraryproxy.cpp
+    src/qml/qmllibrarytracklistmodel.cpp
+    src/qml/qmlplayermanagerproxy.cpp
+    src/qml/qmlplayerproxy.cpp
+    src/qml/qmlvisibleeffectsmodel.cpp
+    src/qml/qmlwaveformoverview.cpp
+  )
+else()
+  target_sources(mixxx-lib PRIVATE
     src/mixxxmainwindow.cpp
-    src/skin/legacy/colorschemeparser.cpp
-    src/skin/legacy/imgcolor.cpp
-    src/skin/legacy/imginvert.cpp
-    src/skin/legacy/imgloader.cpp
-    src/skin/legacy/launchimage.cpp
-    src/skin/legacy/legacyskinparser.cpp
-    src/skin/legacy/pixmapsource.cpp
-    src/skin/legacy/legacyskin.cpp
     src/waveform/guitick.cpp
     src/waveform/renderers/glslwaveformrenderersignal.cpp
     src/waveform/renderers/glvsynctestrenderer.cpp
@@ -981,7 +1062,6 @@ if(NOT QT6)
     src/waveform/renderers/waveformsignalcolors.cpp
     src/waveform/renderers/waveformwidgetrenderer.cpp
     src/waveform/sharedglcontext.cpp
-    src/waveform/visualplayposition.cpp
     src/waveform/visualsmanager.cpp
     src/waveform/vsyncthread.cpp
     src/waveform/waveformmarklabel.cpp
@@ -1001,83 +1081,18 @@ if(NOT QT6)
     src/waveform/widgets/rgbwaveformwidget.cpp
     src/waveform/widgets/softwarewaveformwidget.cpp
     src/waveform/widgets/waveformwidgetabstract.cpp
-    src/widget/controlwidgetconnection.cpp
-    src/widget/hexspinbox.cpp
-    src/widget/paintable.cpp
-    src/widget/wanalysislibrarytableview.cpp
-    src/widget/wbasewidget.cpp
-    src/widget/wbattery.cpp
-    src/widget/wbeatspinbox.cpp
-    src/widget/wcolorpicker.cpp
-    src/widget/wcolorpickeraction.cpp
-    src/widget/wcombobox.cpp
-    src/widget/wcoverart.cpp
-    src/widget/wcoverartlabel.cpp
-    src/widget/wcoverartmenu.cpp
-    src/widget/wcuemenupopup.cpp
-    src/widget/wdisplay.cpp
-    src/widget/weffectbuttonparametername.cpp
-    src/widget/weffectchain.cpp
-    src/widget/weffectchainpresetbutton.cpp
-    src/widget/weffectchainpresetselector.cpp
-    src/widget/weffectknobparametername.cpp
-    src/widget/weffectname.cpp
-    src/widget/weffectparameterknob.cpp
-    src/widget/weffectparameterknobcomposed.cpp
-    src/widget/weffectparameternamebase.cpp
-    src/widget/weffectpushbutton.cpp
-    src/widget/weffectselector.cpp
-    src/widget/whotcuebutton.cpp
-    src/widget/wimagestore.cpp
-    src/widget/wkey.cpp
-    src/widget/wknob.cpp
-    src/widget/wknobcomposed.cpp
-    src/widget/wlabel.cpp
-    src/widget/wlibrary.cpp
-    src/widget/wlibrarysidebar.cpp
-    src/widget/wlibrarytableview.cpp
-    src/widget/wlibrarytextbrowser.cpp
-    src/widget/wmainmenubar.cpp
-    src/widget/wnumber.cpp
-    src/widget/wnumberdb.cpp
-    src/widget/wnumberpos.cpp
-    src/widget/wnumberrate.cpp
     src/widget/woverview.cpp
     src/widget/woverviewhsv.cpp
     src/widget/woverviewlmh.cpp
     src/widget/woverviewrgb.cpp
-    src/widget/wpixmapstore.cpp
-    src/widget/wpushbutton.cpp
-    src/widget/wrecordingduration.cpp
-    src/widget/wscrollable.cpp
-    src/widget/wsearchlineedit.cpp
-    src/widget/wsearchrelatedtracksmenu.cpp
-    src/widget/wsingletoncontainer.cpp
-    src/widget/wsizeawarestack.cpp
-    src/widget/wskincolor.cpp
-    src/widget/wslidercomposed.cpp
     src/widget/wspinny.cpp
-    src/widget/wsplitter.cpp
-    src/widget/wstarrating.cpp
-    src/widget/wstatuslight.cpp
-    src/widget/wtime.cpp
-    src/widget/wtrackmenu.cpp
-    src/widget/wtrackproperty.cpp
-    src/widget/wtracktableview.cpp
-    src/widget/wtracktableviewheader.cpp
-    src/widget/wtracktext.cpp
-    src/widget/wtrackwidgetgroup.cpp
-    src/widget/wvumeter.cpp
     src/widget/wwaveformviewer.cpp
-    src/widget/wwidget.cpp
-    src/widget/wwidgetgroup.cpp
-    src/widget/wwidgetstack.cpp
-    src/widget/wraterange.cpp
   )
 endif()
 set_target_properties(mixxx-lib PROPERTIES AUTOMOC ON AUTOUIC ON CXX_CLANG_TIDY "${CLANG_TIDY}")
 target_include_directories(mixxx-lib PUBLIC src "${CMAKE_CURRENT_BINARY_DIR}/src")
 if(UNIX AND NOT APPLE)
+  target_sources(mixxx-lib PRIVATE src/util/rlimit.cpp)
   set(MIXXX_SETTINGS_PATH ".mixxx/")
 endif()
 
@@ -1248,7 +1263,16 @@ elseif(UNIX)
 endif()
 
 # The mixxx executable
-add_executable(mixxx WIN32 src/main.cpp)
+if(QT6)
+  find_package(Qt6 REQUIRED COMPONENTS Core) # For Qt Core cmake functions
+  # qt_add_executable() is the recommended initial call for qt_finalize_target()
+  # below that takes care of the correct object order in the resulting binary
+  # According to https://doc.qt.io/qt-6/qt-finalize-target.html it is importand for
+  # builds with Qt < 3.21
+  qt_add_executable(mixxx WIN32 src/main.cpp MANUAL_FINALIZATION)
+else()
+  add_executable(mixxx WIN32 src/main.cpp)
+endif()
 # ugly hack to get #include "preferences/dialog/ui_dlgpreferencesdlg.h" to work in
 # src/qmldlgpreferencesproxy.h, which is #included from src/qmlapplication.h.
 target_include_directories(mixxx PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/mixxx-lib_autogen/include")
@@ -1589,6 +1613,7 @@ add_executable(mixxx-test
   src/test/controller_mapping_validation_test.cpp
   src/test/controllerscriptenginelegacy_test.cpp
   src/test/controlobjecttest.cpp
+  src/test/controlobjectscripttest.cpp
   src/test/coreservicestest.cpp
   src/test/coverartcache_test.cpp
   src/test/coverartutils_test.cpp
@@ -1631,6 +1656,7 @@ add_executable(mixxx-test
   src/test/nativeeffects_test.cpp
   src/test/performancetimer_test.cpp
   src/test/playcountertest.cpp
+  src/test/playermanagertest.cpp
   src/test/playlisttest.cpp
   src/test/portmidicontroller_test.cpp
   src/test/portmidienumeratortest.cpp
@@ -1655,6 +1681,7 @@ add_executable(mixxx-test
   src/test/soundsourceproviderregistrytest.cpp
   src/test/sqliteliketest.cpp
   src/test/synccontroltest.cpp
+  src/test/synctrackmetadatatest.cpp
   src/test/tableview_test.cpp
   src/test/taglibtest.cpp
   src/test/trackdao_test.cpp
@@ -1712,26 +1739,6 @@ add_custom_target(mixxx-benchmark
   VERBATIM
 )
 add_dependencies(mixxx-benchmark mixxx-test)
-
-if(UNIX AND USE_SYMLINKS)
-  add_custom_target(mixxx-testdata
-    COMMAND ${CMAKE_COMMAND} -E create_symlink "${CMAKE_CURRENT_SOURCE_DIR}/src/test" "${CMAKE_CURRENT_BINARY_DIR}/src/test"
-    COMMENT "Symlinking test data to build directory..."
-  )
-elseif(WIN32)
-  file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/test" CMAKE_CURRENT_SOURCE_TESTDATA_DIR_NATIVE)
-  file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/src/test/" CMAKE_CURRENT_BINARY_TESTDATA_DIR_NATIVE)
-  add_custom_target(mixxx-testdata
-    COMMAND xcopy ${CMAKE_CURRENT_SOURCE_TESTDATA_DIR_NATIVE} ${CMAKE_CURRENT_BINARY_TESTDATA_DIR_NATIVE} /s /d /q /y
-    COMMENT "Copying missing or modified test data files to build directory..."
-  )
-else()
-  add_custom_target(mixxx-testdata
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/src/test" "${CMAKE_CURRENT_BINARY_DIR}/src/test"
-    COMMENT "Copying all test data files to build directory..."
-  )
-endif()
-add_dependencies(mixxx-test mixxx-testdata)
 
 #
 # Resources
@@ -1966,7 +1973,8 @@ target_include_directories(mixxx-lib SYSTEM PUBLIC lib/fidlib)
 target_link_libraries(mixxx-lib PRIVATE fidlib)
 
 # KeyFinder
-find_package(KeyFinder)
+set(LIBKEYFINDER_VERSION 2.2.6)
+find_package(KeyFinder ${LIBKEYFINDER_VERSION})
 option(KEYFINDER "KeyFinder support" ON)
 if(KEYFINDER)
   if (KeyFinder_FOUND)
@@ -1976,13 +1984,14 @@ if(KEYFINDER)
     find_package(FFTW REQUIRED)
     set(KeyFinder_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/lib/keyfinder-install")
     set(KeyFinder_LIBRARY "${CMAKE_INSTALL_LIBDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}keyfinder${CMAKE_STATIC_LIBRARY_SUFFIX}")
-    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/download")
-    # External project sources must be downloaded as an archive into DOWNLOAD_DIR
-    # from an URL to keep offline builds like for Fedora/RPM Fusion working!
+    # For offline builds download the archive file from the URL and
+    # copy it into DOWNLOAD_DIR under DOWNLOAD_NAME prior to starting
+    # the configuration.
     ExternalProject_Add(libkeyfinder
-      URL "https://github.com/mixxxdj/libkeyfinder/archive/v2.2.4.zip"
-      URL_HASH SHA256=cb3fea8c7213257281b6c7006b2430809f466ad8a1d485663324378d6fc0782c
-      DOWNLOAD_DIR "${CMAKE_CURRENT_BINARY_DIR}/download/libkeyfinder"
+      URL "https://github.com/mixxxdj/libkeyfinder/archive/refs/tags/v${LIBKEYFINDER_VERSION}.zip"
+      URL_HASH SHA256=f15deb56c2dcaa6b10dc3717a7d2f42a8407c04ad550f694de42118be998d256
+      DOWNLOAD_DIR "${CMAKE_CURRENT_BINARY_DIR}/downloads"
+      DOWNLOAD_NAME "libkeyfinder-${LIBKEYFINDER_VERSION}.zip"
       INSTALL_DIR "${KeyFinder_INSTALL_DIR}"
       CMAKE_ARGS
         -DBUILD_SHARED_LIBS=OFF
@@ -2143,6 +2152,59 @@ if(QT6)
   foreach(COMPONENT ${QT6_NEW_COMPONENTS})
     target_link_libraries(mixxx-lib PUBLIC Qt6::${COMPONENT})
   endforeach()
+
+  set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml)
+  set_target_properties(mixxx-lib PROPERTIES AUTOMOC ON)
+  qt_add_qml_module(mixxx-lib
+    URI Mixxx
+    VERSION 0.1
+    RESOURCE_PREFIX /mixxx.org/imports
+    IMPORTS QtQuick
+    QML_FILES
+      res/qml/Mixxx/MathUtils.mjs
+      res/qml/Mixxx/PlayerDropArea.qml
+    NO_GENERATE_QMLDIR
+  )
+
+  # Generation of the `qmldir` file has been disabled (via `NO_GENERATE_QMLDIR`
+  # above) due to QTBUG-100326, which breaks JavaScript module imports:
+  # https://bugreports.qt.io/browse/QTBUG-100326
+  # Instead, a handwritten `qmldir` file that works around the issue needs to
+  # be added to the resources here.
+  set_source_files_properties("res/qml/Mixxx/qmldir" PROPERTIES QT_RESOURCE_ALIAS "qmldir")
+  qt_add_resources(mixxx-libplugin qmldir
+    FILES "res/qml/Mixxx/qmldir"
+    PREFIX "/mixxx.org/imports/Mixxx"
+  )
+  # to make also qmllint happy
+  configure_file(res/qml/Mixxx/qmldir qml/Mixxx/qmldir COPYONLY)
+
+  # FIXME: Currently we need to add these include directories due to
+  # QTBUG-87221. We should figure out a better way to fix this.
+  # See: https://bugreports.qt.io/browse/QTBUG-87221
+  target_include_directories(mixxx-lib PRIVATE src/control src/qml)
+  target_link_libraries(mixxx-lib PRIVATE mixxx-libplugin)
+
+  qt_add_library(mixxx-qml-mixxxcontrols STATIC)
+  set_target_properties(mixxx-qml-mixxxcontrols PROPERTIES AUTOMOC ON)
+  qt_add_qml_module(mixxx-qml-mixxxcontrols
+    URI Mixxx.Controls
+    VERSION 0.1
+    RESOURCE_PREFIX /mixxx.org/imports
+    OPTIONAL_IMPORTS Mixxx
+    QML_FILES
+      res/qml/Mixxx/Controls/Knob.qml
+      res/qml/Mixxx/Controls/Slider.qml
+      res/qml/Mixxx/Controls/Spinny.qml
+      res/qml/Mixxx/Controls/WaveformOverviewHotcueMarker.qml
+      res/qml/Mixxx/Controls/WaveformOverviewMarker.qml
+      res/qml/Mixxx/Controls/WaveformOverview.qml
+  )
+  target_link_libraries(mixxx-lib PRIVATE mixxx-qml-mixxxcontrolsplugin)
+
+  # qt_finalize_target takes care that the resources :/mixxx.org/imports/Mixxx/
+  # and :/mixxx.org/imports/Mixxx/Controls are placed into beginning of the binary
+  qt_finalize_target(mixxx)
 endif()
 
 target_compile_definitions(mixxx-lib PUBLIC QT_TABLET_SUPPORT QT_USE_QSTRINGBUILDER)
@@ -2622,7 +2684,7 @@ if(BROADCAST)
       message(STATUS "Installed libshout version: ${Shout_VERSION} is suffering from bug lp1913579")
   endif()
   if(NOT Shoutidjc_FOUND OR Shoutidjc_VERSION VERSION_LESS 2.4.6)
-    # Fall back to internal libraray in the lib tree
+    # Fall back to internal library in the lib tree
     message(STATUS "Using internal libshout-idjc")
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/lib/libshout-idjc")
     target_include_directories(mixxx-lib SYSTEM PUBLIC lib/libshout-idjc/include)
@@ -2769,6 +2831,8 @@ if(HID)
   endif()
   target_sources(mixxx-lib PRIVATE
     src/controllers/hid/hidcontroller.cpp
+    src/controllers/hid/hidiothread.cpp
+    src/controllers/hid/hidiooutputreport.cpp
     src/controllers/hid/hiddevice.cpp
     src/controllers/hid/hidenumerator.cpp
     src/controllers/hid/legacyhidcontrollermapping.cpp
@@ -2818,11 +2882,7 @@ if(VINYLCONTROL)
 
   # Internal xwax library
   add_library(mixxx-xwax STATIC EXCLUDE_FROM_ALL)
-  if(WIN32)
-    target_sources(mixxx-xwax PRIVATE lib/xwax/timecoder_win32.cpp lib/xwax/lut_win32.cpp)
-  else()
-    target_sources(mixxx-xwax PRIVATE lib/xwax/timecoder.c lib/xwax/lut.c)
-  endif()
+  target_sources(mixxx-xwax PRIVATE lib/xwax/timecoder.c lib/xwax/lut.c)
   target_include_directories(mixxx-xwax SYSTEM PUBLIC lib/xwax)
   target_link_libraries(mixxx-lib PRIVATE mixxx-xwax)
 endif()
@@ -2867,10 +2927,7 @@ set(CPACK_GIT_COMMIT_DATE ${GIT_COMMIT_DATE})
 set(CPACK_SOURCE_IGNORE_FILES  "\\\\.#;/#;.*~;\\\\.o$")
 list(APPEND CPACK_SOURCE_IGNORE_FILES "/\\\\.git/")
 list(APPEND CPACK_SOURCE_IGNORE_FILES "/\\\\.github/")
-list(APPEND CPACK_SOURCE_IGNORE_FILES "/cache/")
 list(APPEND CPACK_SOURCE_IGNORE_FILES "/build/")
-list(APPEND CPACK_SOURCE_IGNORE_FILES "/.*_build/")
-list(APPEND CPACK_SOURCE_IGNORE_FILES "/\\\\.sconf_temp/")
 list(APPEND CPACK_SOURCE_IGNORE_FILES "${CMAKE_CURRENT_BINARY_DIR}/")
 set(CPACK_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 
@@ -2895,7 +2952,7 @@ if (NOT CPACK_DEBIAN_PACKAGE_RELEASE)
    set(CPACK_DEBIAN_PACKAGE_RELEASE 1)
 endif()
 
-set(CPACK_DEBIAN_DISTRIBUTION_RELEASES focal hirsute impish)
+set(CPACK_DEBIAN_DISTRIBUTION_RELEASES focal impish jammy)
 set(CPACK_DEBIAN_SOURCE_DIR ${CMAKE_SOURCE_DIR})
 set(CPACK_DEBIAN_UPLOAD_PPA_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/packaging/CPackDebUploadPPA.cmake")
 set(CPACK_DEBIAN_INSTALL_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/packaging/CPackDebInstall.cmake")
