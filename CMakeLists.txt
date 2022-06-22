@@ -89,12 +89,25 @@ option(QT6 "Build with Qt6" OFF)
 if(APPLE)
   if(QT6)
     # Minimum macOS version supported by Qt 6
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15 CACHE STRING "Minimum macOS version the build will be able to run on" FORCE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15 CACHE STRING "Minimum macOS version the build will be able to run on")
+    if(NOT VCPKG_TARGET_TRIPLET)
+      set(VCPKG_TARGET_TRIPLET "x64-osx-min10.15")
+    endif()
   else()
     # Minimum macOS version supported by Qt 5.12
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.12 CACHE STRING "Minimum macOS version the build will be able to run on" FORCE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.12 CACHE STRING "Minimum macOS version the build will be able to run on")
+    if(NOT VCPKG_TARGET_TRIPLET)
+      set(VCPKG_TARGET_TRIPLET "x64-osx-min10.12")
+    endif()
     # Needed for deployment target < 10.14
     add_compile_options(-fno-aligned-allocation)
+  endif()
+endif()
+
+if(DEFINED VCPKG_ROOT AND DEFINED VCPKG_TARGET_TRIPLET)
+  if(NOT EXISTS "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}")
+    message(FATAL_ERROR "VCPKG_TARGET_TRIPLET dir not found: ${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET} "
+        "Make sure the VCPKG build environment is installed and contains the build for the selected triplet.")
   endif()
 endif()
 
@@ -111,6 +124,7 @@ set(BUILD_COLORS "auto" CACHE STRING "Try to use colors auto/always/no")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 include(CMakeDependentOption)
 include(CheckSymbolExists)
+include(CheckIncludeFileCXX)
 include(ExternalProject)
 include(GNUInstallDirs)
 include(DefaultOption)
@@ -565,6 +579,7 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/effects/backends/builtin/moogladder4filtereffect.cpp
   src/effects/backends/builtin/parametriceqeffect.cpp
   src/effects/backends/builtin/phasereffect.cpp
+  src/effects/backends/builtin/pitchshifteffect.cpp
   src/effects/backends/builtin/reverbeffect.cpp
   src/effects/backends/builtin/threebandbiquadeqeffect.cpp
   src/effects/backends/builtin/tremoloeffect.cpp
@@ -2776,6 +2791,19 @@ if(MODPLUG)
   target_compile_definitions(mixxx-lib PUBLIC __MODPLUG__)
   target_link_libraries(mixxx-lib PRIVATE Modplug::Modplug)
 endif()
+
+find_package(Microsoft.GSL CONFIG)
+if(Microsoft.GSL_FOUND)
+  target_link_libraries(mixxx-lib PRIVATE Microsoft.GSL::GSL)
+else()
+  # check if the headers have been installed without cmake config (< 3.1.0)
+  check_include_file_cxx(gsl/gsl HAVE_GSL_GSL)
+  if(NOT HAVE_GSL_GSL)
+    unset(HAVE_GSL_GSL CACHE) # unset cache to re-evaluate this until it succeeds. check_include_file_cxx() has no REQUIRED flag.
+    message(FATAL_ERROR "ms-gsl deveopment headers (libmsgsl-dev) not found")
+  endif()
+endif()
+
 
 # QtKeychain
 option(QTKEYCHAIN "Secure credentials storage support for Live Broadcasting profiles" ON)
