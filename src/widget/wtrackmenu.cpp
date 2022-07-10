@@ -37,6 +37,7 @@
 #include "widget/wcolorpickeraction.h"
 #include "widget/wcoverartlabel.h"
 #include "widget/wcoverartmenu.h"
+#include "widget/wfindonwebmenu.h"
 #include "widget/wsearchrelatedtracksmenu.h"
 #include "widget/wskincolor.h"
 #include "widget/wstarrating.h"
@@ -156,6 +157,11 @@ void WTrackMenu::createMenus() {
         m_pClearMetadataMenu->setTitle(tr("Reset"));
     }
 
+    if (featureIsEnabled(Feature::Analyze)) {
+        m_pAnalyzeMenu = new QMenu(this);
+        m_pAnalyzeMenu->setTitle(tr("Analyze"));
+    }
+
     if (featureIsEnabled(Feature::SearchRelated)) {
         DEBUG_ASSERT(!m_pSearchRelatedMenu);
         m_pSearchRelatedMenu =
@@ -180,6 +186,25 @@ void WTrackMenu::createMenus() {
                 });
     }
 
+    if (featureIsEnabled(Feature::FindOnWeb)) {
+        DEBUG_ASSERT(!m_pFindOnMenu);
+        m_pFindOnMenu =
+                make_parented<WFindOnWebMenu>(this);
+
+        connect(m_pFindOnMenu,
+                &QMenu::aboutToShow,
+                this,
+                [this] {
+                    m_pFindOnMenu->clear();
+                    const auto pTrack = getFirstTrackPointer();
+                    if (pTrack) {
+                        m_pFindOnMenu->addSubmenusForServices(*pTrack);
+                    }
+                    m_pFindOnMenu->setEnabled(
+                            !m_pFindOnMenu->isEmpty());
+                });
+    }
+
     if (featureIsEnabled(Feature::RemoveFromDisk)) {
         m_pRemoveFromDiskMenu = new QMenu(this);
         m_pRemoveFromDiskMenu->setTitle(tr("Delete Track Files"));
@@ -188,7 +213,9 @@ void WTrackMenu::createMenus() {
 
 void WTrackMenu::createActions() {
     const auto hideRemoveKeySequence =
-            QKeySequence(kHideRemoveShortcutModifier | kHideRemoveShortcutKey);
+            // TODO(XXX): Qt6 replace enum | with QKeyCombination
+            QKeySequence(static_cast<int>(kPropertiesShortcutModifier) |
+                    kPropertiesShortcutKey);
 
     if (featureIsEnabled(Feature::AutoDJ)) {
         m_pAutoDJBottomAct = new QAction(tr("Add to Auto DJ Queue (bottom)"), this);
@@ -253,7 +280,10 @@ void WTrackMenu::createActions() {
         // The keypress is caught in WTrackTableView::keyPressEvent
         if (m_pTrackModel) {
             m_pPropertiesAct->setShortcut(
-                    QKeySequence(kPropertiesShortcutModifier | kPropertiesShortcutKey));
+                    // TODO(XXX): Qt6 replace enum | with QKeyCombination
+                    QKeySequence(
+                            static_cast<int>(kPropertiesShortcutModifier) |
+                            kPropertiesShortcutKey));
         }
         connect(m_pPropertiesAct, &QAction::triggered, this, &WTrackMenu::slotShowDlgTrackInfo);
     }
@@ -392,6 +422,14 @@ void WTrackMenu::createActions() {
                 &WTrackMenu::slotClearBeats);
     }
 
+    if (featureIsEnabled(Feature::Analyze)) {
+        m_pAnalyzeAction = new QAction(tr("Analyze"), this);
+        connect(m_pAnalyzeAction, &QAction::triggered, this, &WTrackMenu::slotAnalyze);
+
+        m_pReanalyzeAction = new QAction(tr("Reanalyze"), this);
+        connect(m_pReanalyzeAction, &QAction::triggered, this, &WTrackMenu::slotReanalyze);
+    }
+
     // This action is only usable when m_deckGroup is set. That is true only
     // for WTrackmenu instantiated by WTrackProperty and other deck widgets, thus
     // don't create it if a track model is set.
@@ -524,6 +562,10 @@ void WTrackMenu::setupActions() {
         }
 
         m_pMetadataMenu->addMenu(m_pCoverMenu);
+        if (featureIsEnabled(Feature::FindOnWeb)) {
+            m_pMetadataMenu->addMenu(m_pFindOnMenu);
+            addSeparator();
+        }
         addMenu(m_pMetadataMenu);
     }
 
@@ -543,6 +585,12 @@ void WTrackMenu::setupActions() {
         m_pClearMetadataMenu->addSeparator();
         m_pClearMetadataMenu->addAction(m_pClearAllMetadataAction);
         addMenu(m_pClearMetadataMenu);
+    }
+
+    if (featureIsEnabled(Feature::Analyze)) {
+        m_pAnalyzeMenu->addAction(m_pAnalyzeAction);
+        m_pAnalyzeMenu->addAction(m_pReanalyzeAction);
+        addMenu(m_pAnalyzeMenu);
     }
 
     // This action is created only for menus instantiated by deck widgets (e.g.
@@ -840,6 +888,12 @@ void WTrackMenu::updateMenus() {
 
     if (featureIsEnabled(Feature::Properties)) {
         m_pPropertiesAct->setEnabled(singleTrackSelected);
+    }
+
+    if (featureIsEnabled(Feature::FindOnWeb)) {
+        const auto pTrack = getFirstTrackPointer();
+        const bool enableMenu = pTrack ? WFindOnWebMenu::hasEntriesForTrack(*pTrack) : false;
+        m_pFindOnMenu->setEnabled(enableMenu);
     }
 }
 
@@ -1303,6 +1357,25 @@ void WTrackMenu::addSelectionToNewCrate() {
     }
 }
 
+void WTrackMenu::addToAnalysis() {
+    const TrackIdList trackIds = getTrackIds();
+    if (trackIds.empty()) {
+        qWarning() << "No tracks selected for analysis";
+        return;
+    }
+
+    emit m_pLibrary->analyzeTracks(trackIds);
+}
+
+void WTrackMenu::slotAnalyze() {
+    addToAnalysis();
+}
+
+void WTrackMenu::slotReanalyze() {
+    clearBeats();
+    addToAnalysis();
+}
+
 void WTrackMenu::slotLockBpm() {
     lockBpm(true);
 }
@@ -1470,7 +1543,7 @@ class ResetBeatsTrackPointerOperation : public mixxx::TrackPointerOperation {
 
 } // anonymous namespace
 
-void WTrackMenu::slotClearBeats() {
+void WTrackMenu::clearBeats() {
     const auto progressLabelText =
             tr("Resetting beats of %n track(s)", "", getTrackCount());
     const auto trackOperator =
@@ -1478,6 +1551,10 @@ void WTrackMenu::slotClearBeats() {
     applyTrackPointerOperation(
             progressLabelText,
             &trackOperator);
+}
+
+void WTrackMenu::slotClearBeats() {
+    clearBeats();
 }
 
 namespace {
@@ -2140,6 +2217,10 @@ bool WTrackMenu::featureIsEnabled(Feature flag) const {
                         TrackModel::Capability::RemoveCrate);
     case Feature::Metadata:
         return m_pTrackModel->hasCapabilities(TrackModel::Capability::EditMetadata);
+    case Feature::Analyze:
+        return m_pTrackModel->hasCapabilities(
+                TrackModel::Capability::EditMetadata |
+                TrackModel::Capability::Analyze);
     case Feature::Reset:
         return m_pTrackModel->hasCapabilities(
                 TrackModel::Capability::EditMetadata |
@@ -2155,6 +2236,8 @@ bool WTrackMenu::featureIsEnabled(Feature flag) const {
     case Feature::RemoveFromDisk:
         return m_pTrackModel->hasCapabilities(TrackModel::Capability::RemoveFromDisk);
     case Feature::FileBrowser:
+        return true;
+    case Feature::FindOnWeb:
         return true;
     case Feature::Properties:
         return m_pTrackModel->hasCapabilities(TrackModel::Capability::EditMetadata);
