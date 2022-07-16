@@ -30,6 +30,10 @@ var TraktorS3 = {};
 // * keylock will still toggle on, but on release, not press.
 TraktorS3.PitchSliderRelativeMode = true;
 
+// In PitchSliderRelativeMode *only*, set ShiftPitch to true to only allow adjustments to the pitch
+// sliders if Shift is held.  This can prevent accidental adjustments.
+TraktorS3.ShiftPitch = false;
+
 // The Samplers can operate two ways.
 // With SamplerModePressAndHold = false, tapping a Sampler button will start the
 // sample playing.  Pressing the button again will stop playback.
@@ -761,34 +765,39 @@ TraktorS3.Deck.prototype.pitchSliderHandler = function(field) {
     if (TraktorS3.PitchSliderRelativeMode) {
         if (this.pitchSliderLastValue === -1) {
             this.pitchSliderLastValue = value;
-        } else {
-            // If shift is pressed, don't update any values.
-            if (this.shiftPressed) {
-                this.pitchSliderLastValue = value;
-                return;
-            }
+            return;
+        }
 
-            let relVal;
-            if (this.keylockPressed) {
-                relVal = 1.0 - engine.getValue(this.activeChannel, "pitch_adjust");
-            } else {
-                relVal = engine.getValue(this.activeChannel, "rate");
-            }
-            // This can result in values outside -1 to 1, but that is valid for the
-            // rate control. This means the entire swing of the rate slider can be
-            // outside the range of the widget, but that's ok because the slider still
-            // works.
-            relVal += value - this.pitchSliderLastValue;
+        // If ShiftPitch is on, invert the state of the shift button
+        let shiftVal = this.shiftPressed;
+        if (TraktorS3.ShiftPitch) {
+            shiftVal = !shiftVal;
+        }
+        if (shiftVal && !this.keylockPressed) {
             this.pitchSliderLastValue = value;
+            return;
+        }
 
-            if (this.keylockPressed) {
-                // To match the pitch change from adjusting the rate, flip the pitch
-                // adjustment.
-                engine.setValue(this.activeChannel, "pitch_adjust", 1.0 - relVal);
-                this.keyAdjusted = true;
-            } else {
-                engine.setValue(this.activeChannel, "rate", relVal);
-            }
+        let relVal;
+        if (this.keylockPressed) {
+            relVal = 1.0 - engine.getValue(this.activeChannel, "pitch_adjust");
+        } else {
+            relVal = engine.getValue(this.activeChannel, "rate");
+        }
+        // This can result in values outside -1 to 1, but that is valid for the
+        // rate control. This means the entire swing of the rate slider can be
+        // outside the range of the widget, but that's ok because the slider still
+        // works.
+        relVal += value - this.pitchSliderLastValue;
+        this.pitchSliderLastValue = value;
+
+        if (this.keylockPressed) {
+            // To match the pitch change from adjusting the rate, flip the pitch
+            // adjustment.
+            engine.setValue(this.activeChannel, "pitch_adjust", 1.0 - relVal);
+            this.keyAdjusted = true;
+        } else {
+            engine.setValue(this.activeChannel, "rate", relVal);
         }
         return;
     }
