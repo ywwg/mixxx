@@ -2461,6 +2461,12 @@ endif()
 find_package(SoundTouch 2.1.2 REQUIRED)
 target_link_libraries(mixxx-lib PRIVATE SoundTouch::SoundTouch)
 
+# LibResample
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBRESAMPLE REQUIRED libresample)
+target_link_libraries(mixxx-lib PRIVATE ${LIBRESAMPLE_LIBRARIES})
+target_include_directories(mixxx-lib SYSTEM PRIVATE ${LIBRESAMPLE_INCLUDE_DIRS})
+
 # TagLib
 find_package(TagLib 1.11 REQUIRED)
 target_link_libraries(mixxx-lib PRIVATE TagLib::TagLib)
