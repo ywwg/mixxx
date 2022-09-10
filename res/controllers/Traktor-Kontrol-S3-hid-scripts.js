@@ -49,6 +49,10 @@ TraktorS3.JogDefaultOn = false;
 // 9-16.  If false, both decks are samplers 1-8.
 TraktorS3.SixteenSamplers = false;
 
+// If true, the sampler buttons on Deck 1 are samplers 1-8 and the sampler buttons on Deck 2 are
+// 9-16.  If false, both decks are samplers 1-8.
+TraktorS3.SixteenSamplers = false;
+
 // You can choose the colors you want for each channel. The list of colors is:
 // RED, CARROT, ORANGE, HONEY, YELLOW, LIME, GREEN, AQUA, CELESTE, SKY, BLUE,
 // PURPLE, FUCHSIA, MAGENTA, AZALEA, SALMON, WHITE
