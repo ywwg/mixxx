@@ -491,8 +491,10 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/analyzer/analyzerebur128.cpp
   src/analyzer/analyzergain.cpp
   src/analyzer/analyzerkey.cpp
+  src/analyzer/analyzerscheduledtrack.cpp
   src/analyzer/analyzersilence.cpp
   src/analyzer/analyzerthread.cpp
+  src/analyzer/analyzertrack.cpp
   src/analyzer/analyzerwaveform.cpp
   src/analyzer/plugins/analyzerqueenmarybeats.cpp
   src/analyzer/plugins/analyzerqueenmarykey.cpp
@@ -734,6 +736,7 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/library/dlgtrackinfo.cpp
   src/library/dlgtrackinfo.ui
   src/library/dlgtrackmetadataexport.cpp
+  src/library/export/coverartcopyworker.cpp
   src/library/export/dlgtrackexport.ui
   src/library/export/trackexportdlg.cpp
   src/library/export/trackexportwizard.cpp
@@ -951,6 +954,7 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/util/duration.cpp
   src/util/experiment.cpp
   src/util/file.cpp
+  src/util/imagefiledata.cpp
   src/util/fileaccess.cpp
   src/util/fileinfo.cpp
   src/util/filename.cpp
@@ -1134,6 +1138,7 @@ else()
     src/widget/woverviewlmh.cpp
     src/widget/woverviewrgb.cpp
     src/widget/wspinny.cpp
+      src/widget/wvumetergl.cpp
     src/widget/wwaveformviewer.cpp
   )
 endif()
