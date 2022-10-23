@@ -1372,7 +1372,8 @@ void EngineBuffer::updateIndicators(double speed, int iBufferSize) {
 
     const double fFractionalPlaypos = fractionalPlayposFromAbsolute(m_playPosition);
 
-    const double tempoTrackSeconds = m_trackEndPositionOld.value() / m_trackSampleRateOld / getRateRatio();
+    const double tempoTrackSeconds = m_trackEndPositionOld.value() /
+            m_trackSampleRateOld / getRateRatio();
     if (speed > 0 && fFractionalPlaypos == 1.0) {
         // At Track end
         speed = 0;
