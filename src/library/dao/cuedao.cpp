@@ -43,7 +43,7 @@ CuePointer cueFromRow(const QSqlRecord& row) {
     int type = row.value(row.indexOf("type")).toInt();
     const auto position =
             mixxx::audio::FramePos::fromEngineSamplePosMaybeInvalid(
-                    row.value(row.indexOf("position")).toInt());
+                    row.value(row.indexOf("position")).toDouble());
     int lengthFrames = row.value(row.indexOf("length")).toInt() / mixxx::kEngineChannelCount;
     int hotcue = row.value(row.indexOf("hotcue")).toInt();
     QString label = labelFromQVariant(row.value(row.indexOf("label")));
