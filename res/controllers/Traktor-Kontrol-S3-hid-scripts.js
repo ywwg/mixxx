@@ -32,7 +32,7 @@ TraktorS3.PitchSliderRelativeMode = true;
 
 // In PitchSliderRelativeMode *only*, set ShiftPitch to true to only allow adjustments to the pitch
 // sliders if Shift is held.  This can prevent accidental adjustments.
-TraktorS3.ShiftPitch = false;
+TraktorS3.ShiftPitch = true;
 
 // The Samplers can operate two ways.
 // With SamplerModePressAndHold = false, tapping a Sampler button will start the
