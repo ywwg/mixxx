@@ -50,7 +50,7 @@ class FramePos final {
         // because otherwise fromEngineSamplePosMaybeInvalid() will think
         // the position is invalid.
         if (engineSamplePos == kLegacyInvalidEnginePosition) {
-            return kLegacyInvalidEnginePosition - .0001;
+            return kLegacyInvalidEnginePosition - 0.0001;
         }
         return engineSamplePos;
     }
