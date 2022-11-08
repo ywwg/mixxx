@@ -44,7 +44,9 @@ CuePointer cueFromRow(const QSqlRecord& row) {
     const auto position =
             mixxx::audio::FramePos::fromEngineSamplePosMaybeInvalid(
                     row.value(row.indexOf("position")).toDouble());
-    FrameDiff_t lengthFrames = row.value(row.indexOf("length")).toDouble() / mixxx::kEngineChannelCount;
+    mixxx::audio::FrameDiff_t lengthFrames =
+            row.value(row.indexOf("length")).toDouble() /
+            mixxx::kEngineChannelCount;
     int hotcue = row.value(row.indexOf("hotcue")).toInt();
     QString label = labelFromQVariant(row.value(row.indexOf("label")));
     mixxx::RgbColor::optional_t color = mixxx::RgbColor::fromQVariant(row.value(row.indexOf("color")));
