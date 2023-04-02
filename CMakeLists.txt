@@ -128,9 +128,9 @@ if(APPLE)
   endif()
 endif()
 
-project(mixxx VERSION 2.4.0)
+project(mixxx VERSION 2.5.0)
 # Work around missing version suffixes support https://gitlab.kitware.com/cmake/cmake/-/issues/16716
-set(MIXXX_VERSION_PRERELEASE "alpha-pre") # set to "alpha-pre" "beta" or ""
+set(MIXXX_VERSION_PRERELEASE "alpha") # set to "alpha" "beta" or ""
 
 set(CMAKE_PROJECT_HOMEPAGE_URL "https://www.mixxx.org")
 set(CMAKE_PROJECT_DESCRIPTION "Mixxx is Free DJ software that gives you everything you need to perform live mixes.")
@@ -245,7 +245,7 @@ if(MSVC)
   add_compile_options(/UTF8)
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     # Target architecture is x64 -> x64 has alsways SSE and SSE2 instruction sets
-    message(STATUS "x64 Enabling SS2 CPU optimizations (>= Pentium 4)")
+    message(STATUS "x64 Enabling SSE2 CPU optimizations (>= Pentium 4)")
     # Define gcc/clang style defines for SSE and SSE2 for compatibility
     add_compile_definitions("__SSE__" "__SSE2__")
   endif()
@@ -313,7 +313,7 @@ if(MSVC)
     if(OPTIMIZE STREQUAL "portable")
       if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
         # Target architecture is x86 with SSE and SSE2
-        message(STATUS "x86 Enabling SS2 CPU optimizations (>= Pentium 4)")
+        message(STATUS "x86 Enabling SSE2 CPU optimizations (>= Pentium 4)")
         # Define gcc/clang style defines for SSE and SSE2 for compatibility
         add_compile_definitions("__SSE__" "__SSE2__")
         # Set compiler option for SSE/SSE2
@@ -323,7 +323,7 @@ if(MSVC)
       message("Enabling optimizations for native system, specified by user")
       if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
         # Target architecture is x86 with SSE and SSE2
-        message(STATUS "x86 Enabling SS2 CPU optimizations (>= Pentium 4)")
+        message(STATUS "x86 Enabling SSE2 CPU optimizations (>= Pentium 4)")
         # Define gcc/clang style defines for SSE and SSE2 for compatibility
         add_compile_definitions("__SSE__" "__SSE2__")
       endif()
@@ -385,7 +385,7 @@ elseif(GNU_GCC OR LLVM_CLANG)
     if(OPTIMIZE STREQUAL "portable")
       # portable: sse2 CPU (>= Pentium 4)
       if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(i[3456]86|x86|x64|x86_64|AMD64)$")
-        message(STATUS "Enabling SS2 CPU optimizations (>= Pentium 4)")
+        message(STATUS "Enabling SSE2 CPU optimizations (>= Pentium 4)")
         add_compile_options(-mtune=generic)
         # -mtune=generic picks the most common, but compatible options.
         # on arm platforms equivalent to -march=arch
@@ -823,6 +823,8 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/musicbrainz/musicbrainzxml.cpp
   src/musicbrainz/tagfetcher.cpp
   src/musicbrainz/web/acoustidlookuptask.cpp
+  src/musicbrainz/web/coverartarchiveimagetask.cpp
+  src/musicbrainz/web/coverartarchivelinkstask.cpp
   src/musicbrainz/web/musicbrainzrecordingstask.cpp
   src/network/jsonwebtask.cpp
   src/network/networktask.cpp
@@ -919,6 +921,7 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/track/replaygain.cpp
   src/track/serato/beatgrid.cpp
   src/track/serato/beatsimporter.cpp
+  src/track/serato/color.cpp
   src/track/serato/cueinfoimporter.cpp
   src/track/serato/markers.cpp
   src/track/serato/markers2.cpp
@@ -1363,7 +1366,7 @@ if (APPLE)
 
     set_target_properties(mixxx PROPERTIES
         MACOSX_BUNDLE true
-        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/packaging/macos/bundle.plist.in"
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/packaging/macos/Info.plist.in"
     )
   endif()
 endif()
@@ -1622,19 +1625,6 @@ if(MSVC)
 endif()
 
 if(WIN32)
-  # qt_de.qm is just one arbitrary file in the directory that needs to be located;
-  # there is no particular reason to look for this file versus any other one in the directory.
-  find_file(QT_TRANSLATION_FILE qt_de.qm PATH_SUFFIXES share/qt5/translations)
-  get_filename_component(QT_TRANSLATIONS ${QT_TRANSLATION_FILE} DIRECTORY)
-  install(
-    DIRECTORY "${QT_TRANSLATIONS}"
-    DESTINATION "${MIXXX_INSTALL_DATADIR}"
-    # QT 5 translations have been separated into several files, and most of the qt_xx.qm files
-    # contain just shortcuts to load the qtbase, qtmultimedia etc files.
-    FILES_MATCHING REGEX
-      "qt_.+\.qm|qtbase_.*\.qm|qtmultimedia_.*\.qm|qtscript_.*\.qm|qtxmlpatterns_.*\.qm"
-  )
-
   # Qt 5 loads these ANGLE DLLs at runtime if the graphics driver is blocklisted.
   # Qt does not link these and vcpkg does not build them as a dependency of Qt,
   # so copy them manually.
@@ -2435,6 +2425,21 @@ elseif(WIN32)
   endif()
 endif()
 
+if(APPLE OR WIN32)
+  # qt_de.qm is just one arbitrary file in the directory that needs to be located;
+  # there is no particular reason to look for this file versus any other one in the directory.
+  find_file(QT_TRANSLATION_FILE qt_de.qm PATHS "${Qt5_DIR}/../../../translations" "${Qt5_DIR}/../../qt5/translations" REQUIRED NO_DEFAULT_PATH)
+  get_filename_component(QT_TRANSLATIONS ${QT_TRANSLATION_FILE} DIRECTORY)
+  install(
+    DIRECTORY "${QT_TRANSLATIONS}"
+    DESTINATION "${MIXXX_INSTALL_DATADIR}"
+    # QT 5 translations have been separated into several files, and most of the qt_xx.qm files
+    # contain just shortcuts to load the qtbase, qtmultimedia etc files.
+    FILES_MATCHING REGEX
+      "qt_.+\.qm|qtbase_.*\.qm|qtmultimedia_.*\.qm|qtscript_.*\.qm|qtxmlpatterns_.*\.qm"
+  )
+endif()
+
 # Queen Mary DSP
 add_library(QueenMaryDsp STATIC EXCLUDE_FROM_ALL
   # lib/qm-dsp/base/KaiserWindow.cpp
@@ -2741,8 +2746,8 @@ endif()
 find_package(lilv)
 default_option(LILV "Lilv (LV2) support" "lilv_FOUND")
 if(LILV)
-  if(NOT TARGET lilv::lilv)
-    message(FATAL_ERROR "Lilv (LV2) support requires the liblilv-0 and its development headers.")
+  if(NOT lilv_FOUND)
+    message(FATAL_ERROR "Lilv (LV2) support requires the liblilv-0 and LV2 libraries and development headers.")
   endif()
   target_sources(mixxx-lib PRIVATE
     src/effects/backends/lv2/lv2backend.cpp
@@ -2759,12 +2764,12 @@ option(BROADCAST "Live Broadcasting (Shoutcast) support" ON)
 if(BROADCAST)
   find_package(Shoutidjc)
   # Check if system lib is at least 2.4.6 and not suffering bugs
-  # https://bugs.launchpad.net/mixxx/+bug/1833225
-  # https://bugs.launchpad.net/mixxx/+bug/1913579
+  # https://github.com/mixxxdj/mixxx/issues/9681
+  # https://github.com/mixxxdj/mixxx/issues/10305
   if(Shoutidjc_FOUND AND Shoutidjc_VERSION VERSION_LESS 2.4.4)
-      message(STATUS "Installed libshout-idjc version: ${Shoutidjc_VERSION} is suffering from bug lp1833225")
+      message(STATUS "Installed libshout-idjc version: ${Shoutidjc_VERSION} is suffering from issue #9681")
   elseif(Shoutidjc_FOUND AND Shoutidjc_VERSION VERSION_LESS 2.4.6)
-      message(STATUS "Installed libshout version: ${Shout_VERSION} is suffering from bug lp1913579")
+      message(STATUS "Installed libshout version: ${Shout_VERSION} is suffering from issue #10305")
   endif()
   if(NOT Shoutidjc_FOUND OR Shoutidjc_VERSION VERSION_LESS 2.4.6)
     # Fall back to internal library in the lib tree
@@ -3069,7 +3074,7 @@ include(CPack)
 if(APPLE AND MACOS_BUNDLE)
     set(BUNDLE_NAME "${MIXXX_INSTALL_PREFIX}")
     set(BUNDLE_DIRS "${CMAKE_PREFIX_PATH}/lib")
-    set(APPLE_CODESIGN_ENTITLEMENTS "${CMAKE_CURRENT_SOURCE_DIR}/packaging/macos/entitlements.plist")
+    set(APPLE_CODESIGN_ENTITLEMENTS "${CMAKE_CURRENT_SOURCE_DIR}/packaging/macos/Mixxx.entitlements")
 
     # Starting with arm64 macOS Apple will require ad-hoc code signatures,
     # which can be generated by setting the identity to a single dash (-).

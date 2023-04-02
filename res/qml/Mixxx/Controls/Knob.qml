@@ -24,12 +24,12 @@ Item {
     property real arcRadius: width / 2
     readonly property real arcStartValue: {
         switch (arcStart) {
-        case Knob.ArcStart.Minimum:
-            return min;
-        case Knob.ArcStart.Maximum:
-            return max;
-        default:
-            return valueCenter;
+            case Knob.ArcStart.Minimum:
+                return min;
+            case Knob.ArcStart.Maximum:
+                return max;
+            default:
+                return valueCenter;
         }
     }
     property real arcOffsetX: 0
