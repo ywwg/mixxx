@@ -1820,10 +1820,6 @@ TraktorS3.Controller.prototype.registerInputPackets = function() {
         engine.connectControl(ch, "end_of_track",
             TraktorS3.bind(TraktorS3.Channel.prototype.endOfTrackHandler, chanob));
     }
-
-    // Dirty hack to set initial values in the packet parser
-    const data = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    TraktorS3.incomingData(data);
 };
 
 TraktorS3.Controller.prototype.registerInputJog = function(message, group, name, offset, bitmask, callback) {
