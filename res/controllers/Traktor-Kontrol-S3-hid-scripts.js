@@ -32,7 +32,7 @@ TraktorS3.PitchSliderRelativeMode = true;
 
 // In PitchSliderRelativeMode *only*, set ShiftPitch to true to only allow adjustments to the pitch
 // sliders if Shift is held.  This can prevent accidental adjustments.
-TraktorS3.ShiftPitch = true;
+TraktorS3.ShiftPitch = false;
 
 // The Samplers can operate two ways.
 // With SamplerModePressAndHold = false, tapping a Sampler button will start the
@@ -2262,7 +2262,7 @@ TraktorS3.Controller.prototype.guiTickHandler = function() {
 // A special packet sent to the controller switches between mic and line
 // input modes.  if lineMode is true, sets input to line. Otherwise, mic.
 TraktorS3.Controller.prototype.setInputLineMode = function(lineMode) {
-    const packet = Array();
+    const packet = [];
     packet.length = 33;
     packet[0] = 0x20;
     if (!lineMode) {
@@ -2303,7 +2303,7 @@ TraktorS3.debugLights = function() {
         "00"
     ];
 
-    const data = [Array(), Array(), Array()];
+    const data = [[], [], []];
 
 
     for (let i = 0; i < data.length; i++) {
