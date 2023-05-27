@@ -470,6 +470,33 @@ bool TrackCollection::deleteCrate(
     return true;
 }
 
+bool TrackCollection::archiveCrate(
+        CrateId crateId, bool archived) {
+    DEBUG_ASSERT_QOBJECT_THREAD_AFFINITY(this);
+
+    Crate crate;
+    VERIFY_OR_DEBUG_ASSERT(crates().readCrateById(crateId, &crate)) {
+        return false; // inexistent or failure
+    }
+    crate.setArchived(archived);
+
+    // Transactional
+    SqlTransaction transaction(m_database);
+    VERIFY_OR_DEBUG_ASSERT(transaction) {
+        return false;
+    }
+    VERIFY_OR_DEBUG_ASSERT(m_crates.onUpdatingCrate(crate)) {
+        return false;
+    }
+    VERIFY_OR_DEBUG_ASSERT(transaction.commit()) {
+        return false;
+    }
+
+    emit crateArchivedChanged(crateId, archived);
+
+    return true;
+}
+
 bool TrackCollection::addCrateTracks(
         CrateId crateId,
         const QList<TrackId>& trackIds) {

@@ -79,6 +79,7 @@ class TrackCollection : public QObject,
     bool insertCrate(const Crate& crate, CrateId* pCrateId = nullptr);
     bool updateCrate(const Crate& crate);
     bool deleteCrate(CrateId crateId);
+    bool archiveCrate(CrateId crateId, bool archived);
     bool addCrateTracks(CrateId crateId, const QList<TrackId>& trackIds);
     bool removeCrateTracks(CrateId crateId, const QList<TrackId>& trackIds);
 
@@ -102,6 +103,7 @@ class TrackCollection : public QObject,
     void crateInserted(CrateId id);
     void crateUpdated(CrateId id);
     void crateDeleted(CrateId id);
+    void crateArchivedChanged(CrateId id, bool archived);
 
     void crateTracksChanged(
             CrateId crate,
