@@ -181,6 +181,10 @@ void CrateFeature::connectTrackCollection() {
             &TrackCollection::crateDeleted,
             this,
             &CrateFeature::slotCrateTableChanged);
+    connect(m_pTrackCollection,
+            &TrackCollection::crateArchivedChanged,
+            this,
+            &CrateFeature::slotCrateArchivedChanged);
     connect(m_pTrackCollection, // crate tracks hidden, unhidden or purged
             &TrackCollection::crateTracksChanged,
             this,
@@ -549,23 +553,15 @@ void CrateFeature::slotToggleCrateArchived() {
     Crate crate;
     if (readLastRightClickedCrate(&crate)) {
         bool archiving = !crate.isArchived();
-        // If we are archiving the crate, select the crate below rather than following
-        // the crate into the archive subtree.
-        int reselectRow = 0;
-        if (archiving) {
-            const auto index = indexFromCrateId(crate.getId());
-            // Constrain reselection between first and last valid crate positions.
-            reselectRow = std::min(std::max(index.row(), 0), m_pSidebarModel->rowCount() - 3);
+
+        // If we are archiving the crate, select the crate below rather than
+        // following the crate into the archive subtree.
+        m_prevSiblingCrate = CrateId();
+        if (archiving && isChildIndexSelectedInSidebar(m_lastRightClickedIndex)) {
+            storePrevSiblingCrateId(crate.getId());
         }
-        crate.setArchived(archiving);
-        if (!m_pTrackCollection->updateCrate(crate)) {
+        if (!m_pTrackCollection->archiveCrate(crate.getId(), archiving)) {
             qDebug() << "Failed to toggle archive status of crate" << crate;
-        } else if (archiving) {
-            const auto reselectIndex = m_pSidebarModel->index(reselectRow, 0);
-            const auto crateId = crateIdFromIndex(reselectIndex);
-            if (crateId.isValid()) {
-                activateCrate(crateId);
-            }
         }
     } else {
         qDebug() << "Failed to toggle archive status of selected crate";
@@ -941,6 +937,24 @@ void CrateFeature::slotCrateTableChanged(CrateId crateId) {
         if (!activateCrate(m_crateTableModel.selectedCrate())) {
             // probably last clicked crate was deleted, try to
             // select the stored sibling
+            activateCrate(m_prevSiblingCrate);
+        }
+    } else {
+        // No valid selection to restore
+        rebuildChildModel();
+    }
+}
+
+void CrateFeature::slotCrateArchivedChanged(CrateId crateId, bool archived) {
+    if (isChildIndexSelectedInSidebar(m_lastClickedIndex)) {
+        // If the crate was loaded to the tracks table and selected in the
+        // sidebar try to activate that or a sibling:
+        // * if the crate was just archived, select the crate below rather than
+        // following the crate into the archive subtree
+        // * if the crate is now unarchived, reselect it
+        rebuildChildModel();
+        if ((archived && crateId == m_crateTableModel.selectedCrate()) ||
+                !activateCrate(m_crateTableModel.selectedCrate())) {
             activateCrate(m_prevSiblingCrate);
         }
     } else {

@@ -71,6 +71,7 @@ class CrateFeature : public BaseTrackSetFeature {
     void slotExportTrackFiles();
     void slotAnalyzeCrate();
     void slotCrateTableChanged(CrateId crateId);
+    void slotCrateArchivedChanged(CrateId crateId, bool archived);
     void slotCrateContentChanged(CrateId crateId);
     void htmlLinkClicked(const QUrl& link);
     void slotTrackSelected(TrackId trackId);
