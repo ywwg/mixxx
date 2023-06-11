@@ -1,5 +1,7 @@
 #include "waveform/widgets/allshader/waveformwidget.h"
 
+#include <QApplication>
+
 #include "waveform/renderers/allshader/waveformrendererabstract.h"
 
 using namespace allshader;
@@ -50,4 +52,9 @@ void WaveformWidget::resizeGL(int w, int h) {
     for (auto renderer : std::as_const(m_rendererStack)) {
         renderer->allshaderWaveformRenderer()->resizeGL(w, h);
     }
+}
+
+void WaveformWidget::wheelEvent(QWheelEvent* event) {
+    QApplication::sendEvent(parentWidget(), event);
+    event->accept();
 }
