@@ -2,6 +2,7 @@
 
 #include <QApplication>
 
+#include "moc_waveformwidget.cpp"
 #include "waveform/renderers/allshader/waveformrendererabstract.h"
 
 using namespace allshader;
