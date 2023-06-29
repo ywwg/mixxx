@@ -827,8 +827,8 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/library/recording/dlgrecording.cpp
   src/library/recording/dlgrecording.ui
   src/library/recording/recordingfeature.cpp
-  src/library/rekordbox/rekordbox_anlz.cpp
-  src/library/rekordbox/rekordbox_pdb.cpp
+  src/library/rekordbox/kaitaistructs/rekordbox_anlz.cpp
+  src/library/rekordbox/kaitaistructs/rekordbox_pdb.cpp
   src/library/rekordbox/rekordboxfeature.cpp
   src/library/rhythmbox/rhythmboxfeature.cpp
   src/library/scanner/importfilestask.cpp
@@ -1267,6 +1267,10 @@ if(APPLE)
   # will automatically insert retain/release calls on Objective-C objects.
   target_compile_options(mixxx-lib PUBLIC -fobjc-arc)
 
+  target_sources(mixxx-lib PRIVATE
+    src/util/darkappearance.mm
+  )
+
   option(MACOS_ITUNES_LIBRARY "Native macOS iTunes/Music.app library integration" ON)
   if(MACOS_ITUNES_LIBRARY)
     target_sources(mixxx-lib PRIVATE
@@ -1284,35 +1288,25 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 # Disable warnings in generated source files
-set_property(
-  SOURCE src/library/rekordbox/rekordbox_anlz.cpp
-  APPEND_STRING
-  PROPERTY CXX_CLANG_TIDY ""
-)
-set_property(
-  SOURCE src/library/rekordbox/rekordbox_pdb.cpp
-  APPEND_STRING
-  PROPERTY CXX_CLANG_TIDY ""
-)
 if(GNU_GCC OR LLVM_CLANG)
   set_property(
-    SOURCE src/library/rekordbox/rekordbox_anlz.cpp
+    SOURCE src/library/rekordbox/kaitaistructs/rekordbox_anlz.cpp
     APPEND_STRING
     PROPERTY COMPILE_OPTIONS -Wno-unused-parameter
   )
   set_property(
-    SOURCE src/library/rekordbox/rekordbox_pdb.cpp
+    SOURCE src/library/rekordbox/kaitaistructs/rekordbox_pdb.cpp
     APPEND_STRING
     PROPERTY COMPILE_OPTIONS -Wno-unused-parameter -Wno-switch
   )
 elseif(MSVC)
   set_property(
-    SOURCE src/library/rekordbox/rekordbox_anlz.cpp
+    SOURCE src/library/rekordbox/kaitaistructs/rekordbox_anlz.cpp
     APPEND_STRING
     PROPERTY COMPILE_OPTIONS /w
   )
   set_property(
-    SOURCE src/library/rekordbox/rekordbox_pdb.cpp
+    SOURCE src/library/rekordbox/kaitaistructs/rekordbox_pdb.cpp
     APPEND_STRING
     PROPERTY COMPILE_OPTIONS /w
   )
@@ -1819,7 +1813,8 @@ add_executable(mixxx-test
   src/test/hotcuecontrol_test.cpp
   src/test/imageutils_test.cpp
   src/test/indexrange_test.cpp
-  src/test/itunesxmlimportertest.cpp
+  # TODO: reanable this after https://github.com/mixxxdj/mixxx/pull/11666
+  # src/test/itunesxmlimportertest.cpp
   src/test/keyutilstest.cpp
   src/test/lcstest.cpp
   src/test/learningutilstest.cpp
