@@ -46,8 +46,7 @@ bool ControllerScriptEngineLegacy::callFunctionOnObjects(
                                 << function << " method";
             continue;
         }
-        qCDebug(m_logger) << "Executing"
-                          << prefixName << "." << function;
+
         QJSValue result = init.callWithInstance(prefix, args);
         if (result.isError()) {
             showScriptExceptionDialog(result, bFatalError);
@@ -217,8 +216,7 @@ bool ControllerScriptEngineLegacy::evaluateScriptFile(const QFileInfo& scriptFil
         qCWarning(m_logger) << "Failed to watch script file" << scriptFile.absoluteFilePath();
     };
 
-    qCDebug(m_logger) << "Loading"
-                      << scriptFile.absoluteFilePath();
+
 
     // Read in the script file
     QString filename = scriptFile.absoluteFilePath();

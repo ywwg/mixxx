@@ -173,16 +173,6 @@ QByteArray HidIoThread::getInputReport(quint8 reportID) {
 
     hidDeviceLock.unlock();
 
-    qCDebug(m_logInput) << bytesRead << "bytes received by hid_get_input_report"
-                        << m_deviceInfo.formatName() << "serial #"
-                        << m_deviceInfo.serialNumber()
-                        << "(including one byte for the report ID:"
-                        << QString::number(static_cast<quint8>(reportID), 16)
-                                   .toUpper()
-                                   .rightJustified(2, QChar('0'))
-                        << ") - Needed: "
-                        << (mixxx::Time::elapsed() - startOfHidGetInputReport)
-                                   .formatMicrosWithUnit();
 
     return returnArray;
 }
@@ -285,13 +275,7 @@ void HidIoThread::sendFeatureReport(
 
     hidDeviceLock.unlock();
 
-    qCDebug(m_logOutput)
-            << result << "bytes sent by sendFeatureReport to"
-            << m_deviceInfo.formatName() << "serial #"
-            << m_deviceInfo.serialNumber() << "(including report ID of"
-            << reportID << ") - Needed: "
-            << (mixxx::Time::elapsed() - startOfHidSendFeatureReport)
-                       .formatMicrosWithUnit();
+
 }
 
 QByteArray HidIoThread::getFeatureReport(
@@ -319,17 +303,7 @@ QByteArray HidIoThread::getFeatureReport(
 
     hidDeviceLock.unlock();
 
-    qCDebug(m_logInput)
-            << bytesRead << "bytes received by getFeatureReport from"
-            << m_deviceInfo.formatName() << "serial #"
-            << m_deviceInfo.serialNumber()
-            << "(including one byte for the report ID:"
-            << QString::number(static_cast<quint8>(reportID), 16)
-                       .toUpper()
-                       .rightJustified(2, QChar('0'))
-            << ") - Needed: "
-            << (mixxx::Time::elapsed() - startOfHidGetFeatureReport)
-                       .formatMicrosWithUnit();
+
 
     // Convert array of bytes read in a JavaScript compatible return type.
     // For compatibility with input array HidController::sendFeatureReport, a reportID prefix is not added here

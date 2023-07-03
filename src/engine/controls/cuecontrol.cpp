@@ -717,6 +717,7 @@ void CueControl::loadCuesFromTrack() {
     // The mixxx::CueType::MainCue from getCuePoints() has the priority
     mixxx::audio::FramePos mainCuePosition;
     if (pMainCue) {
+        qDebug() << "setmain cue";
         mainCuePosition = pMainCue->getPosition();
         // adjust the track cue accordingly
         m_pLoadedTrack->setMainCuePosition(mainCuePosition);
@@ -744,6 +745,7 @@ void CueControl::loadCuesFromTrack() {
 
     DEBUG_ASSERT(mainCuePosition.isValid());
     const auto quantizedMainCuePosition = quantizeCuePoint(mainCuePosition);
+    // this causes the cue point changed signal to fire
     m_pCuePoint->set(quantizedMainCuePosition.toEngineSamplePosMaybeInvalid());
 }
 
@@ -791,6 +793,7 @@ void CueControl::trackBeatsUpdated(mixxx::BeatsPointer pBeats) {
 }
 
 void CueControl::quantizeChanged(double v) {
+    qDebug() << "quantizechanged";
     Q_UNUSED(v);
 
     // check if we were at the cue point before
@@ -1280,6 +1283,7 @@ void CueControl::cueSet(double value) {
     // The m_pCuePoint CO is set via loadCuesFromTrack()
     // this can be done outside the locking scope
     if (pLoadedTrack) {
+        qDebug() << "CUE SET";
         pLoadedTrack->setMainCuePosition(position);
     }
 }
@@ -1293,6 +1297,7 @@ void CueControl::cueClear(double value) {
     // no locking required
     TrackPointer pLoadedTrack = m_pLoadedTrack;
     if (pLoadedTrack) {
+        qDebug() << "CUE CLEAR";
         pLoadedTrack->setMainCuePosition(mixxx::audio::kStartFramePos);
     }
 }
@@ -2200,6 +2205,7 @@ mixxx::audio::FramePos CueControl::getQuantizedCurrentPosition() {
 }
 
 mixxx::audio::FramePos CueControl::quantizeCuePoint(mixxx::audio::FramePos position) {
+    // qDebug() << "quantize cue point";
     // Don't quantize unset cues.
     if (!position.isValid()) {
         return mixxx::audio::kInvalidFramePos;

@@ -82,7 +82,7 @@ bool Controller::applyMapping() {
 }
 
 void Controller::startLearning() {
-    qCDebug(m_logBase) << m_sDeviceName << "started learning";
+
     m_bLearning = true;
 }
 
@@ -144,7 +144,7 @@ void Controller::receive(const QByteArray& data, mixxx::Duration timestamp) {
                                .rightJustified(2, QChar('0')) +
                     spacer;
         }
-        qCDebug(m_logInput).noquote() << message;
+
     }
 
     m_pScriptEngineLegacy->handleIncomingData(data);

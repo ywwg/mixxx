@@ -87,23 +87,7 @@ void MidiController::createOutputHandlers() {
         double min = mapping.output.min;
         double max = mapping.output.max;
 
-        qCDebug(m_logBase)
-                << QString("Creating output handler for %1,%2 between %3 and "
-                           "%4 to MIDI out: 0x%5 0x%6, on: 0x%7 off: 0x%8")
-                           .arg(group,
-                                   key,
-                                   QString::number(min),
-                                   QString::number(max),
-                                   QString::number(status, 16).toUpper(),
-                                   QString::number(control, 16)
-                                           .toUpper()
-                                           .rightJustified(2, '0'),
-                                   QString::number(on, 16)
-                                           .toUpper()
-                                           .rightJustified(2, '0'),
-                                   QString::number(off, 16)
-                                           .toUpper()
-                                           .rightJustified(2, '0'));
+
 
         MidiOutputHandler* moh = new MidiOutputHandler(this, mapping, m_logOutput);
         if (!moh->validate()) {
@@ -227,14 +211,7 @@ void MidiController::receivedShortMessage(unsigned char status,
         return;
     }
 
-    qCDebug(m_logInput) << QStringLiteral("incoming: ")
-                        << MidiUtils::formatMidiOpCode(getName(),
-                                   status,
-                                   control,
-                                   value,
-                                   channel,
-                                   opCode,
-                                   timestamp);
+
 
     MidiKey mappingKey(status, control);
     triggerActivity();
@@ -492,9 +469,7 @@ double MidiController::computeValue(
 }
 
 void MidiController::receive(const QByteArray& data, mixxx::Duration timestamp) {
-    qCDebug(m_logInput) << QStringLiteral("incoming: ")
-                        << MidiUtils::formatSysexMessage(
-                                   getName(), data, timestamp);
+
     MidiKey mappingKey(data.at(0), 0xFF);
 
     triggerActivity();

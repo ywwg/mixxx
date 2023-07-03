@@ -241,7 +241,6 @@ void BulkController::sendBytes(const QByteArray& data) {
         qCWarning(m_logOutput) << "Unable to send data to" << getName()
                                << "serial #" << m_sUID;
     } else {
-        qCDebug(m_logOutput) << ret << "bytes sent to" << getName()
-                             << "serial #" << m_sUID;
+
     }
 }

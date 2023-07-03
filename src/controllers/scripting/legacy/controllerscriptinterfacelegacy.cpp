@@ -60,7 +60,7 @@ ControllerScriptInterfaceLegacy::~ControllerScriptInterfaceLegacy() {
     QHashIterator<int, int> it(m_scratchTimers);
     while (it.hasNext()) {
         it.next();
-        qCDebug(m_logger) << "Aborting scratching on deck" << it.value();
+
         // Clear scratch2_enable. PlayerManager::groupForDeck is 0-indexed.
         QString group = PlayerManager::groupForDeck(it.value() - 1);
         ControlObjectScript* pScratch2Enable =
@@ -79,10 +79,7 @@ ControllerScriptInterfaceLegacy::~ControllerScriptInterfaceLegacy() {
     {
         auto it = m_controlCache.begin();
         while (it != m_controlCache.end()) {
-            qCDebug(m_logger)
-                    << "Deleting ControlObjectScript"
-                    << it.key().group
-                    << it.key().item;
+
             delete it.value();
             // Advance iterator
             it = m_controlCache.erase(it);
@@ -453,7 +450,7 @@ void ControllerScriptInterfaceLegacy::logOrThrowError(const QString& errorMessag
 
 void ControllerScriptInterfaceLegacy::log(const QString& message) {
     logOrThrowError(QStringLiteral("`engine.log` is deprecated. Use `console.log` instead!"));
-    qCDebug(m_logger) << message;
+
 }
 int ControllerScriptInterfaceLegacy::beginTimer(
         int intervalMillis, QJSValue timerCallback, bool oneShot) {
@@ -491,9 +488,9 @@ int ControllerScriptInterfaceLegacy::beginTimer(
     if (timerId == 0) {
         logOrThrowError(QStringLiteral("Script timer could not be created"));
     } else if (oneShot) {
-        qCDebug(m_logger) << "Starting one-shot timer:" << timerId;
+
     } else {
-        qCDebug(m_logger) << "Starting timer:" << timerId;
+
     }
     return timerId;
 }
@@ -505,7 +502,7 @@ void ControllerScriptInterfaceLegacy::stopTimer(int timerId) {
                                 .arg(timerId));
         return;
     }
-    qCDebug(m_logger) << "Killing timer:" << timerId;
+
     killTimer(timerId);
     m_timers.remove(timerId);
 }
@@ -515,7 +512,7 @@ void ControllerScriptInterfaceLegacy::stopScratchTimer(int timerId) {
         qCWarning(m_logger) << "Killing scratch timer" << timerId << ": That timer does not exist!";
         return;
     }
-    qCDebug(m_logger) << "Killing timer:" << timerId;
+
     killTimer(timerId);
     m_scratchTimers.remove(timerId);
 }
@@ -633,7 +630,7 @@ void ControllerScriptInterfaceLegacy::scratchEnable(int deck,
         bool ramp) {
     // If we're already scratching this deck, override that with this request
     if (static_cast<bool>(m_dx[deck])) {
-        //qCDebug(m_logger) << "Already scratching deck" << deck << ". Overriding.";
+        //
         int timerId = m_scratchTimers.key(deck);
         stopScratchTimer(timerId);
     }

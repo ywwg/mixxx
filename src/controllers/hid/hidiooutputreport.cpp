@@ -39,9 +39,6 @@ void HidIoOutputReport::updateCachedData(const QByteArray& data,
 
     } else {
         if (m_possiblyUnsentDataCached && !useNonSkippingFIFO) {
-            qCDebug(logOutput) << "t:" << mixxx::Time::elapsed().formatMillisWithUnit()
-                               << "skipped superseded OutputReport data for ReportID"
-                               << m_reportId;
         }
 
         // The size of an HID report is defined in a HID device and can't vary at runtime
@@ -100,9 +97,6 @@ bool HidIoOutputReport::sendCachedData(QMutex* pHidDeviceAndPollMutex,
 
         cacheLock.unlock();
 
-        qCDebug(logOutput) << "t:" << startOfHidWrite.formatMillisWithUnit()
-                           << "Skipped sending identical OutputReport data from cache for ReportID"
-                           << m_reportId;
 
         // Return with false, to signal the caller, that no time consuming IO operation was necessary
         return false;
@@ -149,11 +143,7 @@ bool HidIoOutputReport::sendCachedData(QMutex* pHidDeviceAndPollMutex,
         return true;
     }
 
-    qCDebug(logOutput) << "t:" << startOfHidWrite.formatMillisWithUnit() << " "
-                       << result << "bytes ( including ReportID of"
-                       << static_cast<quint8>(m_reportId)
-                       << ") sent from skipping cache - Needed:"
-                       << (mixxx::Time::elapsed() - startOfHidWrite).formatMicrosWithUnit();
+
 
     // Return with true, to signal the caller, that the time consuming hid_write operation was executed
     return true;

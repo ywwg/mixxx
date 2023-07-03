@@ -945,6 +945,7 @@ void Track::setMainCuePosition(mixxx::audio::FramePos position) {
     }
 
     markDirtyAndUnlock(&locked);
+    qDebug() << "cues updated" << 1;
     emit cuesUpdated();
 }
 
@@ -974,6 +975,7 @@ mixxx::audio::FramePos Track::getMainCuePosition() const {
 
 void Track::slotCueUpdated() {
     markDirty();
+    qDebug() << "cues updated" << 2;
     emit cuesUpdated();
 }
 
@@ -1007,6 +1009,7 @@ CuePointer Track::createAndAddCue(
     auto locked = lockMutex(&m_qMutex);
     m_cuePoints.push_back(pCue);
     markDirtyAndUnlock(&locked);
+    qDebug() << "cues updated" << 3;
     emit cuesUpdated();
     return pCue;
 }
@@ -1048,6 +1051,7 @@ void Track::removeCue(const CuePointer& pCue) {
         m_record.setMainCuePosition(mixxx::audio::kStartFramePos);
     }
     markDirtyAndUnlock(&locked);
+    qDebug() << "cues updated" << 4;
     emit cuesUpdated();
 }
 
@@ -1073,6 +1077,7 @@ void Track::removeCuesOfType(mixxx::CueType type) {
     }
     if (dirty) {
         markDirtyAndUnlock(&locked);
+        qDebug() << "cues updated" << 5;
         emit cuesUpdated();
     }
 }
@@ -1252,6 +1257,7 @@ void Track::setCuePointsMarkDirtyAndUnlock(
     }
 
     markDirtyAndUnlock(pLock);
+    qDebug() << "cues updated" << 6;
     emit cuesUpdated();
 }
 
@@ -1317,6 +1323,7 @@ void Track::importPendingCueInfosMarkDirtyAndUnlock(
     }
 
     markDirtyAndUnlock(pLock);
+    qDebug() << "cues updated" << 7;
     emit cuesUpdated();
 }
 
@@ -1763,6 +1770,7 @@ void Track::updateStreamInfoFromSource(
         emit durationChanged();
     }
     if (cuesImported) {
+        qDebug() << "cues updated" << 8;
         emit cuesUpdated();
     }
 }

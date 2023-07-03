@@ -41,7 +41,7 @@ bool ControllerScriptModuleEngine::initialize() {
     if (shutdownFunction.isCallable()) {
         m_shutdownFunction = shutdownFunction;
     } else {
-        qCDebug(m_logger) << "Module exports no shutdown function.";
+
     }
     return true;
 }

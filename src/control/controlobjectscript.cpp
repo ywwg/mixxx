@@ -75,18 +75,13 @@ bool ControlObjectScript::addScriptConnection(const ScriptConnection& conn) {
     }
 
     m_scriptConnections.append(conn);
-    qCDebug(m_logger) << "Connected (" +
-                    conn.key.group + ", " + conn.key.item +
-                    ") to connection " + conn.id.toString();
     return true;
 }
 
 bool ControlObjectScript::removeScriptConnection(const ScriptConnection& conn) {
     bool success = m_scriptConnections.removeOne(conn);
     if (success) {
-        qCDebug(m_logger) << "Disconnected (" +
-                        conn.key.group + ", " + conn.key.item +
-                        ") from connection " + conn.id.toString();
+
     } else {
         qCWarning(m_logger) << "Failed to disconnect (" +
                         conn.key.group + ", " + conn.key.item +
