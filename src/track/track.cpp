@@ -905,10 +905,12 @@ void Track::setWaveformSummary(ConstWaveformPointer pWaveform) {
 }
 
 void Track::setMainCuePosition(mixxx::audio::FramePos position) {
+    qDebug() << "setMainCuePosition" << position;
     auto locked = lockMutex(&m_qMutex);
 
     if (!compareAndSet(m_record.ptrMainCuePosition(), position)) {
         // Nothing changed.
+        qDebug() << "no change";
         return;
     }
 
@@ -916,8 +918,10 @@ void Track::setMainCuePosition(mixxx::audio::FramePos position) {
     CuePointer pLoadCue = findCueByType(mixxx::CueType::MainCue);
     if (position.isValid()) {
         if (pLoadCue) {
+            qDebug() << "set start pos" << position;
             pLoadCue->setStartPosition(position);
         } else {
+            qDebug() << "create new cuepointer";
             pLoadCue = CuePointer(new Cue(
                     mixxx::CueType::MainCue,
                     Cue::kNoHotCue,
@@ -935,6 +939,7 @@ void Track::setMainCuePosition(mixxx::audio::FramePos position) {
             m_cuePoints.push_back(pLoadCue);
         }
     } else if (pLoadCue) {
+        qDebug() << "disconnect / remove";
         disconnect(pLoadCue.get(), nullptr, this, nullptr);
         m_cuePoints.removeOne(pLoadCue);
     }
@@ -944,6 +949,7 @@ void Track::setMainCuePosition(mixxx::audio::FramePos position) {
 }
 
 void Track::shiftCuePositionsMillis(double milliseconds) {
+    qDebug() << "shiftCuePositionsMillis" << milliseconds;
     auto locked = lockMutex(&m_qMutex);
 
     VERIFY_OR_DEBUG_ASSERT(m_record.getStreamInfoFromSource()) {
@@ -1205,6 +1211,7 @@ Track::ImportStatus Track::getCueImportStatus() const {
 }
 
 bool Track::setCuePointsWhileLocked(const QList<CuePointer>& cuePoints) {
+    qDebug() << "setCuePointsWhileLocked";
     if (m_cuePoints.isEmpty() && cuePoints.isEmpty()) {
         // Nothing to do
         return false;

@@ -2394,4 +2394,11 @@ TraktorS3.init = function(_id) {
     }
 
     this.kontrol.setInputLineMode(TraktorS3.inputModeLine);
+
+    spamTimer = engine.beginTimer(5, TraktorS3.spamquant, false);
+};
+
+TraktorS3.spamquant = function() {
+    script.toggleControl("[Channel1]", "quantize");
+    script.toggleControl("[Channel2]", "quantize");
 };

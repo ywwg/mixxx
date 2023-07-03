@@ -19,6 +19,7 @@
 #include <QPainter>
 #include <QUrl>
 #include <QtDebug>
+#include <algorithm>
 
 #include "analyzer/analyzerprogress.h"
 #include "control/controlobject.h"
@@ -441,18 +442,22 @@ void WOverview::updateCues(const QList<CuePointer> &loadedCues) {
                     pMark->m_text = newLabel;
                 }
             }
-
-            m_marksToRender.append(pMark);
+            m_marksToRender.insert(std::upper_bound(m_marksToRender.begin(),
+                                           m_marksToRender.end(),
+                                           pMark),
+                    pMark);
         }
     }
 
     // The loop above only adds WaveformMarks for hotcues to m_marksToRender.
     for (const auto& pMark : m_marks) {
         if (!m_marksToRender.contains(pMark) && pMark->isValid() && pMark->getSamplePosition() != Cue::kNoPosition && pMark->isVisible()) {
-            m_marksToRender.append(pMark);
+            m_marksToRender.insert(std::upper_bound(m_marksToRender.begin(),
+                                           m_marksToRender.end(),
+                                           pMark),
+                    pMark);
         }
     }
-    std::sort(m_marksToRender.begin(), m_marksToRender.end());
 }
 
 // connecting the tracks cuesUpdated and onMarkChanged is not possible
