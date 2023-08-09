@@ -66,6 +66,10 @@ TraktorS3.QuickEffectModeChannelColors = false;
 // * keylock will still toggle on, but on release, not press.
 TraktorS3.PitchSliderRelativeMode = true;
 
+// In PitchSliderRelativeMode *only*, set ShiftPitch to true to only allow adjustments to the pitch
+// sliders if Shift is held.  This can prevent accidental adjustments.
+TraktorS3.ShiftPitch = false;
+
 // The Samplers can operate two ways.
 // With SamplerModePressAndHold = false, tapping a Sampler button will start the
 // sample playing.  Pressing the button again will stop playback.
@@ -830,6 +834,7 @@ TraktorS3.Deck = class {
         this.lastTickVal = 0;
         this.lastTickTime = 0;
         this.lastTickWallClock = 0;
+        this.seekRateLimitLastTick = 0;
 
         // Knob encoder states (hold values between 0x0 and 0xF) Rotate to the
         // right is +1 and to the left is means -1
@@ -1285,10 +1290,16 @@ TraktorS3.Deck = class {
 
         // If shift button is held, do a simple seek.
         if (this.shiftPressed) {
-            let playPosition = engine.getValue(this.activeChannel, "playposition");
-            playPosition += deltas[0] / 2048.0;
-            playPosition = Math.max(Math.min(playPosition, 1.0), 0.0);
-            engine.setValue(this.activeChannel, "playposition", playPosition);
+            // If we spam seeks on every single update, it can cause problems with HQ
+            // Rubberband.
+            const now = Date.now();
+            if (now - this.seekRateLimitLastTick > 10) {
+                this.seekRateLimitLastTick = now;
+                let playPosition = engine.getValue(this.activeChannel, "playposition");
+                playPosition += deltas[0] / 256.0;
+                playPosition = Math.max(Math.min(playPosition, 1.0), 0.0);
+                engine.setValue(this.activeChannel, "playposition", playPosition);
+            }
             return;
         }
         const tickDelta = deltas[0];
@@ -1360,34 +1371,39 @@ TraktorS3.Deck = class {
         if (TraktorS3.PitchSliderRelativeMode) {
             if (this.pitchSliderLastValue === -1) {
                 this.pitchSliderLastValue = value;
-            } else {
-                // If shift is pressed, don't update any values.
-                if (this.shiftPressed) {
-                    this.pitchSliderLastValue = value;
-                    return;
-                }
+                return;
+            }
 
-                let relVal;
-                if (this.keylockPressed) {
-                    relVal = 1.0 - engine.getValue(this.activeChannel, "pitch_adjust");
-                } else {
-                    relVal = engine.getValue(this.activeChannel, "rate");
-                }
-                // This can result in values outside -1 to 1, but that is valid
-                // for the rate control. This means the entire swing of the rate
-                // slider can be outside the range of the widget, but that's ok
-                // because the slider still works.
-                relVal += value - this.pitchSliderLastValue;
+            // If ShiftPitch is on, invert the state of the shift button
+            let shiftVal = this.shiftPressed;
+            if (TraktorS3.ShiftPitch) {
+                shiftVal = !shiftVal;
+            }
+            if (shiftVal && !this.keylockPressed) {
                 this.pitchSliderLastValue = value;
+                return;
+            }
 
-                if (this.keylockPressed) {
-                    // To match the pitch change from adjusting the rate, flip
-                    // the pitch adjustment.
-                    engine.setValue(this.activeChannel, "pitch_adjust", 1.0 - relVal);
-                    this.keyAdjusted = true;
-                } else {
-                    engine.setValue(this.activeChannel, "rate", relVal);
-                }
+            let relVal;
+            if (this.keylockPressed) {
+                relVal = 1.0 - engine.getValue(this.activeChannel, "pitch_adjust");
+            } else {
+                relVal = engine.getValue(this.activeChannel, "rate");
+            }
+            // This can result in values outside -1 to 1, but that is valid for the
+            // rate control. This means the entire swing of the rate slider can be
+            // outside the range of the widget, but that's ok because the slider still
+            // works.
+            relVal += value - this.pitchSliderLastValue;
+            this.pitchSliderLastValue = value;
+
+            if (this.keylockPressed) {
+                // To match the pitch change from adjusting the rate, flip the pitch
+                // adjustment.
+                engine.setValue(this.activeChannel, "pitch_adjust", 1.0 - relVal);
+                this.keyAdjusted = true;
+            } else {
+                engine.setValue(this.activeChannel, "rate", relVal);
             }
             return;
         }
@@ -1853,6 +1869,14 @@ TraktorS3.FXControl = class {
 
         this.focusBlinkState = false;
         this.focusBlinkTimer = 0;
+
+        // Make sure all the Mix values are at max so effects are audible.
+        for (let unit = 1; unit <= 4; unit++) {
+            const fxGroup = "[EffectRack1_EffectUnit" + unit + "]";
+            const fxKey = "group_[Channel" + unit + "]_enable";
+            engine.setValue(fxGroup, fxKey, 1);
+            engine.setValue(fxGroup, "mix", 1);
+        }
     }
 
     registerInputs(messageShort, messageLong) {
@@ -1963,6 +1987,35 @@ TraktorS3.FXControl = class {
         }
     }
 
+    // Returns the number of the preset that is loaded, or 0 if none is loaded.
+    getLoadedPreset(channelNumber) {
+        const unitGroup = "[EffectRack1_EffectUnit" + channelNumber + "]";
+        return engine.getValue(unitGroup, "loaded_chain_preset");
+    }
+
+    loadEffectPreset(channelNumber, presetNumber) {
+        const unitGroup = "[EffectRack1_EffectUnit" + channelNumber + "]";
+        engine.setValue(unitGroup, "loaded_chain_preset", presetNumber);
+        this.setEffectUnitEnabled(channelNumber, true);
+    }
+
+    getEffectUnitEnabled(channelNumber) {
+        // Since we enable/disable all the effects at once, use the first one to indicate status.
+        const group = "[EffectRack1_EffectUnit" + channelNumber + "_Effect1]";
+        return engine.getValue(group, "enabled");
+    }
+
+    setEffectUnitEnabled(channelNumber, enable) {
+        for (let effect = 1; effect <= 3; effect++) {
+            const group = "[EffectRack1_EffectUnit" + channelNumber + "_Effect" + effect + "]";
+            if (enable && engine.getValue(group, "loaded")) {
+                engine.setValue(group, "enabled", 1);
+            } else {
+                engine.setValue(group, "enabled", 0);
+            }
+        }
+    }
+
     fxSelectHandler(field) {
         const fxNumber = parseInt(field.name[field.name.length - 1]);
         // Coerce to boolean
@@ -1982,14 +2035,21 @@ TraktorS3.FXControl = class {
 
         switch (this.currentState) {
         case this.STATE_FILTER:
-            // If any fxEnable button is pressed, we are toggling fx unit assignment.
+            // If any fxEnable button is pressed, we are loading an fx preset
             if (this.anyEnablePressed()) {
                 for (const key in this.enablePressed) {
                     if (this.enablePressed[key]) {
                         if (fxNumber === 0) {
-                            script.toggleControl(`[QuickEffectRack1_${key}_Effect1]`, "enabled");
+                            const fxGroup = "[QuickEffectRack1_" + key + "_Effect1]";
+                            const fxKey = "enabled";
+                            script.toggleControl(fxGroup, fxKey);
                         } else {
-                            script.toggleControl(`[EffectRack1_EffectUnit${fxNumber}]`, `group_${key}_enable`);
+                            const channelNumber = this.channelNumber(key);
+                            if (this.getLoadedPreset(channelNumber) !== fxNumber) {
+                                this.loadEffectPreset(channelNumber, fxNumber);
+                            } else {
+                                this.setEffectUnitEnabled(channelNumber, !this.getEffectUnitEnabled(channelNumber));
+                            }
                         }
                     }
                 }
@@ -2061,6 +2121,8 @@ TraktorS3.FXControl = class {
         const value = TraktorS3.normalize12BitValue(field.value);
         const fxGroupPrefix = "[EffectRack1_EffectUnit" + this.activeFX;
         const knobIdx = this.channelToIndex(field.group);
+        const channelNumber = this.channelNumber(field.group);
+        let superknobValue;
 
         switch (this.currentState) {
         case this.STATE_FILTER:
@@ -2069,6 +2131,13 @@ TraktorS3.FXControl = class {
                 return;
             }
             engine.setParameter("[QuickEffectRack1_" + field.group + "]", "super1", value);
+            // Effects Superknob values increase in both directions.
+            if (value >= 0.5) {
+                superknobValue = (value - 0.5) * 2.0;
+            } else {
+                superknobValue = 1.0 - (value * 2.0);
+            }
+            engine.setParameter("[EffectRack1_EffectUnit" + channelNumber + "]", "super1", superknobValue);
             break;
         case this.STATE_EFFECT_INIT:
             // Fallthrough intended
@@ -2138,17 +2207,26 @@ TraktorS3.FXControl = class {
             if (this.selectPressed[idx]) {
                 status = this.LIGHT_BRIGHT;
             } else {
-                // select buttons on if fx unit enabled for the pressed channel,
+                // select buttons on if fx preset loaded and enabled for the pressed channel,
                 // otherwise disabled.
                 status = this.LIGHT_DIM;
                 const pressed = this.firstPressedEnable();
                 if (pressed) {
-                    const fxGroup = idx === 0 ? `[QuickEffectRack1_${pressed}_Effect1]` : `[EffectRack1_EffectUnit${idx}]`;
-                    const fxKey = idx === 0 ? "enabled" : `group_${pressed}_enable`;
-                    if (engine.getParameter(fxGroup, fxKey)) {
-                        status = this.LIGHT_BRIGHT;
+                    if (idx === 0) {
+                        const fxGroup = "[QuickEffectRack1_" + pressed + "_Effect1]";
+                        const fxKey = "enabled";
+                        if (engine.getParameter(fxGroup, fxKey)) {
+                            status = this.LIGHT_BRIGHT;
+                        } else {
+                            status = this.LIGHT_OFF;
+                        }
                     } else {
-                        status = this.LIGHT_OFF;
+                        const channelNumber = this.channelNumber(pressed);
+                        if (this.getEffectUnitEnabled(channelNumber) && this.getLoadedPreset(channelNumber) === idx) {
+                            status = this.LIGHT_BRIGHT;
+                        } else {
+                            status = this.LIGHT_OFF;
+                        }
                     }
                 }
                 ledValue = this.getFXSelectLEDValue(idx, status);
@@ -2193,19 +2271,14 @@ TraktorS3.FXControl = class {
         let status = this.LIGHT_OFF;
         let ledValue = 0x00;
         const buttonNumber = this.channelToIndex(channel);
+        const channelNumber = this.channelNumber(channel);
         switch (this.currentState) {
         case this.STATE_FILTER:
             // enable buttons highlighted if pressed or if any fx unit enabled for channel.
             // Highlight if pressed.
             status = this.LIGHT_DIM;
-            if (this.enablePressed[channel]) {
+            if (this.enablePressed[channel] || this.getEffectUnitEnabled(channelNumber)) {
                 status = this.LIGHT_BRIGHT;
-            } else {
-                for (let idx = 1; idx <= 4 && status === this.LIGHT_OFF; idx++) {
-                    if (engine.getParameter(`[EffectRack1_EffectUnit${idx}]`, `group_${channel}_enable`)) {
-                        status = this.LIGHT_DIM;
-                    }
-                }
             }
             // Enable buttons have regular deck colors
             ledValue = this.getChannelColor(channel, status);
