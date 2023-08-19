@@ -42,7 +42,7 @@ var TraktorS3 = {};
 // Disable this option to use the second, Mixxx-specific mode. See the readme at
 // https://manual.mixxx.org/latest/en/hardware/controllers/native_instruments_traktor_kontrol_s3.html
 // for more information on how to use these modes.
-TraktorS3.QuickEffectMode = true;
+TraktorS3.QuickEffectMode = false;
 // When enabled, set all channels to the first FX chain on startup. Otherwise
 // the quick FX chain assignments from the last Mixxx run are preserved.
 TraktorS3.QuickEffectModeDefaultToFilter = true;
@@ -68,7 +68,7 @@ TraktorS3.PitchSliderRelativeMode = true;
 
 // In PitchSliderRelativeMode *only*, set ShiftPitch to true to only allow adjustments to the pitch
 // sliders if Shift is held.  This can prevent accidental adjustments.
-TraktorS3.ShiftPitch = false;
+TraktorS3.ShiftPitch = true;
 
 // The Samplers can operate two ways.
 // With SamplerModePressAndHold = false, tapping a Sampler button will start the
@@ -285,9 +285,9 @@ TraktorS3.Controller = class {
             const chanob = this.Channels[ch];
             engine.makeConnection(ch, "playposition",
                 TraktorS3.Channel.prototype.playpositionChanged.bind(chanob));
-            engine.connectControl(ch, "track_loaded",
+            engine.makeConnection(ch, "track_loaded",
                 TraktorS3.Channel.prototype.trackLoadedHandler.bind(chanob));
-            engine.connectControl(ch, "end_of_track",
+            engine.makeConnection(ch, "end_of_track",
                 TraktorS3.Channel.prototype.endOfTrackHandler.bind(chanob));
         }
 
@@ -531,9 +531,9 @@ TraktorS3.Controller = class {
             this.Channels[idx].linkOutputs();
         }
 
-        engine.connectControl("[Microphone]", "pfl", this.pflOutput);
+        engine.makeConnection("[Microphone]", "pfl", this.pflOutput);
 
-        engine.connectControl("[Master]", "maximize_library", TraktorS3.Controller.prototype.maximizeLibraryOutput.bind(this));
+        engine.makeConnection("[Master]", "maximize_library", TraktorS3.Controller.prototype.maximizeLibraryOutput.bind(this));
 
         // Master VuMeters
         this.masterVuMeter.VuMeterL.connection = engine.makeConnection("[Master]", "VuMeterL", TraktorS3.Controller.prototype.masterVuMeterHandler.bind(this));
@@ -1465,11 +1465,11 @@ TraktorS3.Deck = class {
         switch (this.deckNumber) {
         case 1:
             this.controller.hid.linkOutput("deck1", key, "[Channel1]", key, callback);
-            engine.connectControl("[Channel3]", key, callback);
+            engine.makeConnection("[Channel3]", key, callback);
             break;
         case 2:
             this.controller.hid.linkOutput("deck2", key, "[Channel2]", key, callback);
-            engine.connectControl("[Channel4]", key, callback);
+            engine.makeConnection("[Channel4]", key, callback);
             break;
         }
     }
@@ -1912,6 +1912,14 @@ TraktorS3.FXControl = class {
             return 1;
         case "4":
             return 4;
+        }
+        return undefined;
+    }
+
+    channelNumber(group) {
+        const channelNumberMatch = group.match(script.channelRegEx);
+        if (channelNumberMatch !== undefined) {
+            return channelNumberMatch[1];
         }
         return undefined;
     }
@@ -2475,17 +2483,17 @@ TraktorS3.QuickFxControl = class {
 
         // This changes the lighting of the five FX Select buttons and maybe
         // also the FX Enable buttons
-        engine.connectControl("[QuickEffectRack1_[Channel1]]", "loaded_chain_preset", this.quickEffectChainLoadHandler.bind(this));
-        engine.connectControl("[QuickEffectRack1_[Channel2]]", "loaded_chain_preset", this.quickEffectChainLoadHandler.bind(this));
-        engine.connectControl("[QuickEffectRack1_[Channel3]]", "loaded_chain_preset", this.quickEffectChainLoadHandler.bind(this));
-        engine.connectControl("[QuickEffectRack1_[Channel4]]", "loaded_chain_preset", this.quickEffectChainLoadHandler.bind(this));
+        engine.makeConnection("[QuickEffectRack1_[Channel1]]", "loaded_chain_preset", this.quickEffectChainLoadHandler.bind(this));
+        engine.makeConnection("[QuickEffectRack1_[Channel2]]", "loaded_chain_preset", this.quickEffectChainLoadHandler.bind(this));
+        engine.makeConnection("[QuickEffectRack1_[Channel3]]", "loaded_chain_preset", this.quickEffectChainLoadHandler.bind(this));
+        engine.makeConnection("[QuickEffectRack1_[Channel4]]", "loaded_chain_preset", this.quickEffectChainLoadHandler.bind(this));
 
         // The FX enable buttons can directly be bound to the quick effect chain
         // enabled status as their lighting doesn't depend on other factors
-        engine.connectControl("[QuickEffectRack1_[Channel1]]", "enabled", value => this.lightFxEnable(1, value === 1));
-        engine.connectControl("[QuickEffectRack1_[Channel2]]", "enabled", value => this.lightFxEnable(2, value === 1));
-        engine.connectControl("[QuickEffectRack1_[Channel3]]", "enabled", value => this.lightFxEnable(3, value === 1));
-        engine.connectControl("[QuickEffectRack1_[Channel4]]", "enabled", value => this.lightFxEnable(4, value === 1));
+        engine.makeConnection("[QuickEffectRack1_[Channel1]]", "enabled", value => this.lightFxEnable(1, value === 1));
+        engine.makeConnection("[QuickEffectRack1_[Channel2]]", "enabled", value => this.lightFxEnable(2, value === 1));
+        engine.makeConnection("[QuickEffectRack1_[Channel3]]", "enabled", value => this.lightFxEnable(3, value === 1));
+        engine.makeConnection("[QuickEffectRack1_[Channel4]]", "enabled", value => this.lightFxEnable(4, value === 1));
     }
 
     // Input handling
