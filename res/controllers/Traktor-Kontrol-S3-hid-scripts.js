@@ -79,7 +79,7 @@ TraktorS3.SamplerModePressAndHold = false;
 
 // When this option is true, start up with the jog button lit, which means touching the job wheel
 // enables scratch mode.
-TraktorS3.JogDefaultOn = true;
+TraktorS3.JogDefaultOn = false;
 
 // If true, the sampler buttons on Deck 1 are samplers 1-8 and the sampler buttons on Deck 2 are
 // 9-16.  If false, both decks are samplers 1-8.
@@ -104,7 +104,7 @@ TraktorS3.LEDBrightValue = 0x02;
 // vinyl. Changing this value to 2.0 causes a single rotation of the platter to
 // result in twice as much movement, and a value of 0.5 causes the amount of
 // movement to be halved.
-TraktorS3.JogSpeedMultiplier = 1.0;
+TraktorS3.JogSpeedMultiplier = 0.5;
 
 // Parameters for the jog wheel smoothing while scratching
 TraktorS3.Alpha = 1.0 / 8;
