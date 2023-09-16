@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.21)
 
 # CMAKE_CXX_COMPILER_ID: Distinguish between "AppleClang" and "Clang"
 if(POLICY CMP0025)
@@ -127,7 +127,7 @@ if(NOT CMAKE_CONFIGURATION_TYPES)
   endif()
 endif()
 
-option(QT6 "Build with Qt6" OFF)
+option(QT6 "Build with Qt6" ON)
 option(QML "Build with QML" OFF)
 option(QOPENGL "Use QOpenGLWindow based widget instead of QGLWidget" ON)
 
@@ -154,25 +154,19 @@ if(APPLE)
     message(FATAL_ERROR "'xcode-select -v' failed with '${XCODE_SELECT_RESULT}'. You may need to install Xcode and run 'sudo xcode-select --install'.")
   endif()
 
-  if(QT6)
-    # Minimum macOS version supported by Qt 6
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15 CACHE STRING "Minimum macOS version the build will be able to run on")
-    if(NOT VCPKG_TARGET_TRIPLET)
-      set(VCPKG_TARGET_TRIPLET "x64-osx-min1012")
-    endif()
+  if(VCPKG_TARGET_TRIPLET MATCHES "^arm64-osx")
+    # Minimum macOS version for arm64 Support
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 11.0 CACHE STRING "Minimum macOS version the build will be able to run on")
+    set(CMAKE_OSX_ARCHITECTURES arm64 CACHE STRING "The target architecture")
+    set(CMAKE_SYSTEM_PROCESSOR arm64 CACHE STRING "The target system processor")
+    set(CMAKE_SYSTEM_NAME Darwin CACHE STRING "Setting this enables CMAKE_CROSSCOMPILE")
   else()
-    if(VCPKG_TARGET_TRIPLET STREQUAL "arm64-osx-min1100")
-      # Minimum macOS version for arm64 Support
-      set(CMAKE_OSX_DEPLOYMENT_TARGET 11.0 CACHE STRING "Minimum macOS version the build will be able to run on")
-      set(CMAKE_OSX_ARCHITECTURES arm64 CACHE STRING "The target achritecture")
-      set(CMAKE_SYSTEM_PROCESSOR arm64 CACHE STRING "The target system processor")
-      set(CMAKE_SYSTEM_NAME Darwin CACHE STRING "Setting this enables CMAKE_CROSSCOMPILE")
+    if(QT6)
+      # Minimum macOS version supported by Qt 6
+      set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15 CACHE STRING "Minimum macOS version the build will be able to run on")
     else()
       # Minimum macOS version supported by Qt 5.12
       set(CMAKE_OSX_DEPLOYMENT_TARGET 10.12 CACHE STRING "Minimum macOS version the build will be able to run on")
-      if(NOT VCPKG_TARGET_TRIPLET)
-        set(VCPKG_TARGET_TRIPLET "x64-osx-min1012")
-      endif()
       # Needed for deployment target < 10.14
       add_compile_options(-fno-aligned-allocation)
     endif()
@@ -556,7 +550,25 @@ if(NOT MSVC)
   if(MOLD_SUPPORT)
     if(MOLD_EXECUTABLE)
       message(STATUS "Selecting mold as linker")
-      add_link_options("-fuse-ld=mold")
+      set(SELECT_MOLD_WITH_FUSE true)
+      # With GCC, mold is a valid '-fuse' argument only with version 12.1.0 and newer.
+      # Earlier versions must use the -B option.
+      if (GNU_GCC)
+        execute_process(
+          COMMAND gcc -dumpfullversion
+          ERROR_QUIET
+          OUTPUT_VARIABLE GCC_VERSION_STRING
+          OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        if (GCC_VERSION_STRING VERSION_LESS 12.1.0)
+          set(SELECT_MOLD_WITH_FUSE false)
+        endif()
+      endif()
+      if (SELECT_MOLD_WITH_FUSE)
+        add_link_options("-fuse-ld=mold")
+      else()
+        add_link_options("-B${MOLD_EXECUTABLE}")
+      endif()
     else()
       message(FATAL_ERROR "Could NOT find mold (missing executable)")
     endif()
@@ -771,7 +783,7 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/engine/effects/engineeffectsmanager.cpp
   src/engine/enginebuffer.cpp
   src/engine/enginedelay.cpp
-  src/engine/enginemaster.cpp
+  src/engine/enginemixer.cpp
   src/engine/engineobject.cpp
   src/engine/enginepregain.cpp
   src/engine/enginesidechaincompressor.cpp
@@ -857,6 +869,7 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/library/hiddentablemodel.cpp
   src/library/itunes/itunesdao.cpp
   src/library/itunes/itunesfeature.cpp
+  src/library/itunes/itunesimporter.cpp
   src/library/itunes/itunesplaylistmodel.cpp
   src/library/itunes/itunesxmlimporter.cpp
   src/library/library_prefs.cpp
@@ -867,6 +880,7 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/library/locationdelegate.cpp
   src/library/missingtablemodel.cpp
   src/library/mixxxlibraryfeature.cpp
+  src/library/multilineeditdelegate.cpp
   src/library/parser.cpp
   src/library/parsercsv.cpp
   src/library/parserm3u.cpp
@@ -1083,7 +1097,6 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/util/mac.cpp
   src/util/moc_included_test.cpp
   src/util/movinginterquartilemean.cpp
-  src/util/performancetimer.cpp
   src/util/rangelist.cpp
   src/util/readaheadsamplebuffer.cpp
   src/util/ringdelaybuffer.cpp
@@ -1270,6 +1283,7 @@ else()
       src/waveform/renderers/allshader/waveformrenderer.cpp
       src/waveform/renderers/allshader/waveformrendererendoftrack.cpp
       src/waveform/renderers/allshader/waveformrendererfiltered.cpp
+      src/waveform/renderers/allshader/waveformrendererhsv.cpp
       src/waveform/renderers/allshader/waveformrendererlrrgb.cpp
       src/waveform/renderers/allshader/waveformrendererpreroll.cpp
       src/waveform/renderers/allshader/waveformrendererrgb.cpp
@@ -1278,6 +1292,7 @@ else()
       src/waveform/renderers/allshader/waveformrendermark.cpp
       src/waveform/renderers/allshader/waveformrendermarkrange.cpp
       src/waveform/widgets/allshader/filteredwaveformwidget.cpp
+      src/waveform/widgets/allshader/hsvwaveformwidget.cpp
       src/waveform/widgets/allshader/lrrgbwaveformwidget.cpp
       src/waveform/widgets/allshader/rgbwaveformwidget.cpp
       src/waveform/widgets/allshader/simplewaveformwidget.cpp
@@ -1318,8 +1333,13 @@ if(APPLE)
   # will automatically insert retain/release calls on Objective-C objects.
   target_compile_options(mixxx-lib PUBLIC -fobjc-arc)
 
+  # Disable deprecation warnings for OpenGL on macOS as we won't switch to
+  # Apple's Metal API in the foreseeable future.
+  target_compile_definitions(mixxx-lib PUBLIC GL_SILENCE_DEPRECATION)
+
   target_sources(mixxx-lib PRIVATE
     src/util/darkappearance.mm
+    src/util/macosversion.mm
   )
 
   option(MACOS_ITUNES_LIBRARY "Native macOS iTunes/Music.app library integration" ON)
@@ -1472,11 +1492,8 @@ if(WIN32)
   # max-and-std-cpp-min-not-available-in-visual-c-2010
   target_compile_definitions(mixxx-lib PUBLIC NOMINMAX UNICODE)
 
-  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    target_compile_definitions(mixxx-lib PUBLIC WIN32)
-  else()
-    target_compile_definitions(mixxx-lib PUBLIC WIN64)
-  endif()
+  # shoutidjc/shout.h checks for WIN32 to see if we are on Windows.
+  target_compile_definitions(mixxx-lib PUBLIC WIN32)
 
   target_link_libraries(mixxx-lib PRIVATE shell32)
 
@@ -1785,35 +1802,23 @@ if(MSVC)
   )
 endif()
 
-if(WIN32)
-  # Qt 5 loads these ANGLE DLLs at runtime if the graphics driver is blocklisted.
-  # Qt does not link these and vcpkg does not build them as a dependency of Qt,
-  # so copy them manually.
-  find_file(EGL_DLL libEGL.dll PATH_SUFFIXES ${CMAKE_INSTALL_BINDIR})
-  find_file(GLESv2_DLL libGLESv2.dll PATH_SUFFIXES ${CMAKE_INSTALL_BINDIR})
-  install(FILES ${EGL_DLL} ${GLESv2_DLL} DESTINATION "${MIXXX_INSTALL_BINDIR}")
+if(WIN32 AND NOT QT6)
+  # Qt 5 loads these ANGLE DLLs at runtime if the graphics driver is on the ignore list.
+  # It does not work with Debug, because the debug version is compiled without the a d suffix
+  find_package(unofficial-angle CONFIG REQUIRED)
+  install(IMPORTED_RUNTIME_ARTIFACTS
+    unofficial::angle::libEGL
+    unofficial::angle::libGLESv2
+    CONFIGURATIONS RelWithDebInfo Release
+    DESTINATION "${MIXXX_INSTALL_BINDIR}"
+    RUNTIME_DEPENDENCY_SET mixxx
+    COMPONENT applocal)
+  set(APPLOCAL_COMPONENT_DEFINED true)
 endif()
 
 #
 # Tests
 #
-
-# CMake + googletest: https://crascit.com/2015/07/25/cmake-gtest/
-
-# Prevent GoogleTest from overriding our compiler/linker options
-# when building with Visual Studio
-set(gtest_force_shared_crt ON CACHE BOOL "Pass Mixxx compiler/linker options to GoogleTest" FORCE)
-
-# Prevent installation of GoogleTest libraries
-set(INSTALL_GTEST OFF CACHE BOOL "Disable installation of GoogleTest" FORCE)
-
-# Add googletest directly to our build. This adds the following targets:
-# gtest, gtest_main, gmock and gmock_main
-message(STATUS "Adding goolgletest targets gtest, gtest_main, gmock and gmock_main")
-add_subdirectory(
-  "${CMAKE_CURRENT_SOURCE_DIR}/lib/googletest"
-  "${CMAKE_CURRENT_BINARY_DIR}/lib/googletest"
-)
 
 add_executable(mixxx-test
   src/test/analyserwaveformtest.cpp
@@ -1830,6 +1835,7 @@ add_executable(mixxx-test
   src/test/broadcastsettings_test.cpp
   src/test/cache_test.cpp
   src/test/channelhandle_test.cpp
+  src/test/chrono_clock_resolution_test.cpp
   src/test/colorconfig_test.cpp
   src/test/colormapperjsproxy_test.cpp
   src/test/colorpalette_test.cpp
@@ -1837,6 +1843,7 @@ add_executable(mixxx-test
   src/test/controller_mapping_validation_test.cpp
   src/test/controllerscriptenginelegacy_test.cpp
   src/test/controlobjecttest.cpp
+  src/test/controlobjectaliastest.cpp
   src/test/controlobjectscripttest.cpp
   src/test/coreservicestest.cpp
   src/test/coverartcache_test.cpp
@@ -1855,7 +1862,7 @@ add_executable(mixxx-test
   src/test/enginebuffertest.cpp
   src/test/engineeffectsdelay_test.cpp
   src/test/enginefilterbiquadtest.cpp
-  src/test/enginemastertest.cpp
+  src/test/enginemixertest.cpp
   src/test/enginemicrophonetest.cpp
   src/test/enginesynctest.cpp
   src/test/fileinfo_test.cpp
@@ -1864,8 +1871,7 @@ add_executable(mixxx-test
   src/test/hotcuecontrol_test.cpp
   src/test/imageutils_test.cpp
   src/test/indexrange_test.cpp
-  # TODO: reanable this after https://github.com/mixxxdj/mixxx/pull/11666
-  # src/test/itunesxmlimportertest.cpp
+  src/test/itunesxmlimportertest.cpp
   src/test/keyutilstest.cpp
   src/test/lcstest.cpp
   src/test/learningutilstest.cpp
@@ -1926,24 +1932,12 @@ add_executable(mixxx-test
   src/test/wwidgetstack_test.cpp
   src/util/moc_included_test.cpp
 )
+find_package(GTest CONFIG REQUIRED)
 set_target_properties(mixxx-test PROPERTIES AUTOMOC ON)
-target_link_libraries(mixxx-test PRIVATE mixxx-lib mixxx-gitinfostore gtest gmock)
+target_link_libraries(mixxx-test PRIVATE mixxx-lib mixxx-gitinfostore GTest::gtest GTest::gmock)
 
-#
-# Benchmark tests
-#
-
-# Disable testing of google/benchmark
-set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
-
-# Prevent installation of google/benchmark artifacts
-set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Disable installation of google/benchmark" FORCE)
-
-add_subdirectory(
-  "${CMAKE_CURRENT_SOURCE_DIR}/lib/benchmark"
-  "${CMAKE_CURRENT_BINARY_DIR}/lib/benchmark"
-)
-target_link_libraries(mixxx-test PRIVATE benchmark)
+find_package(benchmark)
+target_link_libraries(mixxx-test PRIVATE benchmark::benchmark)
 
 # Test Suite
 include(CTest)
@@ -2115,7 +2109,7 @@ option(ENGINEPRIME "Support for library export to Denon Engine Prime" ON)
 if(ENGINEPRIME)
   # libdjinterop does not currently have a stable ABI, so we fetch sources for a specific tag, build here, and link
   # statically.  This situation should be reviewed once libdjinterop hits version 1.x.
-  set(LIBDJINTEROP_VERSION 0.19.1)
+  set(LIBDJINTEROP_VERSION 0.19.2)
   # Look whether an existing installation of libdjinterop matches the required version.
   find_package(DjInterop  ${LIBDJINTEROP_VERSION} EXACT CONFIG)
   if(NOT DjInterop_FOUND)
@@ -2151,7 +2145,7 @@ if(ENGINEPRIME)
       URL
         "https://github.com/xsco/libdjinterop/archive/refs/tags/${LIBDJINTEROP_VERSION}.tar.gz"
         "https://launchpad.net/~xsco/+archive/ubuntu/djinterop/+sourcefiles/libdjinterop/${LIBDJINTEROP_VERSION}-0ubuntu1/libdjinterop_${LIBDJINTEROP_VERSION}.orig.tar.gz"
-      URL_HASH SHA256=fd03a7ed54bf4e58da0075b517a6e7382546227a1ac165769987d57e1cf5e36e
+      URL_HASH SHA256=2f44b43a612b5fccc5bcba4d6c9e463ba8cd637edc9ab2e5dc19173d00c5f4eb
       DOWNLOAD_DIR "${CMAKE_CURRENT_BINARY_DIR}/downloads"
       DOWNLOAD_NAME "libdjinterop-${LIBDJINTEROP_VERSION}.tar.gz"
       INSTALL_DIR ${DJINTEROP_INSTALL_DIR}
@@ -2312,11 +2306,6 @@ elseif(GNU_GCC OR LLVM_CLANG)
   target_compile_options(FpClassify PRIVATE -ffp-contract=on -fno-fast-math)
 endif()
 target_link_libraries(mixxx-lib PRIVATE FpClassify)
-
-# googletest
-# Required to use the macro FRIEND_TEST from <gtest/gtest_prod.h>
-# in production code
-target_include_directories(mixxx-lib SYSTEM PUBLIC "${gtest_SOURCE_DIR}/include")
 
 # LAME
 find_package(mp3lame REQUIRED)
@@ -2519,9 +2508,67 @@ if(Qt_IS_STATIC)
       Qt${QT_VERSION_MAJOR}::QMacStylePlugin
     )
   endif()
+else()
+  if(QT6 AND (WIN32 OR APPLE))
+    # Qt6 does not automatically install plugins like in Qt 5
 
+    find_package(libjpeg-turbo CONFIG REQUIRED)
+    install(IMPORTED_RUNTIME_ARTIFACTS
+      # QJpegPlugin dependency
+      libjpeg-turbo::jpeg
+      DESTINATION "${MIXXX_INSTALL_DATADIR}"
+      RUNTIME_DEPENDENCY_SET mixxx
+      COMPONENT applocal)
+
+    install(IMPORTED_RUNTIME_ARTIFACTS
+      # platform plugins
+      Qt${QT_VERSION_MAJOR}::QOffscreenIntegrationPlugin
+      Qt${QT_VERSION_MAJOR}::QMinimalIntegrationPlugin
+      DESTINATION "${MIXXX_INSTALL_DATADIR}/platforms"
+      RUNTIME_DEPENDENCY_SET mixxx
+      COMPONENT applocal)
+
+    install(IMPORTED_RUNTIME_ARTIFACTS
+      Qt${QT_VERSION_MAJOR}::QGifPlugin
+      Qt${QT_VERSION_MAJOR}::QICOPlugin
+      Qt${QT_VERSION_MAJOR}::QJpegPlugin
+      Qt${QT_VERSION_MAJOR}::QSvgPlugin
+      DESTINATION "${MIXXX_INSTALL_DATADIR}/imageformats"
+      RUNTIME_DEPENDENCY_SET mixxx
+      COMPONENT applocal)
+
+    install(IMPORTED_RUNTIME_ARTIFACTS
+      Qt${QT_VERSION_MAJOR}::QSQLiteDriverPlugin
+      DESTINATION "${MIXXX_INSTALL_DATADIR}/sqldrivers"
+      RUNTIME_DEPENDENCY_SET mixxx
+      COMPONENT applocal)
+
+    if(WIN32)
+      install(IMPORTED_RUNTIME_ARTIFACTS Qt${QT_VERSION_MAJOR}::QWindowsIntegrationPlugin
+        DESTINATION "${MIXXX_INSTALL_DATADIR}/platforms"
+        RUNTIME_DEPENDENCY_SET mixxx
+        COMPONENT applocal)
+      install(IMPORTED_RUNTIME_ARTIFACTS Qt${QT_VERSION_MAJOR}::QWindowsVistaStylePlugin
+        DESTINATION "${MIXXX_INSTALL_DATADIR}/styles"
+        RUNTIME_DEPENDENCY_SET mixxx
+        COMPONENT applocal)
+    endif()
+    if(APPLE)
+      install(IMPORTED_RUNTIME_ARTIFACTS Qt${QT_VERSION_MAJOR}::QCocoaIntegrationPlugin
+        DESTINATION "${MIXXX_INSTALL_DATADIR}/platforms"
+        RUNTIME_DEPENDENCY_SET mixxx
+        COMPONENT applocal)
+      install(IMPORTED_RUNTIME_ARTIFACTS Qt${QT_VERSION_MAJOR}::QMacStylePlugin
+        DESTINATION "${MIXXX_INSTALL_DATADIR}/styles"
+        RUNTIME_DEPENDENCY_SET mixxx
+        COMPONENT applocal)
+    endif()
+
+    add_custom_command(
+        TARGET mixxx POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -DCOMPONENT=applocal -DCMAKE_INSTALL_PREFIX="${CMAKE_CURRENT_BINARY_DIR}" -P cmake_install.cmake)
+  endif()
 endif()
-
 
 if(APPLE)
   if(Qt_IS_STATIC OR QT6)
@@ -2629,14 +2676,14 @@ if(APPLE OR WIN32)
   # qt_de.qm is just one arbitrary file in the directory that needs to be located;
   # there is no particular reason to look for this file versus any other one in the directory.
   if(QT6)
-    find_file(QT_TRANSLATION_FILE qt_de.qm PATHS "${Qt6_DIR}/../../../translations" "${Qt6_DIR}/../../qt5/translations" REQUIRED NO_DEFAULT_PATH)
+    find_file(QT_TRANSLATION_FILE qt_de.qm PATHS "${Qt6_DIR}/../../translations/Qt6" REQUIRED NO_DEFAULT_PATH)
   else()
     find_file(QT_TRANSLATION_FILE qt_de.qm PATHS "${Qt5_DIR}/../../../translations" "${Qt5_DIR}/../../qt5/translations" REQUIRED NO_DEFAULT_PATH)
   endif()
   get_filename_component(QT_TRANSLATIONS ${QT_TRANSLATION_FILE} DIRECTORY)
   install(
-    DIRECTORY "${QT_TRANSLATIONS}"
-    DESTINATION "${MIXXX_INSTALL_DATADIR}"
+    DIRECTORY "${QT_TRANSLATIONS}/"
+    DESTINATION "${MIXXX_INSTALL_DATADIR}/translations"
     # QT 5 translations have been separated into several files, and most of the qt_xx.qm files
     # contain just shortcuts to load the qtbase, qtmultimedia etc files.
     FILES_MATCHING REGEX
@@ -2823,6 +2870,11 @@ if(COREAUDIO)
     src/sources/v1/legacyaudiosourceadapter.cpp
     lib/apple/CAStreamBasicDescription.cpp
   )
+  set_property(
+    SOURCE lib/apple/CAStreamBasicDescription.cpp
+    APPEND_STRING
+    PROPERTY COMPILE_OPTIONS -Wno-deprecated-anon-enum-enum-conversion
+  )
   target_compile_definitions(mixxx-lib PRIVATE __COREAUDIO__)
   target_include_directories(mixxx-lib SYSTEM PUBLIC lib/apple)
 endif()
@@ -2842,7 +2894,7 @@ if(FAAD)
     src/sources/soundsourcem4a.cpp
     src/sources/libfaadloader.cpp
   )
-  target_compile_definitions(mixxx-lib PRIVATE __FAAD__)
+  target_compile_definitions(mixxx-lib PUBLIC __FAAD__)
   if(MP4v2_FOUND)
     target_compile_definitions(mixxx-lib PRIVATE __MP4V2__)
     target_link_libraries(mixxx-lib PRIVATE MP4v2::MP4v2)
@@ -3051,6 +3103,7 @@ if(MEDIAFOUNDATION)
   )
   target_link_libraries(mixxx-lib PRIVATE
     ${MediaFoundation_LIBRARIES}
+    Version.lib
   )
 endif()
 
@@ -3208,6 +3261,14 @@ if(WAVPACK)
   target_sources(mixxx-lib PRIVATE src/sources/soundsourcewv.cpp)
   target_compile_definitions(mixxx-lib PUBLIC __WV__)
   target_link_libraries(mixxx-lib PRIVATE WavPack::wavpack)
+endif()
+
+if (APPLOCAL_COMPONENT_DEFINED)
+    set(CPACK_COMPONENT_applocal_HIDDEN TRUE)
+    # In order to run Mixx from the build directory install applocal components
+    add_custom_command(
+        TARGET mixxx POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -DCOMPONENT=applocal -DCMAKE_INSTALL_PREFIX="${CMAKE_CURRENT_BINARY_DIR}" -P cmake_install.cmake)
 endif()
 
 # Configure file with build options

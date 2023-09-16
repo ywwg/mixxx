@@ -11,6 +11,7 @@
 #include "preferences/usersettings.h"
 #include "track/track.h"
 #include "util/compatibility/qatomic.h"
+#include "util/make_const_iterator.h"
 #include "util/math.h"
 #include "util/sample.h"
 
@@ -49,6 +50,7 @@ LoopingControl::LoopingControl(const QString& group,
         : EngineControl(group, pConfig),
           m_bLoopingEnabled(false),
           m_bLoopRollActive(false),
+          m_bLoopWasEnabledBeforeSlipEnable(false),
           m_bAdjustingLoopIn(false),
           m_bAdjustingLoopOut(false),
           m_bAdjustingLoopInOld(false),
@@ -95,8 +97,7 @@ LoopingControl::LoopingControl(const QString& group,
             Qt::DirectConnection);
     m_pReloopToggleButton->set(0);
     // The old reloop_exit name was confusing. This CO does both entering and exiting.
-    ControlDoublePrivate::insertAlias(ConfigKey(group, "reloop_exit"),
-                                      ConfigKey(group, "reloop_toggle"));
+    m_pReloopToggleButton->addAlias(ConfigKey(group, QStringLiteral("reloop_exit")));
 
     m_pReloopAndStopButton = new ControlPushButton(ConfigKey(group, "reloop_andstop"));
     connect(m_pReloopAndStopButton, &ControlObject::valueChanged,
@@ -1170,6 +1171,8 @@ void LoopingControl::notifySeek(mixxx::audio::FramePos newPosition) {
 }
 
 void LoopingControl::setLoopingEnabled(bool enabled) {
+    m_bLoopWasEnabledBeforeSlipEnable =
+            !m_pSlipEnabled->toBool() && enabled && !m_bLoopRollActive;
     if (m_bLoopingEnabled == enabled) {
         return;
     }
@@ -1186,14 +1189,6 @@ void LoopingControl::setLoopingEnabled(bool enabled) {
     }
 
     emit loopEnabledChanged(enabled);
-}
-
-bool LoopingControl::isLoopingEnabled() {
-    return m_bLoopingEnabled;
-}
-
-bool LoopingControl::isLoopRollActive() {
-    return m_bLoopRollActive;
 }
 
 void LoopingControl::trackLoaded(TrackPointer pNewTrack) {
@@ -1256,10 +1251,10 @@ void LoopingControl::slotBeatLoopDeactivateRoll(BeatLoopingControl* pBeatLoopCon
     // and QVector::iterator is a pointer type in Qt5, but QStack inherits
     // from QList in Qt6 so QStack::iterator is not a pointer type in Qt6.
     // NOLINTNEXTLINE(readability-qualified-auto)
-    auto i = m_activeLoopRolls.begin();
-    while (i != m_activeLoopRolls.end()) {
+    auto i = m_activeLoopRolls.constBegin();
+    while (i != m_activeLoopRolls.constEnd()) {
         if (size == *i) {
-            i = m_activeLoopRolls.erase(i);
+            i = constErase(&m_activeLoopRolls, i);
         } else {
             ++i;
         }
