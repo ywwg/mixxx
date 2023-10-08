@@ -27,7 +27,7 @@ class SampleUtil {
 
     // Allocated a buffer of CSAMPLE's with length size. Ensures that the buffer
     // is 16-byte aligned for SSE enhancement.
-    static CSAMPLE* alloc(SINT size);
+    [[nodiscard]] static CSAMPLE* alloc(SINT size);
 
     // Frees a 16-byte aligned buffer allocated by SampleUtil::alloc()
     static void free(CSAMPLE* pBuffer);
@@ -35,6 +35,7 @@ class SampleUtil {
     // Sets every sample in pBuffer to zero
     inline
     static void clear(CSAMPLE* pBuffer, SINT numSamples) {
+        DEBUG_ASSERT(numSamples >= 0);
         // Special case: This works, because the binary representation
         // of 0.0f is 0!
         memset(pBuffer, 0, sizeof(*pBuffer) * numSamples);
@@ -45,7 +46,7 @@ class SampleUtil {
     inline
     static void fill(CSAMPLE* pBuffer, CSAMPLE value,
             SINT numSamples) {
-        std::fill(pBuffer, pBuffer + numSamples, value);
+        std::fill_n(pBuffer, numSamples, value);
     }
 
     // Copies every sample from pSrc to pDest
@@ -126,7 +127,6 @@ class SampleUtil {
 
     inline static SINT floorPlayPosToFrame(double playPos) {
         return static_cast<SINT>(floor(playPos / kPlayPositionChannels));
-
     }
 
     inline static SINT ceilPlayPosToFrame(double playPos) {

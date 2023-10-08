@@ -68,7 +68,8 @@ DlgPrefSound::DlgPrefSound(QWidget* pParent,
             &DlgPrefSound::apiChanged);
 
     sampleRateComboBox->clear();
-    for (const auto& sampleRate : m_pSoundManager->getSampleRates()) {
+    const auto sampleRates = m_pSoundManager->getSampleRates();
+    for (const auto& sampleRate : sampleRates) {
         if (sampleRate.isValid()) {
             // no ridiculous sample rate values. prohibiting zero means
             // avoiding a potential div-by-0 error in ::updateLatencies
@@ -204,12 +205,12 @@ DlgPrefSound::DlgPrefSound(QWidget* pParent,
                 loadSettings();
             });
 
-    m_pMainAudioLatencyOverloadCount =
-            new ControlProxy("[Master]", "audio_latency_overload_count", this);
-    m_pMainAudioLatencyOverloadCount->connectValueChanged(this, &DlgPrefSound::bufferUnderflow);
+    m_pAudioLatencyOverloadCount =
+            new ControlProxy(kAppGroup, QStringLiteral("audio_latency_overload_count"), this);
+    m_pAudioLatencyOverloadCount->connectValueChanged(this, &DlgPrefSound::bufferUnderflow);
 
-    m_pMainLatency = new ControlProxy("[Master]", "latency", this);
-    m_pMainLatency->connectValueChanged(this, &DlgPrefSound::mainLatencyChanged);
+    m_pOutputLatencyMs = new ControlProxy(kAppGroup, QStringLiteral("output_latency_ms"), this);
+    m_pOutputLatencyMs->connectValueChanged(this, &DlgPrefSound::outputLatencyChanged);
 
     // TODO: remove this option by automatically disabling/enabling the main mix
     // when recording, broadcasting, headphone, and main outputs are enabled/disabled
@@ -737,7 +738,7 @@ void DlgPrefSound::bufferUnderflow(double count) {
     update();
 }
 
-void DlgPrefSound::mainLatencyChanged(double latency) {
+void DlgPrefSound::outputLatencyChanged(double latency) {
     currentLatency->setText(QString("%1 ms").arg(latency));
     update();
 }

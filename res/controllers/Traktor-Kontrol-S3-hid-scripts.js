@@ -513,13 +513,13 @@ TraktorS3.Controller = class {
             outputB.addOutput("[Master]", "!" + "VuMeterR" + i, MasterVuOffsets.VuMeterR + i, "B");
         }
 
-        outputB.addOutput("[Master]", "PeakIndicatorL", 0x45, "B");
-        outputB.addOutput("[Master]", "PeakIndicatorR", 0x4E, "B");
+        outputB.addOutput("[Main]", "peak_indicator_left", 0x45, "B");
+        outputB.addOutput("[Main]", "peak_indicator_right", 0x4E, "B");
 
-        outputB.addOutput("[Channel3]", "PeakIndicator", 0x0F, "B");
-        outputB.addOutput("[Channel1]", "PeakIndicator", 0x1E, "B");
-        outputB.addOutput("[Channel2]", "PeakIndicator", 0x2D, "B");
-        outputB.addOutput("[Channel4]", "PeakIndicator", 0x3C, "B");
+        outputB.addOutput("[Channel3]", "peak_indicator", 0x0F, "B");
+        outputB.addOutput("[Channel1]", "peak_indicator", 0x1E, "B");
+        outputB.addOutput("[Channel2]", "peak_indicator", 0x2D, "B");
+        outputB.addOutput("[Channel4]", "peak_indicator", 0x3C, "B");
 
         this.hid.registerOutputPacket(outputB);
 
@@ -533,13 +533,13 @@ TraktorS3.Controller = class {
 
         engine.makeConnection("[Microphone]", "pfl", this.pflOutput);
 
-        engine.makeConnection("[Master]", "maximize_library", TraktorS3.Controller.prototype.maximizeLibraryOutput.bind(this));
+        engine.connectControl("[Skin]", "show_maximized_library", TraktorS3.Controller.prototype.maximizeLibraryOutput.bind(this));
 
         // Master VuMeters
-        this.masterVuMeter.VuMeterL.connection = engine.makeConnection("[Master]", "VuMeterL", TraktorS3.Controller.prototype.masterVuMeterHandler.bind(this));
-        this.masterVuMeter.VuMeterR.connection = engine.makeConnection("[Master]", "VuMeterR", TraktorS3.Controller.prototype.masterVuMeterHandler.bind(this));
-        this.linkChannelOutput("[Master]", "PeakIndicatorL", TraktorS3.Controller.prototype.peakOutput.bind(this));
-        this.linkChannelOutput("[Master]", "PeakIndicatorR", TraktorS3.Controller.prototype.peakOutput.bind(this));
+        this.masterVuMeter.VuMeterL.connection = engine.makeConnection("[Main]", "vu_meter_left", TraktorS3.Controller.prototype.masterVuMeterHandler.bind(this));
+        this.masterVuMeter.VuMeterR.connection = engine.makeConnection("[Main]", "vu_meter_right", TraktorS3.Controller.prototype.masterVuMeterHandler.bind(this));
+        this.linkChannelOutput("[Main]", "peak_indicator_left", TraktorS3.Controller.prototype.peakOutput.bind(this));
+        this.linkChannelOutput("[Main]", "peak_indicator_right", TraktorS3.Controller.prototype.peakOutput.bind(this));
         this.guiTickConnection = engine.makeConnection("[App]", "gui_tick_50ms_period_s", TraktorS3.Controller.prototype.guiTickHandler.bind(this));
 
         // Sampler callbacks
@@ -1150,7 +1150,7 @@ TraktorS3.Deck = class {
             return;
         }
 
-        script.toggleControl("[Master]", "maximize_library");
+        script.toggleControl("[Skin]", "show_maximized_library");
     }
 
     selectLoopHandler(field) {
@@ -1707,8 +1707,8 @@ TraktorS3.Channel = class {
     }
 
     linkOutputs() {
-        this.vuConnection = engine.makeConnection(this.group, "VuMeter", TraktorS3.Channel.prototype.vuMeterHandler.bind(this));
-        this.clipConnection = engine.makeConnection(this.group, "PeakIndicator", TraktorS3.Controller.prototype.peakOutput.bind(this.controller));
+        this.vuConnection = engine.makeConnection(this.group, "vu_meter", TraktorS3.Channel.prototype.vuMeterHandler.bind(this));
+        this.clipConnection = engine.makeConnection(this.group, "peak_indicator", TraktorS3.Controller.prototype.peakOutput.bind(this.controller));
         this.controller.linkChannelOutput(this.group, "pfl", TraktorS3.Controller.prototype.pflOutput.bind(this.controller));
         for (let j = 1; j <= 8; j++) {
             this.hotcueCallbacks.push(engine.makeConnection(this.group, "hotcue_" + j + "_enabled",
@@ -1800,7 +1800,6 @@ TraktorS3.Channel = class {
  * mapping from 2047 to 0.5 as that would become 0.499878. This is important for
  * FX and anything else where 0.5 has a special meaning (and where that number
  * is checked for without an epsilon).
- *
  * @param {number} value An integer value in the range `[0 .. 4095]`.
  * @returns {number} `value` normalized to `[0, 1]`.
  */
@@ -2575,7 +2574,6 @@ TraktorS3.QuickFxControl = class {
     /**
      * Set the quick effect chain preset for a channel in accordance to one of
      * the five effect buttons.
-     *
      * @param {number} channel The channel number, in 1-4.
      * @param {number} fxButtonIndex The index of the FX button, 0 being the
      *   filter button. Quick effect chain presets are one-indexed, so

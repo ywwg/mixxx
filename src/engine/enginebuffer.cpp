@@ -101,7 +101,7 @@ EngineBuffer::EngineBuffer(const QString& group,
           m_iEnableSyncQueued(SYNC_REQUEST_NONE),
           m_iSyncModeQueued(static_cast<int>(SyncMode::Invalid)),
           m_bPlayAfterLoading(false),
-          m_pCrossfadeBuffer(SampleUtil::alloc(MAX_BUFFER_LEN)),
+          m_pCrossfadeBuffer(SampleUtil::alloc(kMaxEngineSamples)),
           m_bCrossfadeReady(false),
           m_iLastBufferSize(0) {
     // This should be a static assertion, but isValid() is not constexpr.
@@ -110,7 +110,7 @@ EngineBuffer::EngineBuffer(const QString& group,
     m_queuedSeek.setValue(kNoQueuedSeek);
 
     // zero out crossfade buffer
-    SampleUtil::clear(m_pCrossfadeBuffer, MAX_BUFFER_LEN);
+    SampleUtil::clear(m_pCrossfadeBuffer, kMaxEngineSamples);
 
     m_pReader = new CachingReader(group, pConfig);
     connect(m_pReader, &CachingReader::trackLoading,
@@ -375,13 +375,13 @@ mixxx::Bpm EngineBuffer::getLocalBpm() const {
 }
 
 void EngineBuffer::setBeatLoop(mixxx::audio::FramePos startPosition, bool enabled) {
-    return m_pLoopingControl->setBeatLoop(startPosition, enabled);
+    m_pLoopingControl->setBeatLoop(startPosition, enabled);
 }
 
 void EngineBuffer::setLoop(mixxx::audio::FramePos startPosition,
         mixxx::audio::FramePos endPositon,
         bool enabled) {
-    return m_pLoopingControl->setLoop(startPosition, endPositon, enabled);
+    m_pLoopingControl->setLoop(startPosition, endPositon, enabled);
 }
 
 void EngineBuffer::setEngineMixer(EngineMixer* pEngineMixer) {
