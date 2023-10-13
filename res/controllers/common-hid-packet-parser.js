@@ -1253,6 +1253,7 @@ class HIDController {
             "[Sampler7]",
             "[Sampler8]",
             "[Master]",
+            "[Main]",
             "[PreviewDeck1]",
             "[Effects]",
             "[Playlist]",
@@ -2179,6 +2180,7 @@ class HIDController {
         field.mapped_group = m_group;
         field.mapped_name = m_name;
         field.mapped_callback = callback;
+        console.error(`are we here now` + controlgroup + group);
         engine.connectControl(controlgroup, m_name, callback);
         if (engine.getValue(controlgroup, m_name)) {
             this.setOutput(m_group, m_name, this.LEDColors.on);

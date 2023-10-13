@@ -136,12 +136,12 @@ TraktorS3.Controller = class {
         this.fxButtonState = {1: false, 2: false, 3: false, 4: false, 5: false};
 
         this.masterVuMeter = {
-            "VuMeterL": {
+            "vu_meter_left": {
                 connection: null,
                 updated: false,
                 value: 0
             },
-            "VuMeterR": {
+            "vu_meter_right": {
                 connection: null,
                 updated: false,
                 value: 0
@@ -500,17 +500,17 @@ TraktorS3.Controller = class {
         };
         for (const ch in VuOffsets) {
             for (let i = 0; i < 14; i++) {
-                outputB.addOutput(ch, "!" + "VuMeter" + i, VuOffsets[ch] + i, "B");
+                outputB.addOutput(ch, "!" + "vu_meter" + i, VuOffsets[ch] + i, "B");
             }
         }
 
         const MasterVuOffsets = {
-            "VuMeterL": 0x3D,
-            "VuMeterR": 0x46
+            "vu_meter_left": 0x3D,
+            "vu_meter_right": 0x46
         };
         for (let i = 0; i < 8; i++) {
-            outputB.addOutput("[Master]", "!" + "VuMeterL" + i, MasterVuOffsets.VuMeterL + i, "B");
-            outputB.addOutput("[Master]", "!" + "VuMeterR" + i, MasterVuOffsets.VuMeterR + i, "B");
+            outputB.addOutput("[Main]", "!" + "vu_meter_left" + i, MasterVuOffsets.vu_meter_left + i, "B");
+            outputB.addOutput("[Main]", "!" + "vu_meter_right" + i, MasterVuOffsets.vu_meter_right + i, "B");
         }
 
         outputB.addOutput("[Main]", "peak_indicator_left", 0x45, "B");
@@ -536,8 +536,8 @@ TraktorS3.Controller = class {
         engine.connectControl("[Skin]", "show_maximized_library", TraktorS3.Controller.prototype.maximizeLibraryOutput.bind(this));
 
         // Master VuMeters
-        this.masterVuMeter.VuMeterL.connection = engine.makeConnection("[Main]", "vu_meter_left", TraktorS3.Controller.prototype.masterVuMeterHandler.bind(this));
-        this.masterVuMeter.VuMeterR.connection = engine.makeConnection("[Main]", "vu_meter_right", TraktorS3.Controller.prototype.masterVuMeterHandler.bind(this));
+        this.masterVuMeter.vu_meter_left.connection = engine.makeConnection("[Main]", "vu_meter_left", TraktorS3.Controller.prototype.masterVuMeterHandler.bind(this));
+        this.masterVuMeter.vu_meter_right.connection = engine.makeConnection("[Main]", "vu_meter_right", TraktorS3.Controller.prototype.masterVuMeterHandler.bind(this));
         this.linkChannelOutput("[Main]", "peak_indicator_left", TraktorS3.Controller.prototype.peakOutput.bind(this));
         this.linkChannelOutput("[Main]", "peak_indicator_right", TraktorS3.Controller.prototype.peakOutput.bind(this));
         this.guiTickConnection = engine.makeConnection("[App]", "gui_tick_50ms_period_s", TraktorS3.Controller.prototype.guiTickHandler.bind(this));
@@ -550,6 +550,7 @@ TraktorS3.Controller = class {
     }
 
     linkChannelOutput(group, name, callback) {
+        HIDDebug("ok..." + group + " " + name);
         this.hid.linkOutput(group, name, group, name, callback);
     }
 
@@ -768,7 +769,7 @@ TraktorS3.Controller = class {
 
         for (const vu in this.masterVuMeter) {
             if (this.masterVuMeter[vu].updated) {
-                this.vuMeterOutput(this.masterVuMeter[vu].value, "[Master]", vu, 8);
+                this.vuMeterOutput(this.masterVuMeter[vu].value, "[Main]", vu, 8);
                 this.masterVuMeter[vu].updated = false;
                 gotUpdate = true;
             }
@@ -776,7 +777,7 @@ TraktorS3.Controller = class {
         for (let ch = 1; ch <= 4; ch++) {
             const chan = this.Channels["[Channel" + ch + "]"];
             if (chan.vuMeterUpdated) {
-                this.vuMeterOutput(chan.vuMeterValue, chan.group, "VuMeter", 14);
+                this.vuMeterOutput(chan.vuMeterValue, chan.group, "vu_meter", 14);
                 chan.vuMeterUpdated = false;
                 gotUpdate = true;
             }
