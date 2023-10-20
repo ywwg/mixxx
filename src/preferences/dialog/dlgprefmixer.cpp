@@ -16,7 +16,6 @@
 #include "engine/enginexfader.h"
 #include "mixer/playermanager.h"
 #include "moc_dlgprefmixer.cpp"
-#include "util/make_const_iterator.h"
 #include "util/math.h"
 #include "util/rescaler.h"
 
@@ -1175,11 +1174,11 @@ const QList<EffectManifestPointer> DlgPrefMixer::getDeckEqManifests() const {
             allManifests.end(),
             [](const auto& pManifest) { return isMixingEQ(pManifest.data()); });
     if (m_eqEffectsOnly) {
-        constErase(&allManifests, nonEqsStartIt, allManifests.end());
+        allManifests.erase(nonEqsStartIt, allManifests.end());
     } else {
         // Add a null item between EQs and non-EQs. The combobox fill function
         // will use this to insert a separator.
-        constInsert(&allManifests, nonEqsStartIt, EffectManifestPointer());
+        allManifests.insert(nonEqsStartIt, EffectManifestPointer());
     }
     return allManifests;
 }
