@@ -16,6 +16,7 @@
 #include "engine/enginexfader.h"
 #include "mixer/playermanager.h"
 #include "moc_dlgprefmixer.cpp"
+#include "util/make_const_iterator.h"
 #include "util/math.h"
 #include "util/rescaler.h"
 
