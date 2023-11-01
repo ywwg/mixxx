@@ -55,7 +55,7 @@ constexpr int kFrequencyLowerLimit = 16;
 constexpr int kXfaderGridHLines = 3;
 constexpr int kXfaderGridVLines = 5;
 
-bool isMixingEQ(EffectManifest* pManifest) {
+bool isMixingEQ(const EffectManifest* pManifest) {
     return pManifest->isMixingEQ();
 }
 
@@ -1174,11 +1174,11 @@ const QList<EffectManifestPointer> DlgPrefMixer::getDeckEqManifests() const {
             allManifests.end(),
             [](const auto& pManifest) { return isMixingEQ(pManifest.data()); });
     if (m_eqEffectsOnly) {
-        allManifests.erase(nonEqsStartIt, allManifests.end());
+        erase(&allManifests, nonEqsStartIt, allManifests.end());
     } else {
         // Add a null item between EQs and non-EQs. The combobox fill function
         // will use this to insert a separator.
-        allManifests.insert(nonEqsStartIt, EffectManifestPointer());
+        insert(&allManifests, nonEqsStartIt, EffectManifestPointer());
     }
     return allManifests;
 }
