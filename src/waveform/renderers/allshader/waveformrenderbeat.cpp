@@ -2,13 +2,11 @@
 
 #include <QDomNode>
 
-#include "control/controlobject.h"
 #include "skin/legacy/skincontext.h"
 #include "track/track.h"
 #include "waveform/renderers/allshader/matrixforwidgetgeometry.h"
-#include "waveform/widgets/allshader/waveformwidget.h"
+#include "waveform/renderers/waveformwidgetrenderer.h"
 #include "widget/wskincolor.h"
-#include "widget/wwidget.h"
 
 namespace allshader {
 
@@ -22,7 +20,7 @@ void WaveformRenderBeat::initializeGL() {
 }
 
 void WaveformRenderBeat::setup(const QDomNode& node, const SkinContext& context) {
-    m_color.setNamedColor(context.selectString(node, "BeatColor"));
+    m_color = QColor(context.selectString(node, "BeatColor"));
     m_color = WSkinColor::getCorrectColor(m_color).toRgb();
 }
 
