@@ -2558,12 +2558,6 @@ WLibrarySidebar {
   selection-background-color: #555;
 }
 
-/* Prevent OS-style checkbox from being rendered underneath the custom style. */
-WTrackTableView::item,
-#LibraryBPMButton::item {
-  border: 0px;
-}
-
 /* selected table row */
 WTrackTableView::item:selected,
 #LibraryBPMButton::item:selected {

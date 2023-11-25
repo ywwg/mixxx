@@ -457,12 +457,6 @@ WLibraryTextBrowser {
   padding-left: 10px;
 }
 
-/* Prevent OS-style checkbox from being rendered underneath the custom style. */
-WTrackTableView::item,
-#LibraryBPMButton::item {
-  border: 0px;
-}
-
 WTrackTableView::item:selected,
 WSearchLineEdit::item:selected,
 WSearchLineEdit::item:checked,
