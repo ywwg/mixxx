@@ -884,6 +884,7 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/library/parsercsv.cpp
   src/library/parserm3u.cpp
   src/library/parserpls.cpp
+  src/library/playcountdelegate.cpp
   src/library/playlisttablemodel.cpp
   src/library/previewbuttondelegate.cpp
   src/library/proxytrackmodel.cpp
@@ -948,6 +949,7 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/musicbrainz/web/coverartarchiveimagetask.cpp
   src/musicbrainz/web/coverartarchivelinkstask.cpp
   src/musicbrainz/web/musicbrainzrecordingstask.cpp
+  src/nativeeventhandlerwin.cpp
   src/network/jsonwebtask.cpp
   src/network/networktask.cpp
   src/network/webtask.cpp
@@ -1645,7 +1647,7 @@ if(WIN32)
   # shoutidjc/shout.h checks for WIN32 to see if we are on Windows.
   target_compile_definitions(mixxx-lib PUBLIC WIN32)
 
-  target_link_libraries(mixxx-lib PRIVATE shell32)
+  target_link_libraries(mixxx-lib PRIVATE comctl32 shell32)
 
   if(MSVC)
     target_link_options(mixxx-lib PUBLIC /entry:mainCRTStartup)
