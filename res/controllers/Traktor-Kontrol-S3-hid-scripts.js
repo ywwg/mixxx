@@ -533,7 +533,7 @@ TraktorS3.Controller = class {
 
         engine.makeConnection("[Microphone]", "pfl", this.pflOutput);
 
-        engine.connectControl("[Skin]", "show_maximized_library", TraktorS3.Controller.prototype.maximizeLibraryOutput.bind(this));
+        engine.makeConnection("[Skin]", "show_maximized_library", TraktorS3.Controller.prototype.maximizeLibraryOutput.bind(this));
 
         // Master VuMeters
         this.masterVuMeter.vu_meter_left.connection = engine.makeConnection("[Main]", "vu_meter_left", TraktorS3.Controller.prototype.masterVuMeterHandler.bind(this));
@@ -1533,7 +1533,7 @@ TraktorS3.Deck = class {
     }
 
     lightHotcue(number) {
-        const loaded = engine.getValue(this.activeChannel, "hotcue_" + number + "_enabled");
+        const loaded = engine.getValue(this.activeChannel, "hotcue_" + number + "_status");
         const active = engine.getValue(this.activeChannel, "hotcue_" + number + "_activate");
         let ledValue = this.controller.hid.LEDColors.WHITE;
         if (loaded) {
@@ -1712,7 +1712,7 @@ TraktorS3.Channel = class {
         this.clipConnection = engine.makeConnection(this.group, "peak_indicator", TraktorS3.Controller.prototype.peakOutput.bind(this.controller));
         this.controller.linkChannelOutput(this.group, "pfl", TraktorS3.Controller.prototype.pflOutput.bind(this.controller));
         for (let j = 1; j <= 8; j++) {
-            this.hotcueCallbacks.push(engine.makeConnection(this.group, "hotcue_" + j + "_enabled",
+            this.hotcueCallbacks.push(engine.makeConnection(this.group, "hotcue_" + j + "_status",
                 TraktorS3.Channel.prototype.hotcuesOutput.bind(this)));
             this.hotcueCallbacks.push(engine.makeConnection(this.group, "hotcue_" + j + "_activate",
                 TraktorS3.Channel.prototype.hotcuesOutput.bind(this)));
