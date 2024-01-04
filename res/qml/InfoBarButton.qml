@@ -29,6 +29,7 @@ AbstractButton {
                 target: colorOverlay
                 color: root.pressedColor
             }
+
         },
         State {
             name: "active"
@@ -38,6 +39,7 @@ AbstractButton {
                 target: colorOverlay
                 color: root.activeColor
             }
+
         },
         State {
             name: "inactive"

@@ -114,7 +114,7 @@ ApplicationWindow {
             width: parent.width
             visible: !root.maximizeLibrary
 
-            Skin.FadeBehavior on visible  {
+            Skin.FadeBehavior on visible {
                 fadeTarget: crossfader
             }
         }
@@ -128,7 +128,7 @@ ApplicationWindow {
             minimized: root.maximizeLibrary
             visible: root.show4decks
 
-            Skin.FadeBehavior on visible  {
+            Skin.FadeBehavior on visible {
                 fadeTarget: decks34
             }
         }
@@ -139,7 +139,7 @@ ApplicationWindow {
             width: parent.width
             visible: root.showSamplers
 
-            Skin.FadeBehavior on visible  {
+            Skin.FadeBehavior on visible {
                 fadeTarget: samplers
             }
         }
@@ -150,7 +150,7 @@ ApplicationWindow {
             width: parent.width
             visible: root.showEffects
 
-            Skin.FadeBehavior on visible  {
+            Skin.FadeBehavior on visible {
                 fadeTarget: effects
             }
         }

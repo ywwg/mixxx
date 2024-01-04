@@ -20,6 +20,7 @@ Item {
         const trackLocationUrl = deckPlayer.trackLocationUrl;
         if (trackLocationUrl)
             data["text/uri-list"] = trackLocationUrl;
+
         return data;
     }
 
@@ -64,7 +65,7 @@ Item {
         barColor: Theme.bpmSliderBarColor
         bg: Theme.imgBpmSliderBackground
 
-        FadeBehavior on visible  {
+        FadeBehavior on visible {
             fadeTarget: rateSlider
         }
     }

@@ -56,7 +56,7 @@ Item {
             width: 3
             color: root.color
 
-            Behavior on x  {
+            Behavior on x {
                 NumberAnimation {
                     duration: 150
                 }

@@ -24,6 +24,7 @@ Item {
                 opacity: 0
                 visible: false
             }
+
         },
         State {
             when: passthroughControl.value != 0
@@ -70,6 +71,7 @@ Item {
                     property: "visible"
                 }
             }
+
         },
         Transition {
             enabled: waveformContainer.visible
