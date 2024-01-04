@@ -44,8 +44,18 @@ SetlogFeature::SetlogFeature(
     // remove unneeded entries
     deleteAllUnlockedPlaylistsWithFewerTracks();
 
-    // Create empty placeholder playlist for YEAR items
     QString placeholderName = "historyPlaceholder";
+    // remove previously created placeholder playlists
+    const QList<QPair<int, QString>> pls = m_playlistDao.getPlaylists(PlaylistDAO::PLHT_UNKNOWN);
+    QStringList plsToDelete;
+    for (const QPair<int, QString>& pl : pls) {
+        if (pl.second.startsWith(placeholderName)) {
+            plsToDelete.append(QString::number(pl.first));
+        }
+    }
+    m_playlistDao.deletePlaylists(plsToDelete);
+
+    // Create empty placeholder playlist for YEAR items
     m_yearNodeId = m_playlistDao.createUniquePlaylist(&placeholderName,
             PlaylistDAO::PLHT_UNKNOWN);
     DEBUG_ASSERT(m_yearNodeId != kInvalidPlaylistId);
@@ -98,8 +108,10 @@ SetlogFeature::SetlogFeature(
 
 SetlogFeature::~SetlogFeature() {
     // Clean up history when shutting down in case the track threshold changed,
-    // incl. the empty placeholder playlist and potentially empty current playlist
+    // incl. potentially empty current playlist
     deleteAllUnlockedPlaylistsWithFewerTracks();
+    // Delete the placeholder
+    m_playlistDao.deletePlaylist(m_yearNodeId);
 }
 
 QVariant SetlogFeature::title() {
@@ -107,13 +119,13 @@ QVariant SetlogFeature::title() {
 }
 
 void SetlogFeature::bindLibraryWidget(
-        WLibrary* libraryWidget, KeyboardEventFilter* keyboard) {
-    BasePlaylistFeature::bindLibraryWidget(libraryWidget, keyboard);
+        WLibrary* pLibraryWidget, KeyboardEventFilter* pKeyboard) {
+    BasePlaylistFeature::bindLibraryWidget(pLibraryWidget, pKeyboard);
     connect(&PlayerInfo::instance(),
             &PlayerInfo::currentPlayingTrackChanged,
             this,
             &SetlogFeature::slotPlayingTrackChanged);
-    m_libraryWidget = QPointer(libraryWidget);
+    m_pLibraryWidget = QPointer(pLibraryWidget);
 }
 
 void SetlogFeature::deleteAllUnlockedPlaylistsWithFewerTracks() {
@@ -390,10 +402,10 @@ void SetlogFeature::slotJoinWithPrevious() {
 
     // Right-clicked playlist may not be loaded. Use a temporary model to
     // keep sidebar selection and table view in sync
-    QScopedPointer<PlaylistTableModel> pPlaylistTableModel(
-            new PlaylistTableModel(this,
+    std::unique_ptr<PlaylistTableModel> pPlaylistTableModel =
+            std::make_unique<PlaylistTableModel>(this,
                     m_pLibrary->trackCollectionManager(),
-                    "mixxx.db.model.playlist_export"));
+                    "mixxx.db.model.playlist_export");
     pPlaylistTableModel->selectPlaylist(previousPlaylistId);
 
     if (clickedPlaylistId == m_currentPlaylistId) {
@@ -438,10 +450,10 @@ void SetlogFeature::slotMarkAllTracksPlayed() {
 
     // Right-clicked playlist may not be loaded. Use a temporary model to
     // keep sidebar selection and table view in sync
-    QScopedPointer<PlaylistTableModel> pPlaylistTableModel(
-            new PlaylistTableModel(this,
+    std::unique_ptr<PlaylistTableModel> pPlaylistTableModel =
+            std::make_unique<PlaylistTableModel>(this,
                     m_pLibrary->trackCollectionManager(),
-                    "mixxx.db.model.playlist_export"));
+                    "mixxx.db.model.playlist_export");
     pPlaylistTableModel->selectPlaylist(clickedPlaylistId);
     // mark all the Tracks in the previous Playlist as played
     pPlaylistTableModel->select();
@@ -600,9 +612,9 @@ void SetlogFeature::slotPlayingTrackChanged(TrackPointer currentPlayingTrack) {
         // View needs a refresh
 
         bool hasActiveView = false;
-        if (m_libraryWidget) {
+        if (m_pLibraryWidget) {
             WTrackTableView* view = dynamic_cast<WTrackTableView*>(
-                    m_libraryWidget->getActiveView());
+                    m_pLibraryWidget->getActiveView());
             if (view != nullptr) {
                 // We have a active view on the history. The user may have some
                 // important active selection. For example putting track into crates
