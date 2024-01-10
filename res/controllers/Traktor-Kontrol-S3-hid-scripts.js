@@ -104,7 +104,8 @@ TraktorS3.LEDBrightValue = 0x02;
 // vinyl. Changing this value to 2.0 causes a single rotation of the platter to
 // result in twice as much movement, and a value of 0.5 causes the amount of
 // movement to be halved.
-TraktorS3.JogSpeedMultiplier = 0.5;
+TraktorS3.JogSpeedMultiplier = 0.25;
+TraktorS3.ScratchSpeedMultiplier = 2.0;
 
 // Parameters for the jog wheel smoothing while scratching
 TraktorS3.Alpha = 1.0 / 8;
@@ -1271,7 +1272,7 @@ TraktorS3.Deck = class {
             engine.scratchEnable(
                 this.activeChannelNumber,
                 768,
-                33.33334 / TraktorS3.JogSpeedMultiplier,
+                33.33334 / TraktorS3.ScratchSpeedMultiplier,
                 TraktorS3.Alpha,
                 TraktorS3.Beta
             );
