@@ -177,14 +177,17 @@ Item {
                     const positionSeconds = samplesControl.value / 2 / sampleRateControl.value * playPositionControl.value;
                     if (isNaN(positionSeconds))
                         return "";
+
                     let minutes = Math.floor(positionSeconds / 60);
                     let seconds = positionSeconds - (minutes * 60);
                     const deciseconds = Math.trunc((seconds - Math.trunc(seconds)) * 10);
                     seconds = Math.trunc(seconds);
                     if (minutes < 10)
                         minutes = "0" + minutes;
+
                     if (seconds < 10)
                         seconds = "0" + seconds;
+
                     return minutes + ':' + seconds + "." + deciseconds;
                 }
 
