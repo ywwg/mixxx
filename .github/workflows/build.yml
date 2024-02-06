@@ -131,7 +131,7 @@ jobs:
       artifact-windows-win64: ${{ steps.prepare_deploy.outputs.artifact-windows-win64 }}
     steps:
       - name: "Check out repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
         with:
           # This is necessary for making `git describe` work.
           fetch-depth: 0
@@ -267,11 +267,11 @@ jobs:
 
       - name: "[Ubuntu/macOS] Set up gcc/clang problem matcher"
         if: runner.os != 'Windows'
-        uses: ammaraskar/gcc-problem-matcher@0.2.0
+        uses: ammaraskar/gcc-problem-matcher@0.3.0
 
       - name: "[Windows] Set up MSVC problem matcher"
         if: runner.os == 'Windows'
-        uses: ammaraskar/msvc-problem-matcher@0.2.0
+        uses: ammaraskar/msvc-problem-matcher@0.3.0
 
       - name: "Build"
         run: cmake --build . --config RelWithDebInfo
@@ -313,7 +313,7 @@ jobs:
         env:
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         if: runner.os == 'Windows' && env.AZURE_TENANT_ID
-        uses: azure/azure-code-signing-action@v0.2.26
+        uses: azure/azure-code-signing-action@v0.3.0
         with:
           azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -368,7 +368,7 @@ jobs:
         env:
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         if: runner.os == 'Windows' && env.AZURE_TENANT_ID
-        uses: azure/azure-code-signing-action@v0.2.26
+        uses: azure/azure-code-signing-action@v0.3.0
         with:
           azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -470,7 +470,7 @@ jobs:
 
       - name: "Upload GitHub Actions artifacts"
         if: matrix.artifacts_path != null
-        uses: actions/upload-artifact@v4.2.0
+        uses: actions/upload-artifact@v4.3.0
         with:
           name: ${{ matrix.artifacts_name }}
           path: ${{ matrix.artifacts_path }}
@@ -484,7 +484,7 @@ jobs:
     if: always()
     steps:
       - name: "Check out repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
         with:
           fetch-depth: 0
 

@@ -158,22 +158,31 @@ if(APPLE)
     message(FATAL_ERROR "'xcode-select -v' failed with '${XCODE_SELECT_RESULT}'. You may need to install Xcode and run 'sudo xcode-select --install'.")
   endif()
 
-  if(VCPKG_TARGET_TRIPLET MATCHES "^arm64-osx")
-    # Minimum macOS version for arm64 Support
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 11.0 CACHE STRING "Minimum macOS version the build will be able to run on")
-    set(CMAKE_OSX_ARCHITECTURES arm64 CACHE STRING "The target architecture")
-    set(CMAKE_SYSTEM_PROCESSOR arm64 CACHE STRING "The target system processor")
-    set(CMAKE_SYSTEM_NAME Darwin CACHE STRING "Setting this enables CMAKE_CROSSCOMPILE")
-  else()
-    if(QT6)
-      # Minimum macOS version supported by Qt 6
-      set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15 CACHE STRING "Minimum macOS version the build will be able to run on")
+  if(VCPKG_TARGET_TRIPLET MATCHES "^[a-zA-Z0-9]+-osx")
+    message(STATUS "Targeting macOS (${VCPKG_TARGET_TRIPLET})")
+    set(CMAKE_SYSTEM_NAME Darwin CACHE STRING "Target macOS")
+    if(VCPKG_TARGET_TRIPLET MATCHES "^arm64-")
+      # Minimum macOS version for arm64 Support
+      set(CMAKE_OSX_DEPLOYMENT_TARGET 11.0 CACHE STRING "Minimum macOS version the build will be able to run on")
+      set(CMAKE_OSX_ARCHITECTURES arm64 CACHE STRING "The target architecture")
+      set(CMAKE_SYSTEM_PROCESSOR arm64 CACHE STRING "The target system processor")
     else()
-      # Minimum macOS version supported by Qt 5.12
-      set(CMAKE_OSX_DEPLOYMENT_TARGET 10.12 CACHE STRING "Minimum macOS version the build will be able to run on")
-      # Needed for deployment target < 10.14
-      add_compile_options(-fno-aligned-allocation)
+      if(QT6)
+        # Minimum macOS version supported by Qt 6
+        set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15 CACHE STRING "Minimum macOS version the build will be able to run on")
+      else()
+        # Minimum macOS version supported by Qt 5.12
+        set(CMAKE_OSX_DEPLOYMENT_TARGET 10.12 CACHE STRING "Minimum macOS version the build will be able to run on")
+        # Needed for deployment target < 10.14
+        add_compile_options(-fno-aligned-allocation)
+      endif()
     endif()
+  elseif(VCPKG_TARGET_TRIPLET MATCHES "^[a-zA-Z0-9]+-ios")
+    message(STATUS "Targeting iOS (${VCPKG_TARGET_TRIPLET})")
+    set(CMAKE_SYSTEM_NAME iOS CACHE STRING "Target iOS")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 14.0 CACHE STRING "Minimum iOS version to target")
+  else()
+    message(WARNING "Targeting an Apple platform, but VCPKG_TARGET_TRIPLET is not set. This is not a supported scenario!")
   endif()
 endif()
 
@@ -757,7 +766,6 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/effects/backends/builtin/moogladder4filtereffect.cpp
   src/effects/backends/builtin/parametriceqeffect.cpp
   src/effects/backends/builtin/phasereffect.cpp
-  src/effects/backends/builtin/pitchshifteffect.cpp
   src/effects/backends/builtin/reverbeffect.cpp
   src/effects/backends/builtin/threebandbiquadeqeffect.cpp
   src/effects/backends/builtin/tremoloeffect.cpp
@@ -799,7 +807,6 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/encoder/encoderwavesettings.cpp
   src/engine/bufferscalers/enginebufferscale.cpp
   src/engine/bufferscalers/enginebufferscalelinear.cpp
-  src/engine/bufferscalers/enginebufferscalerubberband.cpp
   src/engine/bufferscalers/enginebufferscalest.cpp
   src/engine/cachingreader/cachingreader.cpp
   src/engine/cachingreader/cachingreaderchunk.cpp
@@ -1532,17 +1539,27 @@ if(APPLE)
   target_compile_definitions(mixxx-lib PUBLIC GL_SILENCE_DEPRECATION)
 
   target_sources(mixxx-lib PRIVATE
-    src/util/darkappearance.mm
-    src/util/macosversion.mm
+    src/util/appleosversion.mm
   )
 
-  option(MACOS_ITUNES_LIBRARY "Native macOS iTunes/Music.app library integration" ON)
-  if(MACOS_ITUNES_LIBRARY)
+  if(IOS)
     target_sources(mixxx-lib PRIVATE
-      src/library/itunes/itunesmacosimporter.mm
+      src/soundio/soundmanagerios.mm
+      src/util/screensaverios.mm
     )
-    target_link_libraries(mixxx-lib PRIVATE "-weak_framework iTunesLibrary")
-    target_compile_definitions(mixxx-lib PUBLIC __MACOS_ITUNES_LIBRARY__)
+  else()
+    target_sources(mixxx-lib PRIVATE
+      src/util/darkappearance.mm
+    )
+
+    option(MACOS_ITUNES_LIBRARY "Native macOS iTunes/Music.app library integration" ON)
+    if(MACOS_ITUNES_LIBRARY)
+      target_sources(mixxx-lib PRIVATE
+        src/library/itunes/itunesmacosimporter.mm
+      )
+      target_link_libraries(mixxx-lib PRIVATE "-weak_framework iTunesLibrary")
+      target_compile_definitions(mixxx-lib PUBLIC __MACOS_ITUNES_LIBRARY__)
+    endif()
   endif()
 endif()
 
@@ -1655,11 +1672,16 @@ set(MIXXX_INSTALL_DOCDIR "./doc")
 set(MIXXX_INSTALL_LICENSEDIR "./doc")
 if (APPLE AND MACOS_BUNDLE)
   set(MIXXX_INSTALL_BINDIR "${CMAKE_INSTALL_BINDIR}")
-  set(MACOS_BUNDLE_NAME mixxx)
+  set(MACOS_BUNDLE_NAME Mixxx CACHE STRING "The macOS app bundle and executable name")
+  set(MACOS_BUNDLE_IDENTIFIER org.mixxx.mixxx CACHE STRING "The macOS app bundle identifier")
   set(MIXXX_INSTALL_PREFIX "${MACOS_BUNDLE_NAME}.app")
   set(MIXXX_INSTALL_DATADIR "${MIXXX_INSTALL_PREFIX}/Contents/Resources")
   set(MIXXX_INSTALL_DOCDIR "${MIXXX_INSTALL_DATADIR}")
   set(MIXXX_INSTALL_LICENSEDIR "${MIXXX_INSTALL_DATADIR}/licenses")
+elseif (APPLE AND IOS)
+  set(MIXXX_INSTALL_BINDIR "${CMAKE_INSTALL_BINDIR}")
+  set(IOS_BUNDLE_NAME Mixxx CACHE STRING "The iOS app bundle and executable name")
+  set(IOS_BUNDLE_IDENTIFIER org.mixxx.mixxx CACHE STRING "The iOS app bundle identifier")
 elseif (UNIX)
   set(MIXXX_INSTALL_BINDIR "${CMAKE_INSTALL_BINDIR}")
   set(MIXXX_INSTALL_DATADIR "${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}")
@@ -1731,7 +1753,29 @@ target_link_libraries(mixxx PRIVATE mixxx-lib mixxx-gitinfostore)
 # Installation and Packaging
 #
 if (APPLE)
-  if (MACOS_BUNDLE)
+  if (IOS)
+    set(IOS_BUNDLE_VERSION "${CMAKE_PROJECT_VERSION}")
+    set(IOS_BUNDLE_SHORTVERSION "${CMAKE_PROJECT_VERSION}")
+
+    # https://stackoverflow.com/questions/54830302/how-to-add-the-copy-bundle-resources-phase-with-cmake-in-xcode
+    # https://discourse.cmake.org/t/ios-resource-management/758/7
+    file(GLOB IOS_RESOURCES res/**)
+    list(APPEND IOS_RESOURCES packaging/ios/Assets.xcassets)
+    target_sources(mixxx PUBLIC ${IOS_RESOURCES})
+    set_source_files_properties(${IOS_RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+    source_group(Resources FILES ${IOS_RESOURCES})
+
+    set(QT_IOS_LAUNCH_SCREEN "${CMAKE_CURRENT_SOURCE_DIR}/packaging/ios/LaunchScreen.storyboard")
+
+    set_target_properties(mixxx PROPERTIES
+      MACOSX_BUNDLE true
+      OUTPUT_NAME "${IOS_BUNDLE_NAME}"
+      MACOSX_BUNDLE_BUNDLE_NAME "${IOS_BUNDLE_NAME}"
+      MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/packaging/ios/Info.plist.in"
+      MACOSX_BUNDLE_GUI_IDENTIFIER "${IOS_BUNDLE_IDENTIFIER}"
+      XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+    )
+  elseif (MACOS_BUNDLE)
     install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/res/osx/application.icns" DESTINATION ${MIXXX_INSTALL_DATADIR})
 
     set(MACOS_BUNDLE_VERSION "${CMAKE_PROJECT_VERSION}")
@@ -1739,6 +1783,7 @@ if (APPLE)
 
     set_target_properties(mixxx PROPERTIES
         MACOSX_BUNDLE true
+        OUTPUT_NAME "${MACOS_BUNDLE_NAME}"
         MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/packaging/macos/Info.plist.in"
     )
   endif()
@@ -2500,9 +2545,14 @@ target_include_directories(MP3GuessEnc SYSTEM PUBLIC lib/mp3guessenc-0.27.4)
 target_link_libraries(mixxx-lib PRIVATE MP3GuessEnc)
 
 # OpenGL
-set(OpenGL_GL_PREFERENCE "GLVND")
-find_package(OpenGL REQUIRED)
-target_link_libraries(mixxx-lib PRIVATE OpenGL::GL)
+if(IOS)
+  target_link_libraries(mixxx-lib PRIVATE "-framework OpenGLES")
+  target_compile_definitions(mixxx-lib PUBLIC QT_OPENGL_ES_2)
+else()
+  set(OpenGL_GL_PREFERENCE "GLVND")
+  find_package(OpenGL REQUIRED)
+  target_link_libraries(mixxx-lib PRIVATE OpenGL::GL)
+endif()
 
 # Ogg
 find_package(Ogg REQUIRED)
@@ -2545,8 +2595,7 @@ set(
     Network
     OpenGL
     PrintSupport
-    Qml
-    QuickWidgets
+    Qml # for QJSEngine
     Sql
     Svg
     Test
@@ -2558,12 +2607,11 @@ if(QT6)
   find_package(QT 6.2 NAMES Qt6 COMPONENTS Core REQUIRED)
   list(APPEND QT_EXTRA_COMPONENTS "SvgWidgets")
   list(APPEND QT_EXTRA_COMPONENTS "Core5Compat")
-else()
-  find_package(QT 5.12 NAMES Qt5 COMPONENTS Core REQUIRED)
-endif()
-if(QML)
   list(APPEND QT_EXTRA_COMPONENTS "Quick")
   list(APPEND QT_EXTRA_COMPONENTS "QuickControls2")
+  list(APPEND QT_EXTRA_COMPONENTS "QuickWidgets")
+else()
+  find_package(QT 5.12 NAMES Qt5 COMPONENTS Core REQUIRED)
 endif()
 find_package(Qt${QT_VERSION_MAJOR}
   COMPONENTS
@@ -2706,10 +2754,16 @@ if(Qt_IS_STATIC)
   endif()
 
   if(APPLE)
-    target_link_libraries(mixxx-lib PRIVATE
-      Qt${QT_VERSION_MAJOR}::QCocoaIntegrationPlugin
-      Qt${QT_VERSION_MAJOR}::QMacStylePlugin
-    )
+    if(IOS)
+      target_link_libraries(mixxx-lib PRIVATE
+        Qt${QT_VERSION_MAJOR}::QIOSIntegrationPlugin
+      )
+    else()
+      target_link_libraries(mixxx-lib PRIVATE
+        Qt${QT_VERSION_MAJOR}::QCocoaIntegrationPlugin
+        Qt${QT_VERSION_MAJOR}::QMacStylePlugin
+      )
+    endif()
   endif()
 else()
   if(QT6 AND (WIN32 OR APPLE))
@@ -2769,9 +2823,7 @@ if(APPLE)
   if(Qt_IS_STATIC OR QT6)
     target_link_libraries(mixxx-lib PRIVATE
         "-weak_framework Accelerate"
-        "-weak_framework AppKit"
         "-weak_framework AudioToolbox"
-        "-weak_framework AudioUnit"
         "-weak_framework AVFoundation"
         "-weak_framework CoreAudio"
         "-weak_framework CoreFoundation"
@@ -2783,6 +2835,16 @@ if(APPLE)
         "-weak_framework IOSurface"
         "-weak_framework VideoToolbox"
     )
+    if(IOS)
+      target_link_libraries(mixxx-lib PRIVATE
+        "-weak_framework UIKit"
+      )
+    elseif()
+      target_link_libraries(mixxx-lib PRIVATE
+        "-weak_framework AppKit"
+        "-weak_framework AudioUnit"
+      )
+    endif()
   else()
     # Used for battery measurements and controlling the screensaver on macOS.
     target_link_libraries(mixxx-lib PRIVATE
@@ -2959,8 +3021,16 @@ target_include_directories(mixxx-lib SYSTEM PRIVATE lib/reverb)
 target_link_libraries(mixxx-lib PRIVATE Reverb)
 
 # Rubberband
-find_package(rubberband REQUIRED)
-target_link_libraries(mixxx-lib PRIVATE rubberband::rubberband)
+option(RUBBERBAND "Enable the rubberband engine for pitch-bending" ON)
+if(RUBBERBAND)
+  find_package(rubberband REQUIRED)
+  target_link_libraries(mixxx-lib PRIVATE rubberband::rubberband)
+  target_compile_definitions(mixxx-lib PUBLIC __RUBBERBAND__)
+  target_sources(mixxx-lib PRIVATE
+    src/effects/backends/builtin/pitchshifteffect.cpp
+    src/engine/bufferscalers/enginebufferscalerubberband.cpp
+  )
+endif()
 
 # SndFile
 find_package(SndFile REQUIRED)
@@ -2977,6 +3047,13 @@ target_link_libraries(mixxx-lib PRIVATE SoundTouch::SoundTouch)
 # TagLib
 find_package(TagLib 1.11 REQUIRED)
 target_link_libraries(mixxx-lib PRIVATE TagLib::TagLib)
+if (NOT TagLib_VERSION VERSION_LESS 2.0.0)
+    message(FATAL_ERROR "Installed Taglib ${TagLib_VERSION} is not supported. Use Version >= 1.11 and < 2.0 and its development headers.")
+    # Dear package maintainer: Do not patch away this fatal error
+    # using taglib 2.0.0 will put user data at risk!!
+    # Mixxx is a complex application that needs to be adapted and tested thoroughly
+    # https://github.com/mixxxdj/mixxx/issues/12708
+endif()
 
 # Threads
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -2996,7 +3073,11 @@ if(BATTERY)
   if(WIN32)
     target_sources(mixxx-lib PRIVATE src/util/battery/batterywindows.cpp)
   elseif(APPLE)
-    target_sources(mixxx-lib PRIVATE src/util/battery/batterymac.cpp)
+    if(IOS)
+      message(FATAL_ERROR "Battery support is not implemented for iOS")
+    else()
+      target_sources(mixxx-lib PRIVATE src/util/battery/batterymac.cpp)
+    endif()
   elseif(UNIX)
     find_package(Upower REQUIRED)
     find_package(GLIB COMPONENTS gobject REQUIRED)
@@ -3211,7 +3292,7 @@ if(LILV)
 endif()
 
 # Live Broadcasting (Shoutcast)
-option(BROADCAST "Live Broadcasting (Shoutcast) support" ON)
+cmake_dependent_option(BROADCAST "Live Broadcasting (Shoutcast) support" ON "NOT IOS" OFF)
 if(BROADCAST)
   find_package(Shoutidjc)
   # Check if system lib is at least 2.4.6 and not suffering bugs
@@ -3365,6 +3446,9 @@ if(HID)
         find_library(Setupapi_LIBRARY Setupapi REQUIRED)
         target_link_libraries(mixxx-hidapi PUBLIC ${Setupapi_LIBRARY})
     elseif(APPLE)
+        if(IOS)
+          message(FATAL_ERROR "USB HID controllers are not supported on iOS")
+        endif()
         target_sources(mixxx-hidapi PRIVATE lib/hidapi/mac/hid.c)
         find_library(AppKit_LIBRARY AppKit REQUIRED)
         target_link_libraries(mixxx-hidapi PUBLIC ${AppKit_LIBRARY})

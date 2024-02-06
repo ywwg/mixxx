@@ -1,7 +1,6 @@
 #include "preferences/dialog/dlgpreflibrary.h"
 
 #include <QApplication>
-#include <QDesktopServices>
 #include <QDir>
 #include <QFileDialog>
 #include <QFontDialog>
@@ -18,6 +17,7 @@
 #include "library/trackcollection.h"
 #include "library/trackcollectionmanager.h"
 #include "moc_dlgpreflibrary.cpp"
+#include "util/desktophelper.h"
 #include "widget/wsearchlineedit.h"
 
 using namespace mixxx::library::prefs;
@@ -66,7 +66,7 @@ DlgPrefLibrary::DlgPrefLibrary(
     connect(PushButtonOpenSettingsDir,
             &QPushButton::clicked,
             [settingsDir] {
-                QDesktopServices::openUrl(QUrl::fromLocalFile(settingsDir));
+                mixxx::DesktopHelper::openUrl(QUrl::fromLocalFile(settingsDir));
             });
 
     // Set default direction as stored in config file
@@ -124,7 +124,7 @@ DlgPrefLibrary::DlgPrefLibrary(
     connect(label_settingsManualLink,
             &QLabel::linkActivated,
             [](const QString& url) {
-                QDesktopServices::openUrl(url);
+                mixxx::DesktopHelper::openUrl(url);
             });
 
     connect(checkBox_SyncTrackMetadata,
@@ -294,7 +294,7 @@ void DlgPrefLibrary::slotUpdate() {
             kEditMetadataSelectedClickConfigKey,
             kEditMetadataSelectedClickDefault);
     checkBoxEditMetadataSelectedClicked->setChecked(editMetadataSelectedClick);
-    m_pLibrary->setEditMedatataSelectedClick(editMetadataSelectedClick);
+    m_pLibrary->setEditMetadataSelectedClick(editMetadataSelectedClick);
 
     checkBoxEnableSearchCompletions->setChecked(m_pConfig->getValue(
             kEnableSearchCompletionsConfigKey,
@@ -502,7 +502,7 @@ void DlgPrefLibrary::slotApply() {
 
     m_pConfig->set(kEditMetadataSelectedClickConfigKey,
             ConfigValue(checkBoxEditMetadataSelectedClicked->checkState()));
-    m_pLibrary->setEditMedatataSelectedClick(
+    m_pLibrary->setEditMetadataSelectedClick(
             checkBoxEditMetadataSelectedClicked->checkState());
 
     QFont font = m_pLibrary->getTrackTableFont();

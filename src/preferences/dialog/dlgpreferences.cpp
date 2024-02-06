@@ -1,12 +1,12 @@
 #include "preferences/dialog/dlgpreferences.h"
 
-#include <QDesktopServices>
 #include <QDialog>
 #include <QEvent>
 #include <QMoveEvent>
 #include <QResizeEvent>
 #include <QScreen>
 #include <QScrollArea>
+#include <QtGlobal>
 
 #include "controllers/dlgprefcontrollers.h"
 #include "library/library.h"
@@ -15,6 +15,7 @@
 #include "preferences/dialog/dlgpreflibrary.h"
 #include "preferences/dialog/dlgprefsound.h"
 #include "util/color/color.h"
+#include "util/desktophelper.h"
 #include "util/widgethelper.h"
 
 #ifdef __VINYLCONTROL__
@@ -42,7 +43,7 @@
 #include "preferences/dialog/dlgprefmodplug.h"
 #endif // __MODPLUG__
 
-#ifdef __APPLE__
+#ifdef Q_OS_MACOS
 #include "util/darkappearance.h"
 #endif
 
@@ -435,7 +436,7 @@ void DlgPreferences::slotButtonPressed(QAbstractButton* pButton) {
         if (pCurrentPage) {
             QUrl helpUrl = pCurrentPage->helpUrl();
             DEBUG_ASSERT(helpUrl.isValid());
-            QDesktopServices::openUrl(helpUrl);
+            mixxx::DesktopHelper::openUrl(helpUrl);
         }
         break;
     default:
@@ -572,7 +573,7 @@ QRect DlgPreferences::getDefaultGeometry() {
 }
 
 void DlgPreferences::fixSliderStyle() {
-#ifdef __APPLE__
+#ifdef Q_OS_MACOS
     // Only used on macOS where the default slider style has several issues:
     // - the handle is semi-transparent
     // - the slider is higher than the space we give it, which causes that:
