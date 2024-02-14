@@ -148,7 +148,7 @@ jobs:
         run: git fetch origin --force --tags
 
       - name: "[macOS] Set up cmake"
-        uses: jwlawson/actions-setup-cmake@v1.14
+        uses: jwlawson/actions-setup-cmake@v2.0
         # Ubuntu 22.04 should use the CMake version from the repos.
         if: runner.os == 'macOS'
         with:
@@ -157,7 +157,7 @@ jobs:
           cmake-version: "3.21.x"
 
       - name: "[Windows] Set up cmake"
-        uses: jwlawson/actions-setup-cmake@v1.14
+        uses: jwlawson/actions-setup-cmake@v2.0
         # Ubuntu 22.04 should use the CMake version from the repos.
         if: runner.os == 'Windows'
         with:
@@ -470,7 +470,7 @@ jobs:
 
       - name: "Upload GitHub Actions artifacts"
         if: matrix.artifacts_path != null
-        uses: actions/upload-artifact@v4.3.0
+        uses: actions/upload-artifact@v4.3.1
         with:
           name: ${{ matrix.artifacts_name }}
           path: ${{ matrix.artifacts_path }}
