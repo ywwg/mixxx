@@ -54,14 +54,18 @@ function(FATAL_ERROR_MISSING_ENV)
     else()
       message(FATAL_ERROR "Did you download the Mixxx build environment using `${CMAKE_SOURCE_DIR}/tools/windows_release_buildenv.bat` or `${CMAKE_SOURCE_DIR}/tools/windows_buildenv.bat`(includes Debug)?")
     endif()
-  elseif(APPLE)
+  elseif(APPLE AND NOT IOS)
     if(CMAKE_BUILD_TYPE MATCHES "Debug")
       message(FATAL_ERROR "Did you download the Mixxx build environment using `${CMAKE_SOURCE_DIR}/tools/macos_buildenv.sh`")
     else()
       message(FATAL_ERROR "Did you download the Mixxx build environment using `${CMAKE_SOURCE_DIR}/tools/macos_release_buildenv.sh` or `${CMAKE_SOURCE_DIR}/tools/macos_buildenv.sh`(includes Debug)?")
     endif()
-  else()
+  elseif(LINUX)
     message(FATAL_ERROR "Did you install the Debian dev packages via `${CMAKE_SOURCE_DIR}/tools/debian_buildenv.sh` or the equivalent packages using your package manager?")
+  elseif(DEFINED VCPKG_TARGET_TRIPLET)
+    message(FATAL_ERROR "You are targeting ${VCPKG_TARGET_TRIPLET}, which does not have a prebuilt environment. Please make sure that -DMIXXX_VCPKG_ROOT points to a vcpkg environment containing installed dependencies for ${VCPKG_TARGET_TRIPLET}!")
+  else()
+    message(FATAL_ERROR "You are building for an unknown platform and are missing a build environment. Please set -DVCPKG_TARGET_TRIPLET and make sure that -DMIXXX_VCPKG_ROOT points to a vcpkg environment containing installed dependencies for your target platform!")
   endif()
 endfunction()
 
@@ -147,7 +151,22 @@ if(QML)
   add_compile_definitions(MIXXX_USE_QML)
 endif()
 
-if(APPLE)
+if(VCPKG_TARGET_TRIPLET MATCHES "^wasm(32|64)-emscripten")
+  message(STATUS "Targeting Emscripten (${VCPKG_TARGET_TRIPLET})")
+  if(DEFINED ENV{EMSDK})
+    message(STATUS "Found EMSDK at $ENV{EMSDK}")
+  else()
+    message(FATAL_ERROR "Please make sure emsdk is installed and the environment variable EMSDK is set (see https://emscripten.org/docs/getting_started/downloads.html)")
+  endif()
+  if(NOT DEFINED VCPKG_CHAINLOAD_TOOLCHAIN_FILE)
+    set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE "$ENV{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake" CACHE STRING "")
+  endif()
+  # Enabling this causes Qt's FindWrapRt C++ compile check to fail as it tries
+  # to run `clang-scan-deps` (because we set the C++ standard to 20). Emscripten
+  # does not ship this binary yet, though. Potentially relevant upstream bug:
+  # https://github.com/emscripten-core/emscripten/issues/21042
+  set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
+elseif(APPLE)
   # Check if xcode-select is installed
   execute_process(COMMAND xcode-select -v
     RESULT_VARIABLE XCODE_SELECT_RESULT
@@ -443,10 +462,17 @@ elseif(GNU_GCC OR LLVM_CLANG)
     # The following optimisation flags makes the engine code ~3 times
     # faster, measured on a Atom CPU.
     add_compile_options(
-      -O3
       -ffast-math
       -funroll-loops
     )
+    if(EMSCRIPTEN)
+      # Optimize for size + speed when targeting Emscripten/WebAssembly
+      # This is recommended as we use asyncify:
+      # See https://doc.qt.io/qt-6/wasm.html#asyncify
+      add_compile_options(-Os)
+    else()
+      add_compile_options(-O3)
+    endif()
     # set -fomit-frame-pointer when we don't profile and are not using
     # Clang sanitizers.
     # Note: It is only included in -O on machines where it does not
@@ -459,15 +485,20 @@ elseif(GNU_GCC OR LLVM_CLANG)
       # portable: sse2 CPU (>= Pentium 4)
       if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(i[3456]86|x86|x64|x86_64|AMD64)$")
         message(STATUS "Enabling SSE2 CPU optimizations (>= Pentium 4)")
-        add_compile_options(-mtune=generic)
+        if(NOT EMSCRIPTEN)
+          add_compile_options(-mtune=generic)
+        endif()
         # -mtune=generic picks the most common, but compatible options.
         # on arm platforms equivalent to -march=arch
         if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
           # the sse flags are not set by default on 32 bit builds
           # but are not supported on arm builds
-          add_compile_options(
-            -msse2
-            -mfpmath=sse)
+          add_compile_options(-msse2)
+          if(EMSCRIPTEN)
+            add_compile_options(-msimd128)
+          else()
+            add_compile_options(-mfpmath=sse)
+          endif()
         endif()
         # TODO(rryan): macOS can use SSE3, and possibly SSE 4.1 once
         # we require macOS 10.12.
@@ -725,8 +756,6 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/controllers/midi/midimessage.cpp
   src/controllers/midi/midioutputhandler.cpp
   src/controllers/midi/midiutils.cpp
-  src/controllers/midi/portmidicontroller.cpp
-  src/controllers/midi/portmidienumerator.cpp
   src/controllers/scripting/colormapper.cpp
   src/controllers/scripting/colormapperjsproxy.cpp
   src/controllers/scripting/controllerscriptenginebase.cpp
@@ -1563,6 +1592,13 @@ if(APPLE)
   endif()
 endif()
 
+if(EMSCRIPTEN)
+  # We need asyncify to support asynchronous calls (e.g. QDialog::exec)
+  # when targeting Emscripten/WebAssembly.
+  # See https://doc.qt.io/qt-6/wasm.html#asyncify
+  target_link_options(mixxx-lib PUBLIC -sASYNCIFY)
+endif()
+
 # QML Debugging
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_definitions(mixxx-lib PUBLIC QT_QML_DEBUG)
@@ -1787,6 +1823,14 @@ if (APPLE)
         MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/packaging/macos/Info.plist.in"
     )
   endif()
+endif()
+
+if(EMSCRIPTEN)
+  # Package resources for the web using preloading.
+  # This will generate a mixxx.data file containing all the resources.
+  # See https://emscripten.org/docs/porting/files/packaging_files.html
+  # TODO: Strip this down by only including what we need (i.e. no macOS/Linux packaging, ...)
+  target_link_options(mixxx-lib PUBLIC --preload-file "${CMAKE_CURRENT_SOURCE_DIR}/res@/res")
 endif()
 
 if(WIN32)
@@ -2297,7 +2341,7 @@ option(ENGINEPRIME "Support for library export to Denon Engine Prime" ON)
 if(ENGINEPRIME)
   # libdjinterop does not currently have a stable ABI, so we fetch sources for a specific tag, build here, and link
   # statically.  This situation should be reviewed once libdjinterop hits version 1.x.
-  set(LIBDJINTEROP_VERSION 0.20.1)
+  set(LIBDJINTEROP_VERSION 0.20.2)
   # Look whether an existing installation of libdjinterop matches the required version.
   find_package(DjInterop  ${LIBDJINTEROP_VERSION} EXACT CONFIG)
   if(NOT DjInterop_FOUND)
@@ -2333,7 +2377,7 @@ if(ENGINEPRIME)
       URL
         "https://github.com/xsco/libdjinterop/archive/refs/tags/${LIBDJINTEROP_VERSION}.tar.gz"
         "https://launchpad.net/~xsco/+archive/ubuntu/djinterop/+sourcefiles/libdjinterop/${LIBDJINTEROP_VERSION}-0ubuntu1/libdjinterop_${LIBDJINTEROP_VERSION}.orig.tar.gz"
-      URL_HASH SHA256=69bdbd0e68f12858b79795a76a6023962f93f819ca36ea56a9d4680901865d13
+      URL_HASH SHA256=3024b8b49bc0bd673a7f032e7da7b73ce61144951e810683ec89650fedd45b85
       DOWNLOAD_DIR "${CMAKE_CURRENT_BINARY_DIR}/downloads"
       DOWNLOAD_NAME "libdjinterop-${LIBDJINTEROP_VERSION}.tar.gz"
       INSTALL_DIR ${DJINTEROP_INSTALL_DIR}
@@ -2425,7 +2469,7 @@ string(REPLACE ";" "|" CMAKE_PREFIX_PATH_ALT_SEP "${CMAKE_PREFIX_PATH}")
 option(KEYFINDER "KeyFinder support" ON)
 if(KEYFINDER)
   set(MIN_LIBKEYFINDER_VERSION 2.2.4)
-  set(FETCH_LIBKEYFINDER_VERSION 2.2.6)
+  set(FETCH_LIBKEYFINDER_VERSION 2.2.8)
   find_package(KeyFinder ${MIN_LIBKEYFINDER_VERSION})
   if (KeyFinder_FOUND)
     target_link_libraries(mixxx-lib PRIVATE KeyFinder::KeyFinder)
@@ -2443,8 +2487,8 @@ if(KEYFINDER)
     # copy it into DOWNLOAD_DIR under DOWNLOAD_NAME prior to starting
     # the configuration.
     ExternalProject_Add(libkeyfinder
-      URL "https://github.com/mixxxdj/libkeyfinder/archive/refs/tags/v${FETCH_LIBKEYFINDER_VERSION}.zip"
-      URL_HASH SHA256=f15deb56c2dcaa6b10dc3717a7d2f42a8407c04ad550f694de42118be998d256
+      URL "https://github.com/mixxxdj/libkeyfinder/archive/refs/tags/${FETCH_LIBKEYFINDER_VERSION}.zip"
+      URL_HASH SHA256=4f10e9e5673d948776e47e78273fa4d61408155cb0e210af1538c83222f285d4
       DOWNLOAD_DIR "${CMAKE_CURRENT_BINARY_DIR}/downloads"
       DOWNLOAD_NAME "libkeyfinder-${FETCH_LIBKEYFINDER_VERSION}.zip"
       INSTALL_DIR "${KeyFinder_INSTALL_DIR}"
@@ -2551,7 +2595,13 @@ if(IOS)
 else()
   set(OpenGL_GL_PREFERENCE "GLVND")
   find_package(OpenGL REQUIRED)
-  target_link_libraries(mixxx-lib PRIVATE OpenGL::GL)
+  if(EMSCRIPTEN)
+    # Emscripten's FindOpenGL.cmake does not create OpenGL::GL
+    target_link_libraries(mixxx-lib PRIVATE ${OPENGL_gl_LIBRARY})
+    target_compile_definitions(mixxx-lib PUBLIC QT_OPENGL_ES_2)
+  else()
+    target_link_libraries(mixxx-lib PRIVATE OpenGL::GL)
+  endif()
 endif()
 
 # Ogg
@@ -2574,9 +2624,17 @@ target_include_directories(mixxx-lib SYSTEM PUBLIC lib/portaudio)
 target_link_libraries(mixxx-lib PRIVATE PortAudioRingBuffer)
 
 # PortMidi
-find_package(PortMidi REQUIRED)
-target_include_directories(mixxx-lib SYSTEM PUBLIC ${PortMidi_INCLUDE_DIRS})
-target_link_libraries(mixxx-lib PRIVATE ${PortMidi_LIBRARIES})
+option(PORTMIDI "Enable the PortMidi backend for MIDI controllers" ON)
+if(PORTMIDI)
+  target_compile_definitions(mixxx-lib PUBLIC __PORTMIDI__)
+  find_package(PortMidi REQUIRED)
+  target_include_directories(mixxx-lib SYSTEM PUBLIC ${PortMidi_INCLUDE_DIRS})
+  target_link_libraries(mixxx-lib PRIVATE ${PortMidi_LIBRARIES})
+  target_sources(mixxx-lib PRIVATE
+    src/controllers/midi/portmidicontroller.cpp
+    src/controllers/midi/portmidienumerator.cpp
+  )
+endif()
 
 # Protobuf
 add_subdirectory(src/proto)
@@ -2605,13 +2663,23 @@ set(
 set(QT_EXTRA_COMPONENTS "")
 if(QT6)
   find_package(QT 6.2 NAMES Qt6 COMPONENTS Core REQUIRED)
+  list(APPEND QT_EXTRA_COMPONENTS "ShaderTools")
   list(APPEND QT_EXTRA_COMPONENTS "SvgWidgets")
   list(APPEND QT_EXTRA_COMPONENTS "Core5Compat")
-  list(APPEND QT_EXTRA_COMPONENTS "Quick")
-  list(APPEND QT_EXTRA_COMPONENTS "QuickControls2")
-  list(APPEND QT_EXTRA_COMPONENTS "QuickWidgets")
 else()
   find_package(QT 5.12 NAMES Qt5 COMPONENTS Core REQUIRED)
+endif()
+if(QML)
+  list(APPEND QT_EXTRA_COMPONENTS "Quick")
+  list(APPEND QT_EXTRA_COMPONENTS "LabsQmlModels")
+  list(APPEND QT_EXTRA_COMPONENTS "QuickControls2")
+  list(APPEND QT_EXTRA_COMPONENTS "QuickControls2Impl")
+  list(APPEND QT_EXTRA_COMPONENTS "QuickLayouts")
+  list(APPEND QT_EXTRA_COMPONENTS "QuickShapesPrivate")
+  list(APPEND QT_EXTRA_COMPONENTS "QuickTemplates2")
+  list(APPEND QT_EXTRA_COMPONENTS "QuickWidgets")
+  list(APPEND QT_EXTRA_COMPONENTS "QmlWorkerScript")
+  list(APPEND QT_EXTRA_COMPONENTS "ShaderTools")
 endif()
 find_package(Qt${QT_VERSION_MAJOR}
   COMPONENTS
@@ -2630,6 +2698,8 @@ if(QT_EXTRA_COMPONENTS)
 endif()
 
 if(QML)
+  add_subdirectory(res/shaders)
+
   set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml)
   qt_add_library(mixxx-qml-lib STATIC)
   foreach(COMPONENT ${QT_COMPONENTS})
@@ -2689,6 +2759,8 @@ if(QML)
     src/qml/asyncimageprovider.cpp
     src/qml/qmlapplication.cpp
     src/qml/qmlautoreload.cpp
+    src/qml/qmlbeatsmodel.cpp
+    src/qml/qmlcuesmodel.cpp
     src/qml/qmlcontrolproxy.cpp
     src/qml/qmlconfigproxy.cpp
     src/qml/qmldlgpreferencesproxy.cpp
@@ -2709,6 +2781,14 @@ if(QML)
   # qt_finalize_target takes care that the resources :/mixxx.org/imports/Mixxx/
   # and :/mixxx.org/imports/Mixxx/Controls are placed into beginning of the binary
   qt_finalize_target(mixxx)
+
+  install(
+    DIRECTORY
+      "${CMAKE_CURRENT_SOURCE_DIR}/res/qml"
+    DESTINATION
+      "${MIXXX_INSTALL_DATADIR}"
+  )
+
 endif()
 
 option(DEBUG_ASSERTIONS_FATAL "Fail if debug become true assertions" OFF)
@@ -2733,10 +2813,6 @@ if(Qt_IS_STATIC)
   # into Qt .libs by default.
 
   target_link_libraries(mixxx-lib PRIVATE
-    # platform plugins
-    Qt${QT_VERSION_MAJOR}::QOffscreenIntegrationPlugin
-    Qt${QT_VERSION_MAJOR}::QMinimalIntegrationPlugin
-
     # imageformats plugins
     Qt${QT_VERSION_MAJOR}::QGifPlugin
     Qt${QT_VERSION_MAJOR}::QICOPlugin
@@ -2746,6 +2822,18 @@ if(Qt_IS_STATIC)
     # sqldrivers
     Qt${QT_VERSION_MAJOR}::QSQLiteDriverPlugin
   )
+
+  if(EMSCRIPTEN)
+    target_link_libraries(mixxx-lib PRIVATE
+      Qt${QT_VERSION_MAJOR}::QWasmIntegrationPlugin
+    )
+  else()
+    target_link_libraries(mixxx-lib PRIVATE
+      # platform plugins
+      Qt${QT_VERSION_MAJOR}::QOffscreenIntegrationPlugin
+      Qt${QT_VERSION_MAJOR}::QMinimalIntegrationPlugin
+    )
+  endif()
 
   if(WIN32)
     target_link_libraries(mixxx-lib PRIVATE
@@ -2797,6 +2885,103 @@ else()
       DESTINATION "${MIXXX_INSTALL_DATADIR}/sqldrivers"
       COMPONENT applocal)
 
+    if(QML)
+      install(IMPORTED_RUNTIME_ARTIFACTS
+        Qt${QT_VERSION_MAJOR}::LabsQmlModels
+        DESTINATION "${MIXXX_INSTALL_DATADIR}"
+        COMPONENT applocal)
+
+      install(IMPORTED_RUNTIME_ARTIFACTS
+        Qt${QT_VERSION_MAJOR}::QuickControls2
+        DESTINATION "${MIXXX_INSTALL_DATADIR}"
+        COMPONENT applocal)
+
+      install(IMPORTED_RUNTIME_ARTIFACTS
+        Qt${QT_VERSION_MAJOR}::QuickControls2Impl
+        DESTINATION "${MIXXX_INSTALL_DATADIR}"
+        COMPONENT applocal)
+
+      install(IMPORTED_RUNTIME_ARTIFACTS
+        Qt${QT_VERSION_MAJOR}::QuickLayouts
+        DESTINATION "${MIXXX_INSTALL_DATADIR}"
+        COMPONENT applocal)
+
+      install(IMPORTED_RUNTIME_ARTIFACTS
+        Qt${QT_VERSION_MAJOR}::QuickShapesPrivate
+        DESTINATION "${MIXXX_INSTALL_DATADIR}"
+        COMPONENT applocal)
+
+      install(IMPORTED_RUNTIME_ARTIFACTS
+        Qt${QT_VERSION_MAJOR}::QuickTemplates2
+        DESTINATION "${MIXXX_INSTALL_DATADIR}"
+        COMPONENT applocal)
+
+      install(IMPORTED_RUNTIME_ARTIFACTS
+        Qt${QT_VERSION_MAJOR}::QmlWorkerScript
+        DESTINATION "${MIXXX_INSTALL_DATADIR}"
+        COMPONENT applocal)
+
+      install(IMPORTED_RUNTIME_ARTIFACTS
+        Qt${QT_VERSION_MAJOR}::ShaderTools
+        DESTINATION "${MIXXX_INSTALL_DATADIR}"
+        COMPONENT applocal)
+
+      #install qml6-module-qt5compat-graphicaleffects
+      install(
+        DIRECTORY "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/Qt6/qml/Qt5Compat/GraphicalEffects"
+        DESTINATION "${MIXXX_INSTALL_DATADIR}/Qt6/qml/Qt5Compat"
+        COMPONENT applocal)
+
+      # install qml6-module-qtqml-workerscript
+      install(
+        DIRECTORY "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/Qt6/qml/QtQml/WorkerScript"
+        DESTINATION "${MIXXX_INSTALL_DATADIR}/Qt6/qml/QtQml"
+        COMPONENT applocal)
+
+      # install qml6-module-qtquick-controls
+      install(
+        DIRECTORY "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/Qt6/qml/QtQuick/Controls"
+        DESTINATION "${MIXXX_INSTALL_DATADIR}/Qt6/qml/QtQuick"
+        COMPONENT applocal)
+
+      # install qml6-module-qtquick-layouts
+      install(
+        DIRECTORY "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/Qt6/qml/QtQuick/Layouts"
+        DESTINATION "${MIXXX_INSTALL_DATADIR}/Qt6/qml/QtQuick"
+        COMPONENT applocal)
+
+      # install qml6-module-qtquick-nativestyle
+      install(
+        DIRECTORY "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/Qt6/qml/QtQuick/NativeStyle"
+        DESTINATION "${MIXXX_INSTALL_DATADIR}/Qt6/qml/QtQuick"
+        COMPONENT applocal)
+
+      # install qml6-module-qtquick-shapes
+      install(
+        DIRECTORY "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/Qt6/qml/QtQuick/Shapes"
+        DESTINATION "${MIXXX_INSTALL_DATADIR}/Qt6/qml/QtQuick"
+        COMPONENT applocal)
+
+      # install qml6-module-qtquick-templates
+      install(
+        DIRECTORY "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/Qt6/qml/QtQuick/Templates"
+        DESTINATION "${MIXXX_INSTALL_DATADIR}/Qt6/qml/QtQuick"
+        COMPONENT applocal)
+
+      # qml6-module-qtquick-window
+      install(
+        DIRECTORY "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/Qt6/qml/QtQuick/Window"
+        DESTINATION "${MIXXX_INSTALL_DATADIR}/Qt6/qml/QtQuick"
+        COMPONENT applocal)
+
+      # install qml6-module-qt-labs-qmlmodels
+      install(
+        DIRECTORY "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/Qt6/qml/Qt/labs/qmlmodels"
+        DESTINATION "${MIXXX_INSTALL_DATADIR}/Qt6/qml/Qt/labs"
+        COMPONENT applocal)
+
+    endif()
+
     if(WIN32)
       install(IMPORTED_RUNTIME_ARTIFACTS Qt${QT_VERSION_MAJOR}::QWindowsIntegrationPlugin
         DESTINATION "${MIXXX_INSTALL_DATADIR}/platforms"
@@ -2814,9 +2999,7 @@ else()
         COMPONENT applocal)
     endif()
 
-    add_custom_command(
-        TARGET mixxx POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -DCOMPONENT=applocal -DCMAKE_INSTALL_PREFIX="${CMAKE_CURRENT_BINARY_DIR}" -P cmake_install.cmake)
+    set(APPLOCAL_COMPONENT_DEFINED true)
   endif()
 endif()
 
@@ -2852,7 +3035,7 @@ if(APPLE)
         "-weak_framework IOKit"
     )
   endif()
-elseif(UNIX AND NOT APPLE)
+elseif(UNIX AND NOT APPLE AND NOT EMSCRIPTEN)
   if(QT6)
     find_package(X11)
   else()
@@ -3083,6 +3266,9 @@ if(BATTERY)
       target_sources(mixxx-lib PRIVATE src/util/battery/batterymac.cpp)
     endif()
   elseif(UNIX)
+    if(EMSCRIPTEN)
+      message(FATAL_ERROR "Battery support is not implemented for Emscripten (WebAssembly)")
+    endif()
     find_package(Upower REQUIRED)
     find_package(GLIB COMPONENTS gobject REQUIRED)
     target_include_directories(mixxx-lib SYSTEM PUBLIC ${GLIB_INCLUDE_DIRS})
@@ -3589,8 +3775,22 @@ set(CPACK_DEBIAN_PACKAGE_SECTION "sound")
 set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
 set(CPACK_DEBIAN_PACKAGE_SUGGESTS "pdf-viewer, pulseaudio-utils")
 set(CPACK_DEBIAN_PACKAGE_REPLACES "mixxx-data")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5sql5-sqlite, fonts-open-sans, fonts-ubuntu,\
- qml-module-qtquick-controls, qml-module-qtquick-controls2, qml-module-qt-labs-qmlmodels, qml-module-qtquick-shapes, qt6-qpa-plugins")
+if(QT6)
+  if(QML)
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS
+        "libqt6sql6-sqlite, fonts-open-sans, fonts-ubuntu, qt6-qpa-plugins,\
+ qml6-module-qt5compat-graphicaleffects, qml6-module-qtquick-controls, qml6-module-qtquick-layouts, qml6-module-qtquick-nativestyle, qml6-module-qtquick-templates, qml6-module-qtquick-window, qml6-module-qt-labs-qmlmodels, qml6-module-qtquick-shapes, qml6-module-qtqml-workerscript")
+  else()
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt6sql6-sqlite, fonts-open-sans, fonts-ubuntu, qt6-qpa-plugins")
+  endif()
+else()
+  if(QML)
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5sql5-sqlite, fonts-open-sans, fonts-ubuntu,\
+ qml-module-qtquick-controls, qml-module-qtquick-controls2, qml-module-qt-labs-qmlmodels, qml-module-qtquick-shapes")
+  else()
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5sql5-sqlite, fonts-open-sans, fonts-ubuntu")
+  endif()
+endif()
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "${CPACK_PACKAGE_HOMEPAGE_URL}")
 set(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION TRUE)

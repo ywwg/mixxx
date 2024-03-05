@@ -1,6 +1,7 @@
 #include "controllers/midi/midicontroller.h"
 
 #include <QJSValue>
+#include <algorithm>
 
 #include "control/controlobject.h"
 #include "controllers/defs_controllers.h"
@@ -518,10 +519,11 @@ void MidiController::receive(const QByteArray& data, mixxx::Duration timestamp) 
         }
     }
 
-    auto it = m_pMapping->getInputMappings().constFind(mappingKey.key);
-    for (; it != m_pMapping->getInputMappings().constEnd() && it.key() == mappingKey.key; ++it) {
-        processInputMapping(it.value(), data, timestamp);
-    }
+    const auto [inputMappingsBegin, inputMappingsEnd] =
+            m_pMapping->getInputMappings().equal_range(mappingKey.key);
+    std::for_each(inputMappingsBegin, inputMappingsEnd, [&](const auto& inputMapping) {
+        processInputMapping(inputMapping, data, timestamp);
+    });
 }
 
 void MidiController::processInputMapping(const MidiInputMapping& mapping,

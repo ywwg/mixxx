@@ -112,6 +112,14 @@ void BaseTrackTableModel::setBpmColumnPrecision(int precision) {
     }
     s_bpmColumnPrecision = precision;
 }
+
+bool BaseTrackTableModel::s_bApplyPlayedTrackColor =
+        kApplyPlayedTrackColorDefault;
+
+void BaseTrackTableModel::setApplyPlayedTrackColor(bool apply) {
+    s_bApplyPlayedTrackColor = apply;
+}
+
 //static
 QStringList BaseTrackTableModel::defaultTableColumns() {
     return kDefaultTableColumns;
@@ -125,7 +133,8 @@ BaseTrackTableModel::BaseTrackTableModel(
           TrackModel(cloneDatabase(pTrackCollectionManager), settingsNamespace),
           m_pTrackCollectionManager(pTrackCollectionManager),
           m_previewDeckGroup(PlayerManager::groupForPreviewDeck(0)),
-          m_backgroundColorOpacity(WLibrary::kDefaultTrackTableBackgroundColorOpacity) {
+          m_backgroundColorOpacity(WLibrary::kDefaultTrackTableBackgroundColorOpacity),
+          m_playedInactiveColor(QColor::fromRgb(WTrackTableView::kDefaultPlayedInactiveColorHex)) {
     connect(&pTrackCollectionManager->internalCollection()->getTrackDAO(),
             &TrackDAO::forceModelUpdate,
             this,
@@ -396,6 +405,15 @@ QAbstractItemDelegate* BaseTrackTableModel::delegateForColumn(
         return nullptr;
     }
     m_backgroundColorOpacity = pTableView->getBackgroundColorOpacity();
+    // This is the color used for the text of played tracks.
+    // data() uses this to compose the ForegroundRole QBrush if 'played' is checked.
+    m_playedInactiveColor = pTableView->getPlayedInactiveColor();
+    connect(pTableView,
+            &WTrackTableView::playedInactiveColorChanged,
+            this,
+            [this](QColor col) {
+                m_playedInactiveColor = col;
+            });
     if (index == fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_RATING)) {
         return new StarDelegate(pTableView);
     } else if (index == fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_BPM)) {
@@ -450,6 +468,16 @@ QVariant BaseTrackTableModel::data(
         DEBUG_ASSERT(m_backgroundColorOpacity <= 1.0);
         bgColor.setAlphaF(static_cast<float>(m_backgroundColorOpacity));
         return QBrush(bgColor);
+    } else if (role == Qt::ForegroundRole && s_bApplyPlayedTrackColor) {
+        // Custom text color for played tracks
+        auto playedRaw = rawSiblingValue(
+                index,
+                ColumnCache::COLUMN_LIBRARYTABLE_PLAYED);
+        if (!playedRaw.isNull() &&
+                playedRaw.canConvert<bool>() &&
+                playedRaw.toBool()) {
+            return QVariant::fromValue(m_playedInactiveColor);
+        }
     }
 
     // Only retrieve a value for supported roles
