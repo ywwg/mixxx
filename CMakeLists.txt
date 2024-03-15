@@ -1141,6 +1141,7 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/track/trackref.cpp
   src/util/battery/battery.cpp
   src/util/cache.cpp
+  src/util/clipboard.cpp
   src/util/cmdlineargs.cpp
   src/util/color/color.cpp
   src/util/color/colorpalette.cpp
@@ -2599,6 +2600,10 @@ else()
     # Emscripten's FindOpenGL.cmake does not create OpenGL::GL
     target_link_libraries(mixxx-lib PRIVATE ${OPENGL_gl_LIBRARY})
     target_compile_definitions(mixxx-lib PUBLIC QT_OPENGL_ES_2)
+    # Require WebGL 2.0 (for a WebGL-friendly subset of OpenGL ES 3.0) and
+    # enable full OpenGL ES 2.0 emulation as per
+    # https://emscripten.org/docs/porting/multimedia_and_graphics/OpenGL-support.html
+    target_link_options(mixxx-lib PUBLIC -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sFULL_ES2=1)
   else()
     target_link_libraries(mixxx-lib PRIVATE OpenGL::GL)
   endif()
@@ -2799,6 +2804,13 @@ if(DEBUG_ASSERTIONS_FATAL)
   endif()
   if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(STATUS "DEBUG_ASSERT statements have been enabled because DEBUG_ASSERTIONS_FATAL is ON.")
+  endif()
+endif()
+
+if(EMSCRIPTEN)
+  option(WASM_ASSERTIONS "Enable additional checks when targeting Emscripten/WebAssembly" OFF)
+  if(WASM_ASSERTIONS)
+    target_link_options(mixxx-lib PUBLIC -sASSERTIONS)
   endif()
 endif()
 
