@@ -1202,17 +1202,17 @@ TraktorS3.Deck = class {
         }
 
         if (this.shiftPressed) {
+            if (delta > 0) {
+                script.triggerControl(this.activeChannel, "beatjump_forward");
+            } else {
+                script.triggerControl(this.activeChannel, "beatjump_backward");
+            }
+        } else {
             const beatjumpSize = engine.getValue(this.activeChannel, "beatjump_size");
             if (delta > 0) {
                 engine.setValue(this.activeChannel, "beatjump_size", beatjumpSize * 2);
             } else {
                 engine.setValue(this.activeChannel, "beatjump_size", beatjumpSize / 2);
-            }
-        } else {
-            if (delta > 0) {
-                script.triggerControl(this.activeChannel, "beatjump_forward");
-            } else {
-                script.triggerControl(this.activeChannel, "beatjump_backward");
             }
         }
 
