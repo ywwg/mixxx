@@ -114,13 +114,13 @@ TraktorS3.Beta = TraktorS3.Alpha / 32;
 // These options can be set to non-null values to initialize the beat jump and
 // loop sizes and sync and quantize states for all four decks when the
 // controller is connected
-TraktorS3.DefaultBeatJumpSize = null; // 32
-TraktorS3.DefaultBeatLoopLength = null; // 32
-TraktorS3.DefaultSyncEnabled = null; // true
-TraktorS3.DefaultQuantizeEnabled = null; // true
-TraktorS3.DefaultKeylockEnabled = null; // true
+TraktorS3.DefaultBeatJumpSize = 16; // 32
+TraktorS3.DefaultBeatLoopLength = 16; // 32
+TraktorS3.DefaultSyncEnabled = true; // true
+TraktorS3.DefaultQuantizeEnabled = true; // true
+TraktorS3.DefaultKeylockEnabled = false; // true
 // -1 for left, 0 for center/not assigned, 1 for right
-TraktorS3.DefaultCrossfaderAssignments = [null, null, null, null]; // [0, 0, 0, 0]
+TraktorS3.DefaultCrossfaderAssignments = [0, 0, 0, 0]; // [0, 0, 0, 0]
 
 // Set to true to output debug messages and debug light outputs.
 TraktorS3.DebugMode = false;
@@ -980,13 +980,13 @@ TraktorS3.Deck = class {
             if (engine.getValue(this.activeChannel, "sync_enabled") === 0) {
                 script.triggerControl(this.activeChannel, "beatsync");
                 // Start timer to measure how long button is pressed
-                this.syncPressedTimer = engine.beginTimer(300, () => {
+                this.syncPressedTimer = engine.beginTimer(300, function() {
                     engine.setValue(this.activeChannel, "sync_enabled", 1);
                     // Reset sync button timer state if active
                     if (this.syncPressedTimer !== 0) {
                         this.syncPressedTimer = 0;
                     }
-                }, true);
+                }.bind(this), this, true);
 
                 // Light corresponding LED when button is pressed
                 this.colorOutput(1, "sync_enabled");

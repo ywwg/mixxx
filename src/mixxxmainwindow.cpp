@@ -1175,13 +1175,13 @@ bool MixxxMainWindow::eventFilter(QObject* obj, QEvent* event) {
         }
     } else if (event->type() == QEvent::WindowStateChange) {
 #ifndef __APPLE__
-        qWarning() << "$ WindowStateChange:" << windowState();
+        // qWarning() << "$ WindowStateChange:" << windowState();
         if (windowState() == m_prevState) {
             // Ignore no-op. This happens if another window is raised above
             // MixxxMianWindow,  e.g. DlgPeferences. In such a case event->oldState()
             // will be Qt::WindowNoState which is wrong anyway, so there is nothing
             // to do internally.
-            qWarning() << "$ WindowStateChange IGNORE";
+            // qWarning() << "$ WindowStateChange IGNORE";
             return QMainWindow::eventFilter(obj, event);
         }
         m_prevState = windowState();
