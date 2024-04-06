@@ -1643,7 +1643,7 @@ TraktorS3.Channel = class {
         }
     }
 
-    setDefaults() {
+    setDefaults(group) {
         // The script by default doesn't change any of the deck's settings, but it's
         // useful to be able to initialize these settings to your preferences when
         // you turn on the controller
