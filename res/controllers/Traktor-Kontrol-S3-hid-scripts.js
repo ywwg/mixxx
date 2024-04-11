@@ -115,7 +115,7 @@ TraktorS3.Beta = TraktorS3.Alpha / 32;
 // loop sizes and sync and quantize states for all four decks when the
 // controller is connected
 TraktorS3.DefaultBeatJumpSize = 16; // 32
-TraktorS3.DefaultBeatLoopLength = 16; // 32
+TraktorS3.DefaultBeatLoopLength = 8; // 32
 TraktorS3.DefaultSyncEnabled = true; // true
 TraktorS3.DefaultQuantizeEnabled = true; // true
 TraktorS3.DefaultKeylockEnabled = false; // true
@@ -1298,14 +1298,15 @@ TraktorS3.Deck = class {
         if (this.shiftPressed) {
             // If we spam seeks on every single update, it can cause problems with HQ
             // Rubberband.
-            const now = Date.now();
-            if (now - this.seekRateLimitLastTick > 10) {
-                this.seekRateLimitLastTick = now;
-                let playPosition = engine.getValue(this.activeChannel, "playposition");
-                playPosition += deltas[0] / 256.0;
-                playPosition = Math.max(Math.min(playPosition, 1.0), 0.0);
-                engine.setValue(this.activeChannel, "playposition", playPosition);
-            }
+            // Disable now that we have shift+moveS
+            // const now = Date.now();
+            // if (now - this.seekRateLimitLastTick > 10) {
+            //     this.seekRateLimitLastTick = now;
+            //     let playPosition = engine.getValue(this.activeChannel, "playposition");
+            //     playPosition += deltas[0] / 256.0;
+            //     playPosition = Math.max(Math.min(playPosition, 1.0), 0.0);
+            //     engine.setValue(this.activeChannel, "playposition", playPosition);
+            // }
             return;
         }
         const tickDelta = deltas[0];
