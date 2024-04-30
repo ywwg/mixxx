@@ -991,7 +991,7 @@ TraktorS3.Deck = class {
                     if (this.syncPressedTimer !== 0) {
                         this.syncPressedTimer = 0;
                     }
-                }.bind(this), this, true);
+                }.bind(this), true);
 
                 // Light corresponding LED when button is pressed
                 this.colorOutput(1, "sync_enabled");
@@ -1298,7 +1298,7 @@ TraktorS3.Deck = class {
         if (this.shiftPressed) {
             // If we spam seeks on every single update, it can cause problems with HQ
             // Rubberband.
-            // Disable now that we have shift+moveS
+            // Disable now that we have shift+move.
             // const now = Date.now();
             // if (now - this.seekRateLimitLastTick > 10) {
             //     this.seekRateLimitLastTick = now;
