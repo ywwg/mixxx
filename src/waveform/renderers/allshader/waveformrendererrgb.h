@@ -14,7 +14,9 @@ class WaveformRendererRGB;
 
 class allshader::WaveformRendererRGB final : public allshader::WaveformRendererSignalBase {
   public:
-    explicit WaveformRendererRGB(WaveformWidgetRenderer* waveformWidget);
+    explicit WaveformRendererRGB(WaveformWidgetRenderer* waveformWidget,
+            ::WaveformRendererAbstract::PositionSource type =
+                    ::WaveformRendererAbstract::Play);
 
     // override ::WaveformRendererSignalBase
     void onSetup(const QDomNode& node) override;
@@ -31,6 +33,8 @@ class allshader::WaveformRendererRGB final : public allshader::WaveformRendererS
     RGBAData m_colors_ghost;
 
     const float ghost_alpha = 0.25f;
+
+    bool m_isSlipRenderer;
 
     DISALLOW_COPY_AND_ASSIGN(WaveformRendererRGB);
 };
