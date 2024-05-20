@@ -290,23 +290,18 @@ void DlgTrackInfoMulti::slotApply() {
 
 void DlgTrackInfoMulti::slotOk() {
     slotApply();
-    clear();
     accept();
 }
 
 void DlgTrackInfoMulti::slotCancel() {
-    clear();
     reject();
 }
 
 void DlgTrackInfoMulti::loadTracks(const QList<TrackPointer>& pTracks) {
-    clear();
-
     if (pTracks.isEmpty()) {
         return;
     }
 
-    m_pLoadedTracks.clear();
     for (const auto& pTrack : pTracks) {
         m_pLoadedTracks.insert(pTrack.get()->getId(), pTrack);
     }
@@ -674,19 +669,6 @@ void DlgTrackInfoMulti::saveTracks() {
 
     // Repopulate the dialog and update the UI
     updateFromTracks();
-}
-
-void DlgTrackInfoMulti::clear() {
-    const QSignalBlocker signalBlocker(this);
-
-    disconnectTracksChanged();
-    m_pLoadedTracks.clear();
-    m_trackRecords.clear();
-
-    m_pWStarRating->slotSetRating(0);
-    trackColorDialogSetColorStyleButton(mixxx::RgbColor::nullopt());
-    m_pWCoverArtLabel->loadTrack(TrackPointer());
-    m_pWCoverArtLabel->setCoverArt(CoverInfo(), QPixmap());
 }
 
 void DlgTrackInfoMulti::connectTracksChanged() {
