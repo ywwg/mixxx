@@ -27,6 +27,7 @@
 #include "waveform/widgets/allshader/filteredwaveformwidget.h"
 #include "waveform/widgets/allshader/hsvwaveformwidget.h"
 #include "waveform/widgets/allshader/lrrgbwaveformwidget.h"
+#include "waveform/widgets/allshader/rgbstackedwaveformwidget.h"
 #include "waveform/widgets/allshader/rgbwaveformwidget.h"
 #include "waveform/widgets/allshader/simplewaveformwidget.h"
 #include "waveform/widgets/allshader/waveformwidgettexturedfiltered.h"
@@ -39,12 +40,12 @@
 #include "waveform/widgets/qtvsynctestwidget.h"
 #include "waveform/widgets/qtwaveformwidget.h"
 #endif
+#include "waveform/widgets/deprecated/glrgbwaveformwidget.h"
+#include "waveform/widgets/deprecated/glsimplewaveformwidget.h"
+#include "waveform/widgets/deprecated/glslwaveformwidget.h"
+#include "waveform/widgets/deprecated/glvsynctestwidget.h"
+#include "waveform/widgets/deprecated/glwaveformwidget.h"
 #include "waveform/widgets/emptywaveformwidget.h"
-#include "waveform/widgets/glrgbwaveformwidget.h"
-#include "waveform/widgets/glsimplewaveformwidget.h"
-#include "waveform/widgets/glslwaveformwidget.h"
-#include "waveform/widgets/glvsynctestwidget.h"
-#include "waveform/widgets/glwaveformwidget.h"
 #include "waveform/widgets/hsvwaveformwidget.h"
 #include "waveform/widgets/rgbwaveformwidget.h"
 #include "waveform/widgets/softwarewaveformwidget.h"
@@ -54,6 +55,26 @@
 #include "widget/wwaveformviewer.h"
 
 namespace {
+bool isDeprecated(WaveformWidgetType::Type t) {
+    switch (t) {
+    case WaveformWidgetType::GLRGBWaveform:
+        return true;
+    case WaveformWidgetType::GLSimpleWaveform:
+        return true;
+    case WaveformWidgetType::GLSLFilteredWaveform:
+        return true;
+    case WaveformWidgetType::GLSLRGBWaveform:
+        return true;
+    case WaveformWidgetType::GLSLRGBStackedWaveform:
+        return true;
+    case WaveformWidgetType::GLVSyncTest:
+        return true;
+    case WaveformWidgetType::GLFilteredWaveform:
+        return true;
+    default:
+        return false;
+    }
+}
 // Returns true if the given waveform should be rendered.
 bool shouldRenderWaveform(WaveformWidgetAbstract* pWaveformWidget) {
     if (pWaveformWidget == nullptr ||
@@ -576,6 +597,14 @@ bool WaveformWidgetFactory::widgetTypeSupportsUntilMark() const {
         return true;
     case WaveformWidgetType::AllShaderHSVWaveform:
         return true;
+    case WaveformWidgetType::AllShaderRGBStackedWaveform:
+        return true;
+    case WaveformWidgetType::AllShaderTexturedFiltered:
+        return true;
+    case WaveformWidgetType::AllShaderTexturedRGB:
+        return true;
+    case WaveformWidgetType::AllShaderTexturedStacked:
+        return true;
     default:
         break;
     }
@@ -1007,6 +1036,13 @@ void WaveformWidgetFactory::evaluateWidgets() {
             setWaveformVarsByType.operator()<allshader::FilteredWaveformWidget>();
             break;
 #endif
+        case WaveformWidgetType::AllShaderRGBStackedWaveform:
+#ifndef MIXXX_USE_QOPENGL
+            continue;
+#else
+            setWaveformVarsByType.operator()<allshader::RGBStackedWaveformWidget>();
+            break;
+#endif
         case WaveformWidgetType::AllShaderSimpleWaveform:
 #ifndef MIXXX_USE_QOPENGL
             continue;
@@ -1047,7 +1083,7 @@ void WaveformWidgetFactory::evaluateWidgets() {
             continue;
         }
 
-        bool active = true;
+        bool active = !isDeprecated(static_cast<WaveformWidgetType::Type>(type));
         if (isOpenGlAvailable()) {
             if (useOpenGles && !useOpenGl) {
                 active = false;
@@ -1131,6 +1167,9 @@ WaveformWidgetAbstract* WaveformWidgetFactory::createWaveformWidget(
             break;
         case WaveformWidgetType::AllShaderFilteredWaveform:
             widget = new allshader::FilteredWaveformWidget(viewer->getGroup(), viewer);
+            break;
+        case WaveformWidgetType::AllShaderRGBStackedWaveform:
+            widget = new allshader::RGBStackedWaveformWidget(viewer->getGroup(), viewer);
             break;
         case WaveformWidgetType::AllShaderSimpleWaveform:
             widget = new allshader::SimpleWaveformWidget(viewer->getGroup(), viewer);
@@ -1286,7 +1325,7 @@ QString WaveformWidgetFactory::buildWidgetDisplayName() const {
         }
     }
     if (WaveformT::useTextureForWaveform()) {
-        extras.push_back(QStringLiteral("Waveform data texture"));
+        extras.push_back(QStringLiteral("high detail"));
     }
     QString name = WaveformT::getWaveformWidgetName();
     if (extras.isEmpty()) {

@@ -44,6 +44,7 @@ WaveformWidgetType::Type upgradeToAllShaders(WaveformWidgetType::Type waveformTy
     case WWT::AllShaderRGBWaveform:
     case WWT::AllShaderLRRGBWaveform:
     case WWT::AllShaderFilteredWaveform:
+    case WWT::AllShaderRGBStackedWaveform:
     case WWT::AllShaderSimpleWaveform:
     case WWT::AllShaderHSVWaveform:
     case WWT::AllShaderTexturedFiltered:
@@ -477,8 +478,10 @@ UserSettingsPointer Upgrade::versionUpgrade(const QString& settingsPath) {
                     // Sandbox isn't setup yet at this point in startup because it relies on
                     // the config settings path and this function is what loads the config
                     // so it's not ready yet.
-                    successful = tc.addDirectory(mixxx::FileInfo(currentFolder));
-
+                    successful =
+                            tc.addDirectory(mixxx::FileInfo(currentFolder)) ==
+                            DirectoryDAO::AddResult::Ok;
+                    ;
                     tc.disconnectDatabase();
                 }
             }
