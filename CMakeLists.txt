@@ -1044,6 +1044,7 @@ add_library(mixxx-lib STATIC EXCLUDE_FROM_ALL
   src/preferences/colorpalettesettings.cpp
   src/preferences/colorpalettesettings.cpp
   src/preferences/configobject.cpp
+  src/preferences/constants.cpp
   src/preferences/dialog/dlgprefautodj.cpp
   src/preferences/dialog/dlgprefautodjdlg.ui
   src/preferences/dialog/dlgprefbeats.cpp
@@ -1437,7 +1438,6 @@ target_precompile_headers(mixxx-lib PUBLIC
   src/util/mac.h
   src/util/macros.h
   src/util/math.h
-  src/util/memory.h
   src/util/messagepipe.h
   src/util/movinginterquartilemean.h
   src/util/mutex.h
