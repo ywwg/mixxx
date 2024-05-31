@@ -249,7 +249,13 @@ void WaveformRendererRGB::paintGL() {
                         fpos + 0.5f,
                         m_isSlipRenderer
                                 ? halfBreadth
-                                : halfBreadth + heightFactorAbs * maxAllChn[1]);
+                                : halfBreadth + heightFactorAbs * maxAllChn_ghost[1]);
+                m_vertices_ghost.addRectangle(fpos - 0.5f,
+                        halfBreadth - heightFactorAbs * maxAllChn_ghost[0],
+                        fpos + 0.5f,
+                        m_isSlipRenderer
+                                ? halfBreadth
+                                : halfBreadth + heightFactorAbs * maxAllChn_ghost[1]);
             } else {
                 // note: heightFactor is the same for left and right,
                 // but negative for left (chn 0) and positive for right (chn 1)
@@ -257,8 +263,13 @@ void WaveformRendererRGB::paintGL() {
                         halfBreadth,
                         fpos + 0.5f,
                         halfBreadth + heightFactor[chn] * maxAllChn[chn]);
+                m_vertices_ghost.addRectangle(fpos - 0.5f,
+                        halfBreadth,
+                        fpos + 0.5f,
+                        halfBreadth + heightFactor[chn] * maxAllChn_ghost[chn]);
             }
             m_colors.addForRectangle(red, green, blue);
+            m_colors_ghost.addForRectangle(red_ghost, green_ghost, blue_ghost, ghost_alpha);
         }
 
         xVisualFrame += visualIncrementPerPixel;
