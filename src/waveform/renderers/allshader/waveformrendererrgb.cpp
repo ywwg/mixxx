@@ -15,9 +15,11 @@ inline float math_pow2(float x) {
 } // namespace
 
 WaveformRendererRGB::WaveformRendererRGB(WaveformWidgetRenderer* waveformWidget,
-        ::WaveformRendererAbstract::PositionSource type)
+        ::WaveformRendererAbstract::PositionSource type,
+        WaveformRendererSignalBase::Options options)
         : WaveformRendererSignalBase(waveformWidget),
-          m_isSlipRenderer(type == ::WaveformRendererAbstract::Slip) {
+          m_isSlipRenderer(type == ::WaveformRendererAbstract::Slip),
+          m_options(options) {
 }
 
 void WaveformRendererRGB::onSetup(const QDomNode& node) {
@@ -76,7 +78,9 @@ void WaveformRendererRGB::paintGL() {
     const float breadth = static_cast<float>(m_waveformRenderer->getBreadth()) * devicePixelRatio;
     const float halfBreadth = breadth / 2.0f;
 
-    const float heightFactor = allGain * halfBreadth / m_maxValue;
+    const float heightFactorAbs = allGain * halfBreadth / m_maxValue;
+    const float heightFactor[2] = {-heightFactorAbs, heightFactorAbs};
+    const bool splitLeftRight = m_options & WaveformRendererSignalBase::Option::SplitStereoSignal;
 
     const float low_r = static_cast<float>(m_rgbLowColor_r);
     const float mid_r = static_cast<float>(m_rgbMidColor_r);
@@ -94,7 +98,9 @@ void WaveformRendererRGB::paintGL() {
 
     const int numVerticesPerLine = 6; // 2 triangles
 
-    const int reserved = numVerticesPerLine * (length + 1);
+    const int reserved = numVerticesPerLine *
+            // Slip rendere only render a single channel, so the vertices count doesn't change
+            ((splitLeftRight && !m_isSlipRenderer ? length * 2 : length) + 1);
 
     m_vertices.clear();
     m_vertices.reserve(reserved);
@@ -128,113 +134,132 @@ void WaveformRendererRGB::paintGL() {
 
         // Find the max values for low, mid, high and all in the waveform data.
         // - Max of left and right
-        uchar u8maxLow{};
-        uchar u8maxMid{};
-        uchar u8maxHigh{};
+        uchar u8maxLow[2]{};
+        uchar u8maxMid[2]{};
+        uchar u8maxHigh[2]{};
         // - Per channel
         uchar u8maxAllChn[2]{};
         for (int chn = 0; chn < 2; chn++) {
+            // In case we don't render individual color per channel, we use only
+            // the first field of the arrays to perform signal max
+            int signalChn = splitLeftRight ? chn : 0;
             // data is interleaved left / right
             for (int i = visualIndexStart + chn; i < visualIndexStop + chn; i += 2) {
                 const WaveformData& waveformData = data[i];
 
-                u8maxLow = math_max(u8maxLow, waveformData.filtered.low);
-                u8maxMid = math_max(u8maxMid, waveformData.filtered.mid);
-                u8maxHigh = math_max(u8maxHigh, waveformData.filtered.high);
+                u8maxLow[signalChn] = math_max(u8maxLow[signalChn], waveformData.filtered.low);
+                u8maxMid[signalChn] = math_max(u8maxMid[signalChn], waveformData.filtered.mid);
+                u8maxHigh[signalChn] = math_max(u8maxHigh[signalChn], waveformData.filtered.high);
                 u8maxAllChn[chn] = math_max(u8maxAllChn[chn], waveformData.filtered.all);
             }
         }
-
-        // Cast to float
-        float maxLow = static_cast<float>(u8maxLow);
-        float maxMid = static_cast<float>(u8maxMid);
-        float maxHigh = static_cast<float>(u8maxHigh);
         float maxAllChn[2]{static_cast<float>(u8maxAllChn[0]), static_cast<float>(u8maxAllChn[1])};
-
-        float ghostLow = maxLow;
-        float ghostMid = maxMid;
-        float ghostHigh = maxHigh;
         float maxAllChn_ghost[2]{static_cast<float>(u8maxAllChn[0]),
                 static_cast<float>(u8maxAllChn[1])};
-        // Uncomment to undo scaling with pow(value, 2.0f * 0.316f) done in analyzerwaveform.h
-        // float maxAllChn[2]{unscale(u8maxAllChn[0]), unscale(u8maxAllChn[1])};
 
-        // Calculate the squared magnitude of the maxLow, maxMid and maxHigh values.
-        // We take the square root to get the magnitude below.
-        const float sum = math_pow2(maxLow) + math_pow2(maxMid) + math_pow2(maxHigh);
+        // In case we don't render individual color per channel, all the
+        // signal information is in the first field of each array. If
+        // this is the split render, we only render the left channel
+        // anyway.
+        for (int chn = 0;
+                chn < (splitLeftRight && !m_isSlipRenderer ? 2 : 1);
+                chn++) {
+            // Cast to float
+            float maxLow = static_cast<float>(u8maxLow[chn]);
+            float maxMid = static_cast<float>(u8maxMid[chn]);
+            float maxHigh = static_cast<float>(u8maxHigh[chn]);
 
-        // Apply the gains (non-ghosted version only)
-        maxLow *= lowGain;
-        maxMid *= midGain;
-        maxHigh *= highGain;
+            float ghostLow = maxLow;
+            float ghostMid = maxMid;
+            float ghostHigh = maxHigh;
+            // Uncomment to undo scaling with pow(value, 2.0f * 0.316f) done in analyzerwaveform.h
+            // float maxAllChn[2]{unscale(u8maxAllChn[0]), unscale(u8maxAllChn[1])};
 
-        // Calculate the squared magnitude of the gained maxLow, maxMid and maxHigh values
-        // We take the square root to get the magnitude below.
-        const float sumGained = math_pow2(maxLow) + math_pow2(maxMid) + math_pow2(maxHigh);
-        const float sumGained_ghost = math_pow2(ghostLow) +
-                math_pow2(ghostMid) + math_pow2(ghostHigh);
+            // Calculate the squared magnitude of the maxLow, maxMid and maxHigh values.
+            // We take the square root to get the magnitude below.
+            const float sum = math_pow2(maxLow) + math_pow2(maxMid) + math_pow2(maxHigh);
 
-        // The maxAll values will be used to draw the amplitude. We scale them according to
-        // magnitude of the gained maxLow, maxMid and maxHigh values
-        if (sum != 0.f) {
-            // magnitude = sqrt(sum) and magnitudeGained = sqrt(sumGained), and
-            // factor = magnitudeGained / magnitude, but we can do with a single sqrt:
-            const float factor = std::sqrt(sumGained / sum);
-            maxAllChn[0] *= factor;
-            maxAllChn[1] *= factor;
+            // Apply the gains (non-ghosted version only)
+            maxLow *= lowGain;
+            maxMid *= midGain;
+            maxHigh *= highGain;
 
-            const float factor_ghost = std::sqrt(sumGained_ghost / sum);
-            maxAllChn_ghost[0] *= factor_ghost;
-            maxAllChn_ghost[1] *= factor_ghost;
+            // Calculate the squared magnitude of the gained maxLow, maxMid and maxHigh values
+            // We take the square root to get the magnitude below.
+            const float sumGained = math_pow2(maxLow) + math_pow2(maxMid) + math_pow2(maxHigh);
+            const float sumGained_ghost = math_pow2(ghostLow) +
+                    math_pow2(ghostMid) + math_pow2(ghostHigh);
+
+            // The maxAll values will be used to draw the amplitude. We scale them according to
+            // magnitude of the gained maxLow, maxMid and maxHigh values
+            if (sum != 0.f) {
+                // magnitude = sqrt(sum) and magnitudeGained = sqrt(sumGained), and
+                // factor = magnitudeGained / magnitude, but we can do with a single sqrt:
+                const float factor = std::sqrt(sumGained / sum);
+                maxAllChn[chn] *= factor;
+                if (!splitLeftRight) {
+                    maxAllChn[chn + 1] *= factor;
+                }
+                const float factor_ghost = std::sqrt(sumGained_ghost / sum);
+                maxAllChn_ghost[chn] *= factor;
+                if (!splitLeftRight) {
+                    maxAllChn_ghost[chn + 1] *= factor_ghost;
+                }
+            }
+
+            // Use the gained maxLow, maxMid and maxHigh values to calculate the color components
+            float red = maxLow * low_r + maxMid * mid_r + maxHigh * high_r;
+            float green = maxLow * low_g + maxMid * mid_g + maxHigh * high_g;
+            float blue = maxLow * low_b + maxMid * mid_b + maxHigh * high_b;
+
+            float red_ghost = ghostLow * low_r + ghostMid * mid_r + ghostHigh * high_r;
+            float green_ghost = ghostLow * low_g + ghostMid * mid_g + ghostHigh * high_g;
+            float blue_ghost = ghostLow * low_b + ghostMid * mid_b + ghostHigh * high_b;
+            const float maxComponent_ghost = math_max3(red_ghost, green_ghost, blue_ghost);
+
+            // Normalize the color components using the maximum of the three
+            const float maxComponent = math_max3(red, green, blue);
+            if (maxComponent == 0.f) {
+                // Avoid division by 0
+                red = 0.f;
+                green = 0.f;
+                blue = 0.f;
+            } else {
+                const float normFactor = 1.f / maxComponent;
+                red *= normFactor;
+                green *= normFactor;
+                blue *= normFactor;
+            }
+            if (maxComponent_ghost == 0.f) {
+                // Avoid division by 0
+                red_ghost = 0.f;
+                green_ghost = 0.f;
+                blue_ghost = 0.f;
+            } else {
+                const float normFactor_ghost = 1.f / maxComponent_ghost;
+                red_ghost *= normFactor_ghost;
+                green_ghost *= normFactor_ghost;
+                blue_ghost *= normFactor_ghost;
+            }
+
+            // Lines are thin rectangles
+            if (!splitLeftRight) {
+                m_vertices.addRectangle(fpos - 0.5f,
+                        halfBreadth - heightFactorAbs * maxAllChn[0],
+                        fpos + 0.5f,
+                        m_isSlipRenderer
+                                ? halfBreadth
+                                : halfBreadth + heightFactorAbs * maxAllChn[1]);
+            } else {
+                // note: heightFactor is the same for left and right,
+                // but negative for left (chn 0) and positive for right (chn 1)
+                m_vertices.addRectangle(fpos - 0.5f,
+                        halfBreadth,
+                        fpos + 0.5f,
+                        halfBreadth + heightFactor[chn] * maxAllChn[chn]);
+            }
+            m_colors.addForRectangle(red, green, blue);
         }
-
-        // Use the gained maxLow, maxMid and maxHigh values to calculate the color components
-        float red = maxLow * low_r + maxMid * mid_r + maxHigh * high_r;
-        float green = maxLow * low_g + maxMid * mid_g + maxHigh * high_g;
-        float blue = maxLow * low_b + maxMid * mid_b + maxHigh * high_b;
-
-        // Normalize the color components using the maximum of the three
-        const float maxComponent = math_max3(red, green, blue);
-        if (maxComponent == 0.f) {
-            // Avoid division by 0
-            red = 0.f;
-            green = 0.f;
-            blue = 0.f;
-        } else {
-            const float normFactor = 1.f / maxComponent;
-            red *= normFactor;
-            green *= normFactor;
-            blue *= normFactor;
-        }
-
-        float red_ghost = ghostLow * low_r + ghostMid * mid_r + ghostHigh * high_r;
-        float green_ghost = ghostLow * low_g + ghostMid * mid_g + ghostHigh * high_g;
-        float blue_ghost = ghostLow * low_b + ghostMid * mid_b + ghostHigh * high_b;
-        const float maxComponent_ghost = math_max3(red_ghost, green_ghost, blue_ghost);
-        if (maxComponent_ghost == 0.f) {
-            // Avoid division by 0
-            red_ghost = 0.f;
-            green_ghost = 0.f;
-            blue_ghost = 0.f;
-        } else {
-            const float normFactor_ghost = 1.f / maxComponent_ghost;
-            red_ghost *= normFactor_ghost;
-            green_ghost *= normFactor_ghost;
-            blue_ghost *= normFactor_ghost;
-        }
-
-        // Lines are thin rectangles
-        m_vertices.addRectangle(fpos - 0.5f,
-                halfBreadth - heightFactor * maxAllChn[0],
-                fpos + 0.5f,
-                m_isSlipRenderer ? halfBreadth : halfBreadth + heightFactor * maxAllChn[1]);
-        m_colors.addForRectangle(red, green, blue);
-
-        m_vertices_ghost.addRectangle(fpos - 0.5f,
-                halfBreadth - heightFactor * maxAllChn_ghost[0],
-                fpos + 0.5f,
-                halfBreadth + heightFactor * maxAllChn_ghost[1]);
-        m_colors_ghost.addForRectangle(red_ghost, green_ghost, blue_ghost, ghost_alpha);
 
         xVisualFrame += visualIncrementPerPixel;
     }

@@ -16,13 +16,18 @@ class allshader::WaveformRendererRGB final : public allshader::WaveformRendererS
   public:
     explicit WaveformRendererRGB(WaveformWidgetRenderer* waveformWidget,
             ::WaveformRendererAbstract::PositionSource type =
-                    ::WaveformRendererAbstract::Play);
+                    ::WaveformRendererAbstract::Play,
+            WaveformRendererSignalBase::Options options = WaveformRendererSignalBase::Option::None);
 
     // override ::WaveformRendererSignalBase
     void onSetup(const QDomNode& node) override;
 
     void initializeGL() override;
     void paintGL() override;
+
+    bool supportsSlip() const override {
+        return true;
+    }
 
   private:
     mixxx::RGBShader m_shader;
@@ -35,6 +40,7 @@ class allshader::WaveformRendererRGB final : public allshader::WaveformRendererS
     const float ghost_alpha = 0.25f;
 
     bool m_isSlipRenderer;
+    WaveformRendererSignalBase::Options m_options;
 
     DISALLOW_COPY_AND_ASSIGN(WaveformRendererRGB);
 };
