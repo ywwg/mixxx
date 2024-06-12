@@ -416,7 +416,7 @@ void DlgPrefWaveform::updateWaveformAcceleration(
 
     bool supportAcceleration = false, supportSoftware = true;
     if (handleIdx != -1) {
-        const auto& handle = factory->getAvailableTypes()[handleIdx];
+        const auto handle = factory->getAvailableTypes()[handleIdx];
         supportAcceleration = handle.supportAcceleration();
         supportSoftware = handle.supportSoftware();
     }
