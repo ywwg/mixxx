@@ -1,9 +1,7 @@
 #pragma once
 
-#include "shaders/rgbashader.h"
 #include "shaders/rgbshader.h"
 #include "util/class.h"
-#include "waveform/renderers/allshader/rgbadata.h"
 #include "waveform/renderers/allshader/rgbdata.h"
 #include "waveform/renderers/allshader/vertexdata.h"
 #include "waveform/renderers/allshader/waveformrenderersignalbase.h"
@@ -31,13 +29,8 @@ class allshader::WaveformRendererRGB final : public allshader::WaveformRendererS
 
   private:
     mixxx::RGBShader m_shader;
-    mixxx::RGBAShader m_shader_ghost;
     VertexData m_vertices;
     RGBData m_colors;
-    VertexData m_vertices_ghost;
-    RGBAData m_colors_ghost;
-
-    const float ghost_alpha = 0.25f;
 
     bool m_isSlipRenderer;
     WaveformRendererSignalBase::Options m_options;
