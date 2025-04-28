@@ -555,7 +555,6 @@ TraktorS3.Controller = class {
     }
 
     linkChannelOutput(group, name, callback) {
-        HIDDebug("ok..." + group + " " + name);
         this.hid.linkOutput(group, name, group, name, callback);
     }
 
@@ -1634,7 +1633,7 @@ TraktorS3.Channel = class {
         this.clipConnection = {};
         this.hotcueCallbacks = [];
 
-        // The visual order of the channels in Mixxx is 4, 2, 1, 3, but we want
+        // The visual order of the channels in Mixxx is 3, 1, 2, 4, but we want
         // the crossfader assignments array to match the visual layout
         const visualChannelIndex = {3: 0, 1: 1, 2: 2, 4: 3}[this.groupNumber];
         if (TraktorS3.DefaultCrossfaderAssignments[visualChannelIndex] !== null) {
@@ -2374,7 +2373,7 @@ TraktorS3.debugLights = function() {
         "00"
     ];
 
-    const data = [Array(), Array(), Array()];
+    const data = [[], [], []];
 
 
     for (let i = 0; i < data.length; i++) {
