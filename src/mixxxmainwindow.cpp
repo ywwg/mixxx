@@ -39,6 +39,7 @@
 #ifdef __ENGINEPRIME__
 #include "library/export/libraryexporter.h"
 #endif
+#include "library/overviewcache.h"
 #include "library/trackcollectionmanager.h"
 #include "mixer/playerinfo.h"
 #include "mixer/playermanager.h"
@@ -282,6 +283,18 @@ void MixxxMainWindow::initialize() {
     WaveformWidgetFactory::createInstance(); // takes a long time
     WaveformWidgetFactory::instance()->setConfig(m_pCoreServices->getSettings());
     WaveformWidgetFactory::instance()->startVSync(m_pGuiTick, m_pVisualsManager, false);
+    // Connect OverviewCache so we can clear and re-render overviews in the library
+    // when "OverviewNormalized" or "VisualGain_0" (all) have been changed in the
+    // preferences.
+    auto* pOverviewCache = OverviewCache::instance();
+    connect(WaveformWidgetFactory::instance(),
+            &WaveformWidgetFactory::visualGainChanged,
+            pOverviewCache,
+            &OverviewCache::onNormalizeOrVisualGainChanged);
+    connect(WaveformWidgetFactory::instance(),
+            &WaveformWidgetFactory::overviewNormalizeChanged,
+            pOverviewCache,
+            &OverviewCache::onNormalizeOrVisualGainChanged);
 
     connect(this,
             &MixxxMainWindow::skinLoaded,
@@ -944,6 +957,16 @@ void MixxxMainWindow::connectMenuBar() {
 
     if (m_pCoreServices->getLibrary()) {
         connect(m_pMenuBar,
+                &WMainMenuBar::searchInCurrentView,
+                m_pCoreServices->getLibrary().get(),
+                &Library::slotSearchInCurrentView,
+                Qt::UniqueConnection);
+        connect(m_pMenuBar,
+                &WMainMenuBar::searchInAllTracks,
+                m_pCoreServices->getLibrary().get(),
+                &Library::slotSearchInAllTracks,
+                Qt::UniqueConnection);
+        connect(m_pMenuBar,
                 &WMainMenuBar::createCrate,
                 m_pCoreServices->getLibrary().get(),
                 &Library::slotCreateCrate,
@@ -1172,7 +1195,7 @@ void MixxxMainWindow::slotLibraryScanSummaryDlg(const LibraryScanResultSummary& 
         if (result.numNewMissingTracks != 0) {
             summary += tr("%1 tracks are missing (%2 total)")
                                .arg(QString::number(result.numNewMissingTracks),
-                                       result.numMissingTracks);
+                                       QString::number(result.numMissingTracks));
         }
         if (result.numRediscoveredTracks != 0) {
             summary += QStringLiteral("<br>") +

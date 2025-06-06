@@ -338,9 +338,9 @@ elseif(APPLE)
   endif()
 endif()
 
-project(mixxx VERSION 2.6.0 LANGUAGES C CXX)
+project(mixxx VERSION 2.7.0 LANGUAGES C CXX)
 # Work around missing version suffixes support https://gitlab.kitware.com/cmake/cmake/-/issues/16716
-set(MIXXX_VERSION_PRERELEASE "alpha") # set to "alpha" "beta" or ""
+set(MIXXX_VERSION_PRERELEASE "beta") # set to "alpha" "beta" or ""
 
 set(CMAKE_PROJECT_HOMEPAGE_URL "https://www.mixxx.org")
 set(
@@ -1262,6 +1262,7 @@ add_library(
   src/library/missing_hidden/hiddentablemodel.cpp
   src/library/missing_hidden/missingtablemodel.cpp
   src/library/mixxxlibraryfeature.cpp
+  src/library/overviewcache.cpp
   src/library/parser.cpp
   src/library/parsercsv.cpp
   src/library/parserm3u.cpp
@@ -1291,6 +1292,7 @@ add_library(
   src/library/tabledelegates/keydelegate.cpp
   src/library/tabledelegates/locationdelegate.cpp
   src/library/tabledelegates/multilineeditdelegate.cpp
+  src/library/tabledelegates/overviewdelegate.cpp
   src/library/tabledelegates/previewbuttondelegate.cpp
   src/library/tabledelegates/stardelegate.cpp
   src/library/tabledelegates/stareditor.cpp
@@ -1513,11 +1515,13 @@ add_library(
   src/util/workerthreadscheduler.cpp
   src/util/xml.cpp
   src/waveform/guitick.cpp
+  src/waveform/overviewtype.cpp
   src/waveform/renderers/glwaveformrenderbackground.cpp
   src/waveform/renderers/glvsynctestrenderer.cpp
   src/waveform/renderers/waveformmark.cpp
   src/waveform/renderers/waveformmarkrange.cpp
   src/waveform/renderers/waveformmarkset.cpp
+  src/waveform/renderers/waveformoverviewrenderer.cpp
   src/waveform/renderers/waveformrenderbackground.cpp
   src/waveform/renderers/waveformrenderbeat.cpp
   src/waveform/renderers/waveformrendererabstract.cpp
@@ -1567,6 +1571,7 @@ add_library(
   src/widget/wcoverartlabel.cpp
   src/widget/wcoverartmenu.cpp
   src/widget/wcuemenupopup.cpp
+  src/widget/wcuebutton.cpp
   src/widget/wdisplay.cpp
   src/widget/weffectbuttonparametername.cpp
   src/widget/weffectchain.cpp
@@ -3125,6 +3130,9 @@ target_link_libraries(mixxx-lib PRIVATE FLAC::FLAC)
 # inlining It is compiled without optimization and allows to use these function
 # from -ffast-math optimized objects. The MSVC option /fp:fast does not suffer this issue
 add_library(FpClassify STATIC EXCLUDE_FROM_ALL src/util/fpclassify.cpp)
+# With gcc >= 14 and -flto some code is inlined to fast-math code and then
+# optimized away. Disable it explicit for all compiler just in case.
+set_target_properties(FpClassify PROPERTIES INTERPROCEDURAL_OPTIMIZATION OFF)
 
 if(
   CMAKE_CXX_COMPILER_ID MATCHES "Clang"
@@ -3204,8 +3212,8 @@ else()
     set(CMAKE_FIND_FRAMEWORK FIRST)
   endif()
   set(OpenGL_GL_PREFERENCE "GLVND")
-  find_package(OpenGL REQUIRED)
   if(EMSCRIPTEN)
+    find_package(OpenGL REQUIRED)
     # Emscripten's FindOpenGL.cmake does not create OpenGL::GL
     target_link_libraries(mixxx-lib PRIVATE ${OPENGL_gl_LIBRARY})
     target_compile_definitions(mixxx-lib PUBLIC QT_OPENGL_ES_2)
@@ -3217,7 +3225,12 @@ else()
       PUBLIC -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sFULL_ES2=1
     )
   else()
-    target_link_libraries(mixxx-lib PRIVATE OpenGL::GL)
+    find_package(WrapOpenGL REQUIRED)
+    if(OPENGL_opengl_LIBRARY)
+      target_link_libraries(mixxx-lib PRIVATE OpenGL::OpenGL)
+    else()
+      target_link_libraries(mixxx-lib PRIVATE OpenGL::GL)
+    endif()
   endif()
   if(UNIX AND QGLES2)
     target_compile_definitions(mixxx-lib PUBLIC QT_OPENGL_ES_2)
@@ -3428,23 +3441,25 @@ if(QML)
       src/qml/qmlapplication.cpp
       src/qml/qmlautoreload.cpp
       src/qml/qmlbeatsmodel.cpp
-      src/qml/qmlcuesmodel.cpp
-      src/qml/qmlcontrolproxy.cpp
+      src/qml/qmlchainpresetmodel.cpp
       src/qml/qmlconfigproxy.cpp
+      src/qml/qmlcontrolproxy.cpp
+      src/qml/qmlcuesmodel.cpp
       src/qml/qmldlgpreferencesproxy.cpp
       src/qml/qmleffectmanifestparametersmodel.cpp
-      src/qml/qmleffectsmanagerproxy.cpp
       src/qml/qmleffectslotproxy.cpp
+      src/qml/qmleffectsmanagerproxy.cpp
       src/qml/qmllibraryproxy.cpp
       src/qml/qmllibrarytracklistmodel.cpp
+      src/qml/qmlmixxxcontrollerscreen.cpp
       src/qml/qmlplayermanagerproxy.cpp
       src/qml/qmlplayerproxy.cpp
       src/qml/qmlvisibleeffectsmodel.cpp
-      src/qml/qmlchainpresetmodel.cpp
-      src/qml/qmlwaveformoverview.cpp
-      src/qml/qmlmixxxcontrollerscreen.cpp
       src/qml/qmlwaveformdisplay.cpp
+      src/qml/qmlwaveformoverview.cpp
       src/qml/qmlwaveformrenderer.cpp
+      src/qml/qmlsettingparameter.cpp
+      src/qml/qmltrackproxy.cpp
       src/waveform/renderers/allshader/digitsrenderer.cpp
       src/waveform/renderers/allshader/waveformrenderbeat.cpp
       src/waveform/renderers/allshader/waveformrenderer.cpp
@@ -3896,6 +3911,7 @@ elseif(UNIX AND NOT APPLE AND NOT EMSCRIPTEN)
   if(${X11_FOUND})
     target_include_directories(mixxx-lib SYSTEM PUBLIC "${X11_INCLUDE_DIR}")
     target_link_libraries(mixxx-lib PRIVATE "${X11_LIBRARIES}")
+    target_compile_definitions(mixxx-lib PUBLIC __X11__)
   endif()
   find_package(Qt${QT_VERSION_MAJOR} COMPONENTS DBus REQUIRED)
   target_link_libraries(mixxx-lib PUBLIC Qt${QT_VERSION_MAJOR}::DBus)
@@ -4943,14 +4959,7 @@ if(NOT CPACK_DEBIAN_PACKAGE_RELEASE)
   set(CPACK_DEBIAN_PACKAGE_RELEASE 1)
 endif()
 
-set(
-  CPACK_DEBIAN_DISTRIBUTION_RELEASES
-  jammy
-  noble
-  oracular
-  plucky
-  questing
-)
+set(CPACK_DEBIAN_DISTRIBUTION_RELEASES noble oracular plucky questing)
 set(CPACK_DEBIAN_SOURCE_DIR ${CMAKE_SOURCE_DIR})
 set(
   CPACK_DEBIAN_UPLOAD_PPA_SCRIPT
