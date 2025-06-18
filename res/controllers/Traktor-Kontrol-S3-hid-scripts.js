@@ -66,6 +66,10 @@ TraktorS3.QuickEffectModeChannelColors = engine.getSetting("fxUseChannelColors")
 // * keylock will still toggle on, but on release, not press.
 TraktorS3.PitchSliderRelativeMode = engine.getSetting("pitchMode") === "PITCH_RELATIVE";
 
+// In PitchSliderRelativeMode *only*, set ShiftPitch to true to only allow adjustments to the pitch
+// sliders if Shift is held.  This can prevent accidental adjustments.
+TraktorS3.ShiftPitch = engine.getSetting("pitchShift") === "SLIDER_SHIFT";
+
 // The Samplers can operate two ways.
 // With SamplerModePressAndHold = false, tapping a Sampler button will start the
 // sample playing.  Pressing the button again will stop playback.

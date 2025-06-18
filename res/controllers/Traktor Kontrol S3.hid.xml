@@ -58,6 +58,14 @@
         would allow.
       </description>
     </option>
+    <option variable="pitchShift" type="enum"
+          label="Pitch Slider Shift Mode">
+                <value label="Direct" default="true">SLIDER_DIRECT</value>
+                <value label="Shifted">SLIDER_SHIFT</value>
+        <description>
+            When enabled, does not adjust pitch at all unless shift is held.
+        </description>
+    </option>
     <option variable="samplerModePressAndHold"
       type="boolean"
       label="Stop samplers when button is released"
