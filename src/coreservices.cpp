@@ -14,6 +14,7 @@
 #include "control/controlindicatortimer.h"
 #include "controllers/controllermanager.h"
 #include "controllers/keyboard/keyboardeventfilter.h"
+#include "controllers/scripting/controllerscriptenginebase.h"
 #include "database/mixxxdb.h"
 #include "effects/effectsmanager.h"
 #include "engine/enginemixer.h"
@@ -40,7 +41,6 @@
 #include <QQuickWindow>
 #include <QSGRendererInterface>
 
-#include "controllers/scripting/controllerscriptenginebase.h"
 #include "qml/qmlconfigproxy.h"
 #include "qml/qmleffectsmanagerproxy.h"
 #include "qml/qmllibraryproxy.h"
@@ -63,7 +63,7 @@
 #include "util/sandbox.h"
 #endif
 
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) && defined(__X11__)
 #include <X11/XKBlib.h>
 #endif
 
@@ -118,7 +118,7 @@ Bool __xErrorHandler(Display* display, XErrorEvent* event, xError* error) {
 
 #endif
 
-#if defined(Q_OS_LINUX)
+#if defined(Q_OS_LINUX) && defined(__X11__)
 QLocale localeFromXkbSymbol(const QString& xkbLayout) {
     // This maps XKB layouts to locales of keyboard mappings that are shipped with Mixxx
     static const QMap<QString, QLocale> xkbToLocaleMap = {
@@ -268,7 +268,7 @@ QString getCurrentXkbLayoutName() {
 // to "ibus engine". QGuiApplication::inputMethod() does not work with GNOME and XFCE
 // https://bugreports.qt.io/browse/QTBUG-137302
 inline QLocale inputLocale() {
-#if defined(Q_OS_LINUX)
+#if defined(Q_OS_LINUX) && defined(__X11__)
     QString layoutName = getCurrentXkbLayoutName();
     if (!layoutName.isEmpty()) {
         qDebug() << "Keyboard Layout from XKB:" << layoutName;
@@ -722,6 +722,8 @@ void CoreServices::initialize(QApplication* pApp) {
 
     m_isInitialized = true;
 
+    ControllerScriptEngineBase::registerPlayerManager(getPlayerManager());
+
 #ifdef MIXXX_USE_QML
     initializeQMLSingletons();
 }
@@ -864,6 +866,7 @@ void CoreServices::finalize() {
 
     ControllerScriptEngineBase::registerTrackCollectionManager(nullptr);
 #endif
+    ControllerScriptEngineBase::registerPlayerManager(nullptr);
 
     // Stop all pending library operations
     qDebug() << t.elapsed(false).debugMillisWithUnit() << "stopping pending Library tasks";
