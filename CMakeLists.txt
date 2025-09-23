@@ -3474,6 +3474,15 @@ if(QML)
 
   set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml)
   qt_add_library(mixxx-qml-lib STATIC)
+
+  if(WIN32)
+    target_compile_definitions(mixxx-qml-lib PUBLIC __WINDOWS__)
+  endif()
+
+  if(ENGINEPRIME)
+    target_compile_definitions(mixxx-qml-lib PUBLIC __ENGINEPRIME__)
+  endif()
+
   foreach(component ${QT_COMPONENTS})
     target_link_libraries(
       mixxx-qml-lib
@@ -3555,16 +3564,22 @@ if(QML)
       src/qml/qmleffectslotproxy.cpp
       src/qml/qmleffectsmanagerproxy.cpp
       src/qml/qmllibraryproxy.cpp
+      src/qml/qmllibrarysource.cpp
+      src/qml/qmllibrarysourcetree.cpp
       src/qml/qmllibrarytracklistmodel.cpp
       src/qml/qmlmixxxcontrollerscreen.cpp
       src/qml/qmlplayermanagerproxy.cpp
       src/qml/qmlplayerproxy.cpp
+      src/qml/qmlsidebarmodelproxy.cpp
+      src/qml/qmllibrarytracklistcolumn.cpp
+      src/qml/qmltrackproxy.cpp
       src/qml/qmlvisibleeffectsmodel.cpp
       src/qml/qmlwaveformdisplay.cpp
       src/qml/qmlwaveformoverview.cpp
       src/qml/qmlwaveformrenderer.cpp
       src/qml/qmlsettingparameter.cpp
       src/qml/qmltrackproxy.cpp
+      src/qml/qmlsoundmanagerproxy.cpp
       src/waveform/renderers/allshader/digitsrenderer.cpp
       src/waveform/renderers/allshader/waveformrenderbeat.cpp
       src/waveform/renderers/allshader/waveformrenderer.cpp
@@ -4231,6 +4246,9 @@ if(RUBBERBAND)
   find_package(rubberband REQUIRED)
   target_link_libraries(mixxx-lib PRIVATE rubberband::rubberband)
   target_compile_definitions(mixxx-lib PUBLIC __RUBBERBAND__)
+  if(QML)
+    target_compile_definitions(mixxx-qml-lib PUBLIC __RUBBERBAND__)
+  endif()
   target_sources(
     mixxx-lib
     PRIVATE
