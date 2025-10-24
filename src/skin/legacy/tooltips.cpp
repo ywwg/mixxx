@@ -418,7 +418,9 @@ void Tooltips::addStandardTooltips() {
     add("visual_key")
             //: The musical key of a track
             << tr("Key")
-            << tr("Displays the current musical key of the loaded track after pitch shifting.");
+            << tr("Displays the current musical key of the loaded track after pitch shifting.")
+            << tr("It also shows a colored bar if Key colors are enabled in the Preferences.")
+            << tr("The bar will be split vertically if the track's key is in between full keys.");
 
     add("visual_bpm_edit")
             << tempoDisplay
@@ -1015,6 +1017,12 @@ void Tooltips::addStandardTooltips() {
     // Intro & outro cues
     add("show_intro_outro_cues")
             << tr("Show/hide intro & outro markers and associated buttons.");
+
+    add("keep_consistent_waveform_heights") << tr(
+            "Ensure all waveforms to have the same height across all channels. "
+            "By default, when displaying the stem controls, waveform for "
+            "channel that have no stem may render with a shorter height in "
+            "order to honor the waveform container size you have requested..");
 
     add("intro_start")
             << tr("Intro Start Marker")
