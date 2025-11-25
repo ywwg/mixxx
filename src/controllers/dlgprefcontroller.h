@@ -1,11 +1,14 @@
 #pragma once
 
+#include <qglobal.h>
+
 #include <memory>
 
-#ifdef __HID__
+#if defined(__HID__) && !defined(Q_OS_ANDROID)
 #include "controllers/controllerhidreporttabsmanager.h"
 #endif
 #include "controllers/controllermappinginfo.h"
+#include "controllers/legacycontrollermapping.h"
 #include "controllers/midi/midimessage.h"
 #include "controllers/ui_dlgprefcontrollerdlg.h"
 #include "preferences/dialog/dlgpreferencepage.h"
@@ -66,6 +69,7 @@ class DlgPrefController : public DlgPreferencePage {
     /// Called when the Controller Learning Wizard is closed.
     void slotStopLearning();
     void enableWizardAndIOTabs(bool enable);
+    void slotRefreshMappingList();
 
 #ifdef MIXXX_USE_QML
     // Onboard screen controller.
@@ -151,7 +155,7 @@ class DlgPrefController : public DlgPreferencePage {
     int m_screensTabIndex;        // Index of the screens tab
     QHash<QString, bool> m_settingsCollapsedStates;
 
-#ifdef __HID__
+#if defined(__HID__) && !defined(Q_OS_ANDROID)
     std::unique_ptr<ControllerHidReportTabsManager> m_hidReportTabsManager;
 #endif
 };

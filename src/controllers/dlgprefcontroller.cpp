@@ -18,9 +18,10 @@
 #endif
 #include "controllers/defs_controllers.h"
 #include "controllers/dlgcontrollerlearning.h"
-#ifdef __HID__
+#if defined(__HID__) && !defined(Q_OS_ANDROID)
 #include "controllers/hid/hidcontroller.h"
 #endif
+#include "controllers/legacycontrollermappingfilehandler.h"
 #include "controllers/midi/legacymidicontrollermapping.h"
 #include "controllers/midi/midicontroller.h"
 #include "controllers/scripting/legacy/controllerscriptenginelegacy.h"
@@ -91,7 +92,7 @@ DlgPrefController::DlgPrefController(
           m_outputMappingsTabIndex(-1),
           m_settingsTabIndex(-1),
           m_screensTabIndex(-1)
-#ifdef __HID__
+#if defined(__HID__) && !defined(Q_OS_ANDROID)
           ,
           m_hidReportTabsManager(nullptr) {
     qRegisterMetaType<const hid::reportDescriptor::Control*>();
@@ -102,6 +103,22 @@ DlgPrefController::DlgPrefController(
     m_ui.setupUi(this);
     // Create text color for the file and wiki links
     createLinkColor();
+
+    QString refreshIconPath;
+    if (!Color::isDimColor(palette().text().color())) {
+        refreshIconPath = QStringLiteral(
+                ":/images/preferences/light/"
+                "ic_preferences_controllers_reload.svg");
+    } else {
+        refreshIconPath = QStringLiteral(
+                ":/images/preferences/dark/"
+                "ic_preferences_controllers_reload.svg");
+    }
+    m_ui.btnRefreshMappingList->setIcon(QIcon(refreshIconPath));
+    connect(m_ui.btnRefreshMappingList,
+            &QAbstractButton::clicked,
+            this,
+            &DlgPrefController::slotRefreshMappingList);
 
     m_pControlPickerMenu = make_parented<ControlPickerMenu>(this);
 
@@ -188,7 +205,7 @@ DlgPrefController::DlgPrefController(
         m_ui.labelUsbInterfaceNumberValue->setVisible(false);
     }
 
-#ifdef __HID__
+#if defined(__HID__) && !defined(Q_OS_ANDROID)
     // Display HID UsagePage and Usage if the controller is an HidController
     if (auto* hidController = qobject_cast<HidController*>(m_pController)) {
         m_ui.labelHidUsagePageValue->setText(QStringLiteral("%1 (%2)")
@@ -653,6 +670,11 @@ void DlgPrefController::slotUpdate() {
     // When slotUpdate() is run for the first time, this bool keeps slotPresetSelected()
     // from setting a false-postive 'dirty' flag when updating the fresh GUI.
     m_GuiInitialized = true;
+}
+
+void DlgPrefController::slotRefreshMappingList() {
+    enumerateMappings(m_pControllerManager->getConfiguredMappingFileForDevice(
+            m_pController->getName()));
 }
 
 void DlgPrefController::slotHide() {
