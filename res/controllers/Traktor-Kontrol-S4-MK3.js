@@ -2628,21 +2628,25 @@ class S4Mk3Deck extends Deck {
         this.libraryEncoderPress = new Button({
             deck: this,
             onShortPress: function() {
-                if (this.deck.libraryViewButton.pressed) {
-                    script.toggleControl("[Library]", "sort_order");
+                if (this.deck.shifted) {
+                    script.triggerControl(this.group, "eject");
                 } else {
-                    const currentlyFocusWidget = engine.getValue("[Library]", "focused_widget");
-                    // 3 == Tracks table or root views of library features
-                    if (this.shifted && currentlyFocusWidget === 0) {
-                        script.triggerControl("[Playlist]", "ToggleSelectedSidebarItem");
-                    } else if (currentlyFocusWidget === 3 || currentlyFocusWidget === 0) {
-                        if (this.deck.hasSelectedStem()) {
-                            engine.setValue(this.group, "load_selected_track_stems", this.deck.stemSelection());
-                        } else {
-                            script.triggerControl(this.group, "LoadSelectedTrack");
-                        }
+                    if (this.deck.libraryViewButton.pressed) {
+                        script.toggleControl("[Library]", "sort_order");
                     } else {
-                        script.triggerControl("[Library]", "GoToItem");
+                        const currentlyFocusWidget = engine.getValue("[Library]", "focused_widget");
+                        // 3 == Tracks table or root views of library features
+                        if (this.shifted && currentlyFocusWidget === 0) {
+                            script.triggerControl("[Playlist]", "ToggleSelectedSidebarItem");
+                        } else if (currentlyFocusWidget === 3 || currentlyFocusWidget === 0) {
+                            if (this.deck.hasSelectedStem()) {
+                                engine.setValue(this.group, "load_selected_track_stems", this.deck.stemSelection());
+                            } else {
+                                script.triggerControl(this.group, "LoadSelectedTrack");
+                            }
+                        } else {
+                            script.triggerControl("[Library]", "GoToItem");
+                        }
                     }
                 }
             },
@@ -3048,7 +3052,7 @@ class S4Mk3Deck extends Deck {
             }
         });
 
-        this.wheelMode = wheelModes.vinyl;
+        this.wheelMode = wheelModes.jog;
         this.turntableButton = new Button({
             deck: this,
             onShortPress: function() {
@@ -3203,7 +3207,7 @@ class S4Mk3Deck extends Deck {
                     break;
                 case wheelModes.vinyl:
                     if (this.deck.wheelTouch.touched || engine.getValue(this.group, "scratch2") !== 0) {
-                        engine.setValue(this.group, "scratch2", this.speed);
+                        engine.setValue(this.group, "scratch2", this.speed * 2);
                     } else {
                         engine.setValue(this.group, "jog", this.speed * JogwheelAdjustFactor);
                     }
