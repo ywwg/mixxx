@@ -2643,6 +2643,9 @@ class S4Mk3Deck extends Deck {
                                 engine.setValue(this.group, "load_selected_track_stems", this.deck.stemSelection());
                             } else {
                                 script.triggerControl(this.group, "LoadSelectedTrack");
+                                // engine.beginTimer(1, () => {
+                                //     engine.setValue(this.group, "LoadSelectedTrack", 1);
+                                // }, false);
                             }
                         } else {
                             script.triggerControl("[Library]", "GoToItem");
