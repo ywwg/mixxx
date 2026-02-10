@@ -236,6 +236,7 @@ declare namespace engine {
 
     type CoCallback = (value: number, group: string, name: string) => void;
     type RuntimeSharedDataCallback = (value: SharedDataValue) => void;
+    type RuntimeSharedDataCallback = (value: SharedDataValue) => void;
 
     /**
      * Connects a specified Mixxx Control with a callback function, which is executed if the value of the control changes
@@ -248,6 +249,15 @@ declare namespace engine {
      * @returns Returns script connection object on success, otherwise 'undefined'
      */
     function makeConnection(group: string, name: string, callback: CoCallback): ScriptConnection | undefined;
+
+    /**
+     * Register callback function to be triggered when the shared data is updated
+     *
+     * Note that local update will also trigger the callback. Make sure to make your callback safe against recursion.
+     * @param callback JS function, which will be called every time, the shared controller value changes.
+     * @returns Returns script connection object on success, otherwise 'undefined'
+     */
+    function makeSharedDataConnection(callback: RuntimeSharedDataCallback): ScriptConnection | undefined;
 
     /**
      * Register callback function to be triggered when the shared data is updated
