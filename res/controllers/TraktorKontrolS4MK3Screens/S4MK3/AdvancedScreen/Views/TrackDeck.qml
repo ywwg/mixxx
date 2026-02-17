@@ -144,24 +144,14 @@ Item {
         property bool showLoopSize: true
         property string propertiesPath: ""
 
-        WF.WaveformContainer {
+        Rectangle {
             id: waveformContainer
 
-            deckInfo: display.deckInfo
-
-            deckId: deckInfo.deckId
-            deckSizeState: content.deckSizeState
-            propertiesPath: content.propertiesPath
-
-      // anchors.left:         parent.left
             width: 316
-      // anchors.top:		  phase.bottom
-            showLoopSize: content.showLoopSize
-            isInEditMode: content.isInEditMode
-
-      // the height of the waveform is defined as the remaining space of deckHeight - stripe.height - spacerWaveStripe.height
             height: (settings.alwaysShowTempoInfo || deckInfo.adjustEnabled ? (settings.hideWaveformOverview ? content.waveformHeight + display.secondRowHeight-51 : content.waveformHeight-38) : (!deckInfo.showBPMInfo ? (settings.hideWaveformOverview ? content.waveformHeight + display.secondRowHeight-13 : content.waveformHeight) : (settings.hideWaveformOverview ? content.waveformHeight + display.secondRowHeight-51 : content.waveformHeight-38))) + (settings.hidePhase && settings.hidePhrase ? 16 : 0) + (!settings.hidePhase && !settings.hidePhrase ? -16 : 0)
             visible: deckInfo.isLoaded && !settings.hideWaveforms
+
+            color: "transparent"
 
             Behavior on height { PropertyAnimation { duration: 90} }
         }
