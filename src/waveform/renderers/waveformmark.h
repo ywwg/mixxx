@@ -27,7 +27,6 @@ class WaveformMark {
         // when the text, color, breadth or level are changed.
         bool m_obsolete{};
         Graphics() = default;
-        virtual ~Graphics() = default;
         // non-copyable
         Graphics(const Graphics&) = delete;
         Graphics& operator=(const Graphics&) = delete;
