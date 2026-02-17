@@ -22,6 +22,7 @@ class WaveformMark {
   public:
     class Graphics {
       public:
+        virtual ~Graphics() = default;
         // To indicate that the image for the mark needs to be regenerated,
         // when the text, color, breadth or level are changed.
         bool m_obsolete{};
