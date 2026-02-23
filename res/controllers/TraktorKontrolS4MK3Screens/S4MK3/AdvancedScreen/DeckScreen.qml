@@ -33,21 +33,12 @@ Item {
     property bool browser: settings.showBrowserOnFavorites ? ((deckInfoModel.viewButton) || (deckInfoModel.favorites)) : (deckInfoModel.viewButton)
 
     Component.onCompleted: {
-        if (typeof engine.makeSharedDataConnection === "function") {
-            engine.makeSharedDataConnection(deckscreen.onSharedDataUpdate)
-            deckscreen.onSharedDataUpdate(engine.getSharedData())
-        }
-    }
-
-    function isLeftScreen(deckId) {
-        return deckId == 1 || deckId == 3;
-    }
-
-    function onSharedDataUpdate(data) {
-        if (typeof data === "object" && typeof data.shift === "object") {
-            propShift1.value = !!data.shift["leftdeck"]
-            propShift2.value = !!data.shift["rightdeck"]
-        }
+        engine.makeSharedValueConnection("controller", "leftdeck.shift", function(value) {
+            propShift1.value = !!value;
+        });
+        engine.makeSharedValueConnection("controller", "rightdeck.shift", function(value) {
+            propShift2.value = !!value;
+        });
     }
 
     ViewModels.DeckInfo {

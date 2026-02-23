@@ -16,30 +16,44 @@ Rectangle {
     anchors.fill: parent
     color: "black"
 
-    function onSharedDataUpdate(data) {
-        if (!root) return;
+    property bool currentKeyboardMode: false
+    property int currentPadsMode: 0
 
-        console.log(`Received data on screen#${root.screenId} while currently bind to ${root.group}: ${JSON.stringify(data)}`);
-        if (typeof data === "object" && typeof data.group[root.screenId] === "string" && root.group !== data.group[root.screenId]) {
-            root.group = data.group[root.screenId]
-            waveformOverview.player = Mixxx.PlayerManager.getPlayer(root.group)
-            artwork.player = Mixxx.PlayerManager.getPlayer(root.group)
+    function updateCompactedState() {
+        var shouldBeCompacted = scrollingWaveform.visible || artworkSpacer.visible || currentKeyboardMode;
+        deckInfo.state = shouldBeCompacted ? "compacted" : "";
+    }
+
+    function onGroupChanged(value) {
+        if (typeof value === "string" && root.group !== value) {
+            root.group = value;
+            waveformOverview.player = Mixxx.PlayerManager.getPlayer(root.group);
+            artwork.player = Mixxx.PlayerManager.getPlayer(root.group);
             console.log(`Changed group for screen ${root.screenId} to ${root.group}`);
         }
-        var shouldBeCompacted = false;
-        if (typeof data.padsMode === "object") {
-            scrollingWaveform.visible = data.padsMode[root.group] === 4
-            artworkSpacer.visible = data.padsMode[root.group] === 1
-            shouldBeCompacted |= scrollingWaveform.visible || artworkSpacer.visible
+    }
+
+    function onPadsModeChanged(value, entity) {
+        if (entity === root.group) {
+            currentPadsMode = value;
+            scrollingWaveform.visible = value === 4;
+            artworkSpacer.visible = value === 1;
+            updateCompactedState();
         }
-        if (typeof data.keyboardMode === "object") {
-            shouldBeCompacted |= data.keyboardMode[root.group]
-            keyboard.visible = !!data.keyboardMode[root.group]
+    }
+
+    function onKeyboardModeChanged(value, entity) {
+        if (entity === root.group) {
+            currentKeyboardMode = !!value;
+            keyboard.visible = !!value;
+            updateCompactedState();
         }
-        deckInfo.state = shouldBeCompacted ? "compacted" : ""
-        if (typeof data.displayBeatloopSize === "object") {
-            timeIndicator.mode = data.displayBeatloopSize[root.group] ? S4MK3.TimeAndBeatloopIndicator.Mode.BeetjumpSize : S4MK3.TimeAndBeatloopIndicator.Mode.RemainingTime
-            timeIndicator.update()
+    }
+
+    function onDisplayBeatloopSizeChanged(value, entity) {
+        if (entity === root.group) {
+            timeIndicator.mode = value ? S4MK3.TimeAndBeatloopIndicator.Mode.BeetjumpSize : S4MK3.TimeAndBeatloopIndicator.Mode.RemainingTime;
+            timeIndicator.update();
         }
     }
 
@@ -65,64 +79,25 @@ Rectangle {
         running: false
 
         onTriggered: {
-            root.onSharedDataUpdate({
-                    group: {
-                        "leftdeck": screenId === "leftdeck" && trackLoadedControl.group === "[Channel1]" ? "[Channel3]" : "[Channel1]",
-                        "rightdeck": screenId === "rightdeck" && trackLoadedControl.group === "[Channel2]" ? "[Channel4]" : "[Channel2]",
-                    },
-                    scrollingWaveform: {
-                        "[Channel1]": true,
-                        "[Channel2]": true,
-                        "[Channel3]": true,
-                        "[Channel4]": true,
-                    },
-                    keyboardMode: {
-                        "[Channel1]": false,
-                        "[Channel2]": false,
-                        "[Channel3]": false,
-                        "[Channel4]": false,
-                    },
-                    displayBeatloopSize: {
-                        "[Channel1]": false,
-                        "[Channel2]": false,
-                        "[Channel3]": false,
-                        "[Channel4]": false,
-                    },
-            });
+            // Cycle through decks for the channel change demo
+            const newGroup = screenId === "leftdeck"
+                ? (trackLoadedControl.group === "[Channel1]" ? "[Channel3]" : "[Channel1]")
+                : (trackLoadedControl.group === "[Channel2]" ? "[Channel4]" : "[Channel2]");
+            root.onGroupChanged(newGroup);
         }
     }
 
     Component.onCompleted: {
-        if (typeof engine.makeSharedDataConnection !== "function") {
-            return
+        // Group assignment connection
+        const groupKey = root.screenId === "leftdeck" ? "leftdeck.group" : "rightdeck.group";
+        engine.makeSharedValueConnection("controller", groupKey, root.onGroupChanged);
+
+        // Per-channel connections for padsMode, keyboardMode, displayBeatloopSize
+        for (const ch of ["[Channel1]", "[Channel2]", "[Channel3]", "[Channel4]"]) {
+            engine.makeSharedValueConnection(ch, "padsMode", root.onPadsModeChanged);
+            engine.makeSharedValueConnection(ch, "keyboardMode", root.onKeyboardModeChanged);
+            engine.makeSharedValueConnection(ch, "displayBeatloopSize", root.onDisplayBeatloopSizeChanged);
         }
-
-        engine.makeSharedDataConnection(root.onSharedDataUpdate)
-
-        root.onSharedDataUpdate({
-                group: {
-                    "leftdeck": "[Channel1]",
-                    "rightdeck": "[Channel2]",
-                },
-                scrollingWaveform: {
-                    "[Channel1]": false,
-                    "[Channel2]": false,
-                    "[Channel3]": false,
-                    "[Channel4]": false,
-                },
-                keyboardMode: {
-                    "[Channel1]": false,
-                    "[Channel2]": false,
-                    "[Channel3]": false,
-                    "[Channel4]": false,
-                },
-                displayBeatloopSize: {
-                    "[Channel1]": false,
-                    "[Channel2]": false,
-                    "[Channel3]": false,
-                    "[Channel4]": false,
-                },
-        });
     }
 
     Rectangle {
@@ -416,17 +391,13 @@ Rectangle {
             key: "scratch2_enable"
 
             onValueChanged: {
-                if (typeof engine.makeSharedDataConnection !== "function") {
-                    return;
-                }
-
                 if (value) {
                     waveformTimer.running = false;
                     scrollingWaveform.visible = true;
-                    deckInfo.state = scrollingWaveform.visible ? "compacted" : ""
+                    root.updateCompactedState();
                 } else {
                     waveformTimer.running = true;
-                    waveformTimer.restart()
+                    waveformTimer.restart();
                 }
             }
         }
@@ -440,7 +411,7 @@ Rectangle {
 
             onTriggered: {
                 scrollingWaveform.visible = false;
-                deckInfo.state = scrollingWaveform.visible ? "compacted" : ""
+                root.updateCompactedState();
             }
         }
 

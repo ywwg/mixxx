@@ -15,90 +15,110 @@ Item {
     readonly property var currentPlayer: viewModel.deckPlayer?.currentTrack
     readonly property string screenName: isLeftScreen(viewModel.deckId) ? "leftdeck" : "rightdeck"
 
-    function onSharedDataUpdate(data) {
-        if (typeof data !== "object") {
-            return;
-        }
-        if (typeof data.group[screenName] === "string") {
-            viewModel.group = data.group[screenName]
+    function onGroupChanged(newGroup) {
+        if (typeof newGroup === "string") {
+            viewModel.group = newGroup;
             console.log(`Changed group for screen ${screenName} to ${viewModel.group}`);
         }
-        if (typeof data.shift === "object") {
-            propShift.value = !!data.shift[screenName]
-        }
-        if (typeof data.padsMode === "object") {
-            propPadsMode.value = data.padsMode[viewModel.group]
+    }
+
+    function onShiftChanged(value) {
+        propShift.value = !!value;
+    }
+
+    function onPadsModeChanged(value, entity) {
+        if (entity === viewModel.group) {
+            propPadsMode.value = value;
             console.log(`Changed padsMode for screen ${screenName} to ${propPadsMode.value}`);
         }
-        if (typeof data.selectedQuickFX !== "undefined") {
-            propSelectedQuickFX.value = data.selectedQuickFX
-            console.log(`Changed selectedQuickFX to ${propSelectedQuickFX.value}`);
-        }
-        if (typeof data.selectedStems === "object") {
-            let firstSelected = (data.selectedStems[viewModel.group] || []).findIndex(x => !!x);
+    }
+
+    function onSelectedQuickFXChanged(value) {
+        propSelectedQuickFX.value = value;
+        console.log(`Changed selectedQuickFX to ${propSelectedQuickFX.value}`);
+    }
+
+    function onSelectedStemsChanged(value, entity) {
+        if (entity === viewModel.group) {
+            let firstSelected = (value || []).findIndex(x => !!x);
             propStemSelected.active = firstSelected >= 0;
             if (propStemSelected.active) {
                 propStemSelected.idx = firstSelected;
             }
             console.log(`Changed selectedStems for screen ${screenName} to ${propStemSelected.idx}`);
         }
-        if (typeof data.selectedHotcue === "object") {
-            let hotcue = data.selectedHotcue[viewModel.group];
+    }
 
-            if (hotcue) {
-                let model = viewModel.currentPlayer?.hotcuesModel?.get(hotcue - 1);
-                viewModel.hotcueId = hotcue;
+    function onSelectedHotcueChanged(value, entity) {
+        if (entity === viewModel.group) {
+            if (value) {
+                let model = viewModel.currentPlayer?.hotcuesModel?.get(value - 1);
+                viewModel.hotcueId = value;
                 viewModel.hotcuePressed = true;
                 viewModel.hotcueName = model?.label || "Unnamed cue";
                 viewModel.hotcueType = model?.isLoop ? 5 : 0;
             } else {
                 viewModel.hotcuePressed = false;
             }
-
-            console.log(`Changed selectedHotcue for screen ${screenName} to ${hotcue}`);
-        }
-        if (typeof data.deckColor === "object") {
-            propDeckColors.a = data.deckColor["[Channel1]"]
-            propDeckColors.b = data.deckColor["[Channel2]"]
-            propDeckColors.c = data.deckColor["[Channel3]"]
-            propDeckColors.d = data.deckColor["[Channel4]"]
-        }
-        if (typeof data.rollpadSize === "object") {
-            for (let i = 0; i < 8; i++) {
-                switch (`${data.rollpadSize[i]}`.toLowerCase()) {
-                    case "double":
-                        propRollSizePad[`pad${i+1}`] = "x2"
-                        break;
-                    case "half":
-                        propRollSizePad[`pad${i+1}`] = "/2"
-                        break;
-                    default:
-                        propRollSizePad[`pad${i+1}`] = parseFloat(data.rollpadSize[i]) < 1 ? `1/${1/parseFloat(data.rollpadSize[i])}` : data.rollpadSize[i]
-                }
-            }
-        }
-        if (typeof data.beatjumpSize === "object") {
-            for (let i = 0; i < 8; i++) {
-                switch (`${data.beatjumpSize[i]}`.toLowerCase()) {
-                    case "double":
-                        propJumpSizePad[`pad${i+1}`] = "x2"
-                        break;
-                    case "half":
-                        propJumpSizePad[`pad${i+1}`] = "/2"
-                        break;
-                    case "beatjump":
-                        propJumpSizePad[`pad${i+1}`] = "??"
-                        break;
-                    default:
-                        propJumpSizePad[`pad${i+1}`] = parseFloat(data.beatjumpSize[i]) < 1 ? `1/${1/parseFloat(data.beatjumpSize[i])}` : data.beatjumpSize[i]
-                }
-            }
+            console.log(`Changed selectedHotcue for screen ${screenName} to ${value}`);
         }
     }
+
+    function onDeckColorChanged(value, entity) {
+        switch (entity) {
+        case "[Channel1]": propDeckColors.a = value; break;
+        case "[Channel2]": propDeckColors.b = value; break;
+        case "[Channel3]": propDeckColors.c = value; break;
+        case "[Channel4]": propDeckColors.d = value; break;
+        }
+    }
+
+    function updatePadSizes(propObj, data) {
+        if (typeof data !== "object") { return; }
+        for (let i = 0; i < 8; i++) {
+            let label;
+            switch (`${data[i]}`.toLowerCase()) {
+                case "double": label = "x2"; break;
+                case "half": label = "/2"; break;
+                case "beatjump": label = "??"; break;
+                default:
+                    label = parseFloat(data[i]) < 1 ? `1/${1/parseFloat(data[i])}` : data[i];
+            }
+            propObj[`pad${i+1}`] = label;
+        }
+    }
+
     Component.onCompleted: {
-        if (typeof engine.makeSharedDataConnection === "function") {
-            engine.makeSharedDataConnection(viewModel.onSharedDataUpdate)
-            viewModel.onSharedDataUpdate(engine.getSharedData())
+        // Controller-level connections
+        const groupKey = screenName === "leftdeck" ? "leftdeck.group" : "rightdeck.group";
+        const shiftKey = screenName === "leftdeck" ? "leftdeck.shift" : "rightdeck.shift";
+        engine.makeSharedValueConnection("controller", groupKey, viewModel.onGroupChanged);
+        engine.makeSharedValueConnection("controller", shiftKey, viewModel.onShiftChanged);
+        engine.makeSharedValueConnection("controller", "selectedQuickFX", viewModel.onSelectedQuickFXChanged);
+        engine.makeSharedValueConnection("controller", "rollpadSize", function(value) { updatePadSizes(propRollSizePad, value); });
+        engine.makeSharedValueConnection("controller", "beatjumpSize", function(value) { updatePadSizes(propJumpSizePad, value); });
+
+        // Per-channel connections
+        for (const ch of ["[Channel1]", "[Channel2]", "[Channel3]", "[Channel4]"]) {
+            engine.makeSharedValueConnection(ch, "padsMode", viewModel.onPadsModeChanged);
+            engine.makeSharedValueConnection(ch, "selectedStems", viewModel.onSelectedStemsChanged);
+            engine.makeSharedValueConnection(ch, "selectedHotcue", viewModel.onSelectedHotcueChanged);
+            engine.makeSharedValueConnection(ch, "deckColor", viewModel.onDeckColorChanged);
+        }
+
+        // Initialize from current values
+        const currentGroup = engine.getSharedValue("controller", groupKey);
+        if (currentGroup !== undefined) { viewModel.onGroupChanged(currentGroup); }
+        const currentShift = engine.getSharedValue("controller", shiftKey);
+        if (currentShift !== undefined) { viewModel.onShiftChanged(currentShift); }
+        const currentQuickFX = engine.getSharedValue("controller", "selectedQuickFX");
+        if (currentQuickFX !== undefined) { viewModel.onSelectedQuickFXChanged(currentQuickFX); }
+        const currentRollpadSize = engine.getSharedValue("controller", "rollpadSize");
+        if (currentRollpadSize !== undefined) { updatePadSizes(propRollSizePad, currentRollpadSize); }
+        const currentBeatjumpSize = engine.getSharedValue("controller", "beatjumpSize");
+        if (currentBeatjumpSize !== undefined) { updatePadSizes(propJumpSizePad, currentBeatjumpSize); }
+        for (const ch of ["[Channel1]", "[Channel2]", "[Channel3]", "[Channel4]"]) {
+            viewModel.onDeckColorChanged(engine.getSharedValue(ch, "deckColor"), ch);
         }
     }
 
