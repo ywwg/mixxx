@@ -48,7 +48,6 @@ bool WaveformRendererSlipMode::init() {
         m_pSlipModeControl.reset();
         return true;
     }
-
     m_pSlipModeControl = std::make_unique<ControlProxy>(
             m_waveformRenderer->getGroup(), QStringLiteral("slip_enabled"));
 

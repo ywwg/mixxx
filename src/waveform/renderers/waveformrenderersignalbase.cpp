@@ -56,8 +56,7 @@ WaveformRendererSignalBase::WaveformRendererSignalBase(
           m_rgbHighFilteredColor_b(0) {
 }
 
-WaveformRendererSignalBase::~WaveformRendererSignalBase() {
-}
+WaveformRendererSignalBase::~WaveformRendererSignalBase() = default;
 
 bool WaveformRendererSignalBase::init() {
     m_pEQEnabled = std::make_unique<ControlProxy>(

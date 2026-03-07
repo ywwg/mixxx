@@ -15,8 +15,6 @@ void WaveformRenderMarkBase::setup(const QDomNode& node, const SkinContext& cont
     WaveformSignalColors signalColors = *m_waveformRenderer->getWaveformSignalColors();
     m_marks.setup(m_waveformRenderer->getGroup(), node, context, signalColors);
     m_marks.connectVisibleChanged(this, &WaveformRenderMarkBase::onMarkChanged);
-    m_marks.connectTypeChanged(this, &WaveformRenderMarkBase::onMarkChanged);
-    m_marks.connectStatusChanged(this, &WaveformRenderMarkBase::onMarkChanged);
 }
 
 void WaveformRenderMarkBase::onSetTrack() {

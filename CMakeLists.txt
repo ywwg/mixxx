@@ -1266,6 +1266,8 @@ add_library(
   src/effects/backends/builtin/loudnesscontoureffect.cpp
   src/effects/backends/builtin/metronomeeffect.cpp
   src/effects/backends/builtin/metronomeclick.cpp
+  src/effects/backends/builtin/keycomparisoneffect.cpp
+  src/effects/backends/builtin/pianosample.cpp
   src/effects/backends/builtin/moogladder4filtereffect.cpp
   src/effects/backends/builtin/compressoreffect.cpp
   src/effects/backends/builtin/autogaincontroleffect.cpp
@@ -2974,6 +2976,10 @@ if(BUILD_TESTING)
   endif()
 
   add_executable(mixxx-test ${src-mixxx-test})
+  target_compile_definitions(
+    mixxx-test
+    PUBLIC RESOURCE_FOLDER="${CMAKE_CURRENT_SOURCE_DIR}/res"
+  )
 
   if(HID)
     target_sources(
@@ -3007,6 +3013,30 @@ if(BUILD_TESTING)
   include(CTest)
   include(GoogleTest)
   enable_testing()
+
+  file(
+    GLOB_RECURSE CONTROLLER_BULK_MAPPING_LIST
+    "${CMAKE_CURRENT_SOURCE_DIR}/res/controllers/*.bulk.xml"
+  )
+  file(
+    GLOB_RECURSE CONTROLLER_HID_MAPPING_LIST
+    "${CMAKE_CURRENT_SOURCE_DIR}/res/controllers/*.hid.xml"
+  )
+  file(
+    GLOB_RECURSE CONTROLLER_MIDI_MAPPING_LIST
+    "${CMAKE_CURRENT_SOURCE_DIR}/res/controllers/*.midi.xml"
+  )
+  list(JOIN CONTROLLER_BULK_MAPPING_LIST "\",\"" CONTROLLER_BULK_MAPPINGS)
+  list(JOIN CONTROLLER_HID_MAPPING_LIST "\",\"" CONTROLLER_HID_MAPPINGS)
+  list(JOIN CONTROLLER_MIDI_MAPPING_LIST "\",\"" CONTROLLER_MIDI_MAPPINGS)
+
+  target_compile_definitions(
+    mixxx-test
+    PUBLIC CONTROLLER_BULK_MAPPINGS="${CONTROLLER_BULK_MAPPINGS}"
+    PUBLIC CONTROLLER_HID_MAPPINGS="${CONTROLLER_HID_MAPPINGS}"
+    PUBLIC CONTROLLER_MIDI_MAPPINGS="${CONTROLLER_MIDI_MAPPINGS}"
+  )
+
   gtest_discover_tests(
     mixxx-test
     EXTRA_ARGS --logLevel info
@@ -4340,7 +4370,7 @@ if(APPLE)
     )
     if(IOS)
       target_link_libraries(mixxx-lib PRIVATE "-weak_framework UIKit")
-    elseif()
+    else()
       target_link_libraries(
         mixxx-lib
         PRIVATE "-weak_framework AppKit" "-weak_framework AudioUnit"
@@ -5159,7 +5189,7 @@ if(VINYLCONTROL)
       lib/xwax/lut.c
       lib/xwax/lut_mk2.c
       lib/xwax/filters.c
-      lib/xwax/delayline.c
+      lib/xwax/ringbuffer.c
       lib/xwax/pitch_kalman.c
   )
   target_include_directories(mixxx-xwax SYSTEM PUBLIC lib/xwax)
@@ -5343,7 +5373,7 @@ if(NOT CPACK_DEBIAN_PACKAGE_RELEASE)
   set(CPACK_DEBIAN_PACKAGE_RELEASE 1)
 endif()
 
-set(CPACK_DEBIAN_DISTRIBUTION_RELEASES noble plucky questing resolute)
+set(CPACK_DEBIAN_DISTRIBUTION_RELEASES noble questing resolute)
 set(CPACK_DEBIAN_SOURCE_DIR ${CMAKE_SOURCE_DIR})
 set(
   CPACK_DEBIAN_UPLOAD_PPA_SCRIPT

@@ -241,15 +241,19 @@ class PlayerManager;
 
 // We can't inherit from LibraryTest because that creates a key_notation control object that is also
 // created by the Library object itself. The duplicated CO creation causes a debug assert.
-class LegacyControllerMappingValidationTest : public MixxxDbTest, SoundSourceProviderRegistration {
+class MappingTestFixture
+        : public MixxxDbTest,
+          SoundSourceProviderRegistration,
+          public ::testing::WithParamInterface<std::string> {
   public:
-    LegacyControllerMappingValidationTest()
+    MappingTestFixture()
             : MixxxDbTest(true) {
     }
 
   protected:
     void SetUp() override;
     void TearDown() override;
+#ifdef MIXXX_USE_QML
 
     TrackPointer getOrAddTrackByLocation(
             const QString& trackLocation) const {
@@ -265,9 +269,7 @@ class LegacyControllerMappingValidationTest : public MixxxDbTest, SoundSourcePro
     std::shared_ptr<TrackCollectionManager> m_pTrackCollectionManager;
     std::shared_ptr<RecordingManager> m_pRecordingManager;
     std::shared_ptr<Library> m_pLibrary;
+#endif
 
-    bool testLoadMapping(const MappingInfo& mapping);
-
-    QDir m_mappingPath;
-    QScopedPointer<MappingInfoEnumerator> m_pEnumerator;
+    bool testLoadMapping(const QString& mapping);
 };

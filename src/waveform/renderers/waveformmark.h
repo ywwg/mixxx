@@ -22,11 +22,11 @@ class WaveformMark {
   public:
     class Graphics {
       public:
-        virtual ~Graphics() = default;
         // To indicate that the image for the mark needs to be regenerated,
         // when the text, color, breadth or level are changed.
         bool m_obsolete{};
         Graphics() = default;
+        virtual ~Graphics() = default;
         // non-copyable
         Graphics(const Graphics&) = delete;
         Graphics& operator=(const Graphics&) = delete;
@@ -89,18 +89,15 @@ class WaveformMark {
     }
 
     template<typename Receiver, typename Slot>
-    void connectTypeChanged(Receiver receiver, Slot slot) const {
-        if (m_typeCO) {
-            m_typeCO->connectValueChanged(receiver, slot, Qt::AutoConnection);
-        }
+    void connectSamplePositionChanged(Receiver receiver, Slot slot) const {
+        m_pPositionCO->connectValueChanged(receiver, slot, Qt::AutoConnection);
     };
     template<typename Receiver, typename Slot>
-    void connectStatusChanged(Receiver receiver, Slot slot) const {
-        if (m_statusCO) {
-            m_statusCO->connectValueChanged(receiver, slot, Qt::AutoConnection);
+    void connectSampleEndPositionChanged(Receiver receiver, Slot slot) const {
+        if (m_pEndPositionCO) {
+            m_pEndPositionCO->connectValueChanged(receiver, slot, Qt::AutoConnection);
         }
     };
-
     double getSamplePosition() const {
         return m_pPositionCO->get();
     }
