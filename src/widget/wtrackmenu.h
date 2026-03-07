@@ -174,7 +174,6 @@ class WTrackMenu : public QMenu {
 
     // Info and metadata
     void slotUpdateReplayGainFromPregain();
-    void slotNormalizeReplayGain();
     void slotShowDlgTagFetcher();
     void slotImportMetadataFromFileTags();
     void slotExportMetadataIntoFileTags();
@@ -307,9 +306,6 @@ class WTrackMenu : public QMenu {
 
     // Update ReplayGain from Track
     parented_ptr<QAction> m_pUpdateReplayGainAct;
-
-    // Normalize ReplayGain across selected tracks
-    parented_ptr<QAction> m_pNormalizeReplayGainAct;
 
     // Reload Track Metadata Action:
     parented_ptr<QAction> m_pImportMetadataFromFileAct;
