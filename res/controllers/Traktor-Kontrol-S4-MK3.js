@@ -3695,26 +3695,33 @@ class S4MK3 {
             this.inReports[repordId].handleInput(controller.getInputReport(repordId));
         }
 
-        // Initialize shared data values
-        engine.setSharedValue("controller", "leftdeck.group", "[Channel1]");
-        engine.setSharedValue("controller", "rightdeck.group", "[Channel2]");
-        engine.setSharedValue("controller", "leftdeck.shift", false);
-        engine.setSharedValue("controller", "rightdeck.shift", false);
-        engine.setSharedValue("controller", "rollpadSize", BeatLoopRolls);
-        engine.setSharedValue("controller", "beatjumpSize", BeatJumps);
-        engine.setSharedValue("controller", "selectedQuickFX", null);
+        // Initialize shared data values (bulk set to minimize lock acquisitions)
         const deckColorIndex = (color) => Object.keys(LedColors).indexOf(Object.keys(LedColors).find(key => LedColors[key] === color)) - 1;
+        const initValues = {
+            "controller": {
+                "leftdeck.group": "[Channel1]",
+                "rightdeck.group": "[Channel2]",
+                "leftdeck.shift": false,
+                "rightdeck.shift": false,
+                "rollpadSize": BeatLoopRolls,
+                "beatjumpSize": BeatJumps,
+                "selectedQuickFX": null,
+            },
+        };
         for (let i = 0; i < 4; i++) {
             const ch = `[Channel${i + 1}]`;
-            engine.setSharedValue(ch, "scrollingWaveform", false);
-            engine.setSharedValue(ch, "deckColor", deckColorIndex(DeckColors[i]));
-            engine.setSharedValue(ch, "selectedHotcue", null);
-            engine.setSharedValue(ch, "selectedStems", [0, 0, 0, 0]);
-            engine.setSharedValue(ch, "viewArtwork", false);
-            engine.setSharedValue(ch, "keyboardMode", false);
-            engine.setSharedValue(ch, "displayBeatloopSize", false);
-            engine.setSharedValue(ch, "padsMode", 0);
+            initValues[ch] = {
+                "scrollingWaveform": false,
+                "deckColor": deckColorIndex(DeckColors[i]),
+                "selectedHotcue": null,
+                "selectedStems": [0, 0, 0, 0],
+                "viewArtwork": false,
+                "keyboardMode": false,
+                "displayBeatloopSize": false,
+                "padsMode": 0,
+            };
         }
+        engine.setSharedValues(initValues);
     }
     shutdown() {
         // button LEDs

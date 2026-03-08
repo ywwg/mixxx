@@ -26,12 +26,12 @@ Item {
 
     function rehydrateGroupState() {
         const g = viewModel.group;
-        const padsMode = engine.getSharedValue(g, "padsMode");
-        if (padsMode !== undefined) { viewModel.onPadsModeChanged(padsMode, g); }
-        const stems = engine.getSharedValue(g, "selectedStems");
-        if (stems !== undefined) { viewModel.onSelectedStemsChanged(stems, g); }
-        const hotcue = engine.getSharedValue(g, "selectedHotcue");
-        if (hotcue !== undefined) { viewModel.onSelectedHotcueChanged(hotcue, g); }
+        const all = engine.getAllSharedValues();
+        const groupData = all[g];
+        if (!groupData) return;
+        if (groupData.padsMode !== undefined) { viewModel.onPadsModeChanged(groupData.padsMode, g); }
+        if (groupData.selectedStems !== undefined) { viewModel.onSelectedStemsChanged(groupData.selectedStems, g); }
+        if (groupData.selectedHotcue !== undefined) { viewModel.onSelectedHotcueChanged(groupData.selectedHotcue, g); }
     }
 
     function onShiftChanged(value) {
@@ -118,22 +118,27 @@ Item {
             engine.makeSharedValueConnection(ch, "deckColor", viewModel.onDeckColorChanged);
         }
 
-        // Initialize from current values
-        const currentGroup = engine.getSharedValue("controller", groupKey);
-        if (currentGroup !== undefined) { viewModel.onGroupChanged(currentGroup); }
-        const currentShift = engine.getSharedValue("controller", shiftKey);
-        if (currentShift !== undefined) { viewModel.onShiftChanged(currentShift); }
-        const currentQuickFX = engine.getSharedValue("controller", "selectedQuickFX");
-        if (currentQuickFX !== undefined) { viewModel.onSelectedQuickFXChanged(currentQuickFX); }
-        const currentRollpadSize = engine.getSharedValue("controller", "rollpadSize");
-        if (currentRollpadSize !== undefined) { updatePadSizes(propRollSizePad, currentRollpadSize); }
-        const currentBeatjumpSize = engine.getSharedValue("controller", "beatjumpSize");
-        if (currentBeatjumpSize !== undefined) { updatePadSizes(propJumpSizePad, currentBeatjumpSize); }
+        // Initialize from current values (single lock acquisition)
+        const all = engine.getAllSharedValues();
+        const ctrl = all["controller"] || {};
+        if (ctrl[groupKey] !== undefined) { viewModel.onGroupChanged(ctrl[groupKey]); }
+        if (ctrl[shiftKey] !== undefined) { viewModel.onShiftChanged(ctrl[shiftKey]); }
+        if (ctrl["selectedQuickFX"] !== undefined) { viewModel.onSelectedQuickFXChanged(ctrl["selectedQuickFX"]); }
+        if (ctrl["rollpadSize"] !== undefined) { updatePadSizes(propRollSizePad, ctrl["rollpadSize"]); }
+        if (ctrl["beatjumpSize"] !== undefined) { updatePadSizes(propJumpSizePad, ctrl["beatjumpSize"]); }
         for (const ch of ["[Channel1]", "[Channel2]", "[Channel3]", "[Channel4]"]) {
-            viewModel.onDeckColorChanged(engine.getSharedValue(ch, "deckColor"), ch);
+            const chData = all[ch];
+            if (chData && chData["deckColor"] !== undefined) {
+                viewModel.onDeckColorChanged(chData["deckColor"], ch);
+            }
         }
-        // Seed per-group state for the initial group
-        rehydrateGroupState();
+        // Seed per-group state for the initial group (reuses same snapshot)
+        const groupData = all[viewModel.group];
+        if (groupData) {
+            if (groupData.padsMode !== undefined) { viewModel.onPadsModeChanged(groupData.padsMode, viewModel.group); }
+            if (groupData.selectedStems !== undefined) { viewModel.onSelectedStemsChanged(groupData.selectedStems, viewModel.group); }
+            if (groupData.selectedHotcue !== undefined) { viewModel.onSelectedHotcueChanged(groupData.selectedHotcue, viewModel.group); }
+        }
     }
 
     function isLeftScreen(deckId) {

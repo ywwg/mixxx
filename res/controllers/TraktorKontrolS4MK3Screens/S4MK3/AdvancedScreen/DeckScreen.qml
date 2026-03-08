@@ -40,11 +40,11 @@ Item {
             propShift2.value = !!value;
         });
 
-        // Seed initial shift state
-        const leftShift = engine.getSharedValue("controller", "leftdeck.shift");
-        if (leftShift !== undefined) { propShift1.value = !!leftShift; }
-        const rightShift = engine.getSharedValue("controller", "rightdeck.shift");
-        if (rightShift !== undefined) { propShift2.value = !!rightShift; }
+        // Seed initial shift state (single lock acquisition)
+        const all = engine.getAllSharedValues();
+        const ctrl = all["controller"] || {};
+        if (ctrl["leftdeck.shift"] !== undefined) { propShift1.value = !!ctrl["leftdeck.shift"]; }
+        if (ctrl["rightdeck.shift"] !== undefined) { propShift2.value = !!ctrl["rightdeck.shift"]; }
     }
 
     ViewModels.DeckInfo {
