@@ -68,6 +68,8 @@ class ControllerScriptInterfaceLegacy : public QObject {
             const QString& entity,
             const QString& key,
             const QJSValue& value);
+    Q_INVOKABLE QJSValue getAllSharedValues();
+    Q_INVOKABLE void setSharedValues(const QJSValue& values);
     Q_INVOKABLE QJSValue makeSharedValueConnection(
             const QString& entity,
             const QString& key,
@@ -132,7 +134,7 @@ class ControllerScriptInterfaceLegacy : public QObject {
     void triggerScriptConnection(const ScriptConnection& conn);
 
     /// Disconnect and remove a SharedDataConnection JS callback
-    void removeSharedDataConnection(const SharedDataConnection& conn);
+    bool removeSharedDataConnection(const SharedDataConnection& conn);
     /// Execute a SharedDataConnection JS callback with current value
     void triggerSharedDataConnection(const SharedDataConnection& conn);
 

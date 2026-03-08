@@ -253,7 +253,7 @@ const wheelTimerMax = 2 ** 32 - 1;
 
 const baseRevolutionsPerSecond = BaseRevolutionsPerMinute / 60;
 
-// The active tab ID. This is used when SharedDataAPI is active, to communicate with the screens which tab is currently selected.
+// The active tab ID. This is used to communicate with the screens which tab is currently selected via the shared data system.
 const ActiveTabPadID = {
     jump: 1,
     hotcue: 2,
@@ -312,36 +312,7 @@ const stemChannel = (group, idx) => {
     return `${group.substr(0, group.length - 1)}_Stem${idx + 1}]`;
 };
 
-const isObject = (item) => {
-    return (item && typeof item === "object" && !Array.isArray(item));
-};
 
-const mergeDeep = (target, ...sources) => {
-    if (!sources.length) { return target; }
-    const source = sources.shift();
-
-    if (isObject(target) && isObject(source)) {
-        for (const key in source) {
-            if (isObject(source[key])) {
-                if (!target[key]) { Object.assign(target, {[key]: {}}); }
-                mergeDeep(target[key], source[key]);
-            } else {
-                Object.assign(target, {[key]: source[key]});
-            }
-        }
-    }
-
-    return mergeDeep(target, ...sources);
-};
-
-const hasRuntimeDataAPI = () => typeof engine.getSharedData === "function";
-
-const updateRuntimeData = (patch) => {
-    if (!hasRuntimeDataAPI()) {
-        return;
-    }
-    engine.setSharedData(mergeDeep(engine.getSharedData() || {}, patch));
-};
 
 /*
  * HID report parsing library
@@ -590,11 +561,7 @@ class Deck extends ComponentContainer {
         this.secondDeckModes = null;
         this.selectedHotcue = null;
 
-        updateRuntimeData({
-            selectedHotcue: {
-                [this.group]: this.selectedHotcue
-            }
-        });
+        engine.setSharedValue(this.group, "selectedHotcue", this.selectedHotcue);
     }
     toggleDeck() {
         if (this.decks === undefined) {
@@ -621,11 +588,7 @@ class Deck extends ComponentContainer {
             this.selectedHotcue = null;
 
 
-            updateRuntimeData({
-                selectedHotcue: {
-                    [this.group]: this.selectedHotcue
-                }
-            });
+            engine.setSharedValue(this.group, "selectedHotcue", this.selectedHotcue);
             break;
         }
 
@@ -665,11 +628,7 @@ class Deck extends ComponentContainer {
         this.secondDeckModes = currentModes;
         this.currentDeckNumber = newDeck;
 
-        updateRuntimeData({
-            group: {
-                [this.decks[0] === 1 ? "leftdeck":"rightdeck"]: this.group
-            }
-        });
+        engine.setSharedValue("controller", this.decks[0] === 1 ? "leftdeck.group" : "rightdeck.group", this.group);
     }
     static groupForNumber(deckNumber) {
         return `[Channel${deckNumber}]`;
@@ -929,11 +888,7 @@ class HotcueButton extends PushButton {
         if (this.deck.moveMode === moveModes.hotcueColor) {
             this.deck.selectedHotcue = pressed ? this.number : null;
 
-            updateRuntimeData({
-                selectedHotcue: {
-                    [this.group]: this.deck.selectedHotcue
-                }
-            });
+            engine.setSharedValue(this.group, "selectedHotcue", this.deck.selectedHotcue);
         } else if (this.deck.libraryPlayButton.pressed) {
             engine.setValue(this.deck.libraryPlayButton.group, this.inKey, pressed);
         } else {
@@ -1081,11 +1036,7 @@ class StemButton extends PushButton {
         }
         if (!this.shifted) {
             this.deck.selectedStem[this.number - 1] = pressed;
-            updateRuntimeData({
-                selectedStems: {
-                    [this.group]: this.deck.selectedStem
-                }
-            });
+            engine.setSharedValue(this.group, "selectedStems", this.deck.selectedStem);
         }
         if (!this.shifted && pressed && this.deck.mixer.firstPressedFxSelector !== null) {
             const presetNumber = this.deck.mixer.calculatePresetNumber();
@@ -1096,9 +1047,7 @@ class StemButton extends PushButton {
             this.deck.mixer.resetFxSelectorColors();
 
 
-            updateRuntimeData({
-                selectedQuickFX: null
-            });
+            engine.setSharedValue("controller", "selectedQuickFX", null);
         }
     }
     output() {
@@ -1687,15 +1636,11 @@ class FXSelect extends Button {
             }
             this.outReport.send();
 
-            updateRuntimeData({
-                selectedQuickFX: this.mixer.calculatePresetNumber()
-            });
+            engine.setSharedValue("controller", "selectedQuickFX", this.mixer.calculatePresetNumber());
         } else {
             this.mixer.secondPressedFxSelector = this.number;
 
-            updateRuntimeData({
-                selectedQuickFX: this.mixer.calculatePresetNumber()
-            });
+            engine.setSharedValue("controller", "selectedQuickFX", this.mixer.calculatePresetNumber());
         }
 
     }
@@ -1727,9 +1672,7 @@ class FXSelect extends Button {
         }
         this.mixer.secondPressedFxSelector = null;
 
-        updateRuntimeData({
-            selectedQuickFX: null
-        });
+        engine.setSharedValue("controller", "selectedQuickFX", null);
     }
 
 }
@@ -2321,20 +2264,12 @@ class S4Mk3Deck extends Deck {
             onPress: function() {
                 this.deck.shift();
 
-                updateRuntimeData({
-                    shift: {
-                        [decks[0] === 1 ? "leftdeck":"rightdeck"]: true
-                    }
-                });
+                engine.setSharedValue("controller", decks[0] === 1 ? "leftdeck.shift" : "rightdeck.shift", true);
             },
             onRelease: function() {
                 this.deck.unshift();
 
-                updateRuntimeData({
-                    shift: {
-                        [decks[0] === 1 ? "leftdeck":"rightdeck"]: false
-                    }
-                });
+                engine.setSharedValue("controller", decks[0] === 1 ? "leftdeck.shift" : "rightdeck.shift", false);
             },
         });
 
@@ -2427,19 +2362,11 @@ class S4Mk3Deck extends Deck {
                     script.toggleControl(this.group, "pitch_adjust_set_default");
                 }
 
-                updateRuntimeData({
-                    displayBeatloopSize: {
-                        [this.group]: true
-                    }
-                });
+                engine.setSharedValue(this.group, "displayBeatloopSize", true);
             },
-            onRelease: hasRuntimeDataAPI() ? function() {
-                updateRuntimeData({
-                    displayBeatloopSize: {
-                        [this.group]: false
-                    }
-                });
-            } : undefined
+            onRelease: function() {
+                engine.setSharedValue(this.group, "displayBeatloopSize", false);
+            }
         });
 
         this.rightEncoder = new Encoder({
@@ -2816,13 +2743,9 @@ class S4Mk3Deck extends Deck {
                 }
 
             },
-            onShortPress: hasRuntimeDataAPI() ? function() {
-                updateRuntimeData({
-                    padsMode: {
-                        [this.group]: ActiveTabPadID.hotcue
-                    }
-                });
-            } : undefined,
+            onShortPress: function() {
+                engine.setSharedValue(this.group, "padsMode", ActiveTabPadID.hotcue);
+            },
             onLongPress: function() {
                 this.previousMoveMode = this.deck.moveMode;
                 this.deck.moveMode = moveModes.hotcueColor;
@@ -2839,15 +2762,11 @@ class S4Mk3Deck extends Deck {
         });
         this.recordPadModeButton = new Button({
             deck: this,
-            onShortPress: hasRuntimeDataAPI() ? function() {
-                updateRuntimeData({
-                    padsMode: {
-                        [this.deck.group]: ActiveTabPadID.jump
-                    }
-                });
+            onShortPress: function() {
+                engine.setSharedValue(this.deck.group, "padsMode", ActiveTabPadID.jump);
                 switchPadLayer(this.deck, beatJumpPage);
                 this.deck.lightPadMode();
-            } : undefined,
+            },
             // hack to switch the LED color when changing decks
             outTrigger: function() {
                 this.deck.lightPadMode();
@@ -2859,11 +2778,7 @@ class S4Mk3Deck extends Deck {
             onShortPress: function() {
                 engine.setValue(this.deck.group, "loop_anchor", 1);
 
-                updateRuntimeData({
-                    padsMode: {
-                        [this.deck.group]: UseBeatloopRollInsteadOfSampler ? ActiveTabPadID.roll : ActiveTabPadID.samples
-                    }
-                });
+                engine.setSharedValue(this.deck.group, "padsMode", UseBeatloopRollInsteadOfSampler ? ActiveTabPadID.roll : ActiveTabPadID.samples);
             },
             onShortRelease: function() {
                 if (this.deck.currentPadLayer !== this.deck.padLayers.samplerPage) {
@@ -2885,13 +2800,9 @@ class S4Mk3Deck extends Deck {
         // The mute button doesn't have a mapping by default, but you can add yours here
         this.mutePadModeButton = new Button({
             deck: this,
-            onShortPress: hasRuntimeDataAPI() ? function() {
-                updateRuntimeData({
-                    padsMode: {
-                        [this.deck.group]: ActiveTabPadID.mute
-                    }
-                });
-            } : undefined,
+            onShortPress: function() {
+                engine.setSharedValue(this.deck.group, "padsMode", ActiveTabPadID.mute);
+            },
             // hack to switch the LED color when changing decks
             outTrigger: function() {
                 this.deck.lightPadMode();
@@ -2908,11 +2819,7 @@ class S4Mk3Deck extends Deck {
                 }
             },
             onShortPress: function() {
-                updateRuntimeData({
-                    padsMode: {
-                        [this.deck.group]: ActiveTabPadID.stems
-                    }
-                });
+                engine.setSharedValue(this.deck.group, "padsMode", ActiveTabPadID.stems);
                 if (this.previousMoveMode === null) {
                     this.previousMoveMode = this.deck.moveMode;
                     this.deck.moveMode = moveModes.keyboard;
@@ -3270,26 +3177,22 @@ class S4Mk3Deck extends Deck {
             this.hotcuePadModeButton.send(this.hotcuePadModeButton.color + this.hotcuePadModeButton.brightnessOff);
         }
 
-        const data = (hasRuntimeDataAPI() ? engine.getSharedData() : false) || {};
-
         // unfortunately the other pad mode buttons only have one LED color
         // const recordPadModeLEDOn = this.currentPadLayer === this.padLayers.hotcuePage3;
-        this.recordPadModeButton.output(data.padsMode && data.padsMode[this.group] === ActiveTabPadID.jump);
+        this.recordPadModeButton.output(engine.getSharedValue(this.group, "padsMode") === ActiveTabPadID.jump);
 
         const samplesPadModeLEDOn = this.currentPadLayer === this.padLayers.samplerPage;
         this.samplesPadModeButton.send(samplesPadModeLEDOn ? 127 : 0);
 
         // this.mutePadModeButtonLEDOn = this.currentPadLayer === this.padLayers.samplerPage2;
-        this.mutePadModeButton.output(data.viewArtwork && data.viewArtwork[this.group]);
+        this.mutePadModeButton.output(!!engine.getSharedValue(this.group, "viewArtwork"));
         if (this.keyboardPlayMode !== null) {
             this.stemsPadModeButton.send(LedColors.green + this.stemsPadModeButton.brightnessOn);
         } else {
             const keyboardPadModeLEDOn = this.currentPadLayer === this.padLayers.keyboard || this.currentPadLayer === this.padLayers.stem;
             this.stemsPadModeButton.send(this.stemsPadModeButton.color + (keyboardPadModeLEDOn ? this.stemsPadModeButton.brightnessOn : this.stemsPadModeButton.brightnessOff));
         }
-        if (!hasRuntimeDataAPI() || !data.keyboardMode) { return; }
-        data.keyboardMode[this.group] = this.currentPadLayer === this.padLayers.keyboard;
-        engine.setSharedData(data);
+        engine.setSharedValue(this.group, "keyboardMode", this.currentPadLayer === this.padLayers.keyboard);
     }
 }
 
@@ -3792,67 +3695,33 @@ class S4MK3 {
             this.inReports[repordId].handleInput(controller.getInputReport(repordId));
         }
 
-        updateRuntimeData({
-            group: {
-                "leftdeck": "[Channel1]",
-                "rightdeck": "[Channel2]",
+        // Initialize shared data values (bulk set to minimize lock acquisitions)
+        const deckColorIndex = (color) => Object.keys(LedColors).indexOf(Object.keys(LedColors).find(key => LedColors[key] === color)) - 1;
+        const initValues = {
+            "controller": {
+                "leftdeck.group": "[Channel1]",
+                "rightdeck.group": "[Channel2]",
+                "leftdeck.shift": false,
+                "rightdeck.shift": false,
+                "rollpadSize": BeatLoopRolls,
+                "beatjumpSize": BeatJumps,
+                "selectedQuickFX": null,
             },
-            shift: {
-                "leftdeck": false,
-                "rightdeck": false,
-            },
-            scrollingWavefom: {
-                "[Channel1]": false,
-                "[Channel2]": false,
-                "[Channel3]": false,
-                "[Channel4]": false,
-            },
-            deckColor: {
-                "[Channel1]": Object.keys(LedColors).indexOf(Object.keys(LedColors).find(key => LedColors[key] === DeckColors[0])) - 1,
-                "[Channel2]": Object.keys(LedColors).indexOf(Object.keys(LedColors).find(key => LedColors[key] === DeckColors[1])) - 1,
-                "[Channel3]": Object.keys(LedColors).indexOf(Object.keys(LedColors).find(key => LedColors[key] === DeckColors[2])) - 1,
-                "[Channel4]": Object.keys(LedColors).indexOf(Object.keys(LedColors).find(key => LedColors[key] === DeckColors[3])) - 1,
-            },
-            rollpadSize: BeatLoopRolls,
-            beatjumpSize: BeatJumps,
-            selectedQuickFX: null,
-            selectedHotcue: {
-                "[Channel1]": null,
-                "[Channel2]": null,
-                "[Channel3]": null,
-                "[Channel4]": null,
-            },
-            selectedStems: {
-                "[Channel1]": [0, 0, 0, 0],
-                "[Channel2]": [0, 0, 0, 0],
-                "[Channel3]": [0, 0, 0, 0],
-                "[Channel4]": [0, 0, 0, 0],
-            },
-            viewArtwork: {
-                "[Channel1]": false,
-                "[Channel2]": false,
-                "[Channel3]": false,
-                "[Channel4]": false,
-            },
-            keyboardMode: {
-                "[Channel1]": false,
-                "[Channel2]": false,
-                "[Channel3]": false,
-                "[Channel4]": false,
-            },
-            displayBeatloopSize: {
-                "[Channel1]": false,
-                "[Channel2]": false,
-                "[Channel3]": false,
-                "[Channel4]": false,
-            },
-            padsMode: {
-                "[Channel1]": 0,
-                "[Channel2]": 0,
-                "[Channel3]": 0,
-                "[Channel4]": 0,
-            },
-        });
+        };
+        for (let i = 0; i < 4; i++) {
+            const ch = `[Channel${i + 1}]`;
+            initValues[ch] = {
+                "scrollingWaveform": false,
+                "deckColor": deckColorIndex(DeckColors[i]),
+                "selectedHotcue": null,
+                "selectedStems": [0, 0, 0, 0],
+                "viewArtwork": false,
+                "keyboardMode": false,
+                "displayBeatloopSize": false,
+                "padsMode": 0,
+            };
+        }
+        engine.setSharedValues(initValues);
     }
     shutdown() {
         // button LEDs

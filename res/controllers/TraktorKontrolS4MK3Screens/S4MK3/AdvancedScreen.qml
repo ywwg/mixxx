@@ -26,15 +26,13 @@ Item {
     Defines.Colors {id: colors}
 
     Component.onCompleted: {
-        if (typeof engine.makeSharedDataConnection === "function") {
-            engine.makeSharedDataConnection(screen.onSharedDataUpdate)
-            screen.onSharedDataUpdate(engine.getSharedData())
-        }
-    }
-
-    function onSharedDataUpdate(data) {
-        if (typeof data === "object" && typeof data.group === "object") {
-            propTopDeckFocus = data.group[isLeftScreen ? 'leftdeck' : 'rightdeck'] === `[Channel${screen.topDeckId}]`
+        const groupKey = isLeftScreen ? "leftdeck.group" : "rightdeck.group";
+        engine.makeSharedValueConnection("controller", groupKey, function(value) {
+            propTopDeckFocus = value === `[Channel${screen.topDeckId}]`;
+        });
+        const currentGroup = engine.getSharedValue("controller", groupKey);
+        if (currentGroup !== undefined) {
+            propTopDeckFocus = currentGroup === `[Channel${screen.topDeckId}]`;
         }
     }
 

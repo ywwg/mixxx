@@ -33,21 +33,18 @@ Item {
     property bool browser: settings.showBrowserOnFavorites ? ((deckInfoModel.viewButton) || (deckInfoModel.favorites)) : (deckInfoModel.viewButton)
 
     Component.onCompleted: {
-        if (typeof engine.makeSharedDataConnection === "function") {
-            engine.makeSharedDataConnection(deckscreen.onSharedDataUpdate)
-            deckscreen.onSharedDataUpdate(engine.getSharedData())
-        }
-    }
+        engine.makeSharedValueConnection("controller", "leftdeck.shift", function(value) {
+            propShift1.value = !!value;
+        });
+        engine.makeSharedValueConnection("controller", "rightdeck.shift", function(value) {
+            propShift2.value = !!value;
+        });
 
-    function isLeftScreen(deckId) {
-        return deckId == 1 || deckId == 3;
-    }
-
-    function onSharedDataUpdate(data) {
-        if (typeof data === "object" && typeof data.shift === "object") {
-            propShift1.value = !!data.shift["leftdeck"]
-            propShift2.value = !!data.shift["rightdeck"]
-        }
+        // Seed initial shift state (single lock acquisition)
+        const all = engine.getAllSharedValues();
+        const ctrl = all["controller"] || {};
+        if (ctrl["leftdeck.shift"] !== undefined) { propShift1.value = !!ctrl["leftdeck.shift"]; }
+        if (ctrl["rightdeck.shift"] !== undefined) { propShift2.value = !!ctrl["rightdeck.shift"]; }
     }
 
     ViewModels.DeckInfo {
