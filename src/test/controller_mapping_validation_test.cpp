@@ -7,6 +7,7 @@
 #include <QRegularExpression>
 #include <QUrl>
 
+#include "controllers/controllershareddata.h"
 #include "controllers/defs_controllers.h"
 #include "controllers/legacycontrollermappingfilehandler.h"
 #include "controllers/scripting/legacy/controllerscriptenginelegacy.h"
@@ -217,6 +218,10 @@ bool MappingTestFixture::testLoadMapping(const QString& mappingPath) {
 
     FakeController controller;
     controller.setMapping(pMapping);
+    // Provide shared data so mappings that use setSharedValue/getSharedValue
+    // can initialize without errors.
+    auto pSharedData = std::make_shared<ControllerSharedData>();
+    controller.setSharedData(pSharedData);
     bool result = controller.applyMapping(getTestDir().filePath(RESOURCE_FOLDER));
     controller.stopEngine();
     return result;

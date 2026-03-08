@@ -19,7 +19,19 @@ Item {
         if (typeof newGroup === "string") {
             viewModel.group = newGroup;
             console.log(`Changed group for screen ${screenName} to ${viewModel.group}`);
+            // Rehydrate all per-group state from the new group's current values
+            rehydrateGroupState();
         }
+    }
+
+    function rehydrateGroupState() {
+        const g = viewModel.group;
+        const padsMode = engine.getSharedValue(g, "padsMode");
+        if (padsMode !== undefined) { viewModel.onPadsModeChanged(padsMode, g); }
+        const stems = engine.getSharedValue(g, "selectedStems");
+        if (stems !== undefined) { viewModel.onSelectedStemsChanged(stems, g); }
+        const hotcue = engine.getSharedValue(g, "selectedHotcue");
+        if (hotcue !== undefined) { viewModel.onSelectedHotcueChanged(hotcue, g); }
     }
 
     function onShiftChanged(value) {
@@ -120,6 +132,8 @@ Item {
         for (const ch of ["[Channel1]", "[Channel2]", "[Channel3]", "[Channel4]"]) {
             viewModel.onDeckColorChanged(engine.getSharedValue(ch, "deckColor"), ch);
         }
+        // Seed per-group state for the initial group
+        rehydrateGroupState();
     }
 
     function isLeftScreen(deckId) {

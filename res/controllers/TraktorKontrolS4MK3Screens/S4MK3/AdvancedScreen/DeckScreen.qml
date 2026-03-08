@@ -39,6 +39,12 @@ Item {
         engine.makeSharedValueConnection("controller", "rightdeck.shift", function(value) {
             propShift2.value = !!value;
         });
+
+        // Seed initial shift state
+        const leftShift = engine.getSharedValue("controller", "leftdeck.shift");
+        if (leftShift !== undefined) { propShift1.value = !!leftShift; }
+        const rightShift = engine.getSharedValue("controller", "rightdeck.shift");
+        if (rightShift !== undefined) { propShift2.value = !!rightShift; }
     }
 
     ViewModels.DeckInfo {

@@ -30,7 +30,19 @@ Rectangle {
             waveformOverview.player = Mixxx.PlayerManager.getPlayer(root.group);
             artwork.player = Mixxx.PlayerManager.getPlayer(root.group);
             console.log(`Changed group for screen ${root.screenId} to ${root.group}`);
+            // Rehydrate all per-group state from the new group's current values
+            rehydrateGroupState();
         }
+    }
+
+    function rehydrateGroupState() {
+        const g = root.group;
+        const padsMode = engine.getSharedValue(g, "padsMode");
+        if (padsMode !== undefined) { root.onPadsModeChanged(padsMode, g); }
+        const keyboardMode = engine.getSharedValue(g, "keyboardMode");
+        if (keyboardMode !== undefined) { root.onKeyboardModeChanged(keyboardMode, g); }
+        const beatloopSize = engine.getSharedValue(g, "displayBeatloopSize");
+        if (beatloopSize !== undefined) { root.onDisplayBeatloopSizeChanged(beatloopSize, g); }
     }
 
     function onPadsModeChanged(value, entity) {
@@ -98,6 +110,11 @@ Rectangle {
             engine.makeSharedValueConnection(ch, "keyboardMode", root.onKeyboardModeChanged);
             engine.makeSharedValueConnection(ch, "displayBeatloopSize", root.onDisplayBeatloopSizeChanged);
         }
+
+        // Seed initial group and per-group state
+        const currentGroup = engine.getSharedValue("controller", groupKey);
+        if (currentGroup !== undefined) { root.onGroupChanged(currentGroup); }
+        rehydrateGroupState();
     }
 
     Rectangle {
