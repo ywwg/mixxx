@@ -64,6 +64,7 @@ const KeyboardColors = [
 
 // Constant used to define custom default pad layout
 const DefaultPadLayoutHotcue = "hotcue";
+const DefaultPadLayoutBeatjump = "beatjump";
 const DefaultPadLayoutSamplerBeatloop = "samplerBeatloop";
 const DefaultPadLayoutKeyboard = "keyboard";
 
@@ -2850,7 +2851,7 @@ class S4Mk3Deck extends Deck {
                 pad = newLayer[index];
                 Object.assign(pad, io.pads[index]);
                 if (!(pad instanceof HotcueButton)) {
-                    pad.color = deck.color;
+                    pad.color = LedColors.blue;
                 }
                 // don't change the group of SamplerButtons
                 if (!(pad instanceof SamplerButton)) {
@@ -2882,12 +2883,15 @@ class S4Mk3Deck extends Deck {
             stem: 6,
             beatJump: 6,
         };
+        this.currentPadLayer = this.padLayers.defaultLayer;
+        this.hotcueBlinkTimer = null;
+        this.hotcueBlinker = false;
         switch (DefaultPadLayout) {
         case DefaultPadLayoutHotcue:
             switchPadLayer(this, hotcuePage2);
             this.currentPadLayer = this.padLayers.hotcuePage2;
             break;
-        case DefaultPadLayoutSamplerBeatloop:
+        case DefaultPadLayoutBeatjump:
             switchPadLayer(this, beatJumpPage);
             this.currentPadLayer = this.padLayers.beatJump;
             break;
@@ -3370,12 +3374,23 @@ class S4Mk3Deck extends Deck {
     }
 
     lightPadMode() {
-        if (this.currentPadLayer === this.padLayers.hotcuePage2) {
+        if (this.currentPadLayer === this.padLayers.defaultLayer) {
+            if (this.hotcueBlinkTimer === null) {
+                this.hotcueBlinkTimer = engine.beginTimer(250, () => {
+                    this.hotcuePadModeButton.send(this.hotcuePadModeButton.color + (this.hotcueBlinker ? this.hotcuePadModeButton.brightnessOn : this.hotcuePadModeButton.brightnessOff));
+                    this.hotcueBlinker = !this.hotcueBlinker;
+                }, false);
+            }
+        } else if (this.currentPadLayer === this.padLayers.hotcuePage2) {
             this.hotcuePadModeButton.send(this.hotcuePadModeButton.color + this.hotcuePadModeButton.brightnessOn);
         } else if (this.currentPadLayer === this.padLayers.hotcuePage3) {
             this.hotcuePadModeButton.send(LedColors.white + this.hotcuePadModeButton.brightnessOn);
         } else {
             this.hotcuePadModeButton.send(this.hotcuePadModeButton.color + this.hotcuePadModeButton.brightnessOff);
+        }
+        if (this.hotcueBlinkTimer !== null && this.currentPadLayer !== this.padLayers.defaultLayer) {
+            engine.stopTimer(this.hotcueBlinkTimer);
+            this.hotcueBlinkTimer = null;
         }
 
         const data = (hasRuntimeDataAPI() ? engine.getSharedData() : false) || {};
